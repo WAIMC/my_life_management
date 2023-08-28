@@ -1,0 +1,87 @@
+{
+  "dashboard": "Dashboard",
+  "infrastructure": {
+    "label": "Infrastructure Management",
+    "front_end": {
+      "label": "Front-End",
+      "ui": "UI (User Interface)",
+      "ux": "UX (User Experience)",
+      "typography": "Typography",
+      "color": "Color",
+      "host": "Hosting",
+      "port": "Portal",
+      "proxy": "Proxy",
+      "tree_view": "Tree View",
+      "api": "API"
+    },
+    "back_end": {
+      "label": "Back-End",
+      "host": "Hosting",
+      "port": "Portal",
+      "monitor": "Monitor",
+      "tree_view": "Tree View",
+      "api": "API",
+      "connection_activity": "Connection Activity"
+    },
+    "database": {
+      "label": "Database",
+      "host": "Hosting",
+      "port": "Portal",
+      "monitor": "Monitor",
+      "tree_view": "Tree View",
+      "connection_activity": "Connection Activity"
+    }
+  },
+  "template_response": {
+    "label": "Template Response",
+    "page": {
+      "label": "Page",
+      "login": "Login",
+      "sign_up": "Sign Up",
+      "register_user": "Register User",
+      "user_profile": "User Profile"
+    },
+    "component": {
+      "label": "Component",
+      "table": "Table",
+      "form": "Form",
+      "chart": "Chart",
+      "calendar": "Calendar",
+      "map": "Map",
+      "button": "Button",
+      "color": "Color",
+      "alert": "Alert",
+      "typography": "Typography",
+      "widget": "Widget"
+    }
+  },
+  "network": {
+    "label": "Network Management",
+    "email": "Email",
+    "facebook": "Facebook",
+    "linkedin": "Linkedin"
+  },
+  "authorization": {
+    "label": "Authorization Management",
+    "decentralize": "Decentralize",
+    "role": "Role",
+    "api": "API",
+    "feature": "Feature",
+    "policy": "Policy",
+    "infrastructure": "Infrastructure Management"
+  },
+  "experience": {
+    "label": "Experience Management",
+    "category": "Category",
+    "skill": "Skill",
+    "skill_description": "Skill Description"
+  },
+  "layout": {
+    "label": "Layout Management",
+    "slider": "Slider",
+    "banner": "Banner",
+    "social": "Social",
+    "link": "Link",
+    "translation": "Translation"
+  }
+}

@@ -2,7 +2,7 @@
   <div>
 
     <!-- Header start -->
-      <menuHeader />
+    <menuHeader />
     <!-- Header end -->
 
     <!-- Main start -->
@@ -32,15 +32,8 @@
         <div class="col-3 border rounded">
           <div class="form-group">
             <label for="message">Check v-model</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              name="message" 
-              id="message" 
-              aria-describedby="helpId" 
-              placeholder="Input here..."
-              v-model="message"
-            >
+            <input type="text" class="form-control" name="message" id="message" aria-describedby="helpId"
+              placeholder="Input here..." v-model="message">
             <small id="helpId" class="form-text text-danger">{{ message }}</small>
           </div>
         </div>
@@ -48,11 +41,7 @@
 
       <div class="row">
         <div class="col-3 border rounded">
-          <button 
-            type="button" 
-            class="btn btn-primary"
-            @click="increment"
-          >
+          <button type="button" class="btn btn-primary" @click="increment">
             Increment
           </button>
           <p>{{ count }}</p>
@@ -130,6 +119,4 @@ export default {
   },
 }
 </script>
-<style>
-  
-</style>
+<style></style>

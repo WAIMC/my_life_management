@@ -89,5 +89,5 @@ export default {
 </script>
 
 <style>
-  @import url('~/assets/css/home.css');
+@import url('~/assets/css/home.css');
 </style>

@@ -1,11 +1,15 @@
 <template>
   <div>
-    ok
+    <Category-form />
+    <category-list />
   </div>
 </template>
 <script>
+
 export default {
-  
+  setup() {
+
+  }
 }
 </script>
 <style lang="">

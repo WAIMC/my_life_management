@@ -2,8 +2,8 @@
   <div>
     <h2 class="text-danger">Demo component</h2>
     <div class="row border rounded">
-      <show-calculator @onIncrement="increment" @onDecrement="decrement"/>
-      <show-count :count="count"/>
+      <show-calculator @onIncrement="increment" @onDecrement="decrement" />
+      <show-count :count="count" />
     </div>
     <div class="border rounded">
       <show-change-message @changeMessage="changeMessage" />
@@ -12,8 +12,8 @@
   </div>
 </template>
 <script lang="ts">
-import { ref, onMounted, onUpdated} from 'vue'
-import {testComponent} from '~/assets/js/testComponent';
+import { ref, onMounted, onUpdated } from 'vue'
+import { testComponent } from '~/assets/js/testComponent';
 
 export default {
   setup() {
@@ -36,10 +36,8 @@ export default {
       return count.value--;
     }
 
-    return {count, message, increment, decrement, changeMessage};
+    return { count, message, increment, decrement, changeMessage };
   }
 }
 </script>
-<style>
-  
-</style>
+<style></style>

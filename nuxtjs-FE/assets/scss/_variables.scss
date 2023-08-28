@@ -1,0 +1,26 @@
+$bg-main-color: #1E1E2F;
+$bg-header-color: #15222E;
+$bg-component-color: #27293D;
+$bg-sidebar-color: #2A3755;
+
+/* === Color level 1 === */
+$color-red: #fd5d93;
+$color-red-hover: #E65149;
+$color-blue: #1d8cf8;
+$color-blue-hover:#10AFE0;
+$color-yellow: #ff8d72;
+$color-yellow-hover: #E8625D;
+
+
+/* === Color level 2 === */
+$color-green: #00f2c3;
+$color-green-hover: #0BDB77;
+$color-purple: #e14eca;
+$color-purple-hover: #F74A87;
+$color-white: #c2e1eb;
+$color-dark-gray: #232F3B;
+$color-blue-purple: #5849FA;
+
+/* === Color linear gradient === */
+$linear-purple: linear-gradient(to right, $color-purple 0%, $color-purple-hover 100%);
+$linear-purple-hover: linear-gradient(to right, $color-purple-hover 0%, $color-purple 100%);

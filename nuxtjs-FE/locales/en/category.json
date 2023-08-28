@@ -1,0 +1,13 @@
+{
+  "CATEGORY_NAME": "Name",
+  "Slug": "Slug",
+  "DESCRIPTION": "Description",
+  "STATUS": "Status",
+  "IS_DISPLAY": "Is Display",
+  "RANK_ORDER": "Rank Order",
+  "CREATED_AT": "Created At",
+  "CATEGORY_PARENT": "Category Parent",
+  "PARENT_ROOT": "Parent Root",
+  "SHOW": "Show",
+  "HIDE": "Hide"
+}

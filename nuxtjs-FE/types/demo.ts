@@ -6,7 +6,7 @@ export interface Job {
 }
 
 export interface piniaTask {
-  name: string,
-  age: number,
-  isDied: boolean,
+  name: string;
+  age: number;
+  isDied: boolean;
 }

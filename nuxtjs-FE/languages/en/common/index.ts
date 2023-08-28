@@ -1,1 +1,0 @@
-export { LabelEnum } from './label-enum';

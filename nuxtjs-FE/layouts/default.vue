@@ -1,40 +1,62 @@
 <template>
   <div>
-    <div class="wrap-default row w-100 border rounded bg-dark text-white">
-      <!-- Sidebar menu left master -->
-      <div class="col-1 sidebar-menu-left-mst border rounded">
-        sidebar left
+    <div class="v-container">
+      <!-- Header -->
+      <div class="v-header">
+        <Header />
       </div>
-
-      <!-- Aside main master start -->
-      <div class="col-11 aside-main-mst border rounded">
-        <!-- Header aside start -->
-        <div class="header-aside border rounded">
-          header aside
+      <!-- Article -->
+      <div 
+        class="v-article"
+        :class="toggleBar ? 'v-close__sidebar v-hidden__sidebar-mobile' : 'v-show__sidebar-mobile'"
+      >
+        <!-- Sidebar nav -->
+        <div class="v-sidebar__nav">
+          <div class="v-sidebar__nav-card v-box-shadow">
+            <div class="v-header__sidebar">
+              <a href="#" class="v-row v-justify-content-center v-align-items-center">
+                <img src="/favicon.ico" alt="">
+                <span>
+                  sidebar header
+                </span>
+              </a>
+            </div>
+            <div class="v-body__sidebar">
+              <SidebarMenu />
+            </div>
+          </div>
         </div>
-
-        <!-- Article start -->
-        <div class="sidebar-menu-aside-left border rounded row">
-          <!-- Sidebar menu article left start -->
-          <div class="sidebar-menu-article-left col-1 border rounded">
-            sidebar menu article left
-          </div>
-
-          <!-- Main content start -->
-          <div class="main-content col-11 border rounded">
-            main content
-            <slot />
-          </div>
+        <!-- Aside content -->
+        <div class="v-aside__content">
+          <slot />
         </div>
       </div>
     </div>
   </div>
 </template>
 <script>
+import { storeToRefs } from 'pinia';
+import { useLayoutStore } from '~/stores/layout';
+import Header from '~/layouts/header.vue';
+import SidebarMenu from '~/components/menu/sidebar.vue';
+
 export default {
-  
+  components: {
+    Header,
+    SidebarMenu,
+  },
+  setup() {
+  // Destructuring for state/getter of layout store
+  const {
+    toggleBar,
+  } = storeToRefs(useLayoutStore());
+
+  return {
+    toggleBar,
+  };
+  }
 }
 </script>
-<style>
-  
+<style lang="scss">
+
 </style>

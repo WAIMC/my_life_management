@@ -1,47 +1,49 @@
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia";
 import { piniaTask } from "types/demo";
 
-export const usePiniaTaskStore = defineStore('piniaTask', {
+export const usePiniaTaskStore = defineStore("piniaTask", {
   state: () => {
     return {
       task: [
-        {id: 1, name: 'abc', age: 10, isDied: false},
-        {id: 2, name: 'xyz', age: 11, isDied: false},
-        {id: 3, name: 'lkj', age: 12, isDied: false},
+        { id: 1, name: "abc", age: 10, isDied: false },
+        { id: 2, name: "xyz", age: 11, isDied: false },
+        { id: 3, name: "lkj", age: 12, isDied: false },
       ],
       id: 0 as number,
-      name: '' as string,
+      name: "" as string,
       age: 0 as number,
       isDied: false as boolean,
       isUpdate: false as boolean,
-    }
+    };
   },
   actions: {
-    setName (name:string) {
+    setName(name: string) {
       this.name = name;
     },
-    setAge (age:number) {
+    setAge(age: number) {
       this.age = age;
     },
-    setIsDied (isDied:boolean) {
+    setIsDied(isDied: boolean) {
       this.isDied = isDied;
     },
-    addNewTask (payload:piniaTask) {
-      const {name, age, isDied} = payload;
+    addNewTask(payload: piniaTask) {
+      const { name, age, isDied } = payload;
       this.task = [
         ...this.task,
         {
-          id: this.task.reduce((accumulator, current) => { return accumulator.id > current.id ? accumulator : current}),
+          id: this.task.reduce((accumulator, current) => {
+            return accumulator.id > current.id ? accumulator : current;
+          }),
           name: name.value,
           age: age.value,
           isDied: isDied.value,
-        }
+        },
       ];
     },
-    deleteTask (id: number) {
+    deleteTask(id: number) {
       this.task = this.task.filter((val) => val.id !== id);
     },
-    editTask (id: number) {
+    editTask(id: number) {
       let taskEdit = this.task.filter((val) => val.id === id);
       this.name = taskEdit[0]?.name;
       this.age = taskEdit[0]?.age;
@@ -49,7 +51,7 @@ export const usePiniaTaskStore = defineStore('piniaTask', {
       this.id = id;
       this.isUpdate = true;
     },
-    updateTask () {
+    updateTask() {
       this.task = this.task.map((val) => {
         if (val.id === this.id) {
           val.name = this.name;
@@ -59,14 +61,14 @@ export const usePiniaTaskStore = defineStore('piniaTask', {
 
         return val;
       });
-      console.log('this task :', this.task);
-      
+      console.log("this task :", this.task);
+
       this.isUpdate = false;
     },
-    resetForm () {
-      this.name = '';
+    resetForm() {
+      this.name = "";
       this.age = 0;
       this.isDied = false;
-    }
+    },
   },
 });

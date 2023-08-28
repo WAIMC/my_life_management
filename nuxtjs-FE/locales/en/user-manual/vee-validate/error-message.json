@@ -1,0 +1,9 @@
+{
+  "REQUIRED": "The {field} is required",
+  "EMAIL": "The {field} must be a valid email",
+  "MIN": "The {field} must be greater than {min}",
+  "MAX": "The {filed} must be less than {max}",
+  "CONFIRMED": "The {field} must match",
+  "ALPHANUMERIC": "This {field} must be a valid alphanumeric",
+  "DIGITS": "This {field} must be a valid digits"
+}
