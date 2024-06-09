@@ -16,13 +16,8 @@ class OriginalTranslatorFactory extends Factory
      */
     public function definition(): array
     {
-        $tableName = fake()->name();
-        $columnName = fake()->name();
-
         return [
-            'table_name' => (strlen($tableName) > 64) ? substr($tableName, 0, 64) : $tableName,
-            'column_name' => (strlen($columnName) > 64) ? substr($columnName, 0, 64) : $columnName,
-            'field_id' => fake()->random_int(1, 10),
+            //
         ];
     }
 }

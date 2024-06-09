@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('type')->default(0)->comment('Api type');
             $table->string('name', 50)->comment('Api name');
             $table->string('path', 100)->comment('Api path');
-            $table->boolean('is_valid')->default(false)->comment('Api valid');
+            $table->unsignedTinyInteger('is_valid')->default(0)->comment('Api valid');
             $table->timestamps();
         });
     }

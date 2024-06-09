@@ -2,8 +2,6 @@
 
 namespace Database\Factories\Master;
 
-use App\Models\Master\Admin;
-use App\Models\Master\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,8 +17,7 @@ class AdminRoleFactory extends Factory
     public function definition(): array
     {
         return [
-            'admin_id' => fake()->randomElement(Admin::pluck('id')->toArray()),
-            'role_id' => fake()->randomElement(Role::pluck('id')->toArray()),
+            //
         ];
     }
 }

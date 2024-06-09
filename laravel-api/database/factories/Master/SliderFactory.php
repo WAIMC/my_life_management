@@ -2,7 +2,6 @@
 
 namespace Database\Factories\Master;
 
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,16 +16,8 @@ class SliderFactory extends Factory
      */
     public function definition(): array
     {
-        $title = fake()->title();
-        $link = fake()->url();
-        $image = fake()->image();
-
         return [
-            'title' => (strlen($title) > 50) ? substr($title, 0, 50) : $title,
-            'slug' => Str::slug((strlen($title) > 50) ? substr($title, 0, 50) : $title),
-            'link' => (strlen($link) > 100) ? substr($link, 0, 100) : $link,
-            'image' => (strlen($image) > 100) ? substr($image, 0, 100) : $image,
-            'status' => fake()->random_int(1, 10),
+            //
         ];
     }
 }

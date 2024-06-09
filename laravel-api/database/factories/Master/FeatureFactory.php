@@ -16,11 +16,8 @@ class FeatureFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->name();
-
         return [
-            'name' => (strlen($name) > 50) ? substr($name, 0, 50) : $name,
-            'group' => fake()->random_int(1, 191),
+            //
         ];
     }
 }

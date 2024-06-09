@@ -16,12 +16,8 @@ class SettingLinkFactory extends Factory
      */
     public function definition(): array
     {
-        $key = fake()->name();
-        $value = fake()->name();
-
         return [
-            'key' => (strlen($key) > 30) ? substr($key, 0, 30) : $key,
-            'value' => (strlen($value) > 100) ? substr($value, 0, 100) : $value,
+            //
         ];
     }
 }

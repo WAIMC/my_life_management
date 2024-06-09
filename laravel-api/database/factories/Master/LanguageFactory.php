@@ -16,12 +16,8 @@ class LanguageFactory extends Factory
      */
     public function definition(): array
     {
-        $abbreviation = fake()->languageCode();
-
         return [
-            'abbreviation' => (strlen($abbreviation) > 10) ? substr($abbreviation, 0, 10) : $abbreviation,
-            'name' => fake()->currencyCode(1, 30),
-            'is_active' => false,
+            //
         ];
     }
 }

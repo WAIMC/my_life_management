@@ -3,10 +3,6 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-
-use Database\Seeders\Master\AdminDepartmentSeeder;
-use Database\Seeders\Master\AdminSeeder;
-use Database\Seeders\Master\DepartmentSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -22,11 +18,5 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
-
-        $this->call([
-            AdminSeeder::class,
-            DepartmentSeeder::class,
-            AdminDepartmentSeeder::class,
-        ]);
     }
 }
