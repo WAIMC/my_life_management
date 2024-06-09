@@ -16,8 +16,13 @@ class RoleFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->name();
+        $permission = fake()->name();
+
         return [
-            //
+            'name' => (strlen($name) > 30) ? substr($name, 0, 30) : $name,
+            'permission' => (strlen($permission) > 50) ? substr($permission, 0, 50) : $permission,
+            'is_active' => false,
         ];
     }
 }

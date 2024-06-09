@@ -16,8 +16,12 @@ class DepartmentFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->name();
+
         return [
-            //
+            'code' => fake()->isbn10(),
+            'name' => (strlen($name) > 50) ? substr($name, 0, 50) : $name,
+            'status' => random_int(1, 5),
         ];
     }
 }

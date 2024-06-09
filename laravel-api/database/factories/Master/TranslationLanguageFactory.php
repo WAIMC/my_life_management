@@ -2,6 +2,8 @@
 
 namespace Database\Factories\Master;
 
+use App\Models\Master\Language;
+use App\Models\Master\Translation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,8 @@ class TranslationLanguageFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'translation_id' => fake()->randomElement(Translation::pluck('id')->toArray()),
+            'language_id' => fake()->randomElement(Language::pluck('id')->toArray()),
         ];
     }
 }

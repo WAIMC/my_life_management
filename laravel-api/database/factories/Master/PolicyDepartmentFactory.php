@@ -17,7 +17,7 @@ class PolicyDepartmentFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'category_id' => fake()->random_int(1, 255),
         ];
     }
 }

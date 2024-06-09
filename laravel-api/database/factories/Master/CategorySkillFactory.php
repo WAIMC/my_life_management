@@ -2,6 +2,8 @@
 
 namespace Database\Factories\Master;
 
+use App\Models\Master\Category;
+use App\Models\Master\Skill;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,8 @@ class CategorySkillFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'category_id' => fake()->randomElement(Category::pluck('id')->toArray()),
+            'skill_id' => fake()->randomElement(Skill::pluck('id')->toArray()),
         ];
     }
 }

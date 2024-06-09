@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Master;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,8 +17,19 @@ class BannerFactory extends Factory
      */
     public function definition(): array
     {
+        $title = fake()->title();
+        $description = fake()->text();
+        $link = fake()->url();
+        $image = fake()->image();
+
         return [
-            //
+            'title' => (strlen($title) > 50) ? substr($title, 0, 50) : $title,
+            'slug' => Str::slug((strlen($title) > 50) ? substr($title, 0, 50) : $title),
+            'description' => (strlen($description) > 255) ? substr($description, 0, 255) : $description,
+            'link' => (strlen($link) > 100) ? substr($link, 0, 100) : $link,
+            'image' => (strlen($image) > 100) ? substr($image, 0, 100) : $image,
+            'position' => fake()->random_int(1, 50),
+            'status' => fake()->random_int(1, 50),
         ];
     }
 }

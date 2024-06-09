@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Master;
 
+use App\Models\Master\OriginalTranslator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,8 +17,11 @@ class TranslationFactory extends Factory
      */
     public function definition(): array
     {
+        $translate = fake()->text();
+
         return [
-            //
+            'original_translator_id' => fake()->randomElement(OriginalTranslator::pluck('id')->toArray()),
+            'translate' => (strlen($translate) > 255) ? substr($translate, 0, 255) : $translate,
         ];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Database\Factories\Master;
 
+use App\Models\Master\Admin;
+use App\Models\Master\Department;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,8 @@ class AdminDepartmentFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'admin_id' => fake()->randomElement(Admin::pluck('id')->toArray()),
+            'dept_id' => fake()->randomElement(Department::pluck('id')->toArray()),
         ];
     }
 }
