@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Validator as ValidatorFacade;
 class CommonService
 {
   /**
+   * print raw SQL query
+   * 
+   * var_dump(vsprintf(str_replace(['?'], ['\'%s\''], $query->toSql()), $query->getBindings()));
+   */
+
+  /**
    * Validator request manual
    * 
    * @param mixed $callBack

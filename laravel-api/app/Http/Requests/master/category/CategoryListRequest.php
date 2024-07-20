@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\master\category;
 
-use App\Common;
-use App\Messages;
+use App\Constants\CommonVal;
+use App\Constants\Messages;
+use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CategoryListRequest extends FormRequest
@@ -34,9 +35,38 @@ class CategoryListRequest extends FormRequest
       'status' => 'numeric|min:0',
       'is_display' => 'in:true,false',
       'rank_order' => 'numeric|min:0',
-      'from_date' => 'date|date_format:' . Common::DATE_FORMAT,
-      'to_date' => 'date|after:from_date|date_format:'  . Common::DATE_FORMAT,
+      'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
+      'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
+  }
+
+  /**
+   * Configure the validator instance.
+   *
+   * @param  \Illuminate\Validation\Validator  $validator
+   * @return void
+   */
+  public function withValidator(Validator $validator)
+  {
+    $validator->after(function ($validator) {
+      if ($this->from_date && $this->to_date) {
+        $fromDate = \DateTime::createFromFormat(CommonVal::DATE_FORMAT, $this->from_date);
+        $toDate = \DateTime::createFromFormat(CommonVal::DATE_FORMAT, $this->to_date);
+
+        if ($fromDate >= $toDate) {
+          $validator->errors()->add(
+            'to_date',
+            Messages::getMessage(
+              Messages::E0014,
+              [
+                'attributes' => $this->attributes()['from_date'],
+                'attributes2' => $this->attributes()['to_date']
+              ]
+            )
+          );
+        }
+      }
+    });
   }
 
   /**
@@ -213,13 +243,6 @@ class CategoryListRequest extends FormRequest
         [
           'attributes' => $this->attributes()['to_date'],
           'number' => self::MIN,
-        ]
-      ),
-      'to_date.after' => Messages::getMessage(
-        Messages::E0014,
-        [
-          'attributes' => $this->attributes()['from_date'],
-          'attributes2' => $this->attributes()['to_date']
         ]
       ),
     ];

@@ -3,43 +3,46 @@
 namespace App\Http\Controllers;
 
 use Exception;
-use App\Common;
-use App\Messages;
+use App\Constants\Messages;
+use App\Constants\CommonVal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
-abstract class Controller
+class Controller
 {
   /**
    * Handle request common
+   * 
    * @param mixed @callback
-   * @return array
+   * @return Response
    */
-  public function handleRequest(mixed $callback): array
+  public static function handleRequest(mixed $callback): Response
   {
     DB::beginTransaction();
     try {
       $data = $callback();
       DB::commit();
 
-      return $this->renderResponse(
+      return self::renderResponse(
         $data,
-        [false, Common::HTTP_OK, null]
+        [false, CommonVal::HTTP_OK, null]
       );
     } catch (
       AuthenticationException
       | TokenMismatchException $e
     ) {
+      var_dump('Error 1 :', $e->getMessage());
       DB::rollBack();
 
-      return $this->renderResponse(
+      return self::renderResponse(
         false,
         [true, $e->getCode(), $e->getMessage()]
       );
@@ -50,25 +53,28 @@ abstract class Controller
       | NotFoundHttpException
       | HttpException $e
     ) {
-      return $this->renderResponse(
+      var_dump('Error 2 :', $e->getMessage());
+      return self::renderResponse(
         false,
         [true, $e->getCode(), $e->getMessage()]
       );
     } catch (ValidationException $e) {
-      return $this->renderResponse(
+      var_dump('Error 3 :', $e->getMessage());
+      return self::renderResponse(
         false,
         [
           true,
-          $e->getCode() ?: Common::HTTP_UNPROCESSABLE_CONTENT,
+          $e->getCode() ?: CommonVal::HTTP_UNPROCESSABLE_CONTENT,
           $e->validator->errors()->messages()
         ]
       );
     } catch (Exception $e) {
       DB::rollBack();
+      var_dump('Error 4 :', $e->getMessage());
 
-      return $this->renderResponse(
+      return self::renderResponse(
         false,
-        [true, Common::HTTP_INTERNAL_SERVER_ERROR, Messages::E0500]
+        [true, CommonVal::HTTP_INTERNAL_SERVER_ERROR, Messages::E0500]
       );
     }
   }
@@ -78,19 +84,34 @@ abstract class Controller
    * 
    * @param mixed $data
    * @param array $error
-   * @return array
+   * @return Response
    */
-  public function renderResponse(mixed $data, array $error): array
+  private static function renderResponse(mixed $data, array $error): Response
   {
     list($status, $code, $messages) = $error;
 
-    return [
+    return response()->json([
       'data' => $data,
       'error' => [
         'status' => $status,
         'code' => $code,
         'messages' => $messages
       ]
+    ]);
+  }
+
+  /**
+   * Render data token
+   * 
+   * @param string $token
+   * @return array
+   */
+  protected function respondWithToken($token): array
+  {
+    return [
+      'access_token' => $token,
+      'token_type' => 'bearer',
+      'expires_in' => 3600
     ];
   }
 }

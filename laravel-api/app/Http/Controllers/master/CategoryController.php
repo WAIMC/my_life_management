@@ -13,8 +13,10 @@ class CategoryController extends Controller
    */
   public function index(Request $request)
   {
-    return $this->handleRequest(function () use ($request) {
-      return CategoryService::getInstance()->categoryList($request);
+    $payload = $request->all();
+
+    return $this->handleRequest(function () use ($payload) {
+      return CategoryService::getInstance()->categoryList($payload);
     });
   }
 
