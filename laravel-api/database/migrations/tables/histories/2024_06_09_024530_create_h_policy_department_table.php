@@ -14,13 +14,8 @@ return new class extends Migration
         Schema::create('h_policy_department', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('policy_department_id')->comment('Policy department id');
-            $table->unsignedInteger('category_id')->nullable()->comment('Category id');
-            $table->unsignedInteger('skill_id')->nullable()->comment('skill id');
-            $table->unsignedInteger('skill_description_id')->nullable()->comment('Skill description id');
-            $table->unsignedInteger('slider_id')->nullable()->comment('Slider id');
-            $table->unsignedInteger('banner_id')->nullable()->comment('Banner id');
-            $table->unsignedInteger('setting_link_id')->nullable()->comment('Setting link id');
-            $table->unsignedInteger('social_id')->nullable()->comment('Social id');
+            $table->unsignedInteger('table_name')->nullable()->comment('Policy department');
+            $table->unsignedInteger('row_id')->nullable()->comment('Row id');
             $table->unsignedTinyInteger('action')->comment('Policy department action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');

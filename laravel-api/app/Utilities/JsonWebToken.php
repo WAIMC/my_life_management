@@ -7,7 +7,7 @@ use App\Constants\Messages;
 class JsonWebToken
 {
   public const ALGORITHM_HS256 = 'HS256';
-  public const TTL = 60; // Time to live (second) 
+  public const TTL = 3600; // Time to live (second) 
 
   /**
    * Generate JWT header
@@ -29,7 +29,7 @@ class JsonWebToken
    * @param array $payload
    * @return array
    */
-  private static function JWTPayload(array $payload): array
+  public static function JWTPayload(array $payload): array
   {
     return [
       'id'   => $payload['id'] ?? '',   // ID of the token (member id)
@@ -59,7 +59,7 @@ class JsonWebToken
     );
 
     // Encrypt payload
-    $payload = json_encode(self::JWTPayload($params));
+    $payload = json_encode($params);
     $base64UrlPayload = str_replace(
       ['+', '/', '='],
       ['-', '_', ''],

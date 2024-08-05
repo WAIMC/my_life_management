@@ -38,6 +38,7 @@ class Messages
   const E0401 = 'Unauthorized Access';
   const E0403 = 'Access is forbidden';
   const E0404 = 'Not Found';
+  const E0405 = 'Method Not Allowed';
   const E0500 = 'Internal server error';
 
   /**

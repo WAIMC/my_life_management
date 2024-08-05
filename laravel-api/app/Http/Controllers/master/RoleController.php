@@ -2,21 +2,37 @@
 
 namespace App\Http\Controllers\master;
 
+use App\Models\master\api;
+use App\Constants\Messages;
+use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Services\master\CategoryService;
+use App\Services\master\RoleService;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
-class CategoryController extends Controller
+class RoleController extends Controller
 {
   /**
    * Display a listing of the resource.
+   * 
+   * @param Request $request
+   * @return Response
    */
-  public function index(Request $request)
+  public function index(Request $request): Response
   {
-    $payload = $request->all();
+    return $this->handleRequest(function () use ($request) {
+      // Check valid method
+      if ($request->method() !== api::TYPE_OF_METHOD[0]) {
+        throw new MethodNotAllowedException(
+          [api::TYPE_OF_METHOD[0]],
+          Messages::E0405,
+          CommonVal::HTTP_METHOD_NOT_ALLOWED
+        );
+      }
+      $payload = $request->all();
 
-    return $this->handleRequest(function () use ($payload) {
-      return CategoryService::getInstance()->list($payload);
+      return RoleService::getInstance()->list($payload);
     });
   }
 

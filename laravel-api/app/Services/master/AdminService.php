@@ -5,13 +5,17 @@ namespace App\Services\master;
 use App\Constants\Messages;
 use App\constants\CommonVal;
 use App\Models\master\Admin;
+use Illuminate\Http\Request;
 use App\Services\CommonService;
+use App\Utilities\JsonWebToken;
 use App\Services\SingletonService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use App\Http\Requests\master\admin\AdminRegisterRequest;
-use App\Utilities\JsonWebToken;
+
+use function PHPSTORM_META\type;
 
 class AdminService extends SingletonService
 {
@@ -81,10 +85,41 @@ class AdminService extends SingletonService
       throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
     }
 
-    return JsonWebToken::encode([
+    $payload = JsonWebToken::JWTPayload([
       'id' => (string)$admin->id,
       'type' => Admin::TYPE,
       'role' => 'admin'
-    ], env('JWT_SECRET'));
+    ]);
+
+    // Create token and set expired time in redis
+    $key = Admin::TYPE . ':' . $admin->id;
+    Redis::hmset($key, $payload);
+    Redis::expireat($key, $payload['exp']);
+
+
+    return JsonWebToken::encode($payload, env('JWT_SECRET'));
+  }
+
+  /**
+   * Logout admin account
+   * 
+   * @param Request $request
+   * @return []
+   */
+  public function logout(Request $request)
+  {
+    $adminId = $request->attributes->get('admin_id');
+
+    // Delete token store in redis
+    if (Redis::hget(Admin::TYPE . ':' . $adminId, 'id')) {
+      Redis::del(Admin::TYPE . ':' . $adminId);
+    }
+
+    // Remove the Authorization header if set
+    if ($request->header('Authorization')) {
+      $request->headers->remove('Authorization');
+    }
+
+    return [];
   }
 }

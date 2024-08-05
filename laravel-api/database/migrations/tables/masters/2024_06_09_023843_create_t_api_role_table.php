@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('t_feature', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('name', 50)->comment('Feature name');
-            $table->unsignedTinyInteger('group')->default(0)->comment('Feature group');
+        Schema::create('t_api_role', function (Blueprint $table) {
+            $table->unsignedInteger('api_id');
+            $table->unsignedInteger('role_id');
+            $table->primary(['api_id', 'role_id']);
             $table->timestamps();
+            $table->foreign('api_id')->references('id')->on('t_api');
+            $table->foreign('role_id')->references('id')->on('t_role');
         });
     }
 
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('t_feature');
+        Schema::dropIfExists('t_api_role');
     }
 };

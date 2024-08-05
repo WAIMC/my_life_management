@@ -15,7 +15,9 @@ return new class extends Migration
             $table->increments('id');
             $table->unsignedInteger('feature_id')->comment('Feature id');
             $table->string('name', 50)->nullable()->comment('Feature name');
-            $table->unsignedTinyInteger('group')->nullable()->comment('Feature group');
+            $table->string('group', 50)->nullable()->comment('Feature group');
+            $table->string('description', 100)->nullable()->comment('Feature description');
+            $table->tinyInteger('status')->nullable()->comment('Feature status');
             $table->unsignedTinyInteger('action')->comment('Feature action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');

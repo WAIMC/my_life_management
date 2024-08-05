@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Exception;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
+use App\Utilities\JsonWebToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Session\TokenMismatchException;
@@ -111,7 +112,7 @@ class Controller
     return [
       'access_token' => $token,
       'token_type' => 'bearer',
-      'expires_in' => 3600
+      'expires_in' => JsonWebToken::TTL
     ];
   }
 }

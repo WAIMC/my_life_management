@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('birth')->nullable()->comment('User birth');
             $table->unsignedTinyInteger('gender')->default(0)->comment('User gender');
             $table->unsignedTinyInteger('status')->default(0)->comment('User status');
-            $table->boolean('is_active')->default(0)->comment('User active');
+            $table->boolean('is_active')->default(false)->comment('User active');
             $table->string('avatar', 30)->nullable()->comment('User avatar name');
             $table->timestamp('email_verified_at')->nullable()->comment('Verified email time');
             $table->rememberToken();
