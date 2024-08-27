@@ -6,15 +6,15 @@ use App\Models\master\Api;
 use App\Constants\Messages;
 use App\constants\CommonVal;
 use Illuminate\Http\Request;
+use App\Services\master\ApiService;
 use App\Http\Controllers\Controller;
-use App\Services\master\RoleService;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
-class RoleController extends Controller
+class ApiController extends Controller
 {
   /**
-   * Role list
+   * Api list
    * 
    * @param Request $request
    * @return Response
@@ -32,12 +32,12 @@ class RoleController extends Controller
       }
       $payload = $request->all();
 
-      return RoleService::getInstance()->list($payload);
+      return ApiService::getInstance()->list($payload);
     });
   }
 
   /**
-   * Store role
+   * Store api
    * 
    * @param Request $request
    * @return Response
@@ -55,12 +55,12 @@ class RoleController extends Controller
       }
       $payload = $request->all();
 
-      return RoleService::getInstance()->store($payload);
+      return ApiService::getInstance()->store($payload);
     });
   }
 
   /**
-   * Update role
+   * Update api
    * 
    * @param Request $request
    * @param string $id
@@ -80,12 +80,12 @@ class RoleController extends Controller
       $payload = $request->all();
       $payload['id'] = $id;
 
-      return RoleService::getInstance()->update($payload);
+      return ApiService::getInstance()->update($payload);
     });
   }
 
   /**
-   * Delete role
+   * Delete api
    * 
    * @param Request $request
    * @param string $id
@@ -103,7 +103,7 @@ class RoleController extends Controller
         );
       }
 
-      return RoleService::getInstance()->delete($id);
+      return ApiService::getInstance()->delete($id);
     });
   }
 }

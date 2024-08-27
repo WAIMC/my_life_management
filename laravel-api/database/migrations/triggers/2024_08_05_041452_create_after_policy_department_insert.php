@@ -15,8 +15,8 @@ return new class extends Migration
       CREATE OR REPLACE FUNCTION insert_into_department_management() RETURNS TRIGGER AS $$
         BEGIN
           -- Insert a new record into t_department_management table
-          INSERT INTO t_department_management (department_id, policy_department_id)
-          SELECT id, NEW.id FROM t_department WHERE name = 'root';
+          INSERT INTO t_department_management (department_id, policy_department_id, created_at, updated_at)
+          SELECT id, NEW.id, now(), now() FROM t_department WHERE name = 'root';
           RETURN NEW;
         END;
       $$ LANGUAGE plpgsql;

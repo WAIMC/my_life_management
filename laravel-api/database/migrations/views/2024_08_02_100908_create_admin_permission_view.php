@@ -13,8 +13,9 @@ return new class extends Migration
         DB::statement("
             CREATE VIEW admin_permission_view AS
             SELECT
-            ta.id    AS admin_id,
-            tr.name  AS role_name,
+            ta.id         AS admin_id,
+            tr.id         AS role_id,
+            tr.name       AS role_name,
             CASE
                 WHEN ta2.type = 0 THEN 'GET'
                 WHEN ta2.type = 1 THEN 'POST'
@@ -23,10 +24,10 @@ return new class extends Migration
                 WHEN ta2.type = 4 THEN 'DELETE'
                 ELSE null
             END AS type,
-            ta2.name AS api_name,
-            ta2.path AS path,
-            tf.name  AS feature_name,
-            tf.group AS feature_group
+            ta2.name      AS api_name,
+            ta2.path      AS path,
+            tf.name       AS feature_name,
+            tf.group_name AS feature_group
         FROM
             t_admin ta												-- Account
             INNER JOIN t_admin_role tar ON tar.admin_id = ta.id 	-- Admin role 

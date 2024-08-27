@@ -2,12 +2,13 @@
 
 namespace App\Http\Requests\master\admin;
 
-use App\Constants\CommonVal;
 use App\Constants\Messages;
+use App\constants\CommonVal;
 use App\Models\master\Admin;
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class AdminRegisterRequest extends FormRequest
+class AdminUpdateRequest extends FormRequest
 {
   /**
    * Determine if the user is authorized to make this request.
@@ -24,19 +25,21 @@ class AdminRegisterRequest extends FormRequest
    */
   public function rules(): array
   {
+    $payload = $this->all();
+
     return [
-      'email'        => 'email:rfc,dns|min:0|max:30|required|unique:App\Models\master\Admin,email',
-      'user_name'    => 'string|min:0|max:50|required|unique:App\Models\master\Admin,user_name',
-      'password'     => 'string|min:0|max:100|required',
-      'first_name'   => 'string|min:0|max:20|required',
-      'last_name'    => 'string|min:0|max:20|required',
-      'address'      => 'string|min:0|max:100',
-      'phone_number' => 'string|min:0|max:20',
-      'birth'        => 'date_format:' . CommonVal::DATE_FORMAT,
-      'gender'       => 'in:' . implode(',', array_values(ADMIN::$gender)),
-      'status'       => 'in:' . implode(',', array_values(ADMIN::$status)),
-      'is_active'    => 'in:' . implode(',', array_values(ADMIN::$isActive)),
-      'avatar'       => 'string|min:0|max:30'
+      'email'        => ['email:rfc,dns', 'min:0', 'max:30', 'required', Rule::unique(Admin::class)->ignore($payload['admin_id'])],
+      'user_name'    => ['string', 'min:0', 'max:50', 'required', Rule::unique(Admin::class)->ignore($payload['admin_id'])],
+      'password'     => ['string', 'min:0', 'max:100'],
+      'first_name'   => ['string', 'min:0', 'max:20'],
+      'last_name'    => ['string', 'min:0', 'max:20'],
+      'address'      => ['string', 'min:0', 'max:100'],
+      'phone_number' => ['string', 'min:0', 'max:20'],
+      'birth'        => ['date_format:' . CommonVal::DATE_FORMAT],
+      'gender'       => ['in:' . implode(',', array_values(ADMIN::$gender))],
+      'status'       => ['in:' . implode(',', array_values(ADMIN::$status))],
+      'is_active'    => ['in:' . implode(',', array_values(ADMIN::$isActive))],
+      'avatar'       => ['string', 'min:0', 'max:30']
     ];
   }
 
@@ -129,10 +132,6 @@ class AdminRegisterRequest extends FormRequest
           'number' => Admin::$lengthAttr['oneH']
         ]
       ),
-      'password.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => Admin::attributes()['password']]
-      ),
 
       /**
        * first_name
@@ -155,10 +154,6 @@ class AdminRegisterRequest extends FormRequest
           'number' => Admin::$lengthAttr['twenty']
         ]
       ),
-      'first_name.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => Admin::attributes()['first_name']]
-      ),
 
       /**
        * last_name
@@ -180,10 +175,6 @@ class AdminRegisterRequest extends FormRequest
           'attributes' => Admin::attributes()['last_name'],
           'number' => Admin::$lengthAttr['twenty']
         ]
-      ),
-      'last_name.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => Admin::attributes()['last_name']]
       ),
 
       /**

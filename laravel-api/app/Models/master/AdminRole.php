@@ -5,31 +5,23 @@ namespace App\Models\master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Api extends Model
+class AdminRole extends Model
 {
   use HasFactory;
-
-  public const TYPE_OF_METHOD = [
-    0 => "GET",
-    1 => "POST",
-    2 => "PUT",
-    3 => "PATCH",
-    4 => "DELETE",
-  ];
 
   /**
    * The table associated with the model.
    *
    * @var string
    */
-  protected $table = 't_api';
+  protected $table = 't_admin_role';
 
   /**
    * The attributes that are mass assignable.
    *
    * @var array
    */
-  protected $fillable = ['type', 'name', 'path', 'is_valid', 'feature_id'];
+  protected $fillable = ['admin_id', 'role_id'];
 
   /**
    * Indicates if the model should be timestamped.
@@ -46,13 +38,8 @@ class Api extends Model
   public static function attributes(): array
   {
     return [
-      'table_name' => 'api',
-      'id'         => 'API ID',
-      'type'       => 'Type of api',
-      'name'       => 'Api name',
-      'path'       => 'Api path',
-      'is_valid'   => 'Api valid',
-      'feature_id' => 'Feature ID',
+      'admin_id' => 'Admin id',
+      'role_id' => 'Role id',
     ];
   }
 }

@@ -14,7 +14,7 @@ return new class extends Migration
     Schema::create('t_feature', function (Blueprint $table) {
       $table->increments('id');
       $table->string('name', 50)->comment('Feature name');
-      $table->string('group', 50)->comment('Feature group');
+      $table->string('group_name', 50)->comment('Feature group name');
       $table->string('description', 100)->comment('Feature description');
       $table->tinyInteger('status')->default(0)->comment('Feature status');
       $table->timestamps();

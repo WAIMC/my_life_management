@@ -16,6 +16,11 @@ class Role extends Model
    */
   protected $table = 't_role';
 
+  public static $isActive = [
+    'disabled' => false,
+    'enable'   => true
+  ];
+
   /**
    * The attributes that are mass assignable.
    *
@@ -29,4 +34,19 @@ class Role extends Model
    * @var bool
    */
   public $timestamps = true;
+
+  /**
+   * Attributes for Role
+   *
+   * @return array<string, string>
+   */
+  public static function attributes(): array
+  {
+    return [
+      'id' => 'Role ID',
+      'name' => 'Role name',
+      'permission' => 'Role description',
+      'is_active' => 'Active role',
+    ];
+  }
 }

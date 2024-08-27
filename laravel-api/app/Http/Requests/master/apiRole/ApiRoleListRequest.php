@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Http\Requests\role;
+namespace App\Http\Requests\master\apiRole;
 
 use App\Constants\Messages;
 use App\constants\CommonVal;
 use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
-class RoleListRequest extends FormRequest
+class ApiRoleListRequest extends FormRequest
 {
   const MIN = 0;
-  const MAX_NAME = 30;
-  const MAX_PERMISSION = 50;
 
   /**
    * Determine if the user is authorized to make this request.
@@ -29,9 +27,8 @@ class RoleListRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'name' => 'string|min:0|max:30',
-      'permission' => 'string|min:0|max:50',
-      'is_active' => 'in:true,false',
+      'api_id' => 'numeric|min:0',
+      'role_id' => 'numeric|min:0',
       'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
       'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
@@ -74,9 +71,8 @@ class RoleListRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'name' => 'Role name',
-      'permission' => 'Role description',
-      'is_active' => 'Active role',
+      'api_id' => 'API id',
+      'role_id' => 'Role id',
       'from_date' => 'From date',
       'to_date' => 'To date',
     ];
@@ -91,55 +87,33 @@ class RoleListRequest extends FormRequest
   {
     return [
       /**
-       * Name
+       * Api ID
        */
-      'name.string' => Messages::getMessage(
-        Messages::E0002,
-        ['attributes' => $this->attributes()['name']]
+      'api_id.numeric' => Messages::getMessage(
+        Messages::E0001,
+        ['attributes' => $this->attributes()['api_id']]
       ),
-      'name.min' => Messages::getMessage(
+      'api_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['name'],
+          'attributes' => $this->attributes()['api_id'],
           'number' => self::MIN
-        ]
-      ),
-      'name.max' => Messages::getMessage(
-        Messages::E0011,
-        [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MAX_NAME
         ]
       ),
 
       /**
-       * Permission
+       * Role ID
        */
-      'permission.string' => Messages::getMessage(
-        Messages::E0002,
-        ['attributes' => $this->attributes()['permission']]
+      'role_id.numeric' => Messages::getMessage(
+        Messages::E0001,
+        ['attributes' => $this->attributes()['role_id']]
       ),
-      'permission.min' => Messages::getMessage(
+      'role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['permission'],
+          'attributes' => $this->attributes()['role_id'],
           'number' => self::MIN
         ]
-      ),
-      'permission.max' => Messages::getMessage(
-        Messages::E0011,
-        [
-          'attributes' => $this->attributes()['permission'],
-          'number' => self::MAX_PERMISSION
-        ]
-      ),
-
-      /**
-       * Is display
-       */
-      'is_active.in' => Messages::getMessage(
-        Messages::E0005,
-        ['attributes' => $this->attributes()['is_active']]
       ),
 
       /**

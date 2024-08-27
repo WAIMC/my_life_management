@@ -8,14 +8,16 @@ use App\Models\master\Admin;
 use Illuminate\Http\Request;
 use App\Services\CommonService;
 use App\Utilities\JsonWebToken;
+use function PHPSTORM_META\type;
 use App\Services\SingletonService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
-use App\Http\Requests\master\admin\AdminRegisterRequest;
 
-use function PHPSTORM_META\type;
+use App\Http\Requests\master\admin\AdminUpdateRequest;
+use App\Http\Requests\master\admin\AdminRegisterRequest;
+use App\Repositories\master\RoleRepository;
 
 class AdminService extends SingletonService
 {
@@ -27,6 +29,7 @@ class AdminService extends SingletonService
    */
   public function register(array $payload): bool
   {
+    // Validate
     $validator = (new CommonService())->validationManual(
       (new AdminRegisterRequest()),
       $payload
@@ -36,39 +39,97 @@ class AdminService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    $this->createOrUpdateAccount($payload);
+    // Check is role admin root
+    if (!RoleRepository::isRoot($payload["admin_id"])) {
+      throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
+    }
+
+    $data = [];
+
+    foreach ($payload as $index => $value) {
+      if (isset(Admin::attributes()[$index])) {
+        $data[$index] = ($index === 'password')
+          ? bcrypt($value)
+          : $value;
+      }
+    }
+
+    Admin::Create($data);
 
     return true;
   }
 
   /**
-   * Create or update account admin
+   * Handle update account
    * 
-   * @param array $payload
-   * @return void
+   * @param array @payload
+   * @return bool
    */
-  public function createOrUpdateAccount(array $payload): void
+  public function update(array $payload): bool
   {
-    $secondArray = [];
+    $validator = (new CommonService())->validationManual(
+      (new AdminUpdateRequest()),
+      $payload
+    );
 
-    foreach ($payload as $index => $value) {
-      if (isset(Admin::attributes()[$index])) {
-        if ($index === 'password') {
-          $secondArray[$index] = bcrypt($value);
-        } else {
-          $secondArray[$index] = $value;
-        }
-      }
+    if ($validator->fails()) {
+      throw new ValidationException($validator);
     }
 
-    /**
-     * If first array not exist in admin table => create new second array 
-     * If first array exist in admin table => update second array
-     */
-    Admin::updateOrCreate(
-      ['email' => $payload['email']],
-      $secondArray
-    );
+    $admin = Admin::where("id", $payload["admin_id"])
+      ->where("email", $payload["email"])
+      ->where("user_name", $payload["user_name"])
+      ->where("is_active", Admin::$isActive['enable'])
+      ->first();
+
+    // Don't allow editing if not personal role or role root
+    if (!RoleRepository::isRoot($payload["admin_id"]) && $admin) {
+      throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
+    }
+
+    if (isset($payload["password"])) {
+      $admin->password = bcrypt($payload["password"]);
+    }
+
+    if (isset($payload["first_name"])) {
+      $admin->first_name = $payload["first_name"];
+    }
+
+    if (isset($payload["last_name"])) {
+      $admin->last_name = $payload["last_name"];
+    }
+
+    if (isset($payload["address"])) {
+      $admin->address = $payload["address"];
+    }
+
+    if (isset($payload["phone_number"])) {
+      $admin->phone_number = $payload["phone_number"];
+    }
+
+    if (isset($payload["birth"])) {
+      $admin->birth = $payload["birth"];
+    }
+
+    if (isset($payload["gender"])) {
+      $admin->gender = $payload["gender"];
+    }
+
+    if (isset($payload["status"])) {
+      $admin->status = $payload["status"];
+    }
+
+    if (isset($payload["is_active"])) {
+      $admin->is_active = $payload["is_active"];
+    }
+
+    if (isset($payload["avatar"])) {
+      $admin->avatar = $payload["avatar"];
+    }
+
+    $admin->save();
+
+    return true;
   }
 
   /**

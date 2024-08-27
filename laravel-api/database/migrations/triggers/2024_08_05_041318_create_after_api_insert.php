@@ -15,8 +15,8 @@ return new class extends Migration
       CREATE OR REPLACE FUNCTION insert_into_api_role_from_api() RETURNS TRIGGER AS $$
         BEGIN
           -- Insert a new record into t_api_role table
-          INSERT INTO t_api_role (api_id, role_id)
-          SELECT NEW.id, id FROM t_role WHERE name = 'root';
+          INSERT INTO t_api_role (api_id, role_id, created_at, updated_at)
+          SELECT NEW.id, id, now(), now() FROM t_role WHERE name = 'root';
           RETURN NEW;
         END;
       $$ LANGUAGE plpgsql;

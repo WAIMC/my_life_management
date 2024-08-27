@@ -4,21 +4,21 @@ namespace App\Services\master;
 
 use App\constants\CommonVal;
 use App\Constants\Messages;
-use App\Models\master\Role;
+use App\Http\Requests\master\feature\FeatureListRequest;
+use App\Http\Requests\master\feature\FeatureStoreRequest;
+use App\Http\Requests\master\feature\FeatureUpdateRequest;
 use InvalidArgumentException;
 use App\Services\CommonService;
 use App\Services\SingletonService;
-use App\Http\Resources\master\RoleResource;
-use App\Repositories\master\RoleRepository;
 use Illuminate\Validation\ValidationException;
-use App\Http\Requests\master\role\RoleListRequest;
-use App\Http\Requests\master\role\RoleStoreRequest;
-use App\Http\Requests\master\role\RoleUpdateRequest;
+use App\Http\Resources\master\FeatureResource;
+use App\Models\master\Feature;
+use App\Repositories\master\FeatureRepository;
 
-class RoleService extends SingletonService
+class FeatureService extends SingletonService
 {
   /**
-   * Get role list
+   * Get Feature list
    * 
    * @param array $payload
    * @return mixed
@@ -26,7 +26,7 @@ class RoleService extends SingletonService
   public function list(array $payload): mixed
   {
     $validator = (new CommonService())->validationManual(
-      (new RoleListRequest()),
+      (new FeatureListRequest()),
       $payload
     );
 
@@ -34,15 +34,15 @@ class RoleService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    $list = RoleRepository::list($payload);
+    $list = FeatureRepository::list($payload);
 
     return $list
-      ? RoleResource::collection($list)
+      ? FeatureResource::collection($list)
       : [];
   }
 
   /**
-   * Store role
+   * Store feature
    * 
    * @param array $payload
    * @return bool
@@ -50,7 +50,7 @@ class RoleService extends SingletonService
   public function store(array $payload): bool
   {
     $validator = (new CommonService())->validationManual(
-      (new RoleStoreRequest()),
+      (new FeatureStoreRequest()),
       $payload
     );
 
@@ -58,13 +58,13 @@ class RoleService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    RoleRepository::store($payload);
+    FeatureRepository::store($payload);
 
     return true;
   }
 
   /**
-   * Update role
+   * Update feature
    * 
    * @param array $payload
    * @return bool
@@ -72,7 +72,7 @@ class RoleService extends SingletonService
   public function update(array $payload): bool
   {
     $validator = (new CommonService())->validationManual(
-      (new RoleUpdateRequest()),
+      (new FeatureUpdateRequest()),
       $payload
     );
 
@@ -80,13 +80,13 @@ class RoleService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    RoleRepository::update($payload);
+    FeatureRepository::update($payload);
 
     return true;
   }
 
   /**
-   * Delete role
+   * Delete feature
    * 
    * @param string $id
    * @return bool
@@ -96,12 +96,12 @@ class RoleService extends SingletonService
     if (!is_numeric($id)) {
       $message = Messages::getMessage(
         Messages::E0001,
-        ['attributes' => Role::attributes()['id']]
+        ['attributes' => Feature::attributes()['id']]
       );
       throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
     }
 
-    RoleRepository::delete($id);
+    FeatureRepository::delete($id);
 
     return true;
   }

@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use InvalidArgumentException;
+use LogicException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -52,14 +54,15 @@ class Controller
       | ThrottleRequestsException
       | MethodNotAllowedHttpException
       | NotFoundHttpException
-      | HttpException $e
+      | HttpException
+      | LogicException $e
     ) {
       var_dump('Error 2 :', $e->getMessage());
       return self::renderResponse(
         false,
         [true, $e->getCode(), $e->getMessage()]
       );
-    } catch (ValidationException $e) {
+    } catch (InvalidArgumentException | ValidationException $e) {
       var_dump('Error 3 :', $e->getMessage());
       return self::renderResponse(
         false,

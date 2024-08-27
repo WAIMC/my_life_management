@@ -7,14 +7,14 @@ use App\Constants\Messages;
 use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Services\master\RoleService;
+use App\Services\master\FeatureService;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
-class RoleController extends Controller
+class FeatureController extends Controller
 {
   /**
-   * Role list
+   * Feature list
    * 
    * @param Request $request
    * @return Response
@@ -32,12 +32,12 @@ class RoleController extends Controller
       }
       $payload = $request->all();
 
-      return RoleService::getInstance()->list($payload);
+      return FeatureService::getInstance()->list($payload);
     });
   }
 
   /**
-   * Store role
+   * Store feature
    * 
    * @param Request $request
    * @return Response
@@ -55,12 +55,12 @@ class RoleController extends Controller
       }
       $payload = $request->all();
 
-      return RoleService::getInstance()->store($payload);
+      return FeatureService::getInstance()->store($payload);
     });
   }
 
   /**
-   * Update role
+   * Update feature
    * 
    * @param Request $request
    * @param string $id
@@ -80,12 +80,12 @@ class RoleController extends Controller
       $payload = $request->all();
       $payload['id'] = $id;
 
-      return RoleService::getInstance()->update($payload);
+      return FeatureService::getInstance()->update($payload);
     });
   }
 
   /**
-   * Delete role
+   * Delete feature
    * 
    * @param Request $request
    * @param string $id
@@ -103,7 +103,7 @@ class RoleController extends Controller
         );
       }
 
-      return RoleService::getInstance()->delete($id);
+      return FeatureService::getInstance()->delete($id);
     });
   }
 }
