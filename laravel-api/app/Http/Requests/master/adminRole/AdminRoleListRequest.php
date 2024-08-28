@@ -5,6 +5,7 @@ namespace App\Http\Requests\master\adminRole;
 use App\Constants\Messages;
 use App\constants\CommonVal;
 use App\Models\master\Admin;
+use App\Models\master\AdminRole;
 use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,10 +27,10 @@ class AdminRoleListRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'admin_id' => 'numeric|min:0',
-      'role_id' => 'numeric|min:0',
+      'admin_id'  => 'numeric|min:0',
+      'role_id'   => 'numeric|min:0',
       'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
-      'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
+      'to_date'   => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
   }
 
@@ -70,8 +71,6 @@ class AdminRoleListRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'admin_id' => 'Admin id',
-      'role_id' => 'Role id',
       'from_date' => 'From date',
       'to_date' => 'To date',
     ];
@@ -90,13 +89,13 @@ class AdminRoleListRequest extends FormRequest
        */
       'admin_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['admin_id']]
+        ['attributes' => AdminRole::attributes()['admin_id']]
       ),
       'admin_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['admin_id'],
-          'number' => Admin::$lengthAttr['min']
+          'attributes' => AdminRole::attributes()['admin_id'],
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
 
@@ -105,13 +104,13 @@ class AdminRoleListRequest extends FormRequest
        */
       'role_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => AdminRole::attributes()['role_id']]
       ),
       'role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['role_id'],
-          'number' => Admin::$lengthAttr['min']
+          'attributes' => AdminRole::attributes()['role_id'],
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
 
@@ -126,7 +125,7 @@ class AdminRoleListRequest extends FormRequest
         Messages::E0013,
         [
           'attributes' => $this->attributes()['from_date'],
-          'number' => Admin::$lengthAttr['min'],
+          'number' => Admin::$lengthAttr[0],
         ]
       ),
 
@@ -141,7 +140,7 @@ class AdminRoleListRequest extends FormRequest
         Messages::E0013,
         [
           'attributes' => $this->attributes()['to_date'],
-          'number' => Admin::$lengthAttr['min'],
+          'number' => Admin::$lengthAttr[0],
         ]
       ),
     ];

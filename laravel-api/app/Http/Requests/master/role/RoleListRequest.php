@@ -3,16 +3,13 @@
 namespace App\Http\Requests\master\role;
 
 use App\Constants\Messages;
+use App\Models\master\Role;
 use App\constants\CommonVal;
 use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RoleListRequest extends FormRequest
 {
-  const MIN = 0;
-  const MAX_NAME = 30;
-  const MAX_PERMISSION = 50;
-
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -29,11 +26,11 @@ class RoleListRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'name' => 'string|min:0|max:30',
+      'name'       => 'string|min:0|max:30',
       'permission' => 'string|min:0|max:50',
-      'is_active' => 'in:true,false',
-      'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
-      'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
+      'is_active'  => 'in:' . Role::rangeOfActiveStatus(),
+      'from_date'  => 'date_format:' . CommonVal::DATE_FORMAT,
+      'to_date'    => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
   }
 
@@ -74,11 +71,8 @@ class RoleListRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'name' => 'Role name',
-      'permission' => 'Role description',
-      'is_active' => 'Active role',
       'from_date' => 'From date',
-      'to_date' => 'To date',
+      'to_date'   => 'To date',
     ];
   }
 
@@ -95,20 +89,20 @@ class RoleListRequest extends FormRequest
        */
       'name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Role::attributes()['name']]
       ),
       'name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MIN
+          'attributes' => Role::attributes()['name'],
+          'number' => Role::$lengthAttr[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MAX_NAME
+          'attributes' => Role::attributes()['name'],
+          'number' => Role::$lengthAttr[30]
         ]
       ),
 
@@ -117,20 +111,20 @@ class RoleListRequest extends FormRequest
        */
       'permission.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['permission']]
+        ['attributes' => Role::attributes()['permission']]
       ),
       'permission.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['permission'],
-          'number' => self::MIN
+          'attributes' => Role::attributes()['permission'],
+          'number' => Role::$lengthAttr[0]
         ]
       ),
       'permission.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['permission'],
-          'number' => self::MAX_PERMISSION
+          'attributes' => Role::attributes()['permission'],
+          'number' => Role::$lengthAttr[50]
         ]
       ),
 
@@ -138,38 +132,27 @@ class RoleListRequest extends FormRequest
        * Is active
        */
       'is_active.in' => Messages::getMessage(
-        Messages::E0005,
-        ['attributes' => $this->attributes()['is_active']]
+        Messages::E0015,
+        [
+          'attributes' => Role::attributes()['is_active'],
+          'range' => Role::rangeOfActiveStatus()
+        ]
       ),
 
       /**
        * From date
        */
-      'from_date.numeric' => Messages::getMessage(
-        Messages::E0012,
-        ['attributes' => $this->attributes()['from_date']]
-      ),
       'from_date.date_format' => Messages::getMessage(
         Messages::E0013,
-        [
-          'attributes' => $this->attributes()['from_date'],
-          'number' => self::MIN,
-        ]
+        ['attributes' => $this->attributes()['from_date']]
       ),
 
       /**
        * To date
        */
-      'to_date.numeric' => Messages::getMessage(
-        Messages::E0012,
-        ['attributes' => $this->attributes()['to_date']]
-      ),
       'to_date.date_format' => Messages::getMessage(
         Messages::E0013,
-        [
-          'attributes' => $this->attributes()['to_date'],
-          'number' => self::MIN,
-        ]
+        ['attributes' => $this->attributes()['to_date']]
       ),
     ];
   }

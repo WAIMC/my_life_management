@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\master;
 
+use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,12 +21,12 @@ class ApiRoleResource extends JsonResource
       'type'            => (int)$this->type,
       'name'            => (string)$this->name,
       'path'            => (string)$this->path,
-      'is_valid'        => (bool)$this->is_valid,
+      'is_active'       => (bool)$this->is_active,
       'role_id'         => (int)$this->role_id,
       'role_name'       => (string)$this->role_name,
       'role_permission' => (string)$this->role_permission,
       'role_status'     => (int)$this->role_status,
-      'updated_at'      => (string)$this->updated_at,
+      'updated_at'      => date(CommonVal::DATE_FORMAT, strtotime($this->updated_at))
     ];
   }
 }

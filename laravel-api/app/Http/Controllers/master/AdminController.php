@@ -14,12 +14,37 @@ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 class AdminController extends Controller
 {
   /**
-   * Register admin account
+   * Admin list
    * 
    * @param Request $request
    * @return Response
    */
-  public function register(Request $request): Response
+  public function list(Request $request): Response
+  {
+    return $this->handleRequest(function () use ($request) {
+      // Check valid method
+      if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
+        throw new MethodNotAllowedException(
+          [Api::TYPE_OF_METHOD[0]],
+          Messages::E0405,
+          CommonVal::HTTP_METHOD_NOT_ALLOWED
+        );
+      }
+
+      $payload = $request->all();
+      $payload['admin_id'] = $request->attributes->get('admin_id');
+
+      return AdminService::getInstance()->list($payload);
+    });
+  }
+
+  /**
+   * Store admin
+   * 
+   * @param Request $request
+   * @return Response
+   */
+  public function store(Request $request): Response
   {
     return $this->handleRequest(function () use ($request) {
       // Check valid method
@@ -34,7 +59,7 @@ class AdminController extends Controller
       $payload = $request->all();
       $payload['admin_id'] = $request->attributes->get('admin_id');
 
-      return AdminService::getInstance()->register($payload);
+      return AdminService::getInstance()->store($payload);
     });
   }
 
@@ -110,11 +135,12 @@ class AdminController extends Controller
    * Update account
    * 
    * @param Request $request
+   * @param string $id
    * @return Response
    */
-  public function update(Request $request): Response
+  public function update(Request $request, string $id): Response
   {
-    return $this->handleRequest(function () use ($request) {
+    return $this->handleRequest(function () use ($request, $id) {
       // Check valid method
       if ($request->method() !== Api::TYPE_OF_METHOD[2]) {
         throw new MethodNotAllowedException(
@@ -126,8 +152,35 @@ class AdminController extends Controller
 
       $payload = $request->all();
       $payload['admin_id'] = $request->attributes->get('admin_id');
+      $payload['id'] = $id;
 
       return AdminService::getInstance()->update($payload);
+    });
+  }
+
+  /**
+   * Delete account
+   * 
+   * @param Request $request
+   * @param string $id
+   * @return Response
+   */
+  public function delete(Request $request, string $id): Response
+  {
+    return $this->handleRequest(function () use ($request, $id) {
+      // Check valid method
+      if ($request->method() !== Api::TYPE_OF_METHOD[4]) {
+        throw new MethodNotAllowedException(
+          [Api::TYPE_OF_METHOD[4]],
+          Messages::E0405,
+          CommonVal::HTTP_METHOD_NOT_ALLOWED
+        );
+      }
+
+      $payload['id'] = $id;
+      $payload['admin_id'] = $request->attributes->get('admin_id');
+
+      return AdminService::getInstance()->delete($payload);
     });
   }
 }

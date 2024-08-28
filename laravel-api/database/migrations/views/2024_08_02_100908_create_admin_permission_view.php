@@ -39,7 +39,7 @@ return new class extends Migration
             ta.status = 1
             AND ta.is_active = TRUE
             AND tr.is_active = TRUE 
-            AND ta2.is_valid = TRUE 
+            AND ta2.is_active = TRUE 
             AND tf.status = 1
         ");
     }

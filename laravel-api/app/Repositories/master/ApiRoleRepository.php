@@ -39,7 +39,7 @@ class ApiRoleRepository
         'ta.type        AS type',
         'ta.name        AS name',
         'ta.path        AS path',
-        'ta.is_valid    AS is_valid',
+        'ta.is_active   AS is_active',
         'tar.role_id    AS role_id',
         'tr.name        AS role_name',
         'tr.permission  AS role_permission',

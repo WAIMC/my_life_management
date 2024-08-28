@@ -27,4 +27,21 @@ class Tmp
 
     return true;
   }
+
+  /**
+   * Binding by fields
+   * 
+   * @param array $fields
+   * @param array $payload
+   * @return array
+   */
+  public static function twoWayBindingByFields(array $fields, array $payload): array
+  {
+    $data = [];
+    foreach ($fields as $value) {
+      if (isset($payload[$value])) $data[$value] = $payload[$value];
+    }
+
+    return $data;
+  }
 }

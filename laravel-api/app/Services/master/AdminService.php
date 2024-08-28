@@ -6,32 +6,36 @@ use App\Constants\Messages;
 use App\constants\CommonVal;
 use App\Models\master\Admin;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 use App\Services\CommonService;
 use App\Utilities\JsonWebToken;
 use function PHPSTORM_META\type;
 use App\Services\SingletonService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
+use App\Repositories\master\RoleRepository;
+
+use App\Http\Resources\master\AdminResource;
+use App\Repositories\master\AdminRepository;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
-
+use App\Http\Requests\master\admin\AdminListRequest;
+use App\Http\Requests\master\admin\AdminStoreRequest;
 use App\Http\Requests\master\admin\AdminUpdateRequest;
-use App\Http\Requests\master\admin\AdminRegisterRequest;
-use App\Repositories\master\RoleRepository;
 
 class AdminService extends SingletonService
 {
   /**
-   * Handle register account admin
+   * Handle find admin list
    * 
    * @param array @payload
-   * @return bool
+   * @return mixed
    */
-  public function register(array $payload): bool
+  public function list(array $payload): mixed
   {
     // Validate
     $validator = (new CommonService())->validationManual(
-      (new AdminRegisterRequest()),
+      (new AdminListRequest()),
       $payload
     );
 
@@ -44,17 +48,37 @@ class AdminService extends SingletonService
       throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
     }
 
-    $data = [];
+    $list = AdminRepository::list($payload);
 
-    foreach ($payload as $index => $value) {
-      if (isset(Admin::attributes()[$index])) {
-        $data[$index] = ($index === 'password')
-          ? bcrypt($value)
-          : $value;
-      }
+    return $list
+      ? AdminResource::collection($list)
+      : [];
+  }
+
+  /**
+   * Handle store account admin
+   * 
+   * @param array @payload
+   * @return bool
+   */
+  public function store(array $payload): bool
+  {
+    // Validate
+    $validator = (new CommonService())->validationManual(
+      (new AdminStoreRequest()),
+      $payload
+    );
+
+    if ($validator->fails()) {
+      throw new ValidationException($validator);
     }
 
-    Admin::Create($data);
+    // Check is role admin root
+    if (!RoleRepository::isRoot($payload["admin_id"])) {
+      throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
+    }
+
+    AdminRepository::store($payload);
 
     return true;
   }
@@ -76,58 +100,7 @@ class AdminService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    $admin = Admin::where("id", $payload["admin_id"])
-      ->where("email", $payload["email"])
-      ->where("user_name", $payload["user_name"])
-      ->where("is_active", Admin::$isActive['enable'])
-      ->first();
-
-    // Don't allow editing if not personal role or role root
-    if (!RoleRepository::isRoot($payload["admin_id"]) && $admin) {
-      throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
-    }
-
-    if (isset($payload["password"])) {
-      $admin->password = bcrypt($payload["password"]);
-    }
-
-    if (isset($payload["first_name"])) {
-      $admin->first_name = $payload["first_name"];
-    }
-
-    if (isset($payload["last_name"])) {
-      $admin->last_name = $payload["last_name"];
-    }
-
-    if (isset($payload["address"])) {
-      $admin->address = $payload["address"];
-    }
-
-    if (isset($payload["phone_number"])) {
-      $admin->phone_number = $payload["phone_number"];
-    }
-
-    if (isset($payload["birth"])) {
-      $admin->birth = $payload["birth"];
-    }
-
-    if (isset($payload["gender"])) {
-      $admin->gender = $payload["gender"];
-    }
-
-    if (isset($payload["status"])) {
-      $admin->status = $payload["status"];
-    }
-
-    if (isset($payload["is_active"])) {
-      $admin->is_active = $payload["is_active"];
-    }
-
-    if (isset($payload["avatar"])) {
-      $admin->avatar = $payload["avatar"];
-    }
-
-    $admin->save();
+    AdminRepository::update($payload);
 
     return true;
   }
@@ -182,5 +155,31 @@ class AdminService extends SingletonService
     }
 
     return [];
+  }
+
+  /**
+   * Delete account
+   * 
+   * @param array $payload
+   * @return bool
+   */
+  public function delete(array $payload): bool
+  {
+    if (!is_numeric($payload['id'])) {
+      $message = Messages::getMessage(
+        Messages::E0001,
+        ['attributes' => Admin::attributes()['id']]
+      );
+      throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    }
+
+    // Only root can delete account
+    if (!RoleRepository::isRoot($payload["admin_id"])) {
+      throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
+    }
+
+    AdminRepository::delete($payload['id']);
+
+    return true;
   }
 }

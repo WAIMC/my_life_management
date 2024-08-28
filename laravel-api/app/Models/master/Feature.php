@@ -11,8 +11,14 @@ class Feature extends Model
 
   public const FEATURE_STATUS = [
     'inactive' => 0,
-    'active' => 1,
-    'planned' => 2,
+    'active'   => 1,
+    'planned'  => 2,
+  ];
+
+  public const LENGTH_ATTR = [
+    0   => 0,
+    50  => 50, // name, group_name
+    100 => 100 // description
   ];
 
   /**
@@ -44,12 +50,12 @@ class Feature extends Model
   public static function attributes(): array
   {
     return [
-      'table_name' => 'Feature',
-      'id' => 'Feature ID',
-      'name' => 'Feature name',
-      'group_name' => 'Feature group name',
+      'table_name'  => 'Feature',
+      'id'          => 'Feature ID',
+      'name'        => 'Feature name',
+      'group_name'  => 'Feature group name',
       'description' => 'Feature description',
-      'status' => 'Feature status',
+      'status'      => 'Feature status',
     ];
   }
 }

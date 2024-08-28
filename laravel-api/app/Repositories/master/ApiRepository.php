@@ -39,7 +39,7 @@ class ApiRepository
         'ta.type       AS type',
         'ta.name       AS name',
         'ta.path       AS path',
-        'ta.is_valid   AS is_valid',
+        'ta.is_active   AS is_active',
         'ta.feature_id AS feature_id',
         'tf.name       AS feature_name',
         'tf.group_name AS feature_group',
@@ -58,8 +58,8 @@ class ApiRepository
       $query->where('ta.path', 'like', '%' . $payload['path'] . '%');
     }
 
-    if (isset($payload['is_valid'])) {
-      $query->where('ta.is_valid', $payload['is_valid']);
+    if (isset($payload['is_active'])) {
+      $query->where('ta.is_active', $payload['is_active']);
     }
 
     if (isset($payload['feature_id'])) {
@@ -93,7 +93,7 @@ class ApiRepository
       'type'       => $payload['type'],
       'name'       => $payload['name'],
       'path'       => $payload['path'],
-      'is_valid'   => $payload['is_valid'],
+      'is_active'   => $payload['is_active'],
       'feature_id' => $payload['feature_id'],
     ]);
 
@@ -116,7 +116,7 @@ class ApiRepository
     $api->type = $payload['type'];
     $api->name = $payload['name'];
     $api->path = $payload['path'];
-    $api->is_valid = $payload['is_valid'];
+    $api->is_active = $payload['is_active'];
     $api->feature_id = $payload['feature_id'];
     $api->save();
 

@@ -10,10 +10,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class FeatureListRequest extends FormRequest
 {
-  const MIN = 0;
-  const MAX = 50;
-  const MAX_DESCRIPTION = 100;
-
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -30,12 +26,12 @@ class FeatureListRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'name' => 'string|min:0|max:50',
-      'group_name' => 'string|min:0|max:50',
+      'name'        => 'string|min:0|max:50',
+      'group_name'  => 'string|min:0|max:50',
       'description' => 'string|min:0|max:100',
-      'status' => 'in:' . implode(',', array_values(Feature::FEATURE_STATUS)),
-      'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
-      'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
+      'status'      => 'in:' . implode(',', array_values(Feature::FEATURE_STATUS)),
+      'from_date'   => 'date_format:' . CommonVal::DATE_FORMAT,
+      'to_date'     => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
   }
 
@@ -76,10 +72,6 @@ class FeatureListRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'name' => 'Feature name',
-      'group_name' => 'Feature group name',
-      'description' => 'Feature description',
-      'status' => 'Feature status',
       'from_date' => 'From date',
       'to_date' => 'To date',
     ];
@@ -98,20 +90,20 @@ class FeatureListRequest extends FormRequest
        */
       'name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Feature::attributes()['name']]
       ),
       'name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MIN
+          'attributes' => Feature::attributes()['name'],
+          'number' => Feature::LENGTH_ATTR[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MAX
+          'attributes' => Feature::attributes()['name'],
+          'number' => Feature::LENGTH_ATTR[50]
         ]
       ),
 
@@ -120,20 +112,20 @@ class FeatureListRequest extends FormRequest
        */
       'group_name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['group_name']]
+        ['attributes' => Feature::attributes()['group_name']]
       ),
       'group_name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['group_name'],
-          'number' => self::MIN
+          'attributes' => Feature::attributes()['group_name'],
+          'number' => Feature::LENGTH_ATTR[0]
         ]
       ),
       'group_name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['group_name'],
-          'number' => self::MAX
+          'attributes' => Feature::attributes()['group_name'],
+          'number' => Feature::LENGTH_ATTR[50]
         ]
       ),
 
@@ -142,20 +134,20 @@ class FeatureListRequest extends FormRequest
        */
       'description.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['description']]
+        ['attributes' => Feature::attributes()['description']]
       ),
       'description.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['description'],
-          'number' => self::MIN
+          'attributes' => Feature::attributes()['description'],
+          'number' => Feature::LENGTH_ATTR[0]
         ]
       ),
       'description.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['description'],
-          'number' => self::MAX_DESCRIPTION
+          'attributes' => Feature::attributes()['description'],
+          'number' => Feature::LENGTH_ATTR[100]
         ]
       ),
 
@@ -165,7 +157,7 @@ class FeatureListRequest extends FormRequest
       'status.in' => Messages::getMessage(
         Messages::E0015,
         [
-          'attributes' => $this->attributes()['status'],
+          'attributes' => Feature::attributes()['status'],
           'range' => implode(',', array_values(Feature::FEATURE_STATUS))
         ]
       ),
@@ -173,31 +165,17 @@ class FeatureListRequest extends FormRequest
       /**
        * From date
        */
-      'from_date.numeric' => Messages::getMessage(
-        Messages::E0012,
-        ['attributes' => $this->attributes()['from_date']]
-      ),
       'from_date.date_format' => Messages::getMessage(
         Messages::E0013,
-        [
-          'attributes' => $this->attributes()['from_date'],
-          'number' => self::MIN,
-        ]
+        ['attributes' => $this->attributes()['from_date']]
       ),
 
       /**
        * To date
        */
-      'to_date.numeric' => Messages::getMessage(
-        Messages::E0012,
-        ['attributes' => $this->attributes()['to_date']]
-      ),
       'to_date.date_format' => Messages::getMessage(
         Messages::E0013,
-        [
-          'attributes' => $this->attributes()['to_date'],
-          'number' => self::MIN,
-        ]
+        ['attributes' => $this->attributes()['to_date']]
       ),
     ];
   }

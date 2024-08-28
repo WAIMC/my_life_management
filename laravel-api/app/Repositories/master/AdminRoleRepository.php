@@ -27,18 +27,18 @@ class AdminRoleRepository
       ->join('t_admin AS ta', 'ta.id', '=', 'tar.admin_id')
       ->join('t_role AS tr', 'tr.id', '=', 'tar.role_id')
       ->select([
-        'tar.admin_id     AS admin_id',
-        'ta.email     AS email',
-        'ta.first_name     AS first_name',
-        'ta.last_name     AS last_name',
-        'ta.status     AS status',
+        'tar.admin_id   AS admin_id',
+        'ta.email       AS email',
+        'ta.first_name  AS first_name',
+        'ta.last_name   AS last_name',
+        'ta.status      AS status',
         'tar.role_id    AS role_id',
         'tr.name        AS role_name',
         'tr.permission  AS role_permission',
         'tar.updated_at AS updated_at'
       ])
-      ->where('ta.is_active', Admin::$isActive['enabled'])
-      ->where('tr.is_active', Role::$isActive['enabled']);
+      ->where('ta.is_active', Admin::$isActive['enable'])
+      ->where('tr.is_active', Role::$isActive['enable']);
 
     if (isset($payload['admin_id'])) {
       $query->where('tar.admin_id', $payload['admin_id']);

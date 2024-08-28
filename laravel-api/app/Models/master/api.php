@@ -17,6 +17,17 @@ class Api extends Model
     4 => "DELETE",
   ];
 
+  public const LENGTH_ATTR = [
+    0   => 0,
+    50  => 50, // name
+    100 => 100 // path
+  ];
+
+  public const IS_ACTIVE = [
+    'disabled' => false,
+    'enable'   => true
+  ];
+
   /**
    * The table associated with the model.
    *
@@ -29,7 +40,7 @@ class Api extends Model
    *
    * @var array
    */
-  protected $fillable = ['type', 'name', 'path', 'is_valid', 'feature_id'];
+  protected $fillable = ['type', 'name', 'path', 'is_active', 'feature_id'];
 
   /**
    * Indicates if the model should be timestamped.
@@ -51,8 +62,22 @@ class Api extends Model
       'type'       => 'Type of api',
       'name'       => 'Api name',
       'path'       => 'Api path',
-      'is_valid'   => 'Api valid',
+      'is_active'  => 'Api valid',
       'feature_id' => 'Feature ID',
     ];
+  }
+
+
+  /**
+   * range of active status
+   * @return string
+   */
+  public static function rangeOfActiveStatus(): string
+  {
+    $stringArray = array_map(function ($bool) {
+      return $bool ? 'true' : 'false';
+    }, self::IS_ACTIVE);
+
+    return implode(',', $stringArray);
   }
 }

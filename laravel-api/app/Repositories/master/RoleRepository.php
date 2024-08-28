@@ -57,11 +57,14 @@ class RoleRepository
    */
   public static function store(array $payload): bool
   {
-    Role::create([
-      'name' => $payload['name'],
-      'permission' => $payload['permission'],
-      'is_active' => $payload['is_active'],
-    ]);
+    $fields = ["name", "permission", "is_active"];
+    $data = [];
+
+    foreach ($fields as $value) {
+      if (isset($payload[$value])) $data[$value] = $payload[$value];
+    }
+
+    Role::create($data);
 
     return true;
   }
@@ -79,9 +82,11 @@ class RoleRepository
       throw new NotFoundHttpException(Messages::E0404);
     }
 
-    $role->name = $payload['name'];
-    $role->permission = $payload['permission'];
-    $role->is_active = $payload['is_active'];
+    $fields = ["name", "permission", "is_active"];
+
+    foreach ($fields as $value) {
+      if (isset($payload[$value])) $role->$value = $payload[$value];
+    }
     $role->save();
 
     return true;

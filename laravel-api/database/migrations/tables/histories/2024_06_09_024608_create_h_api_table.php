@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('type')->nullable()->comment('Api type');
             $table->string('name', 50)->nullable()->comment('Api name');
             $table->string('path', 100)->nullable()->comment('Api path');
-            $table->unsignedTinyInteger('is_valid')->nullable()->comment('Api valid');
+            $table->unsignedTinyInteger('is_active')->nullable()->comment('Api status');
             $table->unsignedInteger('feature_id')->comment('Feature id');
             $table->unsignedTinyInteger('action')->comment('Api action');
             $table->unsignedInteger('author_id')->comment('Author id');

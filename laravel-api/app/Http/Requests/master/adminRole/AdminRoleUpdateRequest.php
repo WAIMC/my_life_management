@@ -4,6 +4,7 @@ namespace App\Http\Requests\master\adminRole;
 
 use App\Constants\Messages;
 use App\Models\master\Admin;
+use App\Models\master\AdminRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AdminRoleUpdateRequest extends FormRequest
@@ -47,8 +48,6 @@ class AdminRoleUpdateRequest extends FormRequest
       'insert.*' => 'Items payload insert',
       'delete'   => 'Payload delete',
       'delete.*' => 'Items payload delete',
-      'admin_id' => 'Admin id',
-      'role_id'  => 'Role id',
     ];
   }
 
@@ -97,17 +96,17 @@ class AdminRoleUpdateRequest extends FormRequest
        */
       'insert.*.admin_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['admin_id']]
+        ['attributes' => AdminRole::attributes()['admin_id']]
       ),
       'insert.*.admin_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['admin_id']]
+        ['attributes' => AdminRole::attributes()['admin_id']]
       ),
       'insert.*.admin_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['admin_id'],
-          'number' => Admin::$lengthAttr['min']
+          'attributes' => AdminRole::attributes()['admin_id'],
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
 
@@ -116,17 +115,17 @@ class AdminRoleUpdateRequest extends FormRequest
        */
       'insert.*.role_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => AdminRole::attributes()['role_id']]
       ),
       'insert.*.role_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => AdminRole::attributes()['role_id']]
       ),
       'insert.*.role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['role_id'],
-          'number' => Admin::$lengthAttr['min']
+          'attributes' => AdminRole::attributes()['role_id'],
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
 
@@ -135,17 +134,17 @@ class AdminRoleUpdateRequest extends FormRequest
        */
       'delete.*.admin_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['admin_id']]
+        ['attributes' => AdminRole::attributes()['admin_id']]
       ),
       'delete.*.admin_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['admin_id']]
+        ['attributes' => AdminRole::attributes()['admin_id']]
       ),
       'delete.*.admin_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['admin_id'],
-          'number' => Admin::$lengthAttr['min']
+          'attributes' => AdminRole::attributes()['admin_id'],
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
 
@@ -154,17 +153,17 @@ class AdminRoleUpdateRequest extends FormRequest
        */
       'delete.*.role_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => AdminRole::attributes()['role_id']]
       ),
       'delete.*.role_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => AdminRole::attributes()['role_id']]
       ),
       'delete.*.role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['role_id'],
-          'number' => Admin::$lengthAttr['min']
+          'attributes' => AdminRole::attributes()['role_id'],
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
     ];

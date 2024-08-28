@@ -34,7 +34,7 @@ class ApiUpdateRequest extends FormRequest
       'type' => 'required|in:' . implode(',', array_keys(Api::TYPE_OF_METHOD)),
       'name' => ['required', 'string', 'min:0', 'max:50', Rule::unique(Api::class)->ignore($payload['id'])],
       'path' => ['required', 'string', 'min:0', 'max:100', Rule::unique(Api::class)->ignore($payload['id'])],
-      'is_valid' => 'required|boolean',
+      'is_active' => 'required|boolean',
       'feature_id' => 'required|integer|exists:t_feature,id',
     ];
   }
@@ -50,7 +50,7 @@ class ApiUpdateRequest extends FormRequest
       'type' => 'Type of api',
       'name' => 'Api name',
       'path' => 'Api path',
-      'is_valid' => 'Api valid',
+      'is_active' => 'Api valid',
       'feature_id' => 'Feature ID',
     ];
   }
@@ -139,15 +139,15 @@ class ApiUpdateRequest extends FormRequest
       ),
 
       /**
-       * is_valid
+       * is_active
        */
-      'is_valid.required' => Messages::getMessage(
+      'is_active.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['is_valid']]
+        ['attributes' => $this->attributes()['is_active']]
       ),
-      'is_valid.boolean' => Messages::getMessage(
+      'is_active.boolean' => Messages::getMessage(
         Messages::E0005,
-        ['attributes' => $this->attributes()['is_valid']]
+        ['attributes' => $this->attributes()['is_active']]
       ),
 
       /**

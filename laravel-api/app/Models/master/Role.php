@@ -21,6 +21,12 @@ class Role extends Model
     'enable'   => true
   ];
 
+  public static $lengthAttr = [
+    0   => 0,
+    30  => 30, // name
+    50  => 50, // permission
+  ];
+
   /**
    * The attributes that are mass assignable.
    *
@@ -43,10 +49,23 @@ class Role extends Model
   public static function attributes(): array
   {
     return [
-      'id' => 'Role ID',
-      'name' => 'Role name',
+      'id'         => 'Role ID',
+      'name'       => 'Role name',
       'permission' => 'Role description',
-      'is_active' => 'Active role',
+      'is_active'  => 'Active role',
     ];
+  }
+
+  /**
+   * range of active status
+   * @return string
+   */
+  public static function rangeOfActiveStatus(): string
+  {
+    $stringArray = array_map(function ($bool) {
+      return $bool ? 'true' : 'false';
+    }, self::$isActive);
+
+    return implode(',', $stringArray);
   }
 }

@@ -9,10 +9,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class RoleUpdateRequest extends FormRequest
 {
-  const MIN = 0;
-  const MAX_NAME = 30;
-  const MAX_PERMISSION = 50;
-
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -31,25 +27,10 @@ class RoleUpdateRequest extends FormRequest
     $params = $this->all();
 
     return [
-      'id' => ['integer', 'required'],
-      'name' => ['required', 'string', 'min:0', 'max:30', Rule::unique(Role::class)->ignore($params['id'])],
-      'permission' => ['required', 'string', 'min:0', 'max:50'],
-      'is_active' => ['required', 'in:true,false'],
-    ];
-  }
-
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public function attributes(): array
-  {
-    return [
-      'id' => 'Role ID',
-      'name' => 'Role name',
-      'permission' => 'Role description',
-      'is_active' => 'Active role',
+      'id'         => ['integer', 'required'],
+      'name'       => ['string', 'min:0', 'max:30', Rule::unique(Role::class)->ignore($params['id'])],
+      'permission' => ['string', 'min:0', 'max:50'],
+      'is_active'  => ['bool'],
     ];
   }
 
@@ -66,79 +47,67 @@ class RoleUpdateRequest extends FormRequest
        */
       'id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['id']]
+        ['attributes' => Role::attributes()['id']]
       ),
       'id.integer' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['id']]
+        ['attributes' => Role::attributes()['id']]
       ),
 
       /**
        * Name
        */
-      'name.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['name']]
-      ),
       'name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Role::attributes()['name']]
       ),
       'name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MIN
+          'attributes' => Role::attributes()['name'],
+          'number' => Role::$lengthAttr[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MAX_NAME
+          'attributes' => Role::attributes()['name'],
+          'number' => Role::$lengthAttr[30]
         ]
       ),
       'name.unique' => Messages::getMessage(
         Messages::E0008,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Role::attributes()['name']]
       ),
 
       /**
        * Permission
        */
-      'permission.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['permission']]
-      ),
       'permission.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['permission']]
+        ['attributes' => Role::attributes()['permission']]
       ),
       'permission.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['permission'],
-          'number' => self::MIN
+          'attributes' => Role::attributes()['permission'],
+          'number' => Role::$lengthAttr[0]
         ]
       ),
       'permission.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['permission'],
-          'number' => self::MAX_PERMISSION
+          'attributes' => Role::attributes()['permission'],
+          'number' => Role::$lengthAttr[50]
         ]
       ),
 
       /**
        * Is active
        */
-      'is_active.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['is_active']]
-      ),
-      'is_active.in' => Messages::getMessage(
+      'is_active.bool' => Messages::getMessage(
         Messages::E0005,
-        ['attributes' => $this->attributes()['is_active']]
+        ['attributes' => Role::attributes()['is_active']]
       ),
     ];
   }

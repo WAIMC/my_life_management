@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\master;
 
+use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,11 +21,11 @@ class ApiResource extends JsonResource
       'type'          => (int)$this->type,
       'name'          => (string)$this->name,
       'path'          => (string)$this->path,
-      'is_valid'      => (bool)$this->is_valid,
+      'is_active'      => (bool)$this->is_active,
       'feature_id'    => (int)$this->feature_id,
       'feature_name'  => (string)$this->feature_name,
       'feature_group' => (string)$this->feature_group,
-      'updated_at'     => (string)$this->updated_at,
+      'updated_at'    => date(CommonVal::DATE_FORMAT, strtotime($this->updated_at))
     ];
   }
 }

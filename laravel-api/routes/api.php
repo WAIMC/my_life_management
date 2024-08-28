@@ -17,9 +17,12 @@ Route::prefix('admin')->group(function () {
   Route::middleware(AdminMiddleware::class)->group(function () {
 
     // Admin
-    Route::post('register', [AdminController::class, 'register']);
     Route::get('me', [AdminController::class, 'me']);
     Route::post('logout', [AdminController::class, 'logout']);
+    Route::get('list', [AdminController::class, 'list']);
+    Route::post('store', [AdminController::class, 'store']);
+    Route::put('update/{id}', [AdminController::class, 'update']);
+    Route::delete('delete/{id}', [AdminController::class, 'delete']);
 
     // Role
     Route::prefix('role')->group(function () {

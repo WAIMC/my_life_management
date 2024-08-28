@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\master;
 
+use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,7 +24,7 @@ class AdminRoleResource extends JsonResource
       'role_id'         => (int)$this->role_id,
       'role_name'       => (string)$this->role_name,
       'role_permission' => (string)$this->role_permission,
-      'updated_at'      => (string)$this->updated_at,
+      'updated_at'      => (string)date(CommonVal::DATE_FORMAT, strtotime($this->updated_at)),
     ];
   }
 }

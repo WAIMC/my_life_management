@@ -31,11 +31,11 @@ class Admin extends Authenticatable
   ];
 
   public static $lengthAttr = [
-    'min'    => 0,
-    'twenty' => 20, // first_name, last_name, phone_number
-    'thirty' => 30, // email, avatar
-    'fifty'  => 50, // user_name
-    'oneH'   => 100 // password, address
+    0   => 0,
+    20  => 20, // first_name, last_name, phone_number
+    30  => 30, // email, avatar
+    50  => 50, // user_name
+    100 => 100 // password, address
   ];
 
   /**
@@ -85,6 +85,7 @@ class Admin extends Authenticatable
   public static function attributes(): array
   {
     return [
+      'id'                => 'Admin ID',
       'email'             => 'email',
       'user_name'         => 'user name',
       'password'          => 'password',

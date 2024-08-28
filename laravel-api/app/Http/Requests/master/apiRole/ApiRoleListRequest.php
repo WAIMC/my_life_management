@@ -119,31 +119,17 @@ class ApiRoleListRequest extends FormRequest
       /**
        * From date
        */
-      'from_date.numeric' => Messages::getMessage(
-        Messages::E0012,
-        ['attributes' => $this->attributes()['from_date']]
-      ),
       'from_date.date_format' => Messages::getMessage(
         Messages::E0013,
-        [
-          'attributes' => $this->attributes()['from_date'],
-          'number' => self::MIN,
-        ]
+        ['attributes' => $this->attributes()['from_date']]
       ),
 
       /**
        * To date
        */
-      'to_date.numeric' => Messages::getMessage(
-        Messages::E0012,
-        ['attributes' => $this->attributes()['to_date']]
-      ),
       'to_date.date_format' => Messages::getMessage(
         Messages::E0013,
-        [
-          'attributes' => $this->attributes()['to_date'],
-          'number' => self::MIN,
-        ]
+        ['attributes' => $this->attributes()['to_date']]
       ),
     ];
   }

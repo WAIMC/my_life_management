@@ -7,7 +7,7 @@ use App\Constants\Messages;
 use App\Models\master\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 
-class AdminRegisterRequest extends FormRequest
+class AdminStoreRequest extends FormRequest
 {
   /**
    * Determine if the user is authorized to make this request.
@@ -25,17 +25,17 @@ class AdminRegisterRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'email'        => 'email:rfc,dns|min:0|max:30|required|unique:App\Models\master\Admin,email',
-      'user_name'    => 'string|min:0|max:50|required|unique:App\Models\master\Admin,user_name',
-      'password'     => 'string|min:0|max:100|required',
-      'first_name'   => 'string|min:0|max:20|required',
-      'last_name'    => 'string|min:0|max:20|required',
+      'email'        => 'required|email:rfc,dns|min:0|max:30|unique:App\Models\master\Admin,email',
+      'user_name'    => 'required|string|min:0|max:50|unique:App\Models\master\Admin,user_name',
+      'password'     => 'required|string|min:0|max:100',
+      'first_name'   => 'required|string|min:0|max:20',
+      'last_name'    => 'required|string|min:0|max:20',
       'address'      => 'string|min:0|max:100',
       'phone_number' => 'string|min:0|max:20',
       'birth'        => 'date_format:' . CommonVal::DATE_FORMAT,
       'gender'       => 'in:' . implode(',', array_values(ADMIN::$gender)),
       'status'       => 'in:' . implode(',', array_values(ADMIN::$status)),
-      'is_active'    => 'in:' . implode(',', array_values(ADMIN::$isActive)),
+      'is_active'    => 'bool',
       'avatar'       => 'string|min:0|max:30'
     ];
   }
@@ -59,14 +59,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['email'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'email.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['email'],
-          'number' => Admin::$lengthAttr['thirty'],
+          'number' => Admin::$lengthAttr[30],
         ]
       ),
       'email.required' => Messages::getMessage(
@@ -89,14 +89,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['user_name'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'user_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['user_name'],
-          'number' => Admin::$lengthAttr['fifty']
+          'number' => Admin::$lengthAttr[50]
         ]
       ),
       'user_name.required' => Messages::getMessage(
@@ -119,14 +119,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['password'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'password.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['password'],
-          'number' => Admin::$lengthAttr['oneH']
+          'number' => Admin::$lengthAttr[100]
         ]
       ),
       'password.required' => Messages::getMessage(
@@ -145,14 +145,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['first_name'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'first_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['first_name'],
-          'number' => Admin::$lengthAttr['twenty']
+          'number' => Admin::$lengthAttr[20]
         ]
       ),
       'first_name.required' => Messages::getMessage(
@@ -171,14 +171,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['last_name'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'last_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['last_name'],
-          'number' => Admin::$lengthAttr['twenty']
+          'number' => Admin::$lengthAttr[20]
         ]
       ),
       'last_name.required' => Messages::getMessage(
@@ -197,14 +197,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['address'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'address.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['address'],
-          'number' => Admin::$lengthAttr['oneH']
+          'number' => Admin::$lengthAttr[100]
         ]
       ),
 
@@ -219,14 +219,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['phone_number'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'phone_number.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['phone_number'],
-          'number' => Admin::$lengthAttr['twenty']
+          'number' => Admin::$lengthAttr[20]
         ]
       ),
 
@@ -263,12 +263,9 @@ class AdminRegisterRequest extends FormRequest
       /**
        * is_active
        */
-      'is_active.in' => Messages::getMessage(
-        Messages::E0015,
-        [
-          'attributes' => Admin::attributes()['is_active'],
-          'range' => implode(',', array_values(ADMIN::$isActive))
-        ]
+      'is_active.bool' => Messages::getMessage(
+        Messages::E0005,
+        ['attributes' => Admin::attributes()['is_active']]
       ),
 
       /**
@@ -282,14 +279,14 @@ class AdminRegisterRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['avatar'],
-          'number' => Admin::$lengthAttr['min']
+          'number' => Admin::$lengthAttr[0]
         ]
       ),
       'avatar.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['avatar'],
-          'number' => Admin::$lengthAttr['thirty']
+          'number' => Admin::$lengthAttr[30]
         ]
       ),
     ];
