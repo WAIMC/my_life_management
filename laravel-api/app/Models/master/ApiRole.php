@@ -9,6 +9,10 @@ class ApiRole extends Model
 {
   use HasFactory;
 
+  public const LENGTH_ATTR = [
+    0   => 0,
+  ];
+
   /**
    * The table associated with the model.
    *

@@ -4,6 +4,7 @@ namespace App\Repositories\master;
 
 use DateTime;
 use LogicException;
+use App\Utilities\Tmp;
 use App\Models\master\Api;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
@@ -34,12 +35,12 @@ class ApiRepository
             WHEN ta.type = 3 THEN 'PATCH'
             WHEN ta.type = 4 THEN 'DELETE'
             ELSE null
-          END            AS type_name
+          END          AS type_name
         "),
         'ta.type       AS type',
         'ta.name       AS name',
         'ta.path       AS path',
-        'ta.is_active   AS is_active',
+        'ta.is_active  AS is_active',
         'ta.feature_id AS feature_id',
         'tf.name       AS feature_name',
         'tf.group_name AS feature_group',
@@ -85,55 +86,41 @@ class ApiRepository
    * Store api
    * 
    * @param array $payload
-   * @return bool
+   * @return void
    */
-  public static function store(array $payload): bool
+  public static function store(array $payload): void
   {
-    Api::create([
-      'type'       => $payload['type'],
-      'name'       => $payload['name'],
-      'path'       => $payload['path'],
-      'is_active'   => $payload['is_active'],
-      'feature_id' => $payload['feature_id'],
-    ]);
-
-    return true;
+    $fields = ['type', 'name', 'path', 'is_active', 'feature_id'];
+    Api::create(Tmp::twoWayBindingByFields($fields, $payload));
   }
 
   /**
    * Update api
    * 
    * @param array $payload
-   * @return bool
+   * @return void
    */
-  public static function update(array $payload): bool
+  public static function update(array $payload): void
   {
     $api = Api::find($payload['id']);
     if (!$api) {
       throw new NotFoundHttpException(Messages::E0404);
     }
-
-    $api->type = $payload['type'];
-    $api->name = $payload['name'];
-    $api->path = $payload['path'];
-    $api->is_active = $payload['is_active'];
-    $api->feature_id = $payload['feature_id'];
-    $api->save();
-
-    return true;
+    $fields = ['type', 'name', 'path', 'is_active', 'feature_id'];
+    $api->update(Tmp::twoWayBindingByFields($fields, $payload));
   }
 
   /**
    * Delete api
    * 
    * @param string $id
-   * @return bool
+   * @return void
    */
-  public static function delete(string $id): bool
+  public static function delete(string $id): void
   {
     // Check api exits in db
     $api = Api::find($id);
-    if (!$api->toArray()) {
+    if (!$api) {
       throw new NotFoundHttpException(Messages::E0404);
     }
 
@@ -142,14 +129,12 @@ class ApiRepository
       ->join('t_api_role AS tar', 'tar.api_id', '=', 'ta.id')
       ->select('ta.id')
       ->where('ta.id', $id)
-      ->get();
+      ->exists();
 
-    if ($apiRole->toArray()) {
+    if ($apiRole) {
       throw new LogicException(Messages::E0016, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
     }
 
     $api->delete();
-
-    return true;
   }
 }

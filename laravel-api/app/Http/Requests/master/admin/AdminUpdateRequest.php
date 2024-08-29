@@ -32,8 +32,8 @@ class AdminUpdateRequest extends FormRequest
       'address'      => ['string', 'min:0', 'max:100'],
       'phone_number' => ['string', 'min:0', 'max:20'],
       'birth'        => ['date_format:' . CommonVal::DATE_FORMAT],
-      'gender'       => ['in:' . implode(',', array_values(Admin::$gender))],
-      'status'       => ['in:' . implode(',', array_values(Admin::$status))],
+      'gender'       => ['in:' . implode(',', array_values(Admin::GENDER))],
+      'status'       => ['in:' . implode(',', array_values(Admin::ADMIN_STATUS))],
       'is_active'    => ['bool'],
       'avatar'       => ['string', 'min:0', 'max:30']
     ];
@@ -70,14 +70,14 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['password'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'password.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['password'],
-          'number' => Admin::$lengthAttr[100]
+          'number' => Admin::LENGTH_ATTR[100]
         ]
       ),
 
@@ -92,14 +92,14 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['first_name'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'first_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['first_name'],
-          'number' => Admin::$lengthAttr[20]
+          'number' => Admin::LENGTH_ATTR[20]
         ]
       ),
 
@@ -114,14 +114,14 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['last_name'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'last_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['last_name'],
-          'number' => Admin::$lengthAttr[20]
+          'number' => Admin::LENGTH_ATTR[20]
         ]
       ),
 
@@ -136,14 +136,14 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['address'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'address.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['address'],
-          'number' => Admin::$lengthAttr[100]
+          'number' => Admin::LENGTH_ATTR[100]
         ]
       ),
 
@@ -158,14 +158,14 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['phone_number'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'phone_number.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['phone_number'],
-          'number' => Admin::$lengthAttr[20]
+          'number' => Admin::LENGTH_ATTR[20]
         ]
       ),
 
@@ -184,7 +184,7 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0015,
         [
           'attributes' => Admin::attributes()['gender'],
-          'range' => implode(',', array_values(Admin::$gender))
+          'range' => implode(',', array_values(Admin::GENDER))
         ]
       ),
 
@@ -195,7 +195,7 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0015,
         [
           'attributes' => Admin::attributes()['status'],
-          'range' => implode(',', array_values(Admin::$status))
+          'range' => implode(',', array_values(Admin::ADMIN_STATUS))
         ]
       ),
 
@@ -218,14 +218,14 @@ class AdminUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['avatar'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'avatar.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['avatar'],
-          'number' => Admin::$lengthAttr[30]
+          'number' => Admin::LENGTH_ATTR[30]
         ]
       ),
     ];

@@ -10,10 +10,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ApiListRequest extends FormRequest
 {
-  const MIN = 0;
-  const MAX_name = 50;
-  const MAX_PATH = 100;
-
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -30,13 +26,13 @@ class ApiListRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'type' => 'in:' . implode(',', array_keys(Api::TYPE_OF_METHOD)),
-      'name' => 'string|min:0|max:50',
-      'path' => 'string|min:0|max:100',
-      'is_active' => 'in:true,false',
+      'type'       => 'in:' . implode(',', array_keys(Api::TYPE_OF_METHOD)),
+      'name'       => 'string|min:0|max:50',
+      'path'       => 'string|min:0|max:100',
+      'is_active'  => 'in:true,false',
       'feature_id' => 'integer',
-      'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
-      'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
+      'from_date'  => 'date_format:' . CommonVal::DATE_FORMAT,
+      'to_date'    => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
   }
 
@@ -77,11 +73,6 @@ class ApiListRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'type' => 'Type of api',
-      'name' => 'Api name',
-      'path' => 'Api path',
-      'is_active' => 'Api valid',
-      'feature_id' => 'Feature ID',
       'from_date' => 'From date',
       'to_date' => 'To date',
     ];
@@ -101,7 +92,7 @@ class ApiListRequest extends FormRequest
       'type.in' => Messages::getMessage(
         Messages::E0015,
         [
-          'attributes' => $this->attributes()['type'],
+          'attributes' => Api::attributes()['type'],
           'range' => implode(',', array_keys(Api::TYPE_OF_METHOD))
         ]
       ),
@@ -111,20 +102,20 @@ class ApiListRequest extends FormRequest
        */
       'name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Api::attributes()['name']]
       ),
       'name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MIN
+          'attributes' => Api::attributes()['name'],
+          'number' => Api::LENGTH_ATTR[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MAX_name
+          'attributes' => Api::attributes()['name'],
+          'number' => Api::LENGTH_ATTR[50]
         ]
       ),
 
@@ -133,20 +124,20 @@ class ApiListRequest extends FormRequest
        */
       'path.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['path']]
+        ['attributes' => Api::attributes()['path']]
       ),
       'path.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['path'],
-          'number' => self::MIN
+          'attributes' => Api::attributes()['path'],
+          'number' => Api::LENGTH_ATTR[0]
         ]
       ),
       'path.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['path'],
-          'number' => self::MAX_PATH
+          'attributes' => Api::attributes()['path'],
+          'number' => Api::LENGTH_ATTR[100]
         ]
       ),
 
@@ -155,7 +146,7 @@ class ApiListRequest extends FormRequest
        */
       'is_active.in' => Messages::getMessage(
         Messages::E0005,
-        ['attributes' => $this->attributes()['is_active']]
+        ['attributes' => Api::attributes()['is_active']]
       ),
 
       /**
@@ -163,7 +154,7 @@ class ApiListRequest extends FormRequest
        */
       'feature_id.integer' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['feature_id']]
+        ['attributes' => Api::attributes()['feature_id']]
       ),
 
       /**

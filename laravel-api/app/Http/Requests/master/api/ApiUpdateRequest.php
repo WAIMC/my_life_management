@@ -10,9 +10,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ApiUpdateRequest extends FormRequest
 {
-  const MIN = 0;
-  const MAX_name = 50;
-  const MAX_PATH = 100;
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -31,27 +28,11 @@ class ApiUpdateRequest extends FormRequest
     $payload = $this->all();
 
     return [
-      'type' => 'required|in:' . implode(',', array_keys(Api::TYPE_OF_METHOD)),
-      'name' => ['required', 'string', 'min:0', 'max:50', Rule::unique(Api::class)->ignore($payload['id'])],
-      'path' => ['required', 'string', 'min:0', 'max:100', Rule::unique(Api::class)->ignore($payload['id'])],
-      'is_active' => 'required|boolean',
-      'feature_id' => 'required|integer|exists:t_feature,id',
-    ];
-  }
-
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public function attributes(): array
-  {
-    return [
-      'type' => 'Type of api',
-      'name' => 'Api name',
-      'path' => 'Api path',
-      'is_active' => 'Api valid',
-      'feature_id' => 'Feature ID',
+      'type'       => 'in:' . implode(',', array_keys(Api::TYPE_OF_METHOD)),
+      'name'       => ['string', 'min:0', 'max:50', Rule::unique(Api::class)->ignore($payload['id'])],
+      'path'       => ['string', 'min:0', 'max:100', Rule::unique(Api::class)->ignore($payload['id'])],
+      'is_active'  => 'bool',
+      'feature_id' => 'integer|exists:t_feature,id',
     ];
   }
 
@@ -66,14 +47,10 @@ class ApiUpdateRequest extends FormRequest
       /**
        * Type
        */
-      'type.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['type']]
-      ),
       'type.in' => Messages::getMessage(
         Messages::E0015,
         [
-          'attributes' => $this->attributes()['type'],
+          'attributes' => Api::attributes()['type'],
           'range' => implode(',', array_keys(Api::TYPE_OF_METHOD))
         ]
       ),
@@ -81,90 +58,74 @@ class ApiUpdateRequest extends FormRequest
       /**
        * Name
        */
-      'name.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['name']]
-      ),
       'name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Api::attributes()['name']]
       ),
       'name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MIN
+          'attributes' => Api::attributes()['name'],
+          'number' => Api::LENGTH_ATTR[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['name'],
-          'number' => self::MAX_name
+          'attributes' => Api::attributes()['name'],
+          'number' => Api::LENGTH_ATTR[50]
         ]
       ),
       'name.unique' => Messages::getMessage(
         Messages::E0008,
-        ['attributes' => $this->attributes()['name']]
+        ['attributes' => Api::attributes()['name']]
       ),
 
       /**
        * Path
        */
-      'path.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['path']]
-      ),
       'path.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => $this->attributes()['path']]
+        ['attributes' => Api::attributes()['path']]
       ),
       'path.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['path'],
-          'number' => self::MIN
+          'attributes' => Api::attributes()['path'],
+          'number' => Api::LENGTH_ATTR[0]
         ]
       ),
       'path.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => $this->attributes()['path'],
-          'number' => self::MAX_PATH
+          'attributes' => Api::attributes()['path'],
+          'number' => Api::LENGTH_ATTR[100]
         ]
       ),
       'path.unique' => Messages::getMessage(
         Messages::E0008,
-        ['attributes' => $this->attributes()['path']]
+        ['attributes' => Api::attributes()['path']]
       ),
 
       /**
        * is_active
        */
-      'is_active.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['is_active']]
-      ),
-      'is_active.boolean' => Messages::getMessage(
+      'is_active.bool' => Messages::getMessage(
         Messages::E0005,
-        ['attributes' => $this->attributes()['is_active']]
+        ['attributes' => Api::attributes()['is_active']]
       ),
 
       /**
        * Feature ID
        */
-      'feature_id.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => $this->attributes()['feature_id']]
-      ),
       'feature_id.integer' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['feature_id']]
+        ['attributes' => Api::attributes()['feature_id']]
       ),
       'feature_id.exists' => Messages::getMessage(
         Messages::E0017,
         [
-          'attributes' => $this->attributes()['feature_id'],
+          'attributes' => Api::attributes()['feature_id'],
           'tableName' => Feature::attributes()['table_name']
         ]
       ),

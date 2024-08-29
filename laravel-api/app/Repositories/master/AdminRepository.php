@@ -163,9 +163,9 @@ class AdminRepository
    * Delete Role
    * 
    * @param string $id
-   * @return bool
+   * @return void
    */
-  public static function delete(string $id): bool
+  public static function delete(string $id): void
   {
     $admin = Admin::find($id);
     if (!$admin->toArray()) {
@@ -173,7 +173,5 @@ class AdminRepository
     }
 
     $admin->delete();
-
-    return true;
   }
 }

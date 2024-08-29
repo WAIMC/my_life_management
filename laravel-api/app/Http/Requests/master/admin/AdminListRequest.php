@@ -33,9 +33,9 @@ class AdminListRequest extends FormRequest
       'address'      => 'string|min:0|max:100',
       'phone_number' => 'string|min:0|max:20',
       'birth'        => 'date_format:' . CommonVal::DATE_FORMAT,
-      'gender'       => 'in:' . implode(',', array_values(ADMIN::$gender)),
-      'status'       => 'in:' . implode(',', array_values(ADMIN::$status)),
-      'is_active'    => 'bool',
+      'gender'       => 'in:' . implode(',', array_values(ADMIN::GENDER)),
+      'status'       => 'in:' . implode(',', array_values(ADMIN::ADMIN_STATUS)),
+      'is_active'    => 'in:true,false',
       'avatar'       => 'string|min:0|max:30',
       'from_date'    => 'date_format:' . CommonVal::DATE_FORMAT,
       'to_date'      => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
@@ -103,14 +103,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['email'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'email.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['email'],
-          'number' => Admin::$lengthAttr[30],
+          'number' => Admin::LENGTH_ATTR[30],
         ]
       ),
 
@@ -125,14 +125,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['user_name'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'user_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['user_name'],
-          'number' => Admin::$lengthAttr[50]
+          'number' => Admin::LENGTH_ATTR[50]
         ]
       ),
 
@@ -147,14 +147,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['first_name'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'first_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['first_name'],
-          'number' => Admin::$lengthAttr[20]
+          'number' => Admin::LENGTH_ATTR[20]
         ]
       ),
 
@@ -169,14 +169,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['last_name'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'last_name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['last_name'],
-          'number' => Admin::$lengthAttr[20]
+          'number' => Admin::LENGTH_ATTR[20]
         ]
       ),
 
@@ -191,14 +191,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['address'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'address.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['address'],
-          'number' => Admin::$lengthAttr[100]
+          'number' => Admin::LENGTH_ATTR[100]
         ]
       ),
 
@@ -213,14 +213,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['phone_number'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'phone_number.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['phone_number'],
-          'number' => Admin::$lengthAttr[20]
+          'number' => Admin::LENGTH_ATTR[20]
         ]
       ),
 
@@ -239,7 +239,7 @@ class AdminListRequest extends FormRequest
         Messages::E0015,
         [
           'attributes' => Admin::attributes()['gender'],
-          'range' => implode(',', array_values(ADMIN::$gender))
+          'range' => implode(',', array_values(ADMIN::GENDER))
         ]
       ),
 
@@ -250,14 +250,14 @@ class AdminListRequest extends FormRequest
         Messages::E0015,
         [
           'attributes' => Admin::attributes()['status'],
-          'range' => implode(',', array_values(ADMIN::$status))
+          'range' => implode(',', array_values(ADMIN::ADMIN_STATUS))
         ]
       ),
 
       /**
        * is_active
        */
-      'is_active.bool' => Messages::getMessage(
+      'is_active.in' => Messages::getMessage(
         Messages::E0005,
         ['attributes' => Admin::attributes()['is_active']]
       ),
@@ -273,14 +273,14 @@ class AdminListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Admin::attributes()['avatar'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
       'avatar.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Admin::attributes()['avatar'],
-          'number' => Admin::$lengthAttr[30]
+          'number' => Admin::LENGTH_ATTR[30]
         ]
       ),
 

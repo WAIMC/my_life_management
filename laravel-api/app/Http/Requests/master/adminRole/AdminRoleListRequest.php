@@ -95,7 +95,7 @@ class AdminRoleListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => AdminRole::attributes()['admin_id'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
 
@@ -110,7 +110,7 @@ class AdminRoleListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => AdminRole::attributes()['role_id'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
 
@@ -125,7 +125,7 @@ class AdminRoleListRequest extends FormRequest
         Messages::E0013,
         [
           'attributes' => $this->attributes()['from_date'],
-          'number' => Admin::$lengthAttr[0],
+          'number' => Admin::LENGTH_ATTR[0],
         ]
       ),
 
@@ -140,7 +140,7 @@ class AdminRoleListRequest extends FormRequest
         Messages::E0013,
         [
           'attributes' => $this->attributes()['to_date'],
-          'number' => Admin::$lengthAttr[0],
+          'number' => Admin::LENGTH_ATTR[0],
         ]
       ),
     ];

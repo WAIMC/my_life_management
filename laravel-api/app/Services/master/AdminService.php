@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use InvalidArgumentException;
 use App\Services\CommonService;
 use App\Utilities\JsonWebToken;
-use function PHPSTORM_META\type;
 use App\Services\SingletonService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
@@ -130,7 +129,6 @@ class AdminService extends SingletonService
     Redis::hmset($key, $payload);
     Redis::expireat($key, $payload['exp']);
 
-
     return JsonWebToken::encode($payload, env('JWT_SECRET'));
   }
 
@@ -138,9 +136,9 @@ class AdminService extends SingletonService
    * Logout admin account
    * 
    * @param Request $request
-   * @return []
+   * @return array
    */
-  public function logout(Request $request)
+  public function logout(Request $request): array
   {
     $adminId = $request->attributes->get('admin_id');
 

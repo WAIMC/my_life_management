@@ -66,18 +66,4 @@ class Api extends Model
       'feature_id' => 'Feature ID',
     ];
   }
-
-
-  /**
-   * range of active status
-   * @return string
-   */
-  public static function rangeOfActiveStatus(): string
-  {
-    $stringArray = array_map(function ($bool) {
-      return $bool ? 'true' : 'false';
-    }, self::IS_ACTIVE);
-
-    return implode(',', $stringArray);
-  }
 }

@@ -4,13 +4,12 @@ namespace App\Http\Requests\master\apiRole;
 
 use App\Constants\Messages;
 use App\constants\CommonVal;
+use App\Models\master\ApiRole;
 use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ApiRoleListRequest extends FormRequest
 {
-  const MIN = 0;
-
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -27,10 +26,10 @@ class ApiRoleListRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'api_id' => 'numeric|min:0',
-      'role_id' => 'numeric|min:0',
+      'api_id'    => 'numeric|min:0',
+      'role_id'   => 'numeric|min:0',
       'from_date' => 'date_format:' . CommonVal::DATE_FORMAT,
-      'to_date' => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
+      'to_date'   => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
   }
 
@@ -71,8 +70,6 @@ class ApiRoleListRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'api_id' => 'API id',
-      'role_id' => 'Role id',
       'from_date' => 'From date',
       'to_date' => 'To date',
     ];
@@ -91,13 +88,13 @@ class ApiRoleListRequest extends FormRequest
        */
       'api_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['api_id']]
+        ['attributes' => ApiRole::attributes()['api_id']]
       ),
       'api_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['api_id'],
-          'number' => self::MIN
+          'attributes' => ApiRole::attributes()['api_id'],
+          'number' => ApiRole::LENGTH_ATTR[0]
         ]
       ),
 
@@ -106,13 +103,13 @@ class ApiRoleListRequest extends FormRequest
        */
       'role_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => ApiRole::attributes()['role_id']]
       ),
       'role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['role_id'],
-          'number' => self::MIN
+          'attributes' => ApiRole::attributes()['role_id'],
+          'number' => ApiRole::LENGTH_ATTR[0]
         ]
       ),
 

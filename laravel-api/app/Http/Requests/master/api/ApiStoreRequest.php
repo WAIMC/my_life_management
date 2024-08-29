@@ -28,7 +28,7 @@ class ApiStoreRequest extends FormRequest
       'type'       => 'required|in:' . implode(',', array_keys(Api::TYPE_OF_METHOD)),
       'name'       => 'required|string|min:0|max:50|unique:App\Models\master\api,name',
       'path'       => 'required|string|min:0|max:100|unique:App\Models\master\api,path',
-      'is_active'  => 'required|in:' . Api::rangeOfActiveStatus(),
+      'is_active'  => 'bool',
       'feature_id' => 'required|integer|exists:t_feature,id',
     ];
   }
@@ -119,16 +119,9 @@ class ApiStoreRequest extends FormRequest
       /**
        * is_active
        */
-      'is_active.required' => Messages::getMessage(
-        Messages::E0007,
+      'is_active.bool' => Messages::getMessage(
+        Messages::E0005,
         ['attributes' => Api::attributes()['is_active']]
-      ),
-      'is_active.in' => Messages::getMessage(
-        Messages::E0015,
-        [
-          'attributes' => api::attributes()['is_active'],
-          'range' => Api::rangeOfActiveStatus()
-        ]
       ),
 
       /**

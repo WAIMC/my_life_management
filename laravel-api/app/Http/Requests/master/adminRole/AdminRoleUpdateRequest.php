@@ -106,7 +106,7 @@ class AdminRoleUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => AdminRole::attributes()['admin_id'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
 
@@ -125,7 +125,7 @@ class AdminRoleUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => AdminRole::attributes()['role_id'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
 
@@ -144,7 +144,7 @@ class AdminRoleUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => AdminRole::attributes()['admin_id'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
 
@@ -163,7 +163,7 @@ class AdminRoleUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => AdminRole::attributes()['role_id'],
-          'number' => Admin::$lengthAttr[0]
+          'number' => Admin::LENGTH_ATTR[0]
         ]
       ),
     ];

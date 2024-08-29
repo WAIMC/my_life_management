@@ -3,6 +3,8 @@
 namespace App\Repositories\master;
 
 use DateTime;
+use LogicException;
+use App\Utilities\Tmp;
 use App\Constants\Messages;
 use App\Models\master\Role;
 use App\Constants\CommonVal;
@@ -53,61 +55,63 @@ class RoleRepository
    * Store role
    * 
    * @param array $payload
-   * @return bool
+   * @return void
    */
-  public static function store(array $payload): bool
+  public static function store(array $payload): void
   {
     $fields = ["name", "permission", "is_active"];
-    $data = [];
-
-    foreach ($fields as $value) {
-      if (isset($payload[$value])) $data[$value] = $payload[$value];
-    }
-
-    Role::create($data);
-
-    return true;
+    Role::create(Tmp::twoWayBindingByFields($fields, $payload));
   }
 
   /**
    * Update role
    * 
    * @param array $payload
-   * @return bool
+   * @return void
    */
-  public static function update(array $payload): bool
+  public static function update(array $payload): void
   {
     $role = Role::find($payload['id']);
-    if (!$role->toArray()) {
+    if (!$role) {
       throw new NotFoundHttpException(Messages::E0404);
     }
 
     $fields = ["name", "permission", "is_active"];
-
-    foreach ($fields as $value) {
-      if (isset($payload[$value])) $role->$value = $payload[$value];
-    }
-    $role->save();
-
-    return true;
+    $role->update(Tmp::twoWayBindingByFields($fields, $payload));
   }
 
   /**
    * Delete Role
    * 
    * @param string $id
-   * @return bool
+   * @return void
    */
-  public static function delete(string $id): bool
+  public static function delete(string $id): void
   {
     $role = Role::find($id);
-    if (!$role->toArray()) {
+    if (!$role) {
       throw new NotFoundHttpException(Messages::E0404);
     }
 
-    $role->delete();
+    $queryOne = DB::table('t_role AS tr')
+      ->join('t_admin_role AS tar', 'tar.role_id', '=', 'tr.id')
+      ->select(['tr.id AS id']);
+    $queryTwo = DB::table('t_role AS tr2')
+      ->join('t_api_role AS tar2', 'tar2.role_id', '=', 'tr2.id')
+      ->select(['tr2.id AS id']);
 
-    return true;
+    // Check Fk constraint violation
+    $query = DB::query()
+      ->from($queryOne->union($queryTwo), 'temp')
+      ->select(['temp.id'])
+      ->where('temp.id', $id)
+      ->exists();
+
+    if ($query) {
+      throw new LogicException(Messages::E0016, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    }
+
+    $role->delete();
   }
 
   /**

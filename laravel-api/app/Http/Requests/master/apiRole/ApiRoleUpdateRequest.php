@@ -3,11 +3,11 @@
 namespace App\Http\Requests\master\apiRole;
 
 use App\Constants\Messages;
+use App\Models\master\ApiRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ApiRoleUpdateRequest extends FormRequest
 {
-  const MIN = 0;
   /**
    * Determine if the user is authorized to make this request.
    */
@@ -47,8 +47,6 @@ class ApiRoleUpdateRequest extends FormRequest
       'insert.*' => 'Items payload insert',
       'delete'   => 'Payload delete',
       'delete.*' => 'Items payload delete',
-      'api_id'   => 'API id',
-      'role_id'  => 'Role id',
     ];
   }
 
@@ -97,17 +95,17 @@ class ApiRoleUpdateRequest extends FormRequest
        */
       'insert.*.api_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['api_id']]
+        ['attributes' => ApiRole::attributes()['api_id']]
       ),
       'insert.*.api_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['api_id']]
+        ['attributes' => ApiRole::attributes()['api_id']]
       ),
       'insert.*.api_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['api_id'],
-          'number' => self::MIN
+          'attributes' => ApiRole::attributes()['api_id'],
+          'number' => ApiRole::LENGTH_ATTR[0]
         ]
       ),
 
@@ -116,17 +114,17 @@ class ApiRoleUpdateRequest extends FormRequest
        */
       'insert.*.role_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => ApiRole::attributes()['role_id']]
       ),
       'insert.*.role_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => ApiRole::attributes()['role_id']]
       ),
       'insert.*.role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['role_id'],
-          'number' => self::MIN
+          'attributes' => ApiRole::attributes()['role_id'],
+          'number' => ApiRole::LENGTH_ATTR[0]
         ]
       ),
 
@@ -135,17 +133,17 @@ class ApiRoleUpdateRequest extends FormRequest
        */
       'delete.*.api_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['api_id']]
+        ['attributes' => ApiRole::attributes()['api_id']]
       ),
       'delete.*.api_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['api_id']]
+        ['attributes' => ApiRole::attributes()['api_id']]
       ),
       'delete.*.api_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['api_id'],
-          'number' => self::MIN
+          'attributes' => ApiRole::attributes()['api_id'],
+          'number' => ApiRole::LENGTH_ATTR[0]
         ]
       ),
 
@@ -154,17 +152,17 @@ class ApiRoleUpdateRequest extends FormRequest
        */
       'delete.*.role_id.required' => Messages::getMessage(
         Messages::E0007,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => ApiRole::attributes()['role_id']]
       ),
       'delete.*.role_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => $this->attributes()['role_id']]
+        ['attributes' => ApiRole::attributes()['role_id']]
       ),
       'delete.*.role_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => $this->attributes()['role_id'],
-          'number' => self::MIN
+          'attributes' => ApiRole::attributes()['role_id'],
+          'number' => ApiRole::LENGTH_ATTR[0]
         ]
       ),
     ];

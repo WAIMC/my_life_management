@@ -13,24 +13,24 @@ class Admin extends Authenticatable
   public const TYPE = 'admin';
   public const ROOT = 'root';
 
-  public static $status = [
+  public const ADMIN_STATUS = [
     'inactive'  => 0,
     'active'    => 1,
     'waiting'   => 2,
     'suspended' => 3,
   ];
 
-  public static $isActive = [
+  public const IS_ACTIVE = [
     'disabled' => false,
     'enable'   => true
   ];
 
-  public static $gender = [
+  public const GENDER = [
     'male'   => 0,
     'female' => 1
   ];
 
-  public static $lengthAttr = [
+  public const LENGTH_ATTR = [
     0   => 0,
     20  => 20, // first_name, last_name, phone_number
     30  => 30, // email, avatar
