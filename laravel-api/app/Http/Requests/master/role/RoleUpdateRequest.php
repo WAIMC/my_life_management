@@ -65,14 +65,14 @@ class RoleUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Role::attributes()['name'],
-          'number' => Role::$lengthAttr[0]
+          'number' => Role::LENGTH_ATTR[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Role::attributes()['name'],
-          'number' => Role::$lengthAttr[30]
+          'number' => Role::LENGTH_ATTR[30]
         ]
       ),
       'name.unique' => Messages::getMessage(
@@ -91,14 +91,14 @@ class RoleUpdateRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Role::attributes()['permission'],
-          'number' => Role::$lengthAttr[0]
+          'number' => Role::LENGTH_ATTR[0]
         ]
       ),
       'permission.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Role::attributes()['permission'],
-          'number' => Role::$lengthAttr[50]
+          'number' => Role::LENGTH_ATTR[50]
         ]
       ),
 

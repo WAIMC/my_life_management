@@ -38,7 +38,7 @@ class AdminRoleRepository
         'tar.updated_at AS updated_at'
       ])
       ->where('ta.is_active', Admin::IS_ACTIVE['enable'])
-      ->where('tr.is_active', Role::$isActive['enable']);
+      ->where('tr.is_active', Role::IS_ACTIVE['enable']);
 
     if (isset($payload['admin_id'])) {
       $query->where('tar.admin_id', $payload['admin_id']);

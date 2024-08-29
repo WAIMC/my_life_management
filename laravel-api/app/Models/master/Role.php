@@ -16,12 +16,12 @@ class Role extends Model
    */
   protected $table = 't_role';
 
-  public static $isActive = [
+  public const IS_ACTIVE = [
     'disabled' => false,
     'enable'   => true
   ];
 
-  public static $lengthAttr = [
+  public const LENGTH_ATTR = [
     0   => 0,
     30  => 30, // name
     50  => 50, // permission
@@ -54,18 +54,5 @@ class Role extends Model
       'permission' => 'Role description',
       'is_active'  => 'Active role',
     ];
-  }
-
-  /**
-   * range of active status
-   * @return string
-   */
-  public static function rangeOfActiveStatus(): string
-  {
-    $stringArray = array_map(function ($bool) {
-      return $bool ? 'true' : 'false';
-    }, self::$isActive);
-
-    return implode(',', $stringArray);
   }
 }

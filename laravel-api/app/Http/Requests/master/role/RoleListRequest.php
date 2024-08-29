@@ -28,7 +28,7 @@ class RoleListRequest extends FormRequest
     return [
       'name'       => 'string|min:0|max:30',
       'permission' => 'string|min:0|max:50',
-      'is_active'  => 'in:' . Role::rangeOfActiveStatus(),
+      'is_active'  => 'in:true,false',
       'from_date'  => 'date_format:' . CommonVal::DATE_FORMAT,
       'to_date'    => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
     ];
@@ -95,14 +95,14 @@ class RoleListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Role::attributes()['name'],
-          'number' => Role::$lengthAttr[0]
+          'number' => Role::LENGTH_ATTR[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Role::attributes()['name'],
-          'number' => Role::$lengthAttr[30]
+          'number' => Role::LENGTH_ATTR[30]
         ]
       ),
 
@@ -117,26 +117,23 @@ class RoleListRequest extends FormRequest
         Messages::E0010,
         [
           'attributes' => Role::attributes()['permission'],
-          'number' => Role::$lengthAttr[0]
+          'number' => Role::LENGTH_ATTR[0]
         ]
       ),
       'permission.max' => Messages::getMessage(
         Messages::E0011,
         [
           'attributes' => Role::attributes()['permission'],
-          'number' => Role::$lengthAttr[50]
+          'number' => Role::LENGTH_ATTR[50]
         ]
       ),
 
       /**
        * Is active
        */
-      'is_active.in' => Messages::getMessage(
-        Messages::E0015,
-        [
-          'attributes' => Role::attributes()['is_active'],
-          'range' => Role::rangeOfActiveStatus()
-        ]
+      'is_active.bool' => Messages::getMessage(
+        Messages::E0005,
+        ['attributes' => Role::attributes()['is_active']]
       ),
 
       /**
