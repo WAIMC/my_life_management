@@ -174,4 +174,17 @@ class AdminRepository
 
     $admin->delete();
   }
+
+  /**
+   * Check is admin active
+   * 
+   * @param array $data
+   * @return bool
+   */
+  public static function isAdminActive(array $data): bool
+  {
+    return Admin::whereIn('id', $data)
+      ->where('is_active', Admin::IS_ACTIVE['enable'])
+      ->exists();
+  }
 }

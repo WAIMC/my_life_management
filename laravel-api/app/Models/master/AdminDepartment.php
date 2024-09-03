@@ -5,23 +5,26 @@ namespace App\Models\master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AdminRole extends Model
+class AdminDepartment extends Model
 {
   use HasFactory;
 
+  public const LENGTH_ATTR = [
+    0 => 0
+  ];
   /**
    * The table associated with the model.
    *
    * @var string
    */
-  protected $table = 't_admin_role';
+  protected $table = 't_admin_department';
 
   /**
    * The attributes that are mass assignable.
    *
    * @var array
    */
-  protected $fillable = ['admin_id', 'role_id'];
+  protected $fillable = ['admin_id', 'department_id'];
 
   /**
    * Indicates if the model should be timestamped.
@@ -38,8 +41,8 @@ class AdminRole extends Model
   public static function attributes(): array
   {
     return [
-      'admin_id' => 'Admin id',
-      'role_id'  => 'Role id',
+      'admin_id'      => 'Admin id',
+      'department_id' => 'Department id',
     ];
   }
 }

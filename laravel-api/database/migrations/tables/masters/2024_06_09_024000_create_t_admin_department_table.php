@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('t_admin_department', function (Blueprint $table) {
             $table->unsignedInteger('admin_id');
-            $table->unsignedInteger('dept_id');
-            $table->primary(['admin_id', 'dept_id']);
+            $table->unsignedInteger('department_id');
+            $table->primary(['admin_id', 'department_id']);
             $table->timestamps();
             $table->foreign('admin_id')->references('id')->on('t_admin');
-            $table->foreign('dept_id')->references('id')->on('t_department');
+            $table->foreign('department_id')->references('id')->on('t_department');
         });
     }
 

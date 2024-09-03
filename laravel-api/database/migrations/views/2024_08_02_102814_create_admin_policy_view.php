@@ -23,7 +23,7 @@ return new class extends Migration
             FROM
                 t_admin ta                                                                  -- Account
                 INNER JOIN t_admin_department tad ON tad.admin_id = ta.id                   -- 
-                INNER JOIN t_department td ON td.id = tad.dept_id                           -- Department
+                INNER JOIN t_department td ON td.id = tad.department_id                      -- Department
                 INNER JOIN t_department_management tdm ON tdm.department_id = td.id         -- 
                 INNER JOIN t_policy_department tpd ON tpd.id = tdm.policy_department_id     -- Policy
             WHERE

@@ -33,7 +33,11 @@ VALUES
 (3, 'admin role', 'admin', 'admin role management', 1, now(), now()),
 (4, 'feature', 'admin', 'feature management', 1, now(), now()),
 (5, 'api', 'admin', 'api management', 1, now(), now()),
-(6, 'api role', 'admin', 'api role management', 1, now(), now());
+(6, 'api role', 'admin', 'api role management', 1, now(), now()),
+(7, 'department', 'admin', 'department management', 1, now(), now()),
+(8, 'admin department', 'admin', 'admin department management', 1, now(), now()),
+(9, 'policy department', 'admin', 'policy department management', 1, now(), now()),
+(10, 'department management', 'admin', 'department management', 1, now(), now());
 SELECT setval(pg_get_serial_sequence('t_feature', 'id'), (SELECT MAX(id) FROM t_feature) + 1);
 
 -- t_api
@@ -61,7 +65,19 @@ VALUES
 (2, 'update api', 'api/admin/api/update/{id}', true, 5, now(), now()),
 (4, 'delete api', 'api/admin/api/delete/{id}', true, 5, now(), now()),
 (0, 'api role list', 'api/admin/api-role/list', true, 6, now(), now()),
-(2, 'api role update', 'api/admin/api-role/update', true, 6, now(), now());
+(2, 'api role update', 'api/admin/api-role/update', true, 6, now(), now()),
+(0, 'department list', 'api/admin/department/list', true, 7, now(), now()),
+(1, 'department store', 'api/admin/department/store', true, 7, now(), now()),
+(2, 'update department', 'api/admin/department/update/{id}', true, 7, now(), now()),
+(4, 'delete department', 'api/admin/department/delete/{id}', true, 7, now(), now()),
+(0, 'admin department list', 'api/admin/admin-department/list', true, 8, now(), now()),
+(2, 'admin department update', 'api/admin/admin-department/update', true, 8, now(), now()),
+(0, 'policy department list', 'api/admin/policy-department/list', true, 9, now(), now()),
+(1, 'policy department store', 'api/admin/policy-department/store', true, 9, now(), now()),
+(2, 'update policy department', 'api/admin/policy-department/update/{id}', true, 9, now(), now()),
+(4, 'delete policy department', 'api/admin/policy-department/delete/{id}', true, 9, now(), now()),
+(0, 'department management list', 'api/admin/department-management/list', true, 10, now(), now()),
+(2, 'department management update', 'api/admin/department-management/update', true, 10, now(), now());
 SELECT setval(pg_get_serial_sequence('t_api', 'id'), (SELECT MAX(id) FROM t_api) + 1);
 
 -- t_department
@@ -72,5 +88,5 @@ SELECT setval(pg_get_serial_sequence('t_department', 'id'), (SELECT MAX(id) FROM
 
 -- t_admin_department
 INSERT INTO t_admin_department
-(admin_id, dept_id, created_at, updated_at)
+(admin_id, department_id, created_at, updated_at)
 VALUES(1, 1, now(), now());
