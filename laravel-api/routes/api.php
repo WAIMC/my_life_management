@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\master\DepartmentManagementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\master\ApiController;
 use App\Http\Controllers\master\RoleController;
 use App\Http\Controllers\master\AdminController;
+use App\Http\Controllers\master\SkillController;
 use App\Http\Controllers\master\ApiRoleController;
 use App\Http\Controllers\master\FeatureController;
 use App\Http\Controllers\master\CategoryController;
@@ -14,6 +14,7 @@ use App\Http\Controllers\master\AdminRoleController;
 use App\Http\Controllers\master\DepartmentController;
 use App\Http\Controllers\master\AdminDepartmentController;
 use App\Http\Controllers\master\PolicyDepartmentController;
+use App\Http\Controllers\master\DepartmentManagementController;
 
 Route::prefix('admin')->group(function () {
   Route::post('login', [AdminController::class, 'login']);
@@ -92,9 +93,21 @@ Route::prefix('admin')->group(function () {
       Route::put('update', [DepartmentManagementController::class, 'update']);
     });
 
-    Route::apiResources([
-      'category' => CategoryController::class
-    ]);
+    // Category
+    Route::prefix('category')->group(function () {
+      Route::get('list', [CategoryController::class, 'list']);
+      Route::post('store', [CategoryController::class, 'store']);
+      Route::put('update/{id}', [CategoryController::class, 'update']);
+      Route::delete('delete/{id}', [CategoryController::class, 'delete']);
+    });
+
+    // Skill
+    Route::prefix('skill')->group(function () {
+      Route::get('list', [SkillController::class, 'list']);
+      Route::post('store', [SkillController::class, 'store']);
+      Route::put('update/{id}', [SkillController::class, 'update']);
+      Route::delete('delete/{id}', [SkillController::class, 'delete']);
+    });
   });
 });
 

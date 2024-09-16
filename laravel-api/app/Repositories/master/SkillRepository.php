@@ -7,23 +7,23 @@ use LogicException;
 use App\Utilities\Tmp;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Models\master\Category;
+use App\Models\master\Skill;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class CategoryRepository
+class SkillRepository
 {
   /**
-   * Category list
+   * Skill list
    * 
-   * @param array @payload
+   * @param array $payload
    * @return Collection
    */
   public static function list(array $payload): Collection
   {
-    $query = Category::query()
-      ->select('id', 'parent_id', 'name', 'slug', 'description', 'status', 'is_display', 'rank_order', 'updated_at');
+    $query = Skill::query()
+      ->select('id', 'parent_id', 'name', 'slug', 'status', 'is_display', 'rank_order', 'updated_at');
 
     if (isset($payload['parent_id'])) {
       $query->where('parent_id', $payload['parent_id']);
@@ -35,10 +35,6 @@ class CategoryRepository
 
     if (isset($payload['slug'])) {
       $query->where('slug', 'like', '%' . $payload['slug'] . '%');
-    }
-
-    if (isset($payload['description'])) {
-      $query->where('description', 'like', '%' . $payload['description'] . '%');
     }
 
     if (isset($payload['status'])) {
@@ -67,57 +63,65 @@ class CategoryRepository
   }
 
   /**
-   * Store category
+   * Store skill
    * 
    * @param array $payload
    * @return void
    */
   public static function store(array $payload): void
   {
-    $fields = ['parent_id', 'name', 'slug', 'description', 'status', 'is_display', 'rank_order'];
-    Category::create(Tmp::twoWayBindingByFields($fields, $payload));
+    $fields = ['parent_id', 'name', 'slug', 'status', 'is_display', 'rank_order'];
+    Skill::create(Tmp::twoWayBindingByFields($fields, $payload));
   }
 
   /**
-   * Update category
+   * Update skill
    * 
    * @param array $payload
    * @return void
    */
   public static function update(array $payload): void
   {
-    $category = Category::find($payload['id']);
-    if (!$category) {
+    $skill = Skill::find($payload['id']);
+    if (!$skill) {
       throw new NotFoundHttpException(Messages::E0404);
     }
 
-    $fields = ['parent_id', 'name', 'slug', 'description', 'status', 'is_display', 'rank_order'];
-    $category->update(Tmp::twoWayBindingByFields($fields, $payload));
+    $fields = ['parent_id', 'name', 'slug', 'status', 'is_display', 'rank_order'];
+    $skill->update(Tmp::twoWayBindingByFields($fields, $payload));
   }
 
   /**
-   * Delete category
+   * Delete skill
    * 
    * @param string $id
    * @return void
    */
   public static function delete(string $id): void
   {
-    $category = Category::find($id);
-    if (!$category) {
+    $skill = Skill::find($id);
+    if (!$skill) {
       throw new NotFoundHttpException(Messages::E0404);
     }
 
+    $queryOne = DB::table('t_skill AS ts')
+      ->join('t_category_skill AS tcs', 'tcs.skill_id', '=', 'ts.id')
+      ->select(['ts.id AS id']);
+    $queryTwo = DB::table('t_skill AS ts2')
+      ->join('t_skill_description AS tsd', 'tsd.skill_id', '=', 'ts2.id')
+      ->select(['ts2.id AS id']);
+
     // Check Fk constraint violation
-    $query = DB::table('t_category AS tc')
-      ->join('t_category_skill AS tcs', 'tcs.category_id', '=', 'tc.id')
-      ->select(['tc.id AS id'])
+    $query = DB::query()
+      ->from($queryOne->union($queryTwo), 'temp')
+      ->select(['temp.id'])
+      ->where('temp.id', $id)
       ->exists();
 
     if ($query) {
       throw new LogicException(Messages::E0016, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
     }
 
-    $category->delete();
+    $skill->delete();
   }
 }

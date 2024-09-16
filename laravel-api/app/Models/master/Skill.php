@@ -5,17 +5,16 @@ namespace App\Models\master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Category extends Model
+class Skill extends Model
 {
   use HasFactory;
 
   public const LENGTH_ATTR = [
     0   => 0,
     50  => 50, // name. slug
-    150 => 150 // description
   ];
 
-  public const CATEGORY_STATUS = [
+  public const SKILL_STATUS = [
     'inactive'  => 0,
     'active'    => 1,
     'waiting'   => 2,
@@ -27,14 +26,14 @@ class Category extends Model
    *
    * @var string
    */
-  protected $table = 't_category';
+  protected $table = 't_skill';
 
   /**
    * The attributes that are mass assignable.
    *
    * @var array
    */
-  protected $fillable = ['parent_id', 'name', 'slug', 'description', 'status', 'is_display', 'rank_order'];
+  protected $fillable = ['parent_id', 'name', 'slug', 'status', 'rank_order', 'is_display'];
 
   /**
    * Indicates if the model should be timestamped.
@@ -51,11 +50,10 @@ class Category extends Model
   public static function attributes(): array
   {
     return [
-      'id'          => 'Category ID',
+      'id'          => 'Skill ID',
       'parent_id'   => 'Parent id',
       'name'        => 'Name',
       'slug'        => 'Slug',
-      'description' => 'Description',
       'status'      => 'Status',
       'is_display'  => 'Display',
       'rank_order'  => 'Rank order',

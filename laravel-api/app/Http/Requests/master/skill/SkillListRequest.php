@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Requests\master\category;
+namespace App\Http\Requests\master\skill;
 
 use App\Constants\Messages;
-use App\Constants\CommonVal;
-use App\Models\master\Category;
+use App\constants\CommonVal;
+use App\Models\master\Skill;
 use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CategoryListRequest extends FormRequest
+class SkillListRequest extends FormRequest
 {
   /**
    * Determine if the user is authorized to make this request.
    */
   public function authorize(): bool
   {
-    return true;
+    return false;
   }
 
   /**
@@ -29,8 +29,7 @@ class CategoryListRequest extends FormRequest
       'parent_id'   => 'numeric|min:0',
       'name'        => 'string|min:0|max:50',
       'slug'        => 'string|min:0|max:50',
-      'description' => 'string|min:0|max:150',
-      'status'      => 'in:' . implode(',', array_keys(Category::CATEGORY_STATUS)),
+      'status'      => 'in:' . implode(',', array_keys(Skill::SKILL_STATUS)),
       'is_display'  => 'in:true,false',
       'rank_order'  => 'numeric|min:0',
       'from_date'   => 'date_format:' . CommonVal::DATE_FORMAT,
@@ -93,13 +92,13 @@ class CategoryListRequest extends FormRequest
        */
       'parent_id.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => Category::attributes()['parent_id']]
+        ['attributes' => Skill::attributes()['parent_id']]
       ),
       'parent_id.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => Category::attributes()['parent_id'],
-          'number' => Category::LENGTH_ATTR[0],
+          'attributes' => Skill::attributes()['parent_id'],
+          'number' => Skill::LENGTH_ATTR[0],
         ]
       ),
 
@@ -108,20 +107,20 @@ class CategoryListRequest extends FormRequest
        */
       'name.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => Category::attributes()['name']]
+        ['attributes' => Skill::attributes()['name']]
       ),
       'name.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => Category::attributes()['name'],
-          'number' => Category::LENGTH_ATTR[0]
+          'attributes' => Skill::attributes()['name'],
+          'number' => Skill::LENGTH_ATTR[0]
         ]
       ),
       'name.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => Category::attributes()['name'],
-          'number' => Category::LENGTH_ATTR[50]
+          'attributes' => Skill::attributes()['name'],
+          'number' => Skill::LENGTH_ATTR[50]
         ]
       ),
 
@@ -130,42 +129,20 @@ class CategoryListRequest extends FormRequest
        */
       'slug.string' => Messages::getMessage(
         Messages::E0002,
-        ['attributes' => Category::attributes()['slug']]
+        ['attributes' => Skill::attributes()['slug']]
       ),
       'slug.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => Category::attributes()['slug'],
-          'number' => Category::LENGTH_ATTR[0]
+          'attributes' => Skill::attributes()['slug'],
+          'number' => Skill::LENGTH_ATTR[0]
         ]
       ),
       'slug.max' => Messages::getMessage(
         Messages::E0011,
         [
-          'attributes' => Category::attributes()['slug'],
-          'number' => Category::LENGTH_ATTR[50]
-        ]
-      ),
-
-      /**
-       * Description
-       */
-      'description.string' => Messages::getMessage(
-        Messages::E0002,
-        ['attributes' => Category::attributes()['description']]
-      ),
-      'description.min' => Messages::getMessage(
-        Messages::E0010,
-        [
-          'attributes' => Category::attributes()['description'],
-          'number' => Category::LENGTH_ATTR[0]
-        ]
-      ),
-      'description.max' => Messages::getMessage(
-        Messages::E0011,
-        [
-          'attributes' => Category::attributes()['description'],
-          'number' => Category::LENGTH_ATTR[150]
+          'attributes' => Skill::attributes()['slug'],
+          'number' => Skill::LENGTH_ATTR[50]
         ]
       ),
 
@@ -175,8 +152,8 @@ class CategoryListRequest extends FormRequest
       'status.in' => Messages::getMessage(
         Messages::E0015,
         [
-          'attributes' => Category::attributes()['status'],
-          'range' => implode(',', array_keys(Category::CATEGORY_STATUS))
+          'attributes' => Skill::attributes()['status'],
+          'range' => implode(',', array_keys(Skill::SKILL_STATUS))
         ]
       ),
 
@@ -185,7 +162,7 @@ class CategoryListRequest extends FormRequest
        */
       'is_display.in' => Messages::getMessage(
         Messages::E0005,
-        ['attributes' => Category::attributes()['is_display']]
+        ['attributes' => Skill::attributes()['is_display']]
       ),
 
       /**
@@ -193,13 +170,13 @@ class CategoryListRequest extends FormRequest
        */
       'rank_order.numeric' => Messages::getMessage(
         Messages::E0001,
-        ['attributes' => Category::attributes()['rank_order']]
+        ['attributes' => Skill::attributes()['rank_order']]
       ),
       'rank_order.min' => Messages::getMessage(
         Messages::E0010,
         [
-          'attributes' => Category::attributes()['rank_order'],
-          'number' => Category::LENGTH_ATTR[0]
+          'attributes' => Skill::attributes()['rank_order'],
+          'number' => Skill::LENGTH_ATTR[0]
         ]
       ),
 

@@ -37,7 +37,9 @@ VALUES
 (7, 'department', 'admin', 'department management', 1, now(), now()),
 (8, 'admin department', 'admin', 'admin department management', 1, now(), now()),
 (9, 'policy department', 'admin', 'policy department management', 1, now(), now()),
-(10, 'department management', 'admin', 'department management', 1, now(), now());
+(10, 'department management', 'admin', 'department management', 1, now(), now()),
+(11, 'category', 'admin', 'category management', 1, now(), now()),
+(12, 'skill', 'admin', 'skill management', 1, now(), now());
 SELECT setval(pg_get_serial_sequence('t_feature', 'id'), (SELECT MAX(id) FROM t_feature) + 1);
 
 -- t_api
@@ -77,7 +79,15 @@ VALUES
 (2, 'update policy department', 'api/admin/policy-department/update/{id}', true, 9, now(), now()),
 (4, 'delete policy department', 'api/admin/policy-department/delete/{id}', true, 9, now(), now()),
 (0, 'department management list', 'api/admin/department-management/list', true, 10, now(), now()),
-(2, 'department management update', 'api/admin/department-management/update', true, 10, now(), now());
+(2, 'department management update', 'api/admin/department-management/update', true, 10, now(), now()),
+(0, 'category list', 'api/admin/category/list', true, 11, now(), now()),
+(1, 'category store', 'api/admin/category/store', true, 11, now(), now()),
+(2, 'update category', 'api/admin/category/update/{id}', true, 11, now(), now()),
+(4, 'delete category', 'api/admin/category/delete/{id}', true, 11, now(), now()),
+(0, 'skill list', 'api/admin/skill/list', true, 12, now(), now()),
+(1, 'skill store', 'api/admin/skill/store', true, 12, now(), now()),
+(2, 'update skill', 'api/admin/skill/update/{id}', true, 12, now(), now()),
+(4, 'delete skill', 'api/admin/skill/delete/{id}', true, 12, now(), now());
 SELECT setval(pg_get_serial_sequence('t_api', 'id'), (SELECT MAX(id) FROM t_api) + 1);
 
 -- t_department

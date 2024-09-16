@@ -3,19 +3,17 @@
 namespace App\Http\Requests\master\category;
 
 use App\Constants\Messages;
-use App\Constants\CommonVal;
 use App\Models\master\Category;
-use Illuminate\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CategoryListRequest extends FormRequest
+class CategoryStoreRequest extends FormRequest
 {
   /**
    * Determine if the user is authorized to make this request.
    */
   public function authorize(): bool
   {
-    return true;
+    return false;
   }
 
   /**
@@ -27,56 +25,12 @@ class CategoryListRequest extends FormRequest
   {
     return [
       'parent_id'   => 'numeric|min:0',
-      'name'        => 'string|min:0|max:50',
-      'slug'        => 'string|min:0|max:50',
+      'name'        => 'required|string|min:0|max:50|unique:App\Models\master\category,name',
+      'slug'        => 'required|string|min:0|max:50|unique:App\Models\master\category,slug',
       'description' => 'string|min:0|max:150',
-      'status'      => 'in:' . implode(',', array_keys(Category::CATEGORY_STATUS)),
-      'is_display'  => 'in:true,false',
-      'rank_order'  => 'numeric|min:0',
-      'from_date'   => 'date_format:' . CommonVal::DATE_FORMAT,
-      'to_date'     => 'after:from_date|date_format:'  . CommonVal::DATE_FORMAT,
-    ];
-  }
-
-  /**
-   * Configure the validator instance.
-   *
-   * @param  \Illuminate\Validation\Validator  $validator
-   * @return void
-   */
-  public function withValidator(Validator $validator)
-  {
-    $validator->after(function ($validator) {
-      if ($this->from_date && $this->to_date) {
-        $fromDate = \DateTime::createFromFormat(CommonVal::DATE_FORMAT, $this->from_date);
-        $toDate = \DateTime::createFromFormat(CommonVal::DATE_FORMAT, $this->to_date);
-
-        if ($fromDate >= $toDate) {
-          $validator->errors()->add(
-            'to_date',
-            Messages::getMessage(
-              Messages::E0014,
-              [
-                'attributes' => $this->attributes()['from_date'],
-                'attributes2' => $this->attributes()['to_date']
-              ]
-            )
-          );
-        }
-      }
-    });
-  }
-
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public function attributes(): array
-  {
-    return [
-      'from_date' => 'from date',
-      'to_date' => 'to date',
+      'status'      => 'in:' . implode(',', array_values(Category::CATEGORY_STATUS)),
+      'is_display'  => 'bool',
+      'rank_order'  => 'numeric|min:0'
     ];
   }
 
@@ -106,6 +60,10 @@ class CategoryListRequest extends FormRequest
       /**
        * Name
        */
+      'name.required' => Messages::getMessage(
+        Messages::E0007,
+        ['attributes' => Category::attributes()['name']]
+      ),
       'name.string' => Messages::getMessage(
         Messages::E0002,
         ['attributes' => Category::attributes()['name']]
@@ -124,10 +82,18 @@ class CategoryListRequest extends FormRequest
           'number' => Category::LENGTH_ATTR[50]
         ]
       ),
+      'name.unique' => Messages::getMessage(
+        Messages::E0008,
+        ['attributes' => Category::attributes()['name']]
+      ),
 
       /**
        * Slug
        */
+      'slug.required' => Messages::getMessage(
+        Messages::E0007,
+        ['attributes' => Category::attributes()['slug']]
+      ),
       'slug.string' => Messages::getMessage(
         Messages::E0002,
         ['attributes' => Category::attributes()['slug']]
@@ -145,6 +111,10 @@ class CategoryListRequest extends FormRequest
           'attributes' => Category::attributes()['slug'],
           'number' => Category::LENGTH_ATTR[50]
         ]
+      ),
+      'slug.unique' => Messages::getMessage(
+        Messages::E0008,
+        ['attributes' => Category::attributes()['slug']]
       ),
 
       /**
@@ -176,14 +146,14 @@ class CategoryListRequest extends FormRequest
         Messages::E0015,
         [
           'attributes' => Category::attributes()['status'],
-          'range' => implode(',', array_keys(Category::CATEGORY_STATUS))
+          'range' => implode(',', array_values(Category::CATEGORY_STATUS))
         ]
       ),
 
       /**
        * Is display
        */
-      'is_display.in' => Messages::getMessage(
+      'is_display.bool' => Messages::getMessage(
         Messages::E0005,
         ['attributes' => Category::attributes()['is_display']]
       ),
@@ -201,22 +171,6 @@ class CategoryListRequest extends FormRequest
           'attributes' => Category::attributes()['rank_order'],
           'number' => Category::LENGTH_ATTR[0]
         ]
-      ),
-
-      /**
-       * From date
-       */
-      'from_date.date_format' => Messages::getMessage(
-        Messages::E0013,
-        ['attributes' => $this->attributes()['from_date']]
-      ),
-
-      /**
-       * To date
-       */
-      'to_date.date_format' => Messages::getMessage(
-        Messages::E0013,
-        ['attributes' => $this->attributes()['to_date']]
       ),
     ];
   }

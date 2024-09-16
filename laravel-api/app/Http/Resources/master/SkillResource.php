@@ -6,7 +6,7 @@ use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class CategoryResource extends JsonResource
+class SkillResource extends JsonResource
 {
   /**
    * Transform the resource into an array.
@@ -20,7 +20,6 @@ class CategoryResource extends JsonResource
       'parent_id'   => (int)$this->parent_id,
       'name'        => (string)$this->name,
       'slug'        => (string)$this->slug,
-      'description' => (string)$this->description,
       'status'      => (int)$this->status,
       'is_display'  => (bool)$this->is_display,
       'rank_order'  => (int)$this->rank_order,

@@ -4,21 +4,21 @@ namespace App\Services\master;
 
 use App\Constants\Messages;
 use App\constants\CommonVal;
+use App\Models\master\Skill;
 use InvalidArgumentException;
-use App\Models\master\Category;
 use App\Services\CommonService;
 use App\Services\SingletonService;
+use App\Http\Resources\master\SkillResource;
+use App\Repositories\master\SkillRepository;
 use Illuminate\Validation\ValidationException;
-use App\Http\Resources\master\CategoryResource;
-use App\Repositories\master\CategoryRepository;
-use App\Http\Requests\master\category\CategoryListRequest;
-use App\Http\Requests\master\category\CategoryStoreRequest;
-use App\Http\Requests\master\category\CategoryUpdateRequest;
+use App\Http\Requests\master\skill\SkillListRequest;
+use App\Http\Requests\master\skill\SkillStoreRequest;
+use App\Http\Requests\master\skill\SkillUpdateRequest;
 
-class CategoryService extends SingletonService
+class SkillService extends SingletonService
 {
   /**
-   * Category list
+   * Skill list
    * 
    * @param array $payload
    * @return mixed
@@ -26,7 +26,7 @@ class CategoryService extends SingletonService
   public function list(array $payload): mixed
   {
     $validator = (new CommonService())->validationManual(
-      (new CategoryListRequest()),
+      (new SkillListRequest()),
       $payload
     );
 
@@ -34,15 +34,15 @@ class CategoryService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    $list = CategoryRepository::list($payload);
+    $list = SkillRepository::list($payload);
 
     return $list
-      ? CategoryResource::collection($list)
+      ? SkillResource::collection($list)
       : [];
   }
 
   /**
-   * Store category
+   * Store skill
    * 
    * @param array $payload
    * @return bool
@@ -50,7 +50,7 @@ class CategoryService extends SingletonService
   public function store(array $payload): bool
   {
     $validator = (new CommonService())->validationManual(
-      (new CategoryStoreRequest()),
+      (new SkillStoreRequest()),
       $payload
     );
 
@@ -58,13 +58,13 @@ class CategoryService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    CategoryRepository::store($payload);
+    SkillRepository::store($payload);
 
     return true;
   }
 
   /**
-   * Update category
+   * Update skill
    * 
    * @param array $payload
    * @return bool
@@ -72,7 +72,7 @@ class CategoryService extends SingletonService
   public function update(array $payload): bool
   {
     $validator = (new CommonService())->validationManual(
-      (new CategoryUpdateRequest()),
+      (new SkillUpdateRequest()),
       $payload
     );
 
@@ -80,13 +80,13 @@ class CategoryService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    CategoryRepository::update($payload);
+    SkillRepository::update($payload);
 
     return true;
   }
 
   /**
-   * Delete category
+   * Delete skill
    * 
    * @param string $id
    * @return bool
@@ -96,12 +96,12 @@ class CategoryService extends SingletonService
     if (!is_numeric($id)) {
       $message = Messages::getMessage(
         Messages::E0001,
-        ['attributes' => Category::attributes()['id']]
+        ['attributes' => Skill::attributes()['id']]
       );
       throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
     }
 
-    CategoryRepository::delete($id);
+    SkillRepository::delete($id);
 
     return true;
   }

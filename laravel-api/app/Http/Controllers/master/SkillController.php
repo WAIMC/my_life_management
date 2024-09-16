@@ -7,14 +7,14 @@ use App\Constants\Messages;
 use App\constants\CommonVal;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Services\master\CategoryService;
+use App\Services\master\SkillService;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
-class CategoryController extends Controller
+class SkillController extends Controller
 {
   /**
-   * Category list
+   * Skill list
    * 
    * @param Request $request
    * @return Response
@@ -32,12 +32,12 @@ class CategoryController extends Controller
       }
       $payload = $request->all();
 
-      return CategoryService::getInstance()->list($payload);
+      return SkillService::getInstance()->list($payload);
     });
   }
 
   /**
-   * Store category
+   * Store skill
    * 
    * @param Request $request
    * @return Response
@@ -55,12 +55,12 @@ class CategoryController extends Controller
       }
       $payload = $request->all();
 
-      return CategoryService::getInstance()->store($payload);
+      return SkillService::getInstance()->store($payload);
     });
   }
 
   /**
-   * Update category
+   * Update skill
    * 
    * @param Request $request
    * @param string $id
@@ -80,12 +80,12 @@ class CategoryController extends Controller
       $payload = $request->all();
       $payload['id'] = $id;
 
-      return CategoryService::getInstance()->update($payload);
+      return SkillService::getInstance()->update($payload);
     });
   }
 
   /**
-   * Delete category
+   * Delete skill
    * 
    * @param Request $request
    * @param string $id
@@ -103,7 +103,7 @@ class CategoryController extends Controller
         );
       }
 
-      return CategoryService::getInstance()->delete($id);
+      return SkillService::getInstance()->delete($id);
     });
   }
 }
