@@ -11,13 +11,13 @@
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+-   [Simple, fast routing engine](https://laravel.com/docs/routing).
+-   [Powerful dependency injection container](https://laravel.com/docs/container).
+-   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+-   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+-   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+-   [Robust background job processing](https://laravel.com/docs/queues).
+-   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
@@ -35,19 +35,19 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 ### Premium Partners
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+-   **[Vehikl](https://vehikl.com/)**
+-   **[Tighten Co.](https://tighten.co)**
+-   **[WebReinvent](https://webreinvent.com/)**
+-   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+-   **[64 Robots](https://64robots.com)**
+-   **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
+-   **[Cyber-Duck](https://cyber-duck.co.uk)**
+-   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+-   **[Jump24](https://jump24.co.uk)**
+-   **[Redberry](https://redberry.international/laravel/)**
+-   **[Active Logic](https://activelogic.com)**
+-   **[byte5](https://byte5.de)**
+-   **[OP.GG](https://op.gg)**
 
 ## Contributing
 
@@ -64,3 +64,69 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Step by step install project
+
+-   **Step 1: Check requirement**
+    -   Apache version 2.4.54
+    -   php version 8.2
+    -   postgresql 16.3
+    -   redis version 5.0.14.1
+-   **Step 2: Clone project**
+-   **Step 3: Open cmd or terminal run command below to install package**
+    ```
+    composer i
+    ```
+-   **Step 4: Duplicate file `.env.example` and rename to `.env`**
+-   **Step 5: Open cmd or terminal run command below to generate key**
+    ```
+    php artisan key:generate
+    ```
+-   **Step 6: Run start web server apache (php, postgresql, redis)**
+-   **Step 7: Create new schema in postgresql**
+-   **Step 8: Open file `.env` , get information connect from `Step 7` to edit**
+    ```
+    DB_CONNECTION=
+    DB_HOST=
+    DB_PORT=
+    DB_DATABASE=
+    DB_USERNAME=
+    DB_PASSWORD=
+    ```
+-   **Step 9: Open cmd or terminal run command below to migrate database**
+    -   **Step 9.1: Migration tables master**
+        ```
+        php artisan migrate --path=database/migrations/tables/masters
+        ```
+    -   **Step 9.2: Migration tables histories**
+        ```
+        php artisan migrate --path=database/migrations/tables/histories
+        ```
+    -   **Step 9.3: Migration triggers**
+        ```
+        php artisan migrate --path=database/migrations/triggers
+        ```
+    -   **Step 9.4: Migration views**
+        ```
+        php artisan migrate --path=database/migrations/views
+        ```
+-   **Step 10: Open file `.env` , get information connect redis to edit**
+    ```
+    REDIS_CLIENT=
+    REDIS_HOST=
+    REDIS_PASSWORD=
+    REDIS_PORT=
+    ```
+-   **Step 11: Open cmd or terminal run command below to generate access and refresh secret key**
+    -   **Step 11.1: Copy result, create assign value for new variable `ACCESS_TOKEN_SECRET=`**
+    ```
+    php -r 'echo base64_encode(random_bytes(32));'
+    ```
+    -   **Step 11.2: Copy result, create assign value for new variable `REFRESH_TOKEN_SECRET=`**
+    ```
+    php -r 'echo base64_encode(random_bytes(32));'
+    ```
+-   **Step 12: Open cmd or terminal run command below to start web**
+    ```
+    php artisan serve
+    ```
