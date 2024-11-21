@@ -103,19 +103,4 @@ class Controller
       ]
     ]);
   }
-
-  /**
-   * Render data token
-   * 
-   * @param string $token
-   * @return array
-   */
-  protected function respondWithToken($token): array
-  {
-    return [
-      'access_token' => $token,
-      'token_type' => 'bearer',
-      'expires_in' => JsonWebToken::TTL
-    ];
-  }
 }

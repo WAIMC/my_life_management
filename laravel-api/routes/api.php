@@ -18,11 +18,11 @@ use App\Http\Controllers\master\DepartmentManagementController;
 
 Route::prefix('admin')->group(function () {
   Route::post('login', [AdminController::class, 'login']);
+  Route::post('refresh-token', [AdminController::class, 'refreshToken']);
 
   Route::middleware(AdminMiddleware::class)->group(function () {
 
     // Admin
-    Route::get('me', [AdminController::class, 'me']);
     Route::post('logout', [AdminController::class, 'logout']);
     Route::get('list', [AdminController::class, 'list']);
     Route::post('store', [AdminController::class, 'store']);

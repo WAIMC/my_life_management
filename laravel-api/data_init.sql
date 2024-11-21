@@ -46,7 +46,6 @@ SELECT setval(pg_get_serial_sequence('t_feature', 'id'), (SELECT MAX(id) FROM t_
 INSERT INTO t_api
 ("type", "name", "path", is_active, feature_id, created_at, updated_at)
 VALUES
-(0, 'current admin', 'api/admin/me', true, 1, now(), now()),
 (1, 'logout admin', 'api/admin/logout', true, 1, now(), now()),
 (0, 'admin list', 'api/admin/list', true, 1, now(), now()),
 (1, 'admin store', 'api/admin/store', true, 1, now(), now()),

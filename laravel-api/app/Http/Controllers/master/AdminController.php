@@ -81,31 +81,31 @@ class AdminController extends Controller
         );
       }
       $credentials = $request->only('user_name', 'password');
-      $token = AdminService::getInstance()->login($credentials);
 
-      return $this->respondWithToken($token);
+      return AdminService::getInstance()->login($credentials);
     });
   }
 
   /**
-   * Current auth
+   * Refresh token admin account
    * 
    * @param Request $request
    * @return Response
    */
-  public function me(Request $request): Response
+  public function refreshToken(Request $request): Response
   {
     return $this->handleRequest(function () use ($request) {
       // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
+      if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
         throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[0]],
+          [Api::TYPE_OF_METHOD[1]],
           Messages::E0405,
           CommonVal::HTTP_METHOD_NOT_ALLOWED
         );
       }
+      $refreshToken = $request->bearerToken();
 
-      return $this->respondWithToken(true);
+      return AdminService::getInstance()->refreshToken($refreshToken);
     });
   }
 
@@ -126,8 +126,9 @@ class AdminController extends Controller
           CommonVal::HTTP_METHOD_NOT_ALLOWED
         );
       }
+      $refreshToken = $request['refresh_token'];
 
-      return AdminService::getInstance()->logout($request);
+      return AdminService::getInstance()->logout($refreshToken);
     });
   }
 

@@ -61,4 +61,5 @@ class CommonVal
   public const HTTP_SERVICE_UNAVAILABLE = 503;
 
   public const DATE_FORMAT = 'd/m/Y';
+  public const BLACKLIST = 'blacklist';
 }

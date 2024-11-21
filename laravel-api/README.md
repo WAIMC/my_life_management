@@ -110,23 +110,24 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
         ```
         php artisan migrate --path=database/migrations/views
         ```
--   **Step 10: Open file `.env` , get information connect redis to edit**
+-   **Step 10: Execute all sql query in file `data_init.sql`**
+-   **Step 11: Open file `.env` , get information connect redis to edit**
     ```
     REDIS_CLIENT=
     REDIS_HOST=
     REDIS_PASSWORD=
     REDIS_PORT=
     ```
--   **Step 11: Open cmd or terminal run command below to generate access and refresh secret key**
-    -   **Step 11.1: Copy result, create assign value for new variable `ACCESS_TOKEN_SECRET=`**
+-   **Step 12: Open cmd or terminal run command below to generate access and refresh secret key**
+    -   **Step 12.1: Copy result, create assign value for new variable `ACCESS_TOKEN_SECRET=`**
     ```
     php -r 'echo base64_encode(random_bytes(32));'
     ```
-    -   **Step 11.2: Copy result, create assign value for new variable `REFRESH_TOKEN_SECRET=`**
+    -   **Step 12.2: Copy result, create assign value for new variable `REFRESH_TOKEN_SECRET=`**
     ```
     php -r 'echo base64_encode(random_bytes(32));'
     ```
--   **Step 12: Open cmd or terminal run command below to start web**
+-   **Step 13: Open cmd or terminal run command below to start web**
     ```
     php artisan serve
     ```

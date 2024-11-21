@@ -60,6 +60,7 @@ class Messages
   const E0606 = 'Signature verification failed';
   const E0607 = 'Invalid expiration time';
   const E0608 = 'Invalid type member';
+  const E0609 = 'Token already exist in blacklist';
 
   /**
    * Get message

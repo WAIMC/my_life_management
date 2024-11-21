@@ -7,7 +7,8 @@ use App\Constants\Messages;
 class JsonWebToken
 {
   public const ALGORITHM_HS256 = 'HS256';
-  public const TTL = 3600; // Time to live (second) 
+  public const TTL_ACCESS = 3600 * 5;   // Time to live (second) 
+  public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second) 
 
   /**
    * Generate JWT header
@@ -27,16 +28,17 @@ class JsonWebToken
    * Generate JWT payload
    * 
    * @param array $payload
+   * @param bool $isRefresh
    * @return array
    */
-  public static function JWTPayload(array $payload): array
+  public static function JWTPayload(array $payload, bool $isRefresh = false): array
   {
     return [
-      'id'   => $payload['id'] ?? '',   // ID of the token (member id)
-      'type' => $payload['type'] ?? '', // Type of the token (member type)
-      'role' => $payload['role'] ?? '', // Role of the token (member role)
-      'iat'  => time(),                 // Time when JWT was issued.
-      'exp'  => time() + self::TTL      // Expiration time (1 minute)
+      'id'   => $payload['id'] ?? '',                                        // ID of the token (member id)
+      'type' => $payload['type'] ?? '',                                      // Type of the token (member type)
+      'role' => $payload['role'] ?? '',                                      // Role of the token (member role)
+      'iat'  => time(),                                                      // Time when JWT was issued.
+      'exp'  => time() + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS) // Expiration time
     ];
   }
 
@@ -87,9 +89,10 @@ class JsonWebToken
    * 
    * @param string $jwt
    * @param string $key
+   * @param bool $isRefresh
    * @return array
    */
-  public static function decode($jwt, $key): array
+  public static function decode($jwt, $key, $isRefresh = false): array
   {
     $tks = explode('.', $jwt);
     if (count($tks) != 3) {
@@ -103,10 +106,6 @@ class JsonWebToken
     $header = json_decode(base64_decode($headB64), true);
     if (null === $header) {
       throw new \UnexpectedValueException(Messages::E0601);
-    }
-
-    if (!Tmp::areSameKeysAndType($header, self::JWTHeader())) {
-      throw new \UnexpectedValueException(Messages::E0602);
     }
 
     /**
@@ -124,7 +123,7 @@ class JsonWebToken
     // Check expiration time
     if (
       $payload['exp'] < time()
-      || $payload['iat'] !== $payload['exp'] - self::TTL
+      || $payload['iat'] !== $payload['exp'] - ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS)
     ) {
       throw new \UnexpectedValueException(Messages::E0607);
     }
@@ -153,6 +152,9 @@ class JsonWebToken
       throw new \UnexpectedValueException(Messages::E0606);
     }
 
-    return $payload;
+    return [
+      'body'      => $payload,
+      'signature' => $cryptoB64
+    ];
   }
 }

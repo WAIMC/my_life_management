@@ -29,6 +29,7 @@ class AdminMiddleware
   {
     $token = $request->bearerToken();
 
+    // Check existing access token
     if (!$token) {
       return Controller::handleRequest(function () {
         throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
@@ -36,15 +37,11 @@ class AdminMiddleware
     }
 
     try {
-      $credentials = JsonWebToken::decode($token, env('JWT_SECRET'));
+      $payload = JsonWebToken::decode($token, env('ACCESS_TOKEN_SECRET'));
+      $credentials = $payload['body'];
       // Check request from member type admin
       if ($credentials['type'] !== Admin::TYPE) {
         throw new \UnexpectedValueException(Messages::E0608);
-      }
-
-      // Check expired token on redis
-      if (!Redis::hget(Admin::TYPE . ':' . $credentials['id'], 'id')) {
-        throw new \UnexpectedValueException(Messages::E0607);
       }
 
       // Check permission access
@@ -67,24 +64,9 @@ class AdminMiddleware
       });
     }
 
-    $payload = JsonWebToken::JWTPayload([
-      'id' => (string)$adminPermission->admin_id,
-      'type' => Admin::TYPE,
-      'role' => 'admin'
-    ]);
-
-    // Create token and set expired time in redis
-    $key = Admin::TYPE . ':' . $adminPermission->admin_id;
-    Redis::hmset($key, $payload);
-    Redis::expireat($key, $payload['exp']);
-
-    // Create jwt
-    $token = JsonWebToken::encode($payload, env('JWT_SECRET'));
-
     // Set info for request
     $request->attributes->set('admin_id',  $adminPermission->admin_id);
     $response = $next($request);
-    $response->headers->set('Authorization', "Bearer $token");
 
     return $response;
   }

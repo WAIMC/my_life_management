@@ -108,9 +108,9 @@ class AdminService extends SingletonService
    * Handle login account
    * 
    * @param array $payload
-   * @return string
+   * @return array
    */
-  public function login($payload): string
+  public function login($payload): array
   {
     $admin = Admin::where('user_name', $payload['user_name'])->first();
 
@@ -118,38 +118,84 @@ class AdminService extends SingletonService
       throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
     }
 
-    $payload = JsonWebToken::JWTPayload([
+    $payload = [
       'id' => (string)$admin->id,
       'type' => Admin::TYPE,
       'role' => 'admin'
-    ]);
+    ];
 
-    // Create token and set expired time in redis
-    $key = Admin::TYPE . ':' . $admin->id;
-    Redis::hmset($key, $payload);
-    Redis::expireat($key, $payload['exp']);
+    // Generate new access token
+    $accessToken = JsonWebToken::encode(
+      JsonWebToken::JWTPayload($payload, false),
+      env('ACCESS_TOKEN_SECRET')
+    );
 
-    return JsonWebToken::encode($payload, env('JWT_SECRET'));
+    // Generate new refresh token
+    $refreshToken = JsonWebToken::encode(
+      JsonWebToken::JWTPayload($payload, true),
+      env('REFRESH_TOKEN_SECRET')
+    );
+
+    return [
+      'token_type'    => 'bearer',
+      'expires_on'    => time() + JsonWebToken::TTL_ACCESS,
+      'access_token'  => $accessToken,
+      'refresh_token' => $refreshToken
+    ];
+  }
+
+  /**
+   * Handle refresh token
+   * 
+   * @param string|null $refreshToken
+   * @return array
+   */
+  public function refreshToken(string|null $refreshToken): array
+  {
+    $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
+
+    // Check refresh token had exited in black list
+    $key = CommonVal::BLACKLIST . ':' . Admin::TYPE . ':' . $payload['signature'];
+    if (Redis::hget($key, 'id')) {
+      throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
+    }
+
+    // Generate new access token
+    $accessToken = JsonWebToken::encode(
+      JsonWebToken::JWTPayload($payload['body'], false),
+      env('ACCESS_TOKEN_SECRET')
+    );
+
+    // Generate new refresh token
+    $refreshToken = JsonWebToken::encode(
+      JsonWebToken::JWTPayload($payload['body'], true),
+      env('REFRESH_TOKEN_SECRET')
+    );
+
+    return [
+      'access_token'  => $accessToken,
+      'refresh_token' => $refreshToken
+    ];
   }
 
   /**
    * Logout admin account
-   * 
-   * @param Request $request
+   *
+   * @param string|null $refreshToken
    * @return array
    */
-  public function logout(Request $request): array
+  public function logout(string|null $refreshToken): array
   {
-    $adminId = $request->attributes->get('admin_id');
+    $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
+    $body = $payload['body'];
 
-    // Delete token store in redis
-    if (Redis::hget(Admin::TYPE . ':' . $adminId, 'id')) {
-      Redis::del(Admin::TYPE . ':' . $adminId);
-    }
+    $key = CommonVal::BLACKLIST . ':' . Admin::TYPE . ':' . $payload['signature'];
 
-    // Remove the Authorization header if set
-    if ($request->header('Authorization')) {
-      $request->headers->remove('Authorization');
+    if (Redis::hget($key, 'id')) { // Check already exit in blacklist
+      throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
+    } else { // Create token and set expired time in blacklist
+      Redis::hmset($key, $body);
+      Redis::expireat($key, $body['exp']);
     }
 
     return [];
