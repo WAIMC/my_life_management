@@ -68,9 +68,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 ## Step by step install project
 
 -   **Step 1: Check requirement**
-    -   Apache version 2.4.54
-    -   php version 8.2
-    -   postgresql 16.3
+    -   Apache version 2.4.62
+    -   php version 8.2.26
+    -   postgresql 16.6
     -   redis version 5.0.14.1
 -   **Step 2: Clone project**
 -   **Step 3: Open cmd or terminal run command below to install package**
@@ -82,11 +82,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     ```
     php artisan key:generate
     ```
--   **Step 6: Run start web server apache (php, postgresql, redis)**
+-   **Step 6: Run start web server apache, php, postgresql, redis**
 -   **Step 7: Create new schema in postgresql**
 -   **Step 8: Open file `.env` , get information connect from `Step 7` to edit**
     ```
-    DB_CONNECTION=
+    DB_CONNECTION=pgsql
     DB_HOST=
     DB_PORT=
     DB_DATABASE=
@@ -113,7 +113,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 -   **Step 10: Execute all sql query in file `data_init.sql`**
 -   **Step 11: Open file `.env` , get information connect redis to edit**
     ```
-    REDIS_CLIENT=
+    REDIS_CLIENT=predis
     REDIS_HOST=
     REDIS_PASSWORD=
     REDIS_PORT=
