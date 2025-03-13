@@ -16,8 +16,6 @@ return new class extends Migration
             $table->unsignedInteger('role_id');
             $table->primary(['api_id', 'role_id']);
             $table->timestamps();
-            $table->foreign('api_id')->references('id')->on('t_api');
-            $table->foreign('role_id')->references('id')->on('t_role');
         });
     }
 

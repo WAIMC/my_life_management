@@ -16,8 +16,6 @@ return new class extends Migration
             $table->unsignedInteger('department_id');
             $table->primary(['admin_id', 'department_id']);
             $table->timestamps();
-            $table->foreign('admin_id')->references('id')->on('t_admin');
-            $table->foreign('department_id')->references('id')->on('t_department');
         });
     }
 

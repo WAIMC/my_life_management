@@ -16,8 +16,6 @@ return new class extends Migration
             $table->unsignedInteger('language_id');
             $table->primary(['translation_id', 'language_id']);
             $table->timestamps();
-            $table->foreign('translation_id')->references('id')->on('t_translation');
-            $table->foreign('language_id')->references('id')->on('t_language');
         });
     }
 

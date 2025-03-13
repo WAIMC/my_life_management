@@ -19,7 +19,6 @@ return new class extends Migration
       $table->boolean('is_active')->default(false)->comment('Api status');
       $table->unsignedInteger('feature_id')->comment('Feature ID');
       $table->timestamps();
-      $table->foreign('feature_id')->references('id')->on('t_feature');
     });
   }
 

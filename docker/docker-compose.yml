@@ -29,10 +29,8 @@ services:
     container_name: db-pgsql
     ports:
       - "5432:5432" # Custom port cho PostgreSQL 5432 sang 5433, 5433 dùng bên ngoài env docker
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Vinh@123 # Ensure this matches the Laravel .env file
+    env_file:
+      - ./postgresql/.env # Use custom environment file
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./postgresql/postgresql.conf:/var/lib/postgresql/data/postgresql.conf

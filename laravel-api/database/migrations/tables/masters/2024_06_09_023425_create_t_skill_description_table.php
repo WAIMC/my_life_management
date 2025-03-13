@@ -22,7 +22,6 @@ return new class extends Migration
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Skill description order');
             $table->unsignedInteger('skill_id')->comment('Skill id primary key');
             $table->timestamps();
-            $table->foreign('skill_id')->references('id')->on('t_skill');
         });
     }
 

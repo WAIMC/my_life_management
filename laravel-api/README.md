@@ -94,21 +94,13 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     DB_PASSWORD=
     ```
 -   **Step 9: Open cmd or terminal run command below to migrate database**
-    -   **Step 9.1: Migration tables master**
+    -   **Step 9.1: Migration all tables**
         ```
-        php artisan migrate --path=database/migrations/tables/masters
+        php artisan migrate:all
         ```
-    -   **Step 9.2: Migration tables histories**
+    -   **Step 9.2: Migration rollback all**
         ```
-        php artisan migrate --path=database/migrations/tables/histories
-        ```
-    -   **Step 9.3: Migration triggers**
-        ```
-        php artisan migrate --path=database/migrations/triggers
-        ```
-    -   **Step 9.4: Migration views**
-        ```
-        php artisan migrate --path=database/migrations/views
+        php artisan migrate:rollback-all
         ```
 -   **Step 10: Execute all sql query in file `data_init.sql`**
 -   **Step 11: Open file `.env` , get information connect redis to edit**
