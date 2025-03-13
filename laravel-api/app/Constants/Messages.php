@@ -62,8 +62,7 @@ class Messages
   const E0608 = 'Invalid type member';
   const E0609 = 'Token already exist in blacklist';
 
-
-  const TEST = 'demo test message';
+  const TEST = 'demo test message2';
 
   /**
    * Get message
