@@ -2,11 +2,105 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller as BaseController;
+use Exception;
+use App\Constants\Messages;
+use App\Constants\CommonVal;
+use App\Utilities\JsonWebToken;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use InvalidArgumentException;
+use LogicException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
-class Controller extends BaseController
+class Controller
 {
-    use AuthorizesRequests, ValidatesRequests;
+  /**
+   * Handle request common
+   * 
+   * @param mixed @callback
+   * @return Response
+   */
+  public static function handleRequest(mixed $callback): Response
+  {
+    DB::beginTransaction();
+    try {
+      $data = $callback();
+      DB::commit();
+
+      return self::renderResponse(
+        $data,
+        [false, CommonVal::HTTP_OK, null]
+      );
+    } catch (
+      AuthenticationException
+      | TokenMismatchException $e
+    ) {
+      var_dump('Error 1 :', $e->getMessage());
+      DB::rollBack();
+
+      return self::renderResponse(
+        false,
+        [true, $e->getCode(), $e->getMessage()]
+      );
+    } catch (
+      AuthorizationException
+      | ThrottleRequestsException
+      | MethodNotAllowedHttpException
+      | NotFoundHttpException
+      | HttpException
+      | LogicException $e
+    ) {
+      var_dump('Error 2 :', $e->getMessage());
+      return self::renderResponse(
+        false,
+        [true, $e->getCode(), $e->getMessage()]
+      );
+    } catch (InvalidArgumentException | ValidationException $e) {
+      var_dump('Error 3 :', $e->getMessage());
+      return self::renderResponse(
+        false,
+        [
+          true,
+          $e->getCode() ?: CommonVal::HTTP_UNPROCESSABLE_CONTENT,
+          $e->validator->errors()->messages()
+        ]
+      );
+    } catch (Exception $e) {
+      DB::rollBack();
+      var_dump('Error 4 :', $e->getMessage());
+
+      return self::renderResponse(
+        false,
+        [true, CommonVal::HTTP_INTERNAL_SERVER_ERROR, Messages::E0500]
+      );
+    }
+  }
+
+  /**
+   * Render response api
+   * 
+   * @param mixed $data
+   * @param array $error
+   * @return Response
+   */
+  private static function renderResponse(mixed $data, array $error): Response
+  {
+    list($status, $code, $messages) = $error;
+
+    return response()->json([
+      'data' => $data,
+      'error' => [
+        'status' => $status,
+        'code' => $code,
+        'messages' => $messages
+      ]
+    ]);
+  }
 }

@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Resources\master;
+
+use App\constants\CommonVal;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class SkillResource extends JsonResource
+{
+  /**
+   * Transform the resource into an array.
+   *
+   * @return array<string, mixed>
+   */
+  public function toArray(Request $request): array
+  {
+    return [
+      'id'          => (int)$this->id,
+      'parent_id'   => (int)$this->parent_id,
+      'name'        => (string)$this->name,
+      'slug'        => (string)$this->slug,
+      'status'      => (int)$this->status,
+      'is_display'  => (bool)$this->is_display,
+      'rank_order'  => (int)$this->rank_order,
+      'update_at'   => date(CommonVal::DATE_FORMAT, strtotime($this->updated_at))
+    ];
+  }
+}
