@@ -102,3 +102,42 @@ giữa nginx và php thông qua service php-fpm
 - Kiểm tra kết nỗi từ bên ngoài với docker
   + config firewall container docker posgresql cho phép port
   + Config firewall window (nếu dùng window) window defence firewall inbound cho phép port của posgresl
+
+
+
+
+/////////////////////////////////////////////////
+Cài đặt Docker trên WSL
+  Cập nhật hệ thống và cài đặt Docker
+    sudo apt-get update
+    sudo apt-get install -y docker.io docker-compose
+  
+  Khởi động Docker:
+    sudo service docker start
+
+Khởi chạy môi trường, truy cập vào path project docker folder
+  docker-compose up -d --build
+
+Truy cập các service:
+  Laravel API: http://localhost:8080
+  Next.js front-end: http://localhost:3000
+  FastAPI: http://localhost:8000
+
+Lưu ý
+Đảm bảo các port (8080, 3000, 8000, 5432, 6379) không bị xung đột trên WSL.
+
+
+Mục tiêu
+Bạn muốn thiết lập một môi trường phát triển sử dụng Docker để chạy một website với các thành phần sau:
+  Laravel 11: API chính, sử dụng PHP 8.2 và Nginx.
+  Next.js: Front-end, sử dụng Node.js 20.
+  FastAPI: API thứ hai, sử dụng Python 3.11.
+  PostgreSQL: Cơ sở dữ liệu chính, phiên bản 15.
+  Nginx: Web server để phục vụ Laravel API.
+  Redis: Dùng cho caching hoặc quản lý session, phiên bản mới nhất.
+
+Mỗi công nghệ sẽ chạy trong container riêng, với các file cấu hình được lưu trong thư mục riêng biệt. File docker-compose.yml sẽ quản lý việc xây dựng và kết nối các container. Môi trường được thiết kế để hoạt động trên WSL (Ubuntu) và tương thích với nhiều hệ điều hành.
+
+
+docker-compose down -v
+docker-compose up -d --build
