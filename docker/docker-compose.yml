@@ -5,13 +5,17 @@ services:
     volumes:
       - ../laravel-api:/var/www/laravel-api
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5433
-      DB_DATABASE: laravel
-      DB_USERNAME: laravel
-      DB_PASSWORD: secret
-      REDIS_HOST: redis
+      # PostgreSQL
+      DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
+      DB_PORT: ${POSTGRES_PORT_INSIDE_ENV}
+      DB_DATABASE: ${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Redis
+      REDIS_HOST: ${REDIS_HOST_INSIDE_ENV}
+      REDIS_PORT: ${REDIS_PORT_INSIDE_ENV}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     depends_on:
       - ml-postgres
       - ml-redis
@@ -24,7 +28,7 @@ services:
       - ../laravel-api:/var/www/laravel-api
       # - ./nextjs-fe:/var/www/nextjs
     ports:
-      - "90:80"
+      - "${NGINX_PORT_OUTSIDE_ENV}:${NGINX_PORT_INSIDE_ENV}"
     depends_on:
       - ml-php
       # - ml-nextjs
@@ -34,15 +38,14 @@ services:
     container_name: ml-postgres
     image: postgres:15-alpine
     volumes:
-      - ./postgres/data:/var/lib/postgresql/data
       - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     environment:
-      POSTGRES_DB: ml_db
-      POSTGRES_USER: ml_user
-      POSTGRES_PASSWORD: ml_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT_OUTSIDE_ENV}:${POSTGRES_PORT_INSIDE_ENV}"
 
   ml-redis:
     container_name: ml-redis
@@ -50,7 +53,10 @@ services:
     volumes:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT_OUTSIDE_ENV}:${REDIS_PORT_INSIDE_ENV}"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   # ml-nextjs:
   #   container_name: ml-nextjs
