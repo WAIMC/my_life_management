@@ -3,18 +3,18 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\master\ApiController;
-use App\Http\Controllers\master\RoleController;
-use App\Http\Controllers\master\AdminController;
-use App\Http\Controllers\master\SkillController;
-use App\Http\Controllers\master\ApiRoleController;
-use App\Http\Controllers\master\FeatureController;
-use App\Http\Controllers\master\CategoryController;
-use App\Http\Controllers\master\AdminRoleController;
-use App\Http\Controllers\master\DepartmentController;
-use App\Http\Controllers\master\AdminDepartmentController;
-use App\Http\Controllers\master\PolicyDepartmentController;
-use App\Http\Controllers\master\DepartmentManagementController;
+use App\Http\Controllers\Master\ApiController;
+use App\Http\Controllers\Master\RoleController;
+use App\Http\Controllers\Master\AdminController;
+use App\Http\Controllers\Master\SkillController;
+use App\Http\Controllers\Master\ApiRoleController;
+use App\Http\Controllers\Master\FeatureController;
+use App\Http\Controllers\Master\CategoryController;
+use App\Http\Controllers\Master\AdminRoleController;
+use App\Http\Controllers\Master\DepartmentController;
+use App\Http\Controllers\Master\AdminDepartmentController;
+use App\Http\Controllers\Master\PolicyDepartmentController;
+use App\Http\Controllers\Master\DepartmentManagementController;
 
 Route::prefix('admin')->group(function () {
   Route::post('login', [AdminController::class, 'login']);

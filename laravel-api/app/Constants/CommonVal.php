@@ -1,6 +1,6 @@
 <?php
 
-namespace App\constants;
+namespace App\Constants;
 
 class CommonVal
 {
