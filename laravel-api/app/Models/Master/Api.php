@@ -66,4 +66,9 @@ class Api extends Model
       'feature_id' => 'Feature ID',
     ];
   }
+
+  public function feature()
+  {
+      return $this->belongsTo(Feature::class, 'feature_id');
+  }
 }

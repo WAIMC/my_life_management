@@ -55,4 +55,9 @@ class Role extends Model
       'is_active'  => 'Active role',
     ];
   }
+
+  public function features()
+  {
+      return $this->belongsToMany(Feature::class, 't_role_feature');
+  }
 }

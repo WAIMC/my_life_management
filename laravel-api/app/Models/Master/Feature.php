@@ -58,4 +58,14 @@ class Feature extends Model
       'status'      => 'Feature status',
     ];
   }
+
+  public function apis()
+  {
+      return $this->hasMany(Api::class, 'feature_id');
+  }
+
+  public function roles()
+  {
+      return $this->belongsToMany(Role::class, 't_role_feature');
+  }
 }
