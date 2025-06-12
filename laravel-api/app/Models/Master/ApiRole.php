@@ -20,6 +20,9 @@ class ApiRole extends Model
    */
   protected $table = 't_api_role';
 
+  public $incrementing = false;
+  protected $primaryKey = null;
+
   /**
    * The attributes that are mass assignable.
    *

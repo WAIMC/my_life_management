@@ -19,6 +19,9 @@ class AdminDepartment extends Model
    */
   protected $table = 't_admin_department';
 
+  public $incrementing = false;
+  protected $primaryKey = null;
+
   /**
    * The attributes that are mass assignable.
    *

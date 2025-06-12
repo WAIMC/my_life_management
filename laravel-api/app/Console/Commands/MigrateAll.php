@@ -23,7 +23,7 @@ class MigrateAll extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): void
     {
         $paths = [
             'database/migrations/tables/masters',
