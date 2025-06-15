@@ -16,6 +16,9 @@ class AdminRole extends Model
    */
   protected $table = 't_admin_role';
 
+  public $incrementing = false;
+  protected $primaryKey = null;
+
   /**
    * The attributes that are mass assignable.
    *

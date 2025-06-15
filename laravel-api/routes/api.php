@@ -17,17 +17,21 @@ use App\Http\Controllers\Master\PolicyDepartmentController;
 use App\Http\Controllers\Master\DepartmentManagementController;
 
 Route::prefix('admin')->group(function () {
-  Route::post('login', [AdminController::class, 'login']);
-  Route::post('refresh-token', [AdminController::class, 'refreshToken']);
+  Route::prefix('account')->group(function () {
+    Route::post('login', [AdminController::class, 'login']);
+    Route::post('refresh-token', [AdminController::class, 'refreshToken']);
+  });
 
   Route::middleware(AdminMiddleware::class)->group(function () {
 
     // Admin
-    Route::post('logout', [AdminController::class, 'logout']);
-    Route::get('list', [AdminController::class, 'list']);
-    Route::post('store', [AdminController::class, 'store']);
-    Route::put('update/{id}', [AdminController::class, 'update']);
-    Route::delete('delete/{id}', [AdminController::class, 'delete']);
+    Route::prefix('account')->group(function () {
+      Route::post('logout', [AdminController::class, 'logout']);
+      Route::get('list', [AdminController::class, 'list']);
+      Route::post('store', [AdminController::class, 'store']);
+      Route::put('update/{id}', [AdminController::class, 'update']);
+      Route::delete('delete/{id}', [AdminController::class, 'delete']);
+    });
 
     // Role
     Route::prefix('role')->group(function () {
