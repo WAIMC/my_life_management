@@ -1,297 +1,244 @@
-Quy trình sử dụng AI để tạo mã CRUD trong Laravel
-Quy trình này hướng dẫn cách sử dụng AI (như GitHub Copilot) để tự động hóa việc tạo mã CRUD cho một bảng cụ thể trong Laravel. Rule này áp dụng cho bất kỳ bảng nào, ví dụ: bảng t_admin. Thành viên team sẽ clone repository, đọc tài liệu này, và yêu cầu AI tạo mã dựa trên rule dưới đây.
-Mục đích
+Hướng dẫn quy ước mã hóa (Coding Convention) trong dự án Laravel API
+Tài liệu này định nghĩa các quy tắc và cấu trúc cho dự án Laravel API, nhằm đảm bảo tính nhất quán, dễ mở rộng, bảo trì, và dễ tiếp cận cho các thành viên mới. Các thành phần bao gồm: Thiết kế cơ sở dữ liệu, Migration, Model, Controller, Service, Validate Request, Repository, Interface, Resource, và Route. Tất cả tuân theo chuẩn PSR-2/PSR-12 của Laravel.
 
-Tự động hóa việc tạo mã CRUD.
-Đảm bảo tính nhất quán trong cấu trúc mã.
-Dễ dàng áp dụng cho mọi thành viên trong team.
+Cấu trúc hoạt động của một luồng API tối ưu
+Một luồng API tối ưu được phân chia nhiệm vụ rõ ràng giữa các thành phần:
 
-Cách sử dụng
+Route: Định nghĩa endpoint API, ánh xạ đến các phương thức trong controller.
+Controller: Nhận request, validate input (sử dụng FormRequest), gọi service xử lý logic nghiệp vụ, trả về response (sử dụng Resource).
+Service: Chứa logic nghiệp vụ, tương tác với repository để truy cập dữ liệu.
+Repository: Tách biệt logic truy cập dữ liệu, tương tác trực tiếp với model.
+Model: Định nghĩa cấu trúc dữ liệu và quan hệ.
+Resource: Chuyển đổi dữ liệu model thành định dạng JSON cho API response.
+FormRequest: Xử lý validation cho request input.
 
-Clone repository: Lấy source code chứa tài liệu này.
-Đọc tài liệu: Xem docs/crud_rule.md để hiểu quy trình.
-Yêu cầu AI: Trên editor (như VSCode với GitHub Copilot), nhập yêu cầu:"Tạo mã CRUD cho bảng t_admin theo rule trong docs/crud_rule.md với các cột: id, email (string, 30), user_name (string, 50), timestamps."
-Review và chỉnh sửa: Kiểm tra mã được tạo và điều chỉnh nếu cần.
 
-Rule chi tiết cho AI
-1. Migration
+Thiết kế cơ sở dữ liệu
+Table
 
-Tên file: database/migrations/[timestamp]_create_[table]_table.php
-Cấu trúc:
+Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh, viết tắt nếu tên dài.
+Phạm vi:
+Hậu tố _mst: Bảng master (dữ liệu chung quan trọng, ví dụ: admin, hệ thống).
+Hậu tố _mgmt: Bảng management (chức năng quản lý của phòng ban).
+Hậu tố _mst_hist hoặc _mgmt_hist: Bảng lịch sử.
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
-class Create[Table]Table extends Migration
-{
-    public function up()
-    {
-        Schema::create('[table]', function (Blueprint $table) {
-            $table->id();
-            // Thêm các cột theo yêu cầu, ví dụ:
-            $table->string('email', 30)->comment('Admin email');
-            $table->string('user_name', 50)->comment('Admin user name');
-            $table->timestamps();
-        });
-    }
+Bảng trung gian (Pivot): Đặt tên gồm tên các bảng liên quan, ví dụ: product_tag_mgmt (trung gian giữa product_mgmt và tag_mgmt).
 
-    public function down()
-    {
-        Schema::dropIfExists('[table]');
-    }
+Column
+
+Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh, không viết tắt.
+Yêu cầu bắt buộc: Mọi bảng phải có created_at và updated_at (kiểu timestamp).
+Khóa chính: Dùng [table_name]_id, kiểu auto-increment.
+Khóa ngoại: Dùng hậu tố _id, ví dụ: category_id.
+Boolean: Tiền tố is_ hoặc has_, ví dụ: is_active.
+Kiểu dữ liệu: Phân tích kích thước tối thiểu/tối đa, ví dụ: phone (12 ký tự), email (320 ký tự). Định nghĩa thuộc tính như nullable, default, unique.
+Chú thích: Mô tả ngắn gọn, viết hoa chữ cái đầu, giải thích chi tiết trong tài liệu riêng.
+
+Procedure
+
+Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
+Hậu tố: [procedure_name]_[mst|mgmt|mst_hist|mgmt_hist]_function.
+
+View
+
+Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
+Tiền tố: view_[view_name]_[mst|mgmt|mst_hist|mgmt_hist].
+
+Trigger
+
+Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
+Tiền tố: trigger_[insert|update|delete]_[before|after]_[table_name]_[mst|mgmt|mst_hist|mgmt_hist].
+
+Sequence
+
+Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
+Hậu tố: [table_name]_[mst|mgmt|mst_hist|mgmt_hist]_seq.
+
+
+Migration
+
+Tạo file:php artisan make:migration [create|update]_[component_name]_[component] --path=database/migrations/[sub_path]
+
+
+[create|update]: create cho mới, update cho chỉnh sửa.
+[component]: table|view|procedure|trigger|sequence.
+
+
+Định danh: yyyy_mm_dd_hhmmss_[action]_[component_name]_[component].php.
+Sub Path:
+Table: \Table\[Master|Management|History\Master|History\Management].
+Procedure: \Procedure\[Master|Management|History\Master|History\Management].
+View: \View\[Master|Management|History\Master|History\Management].
+Trigger: \Trigger\[Master|Management|History\Master|History\Management]\[table_name].
+Sequence: \Sequence\[Master|Management|History\Master|History\Management].
+
+
+Quy tắc:
+Dùng Schema::create hoặc Schema::table cho bảng.
+Dùng DB::statement hoặc DB::unprepared cho view, procedure, trigger, sequence trong up().
+Viết logic rollback trong down() (drop hoặc update ngược lại).
+
+
+
+
+Model
+
+Tạo file:php artisan make:model [ModelName] --path=app/Models/[sub_path]
+
+
+Định danh: Dùng PascalCase, số ít, dựa trên tên bảng (snake_case → PascalCase).
+Sub Path: \Master, \Management, \History\Master, \History\Management.
+Thuộc tính:
+$table = '[table_name]': Tên bảng theo thiết kế cơ sở dữ liệu.
+$fillable = ['column1', 'column2']: Các cột cho phép gán giá trị.
+const STATUS = ['active' => 1, 'inactive' => 0]: Hằng số cho trạng thái.
+
+
+Quan hệ:public function relatedModel(): BelongsTo {
+    return $this->belongsTo(RelatedModel::class);
 }
 
 
-Thay thế: [table] là tên bảng (ví dụ: t_admin), [Table] là tên bảng dạng CamelCase (ví dụ: TAdmin).
-
-2. Model
-
-Đường dẫn: app/Models/[Table].php
-Cấu trúc:
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-class [Table] extends Model
-{
-    protected $table = '[table]';
-    protected $fillable = ['email', 'user_name']; // Thêm các cột từ yêu cầu
+Scope:public function scopeActive($query) {
+    return $query->where('status', 1);
 }
 
 
-Thay thế: [table] và [Table] như trên.
 
-3. Repository Interface
 
-Đường dẫn: app/Contracts/Repositories/[Table]RepositoryInterface.php
-Cấu trúc:
+Controller
 
-namespace App\Contracts\Repositories;
+Tạo file:php artisan make:controller [ControllerName]Controller --path=app/Http/Controllers/[sub_path]
 
-interface [Table]RepositoryInterface
-{
-    public function all();
-    public function create(array $data);
-    public function find($id);
-    public function update($id, array $data);
-    public function delete($id);
-}
 
-4. Repository
+Định danh: [ModelName]Controller, dùng PascalCase.
+Sub Path: \Master, \Management, \History\Master, \History\Management.
+Quy tắc:
+Dùng FormRequest để validate.
+Gọi service xử lý logic.
+Trả về Resource cho response.
+Sử dụng middleware, authentication, authorization khi cần.
 
-Đường dẫn: app/Repositories/[Table]Repository.php
-Cấu trúc:
 
-namespace App\Repositories;
-
-use App\Models\[Table];
-use App\Contracts\Repositories\[Table]RepositoryInterface;
-
-class [Table]Repository implements [Table]RepositoryInterface
-{
-    protected $model;
-
-    public function __construct([Table] $model)
-    {
-        $this->model = $model;
-    }
-
-    public function all()
-    {
-        return $this->model->all();
-    }
-
-    public function create(array $data)
-    {
-        return $this->model->create($data);
-    }
-
-    public function find($id)
-    {
-        return $this->model->find($id);
-    }
-
-    public function update($id, array $data)
-    {
-        $record = $this->find($id);
-        $record->update($data);
-        return $record;
-    }
-
-    public function delete($id)
-    {
-        $record = $this->find($id);
-        $record->delete();
-        return true;
-    }
-}
-
-5. Service
-
-Đường dẫn: app/Services/[Table]Service.php
-Cấu trúc:
-
-namespace App\Services;
-
-use App\Repositories\[Table]Repository;
-use App\Contracts\Repositories\[Table]RepositoryInterface;
-
-class [Table]Service
-{
-    protected $repository;
-
-    public function __construct([Table]RepositoryInterface $repository)
-    {
-        $this->repository = $repository;
-    }
-
-    public function getAll()
-    {
-        return $this->repository->all();
-    }
-
-    public function create(array $data)
-    {
-        return $this->repository->create($data);
-    }
-
-    public function getById($id)
-    {
-        return $this->repository->find($id);
-    }
-
-    public function update($id, array $data)
-    {
-        return $this->repository->update($id, $data);
-    }
-
-    public function delete($id)
-    {
-        return $this->repository->delete($id);
-    }
-}
-
-6. Controller
-
-Đường dẫn: app/Http/Controllers/[Table]Controller.php
-Cấu trúc:
-
-namespace App\Http\Controllers;
-
-use App\Services\[Table]Service;
-use App\Http\Requests\[Table]StoreRequest;
-use App\Http\Requests\[Table]UpdateRequest;
-use Illuminate\Http\Request;
-
-class [Table]Controller extends Controller
-{
-    protected $service;
-
-    public function __construct([Table]Service $service)
-    {
-        $this->service = $service;
-    }
-
-    public function index()
-    {
-        return response()->json($this->service->getAll());
-    }
-
-    public function store([Table]StoreRequest $request)
-    {
-        return response()->json($this->service->create($request->validated()), 201);
-    }
-
-    public function show($id)
-    {
-        return response()->json($this->service->getById($id));
-    }
-
-    public function update([Table]UpdateRequest $request, $id)
-    {
-        return response()->json($this->service->update($id, $request->validated()));
-    }
-
-    public function destroy($id)
-    {
-        $this->service->delete($id);
-        return response()->json(null, 204);
-    }
-}
-
-7. Validation
-
-Store Request: app/Http/Requests/[Table]StoreRequest.php
-
-namespace App\Http\Requests;
-
-use Illuminate\Foundation\Http\FormRequest;
-
-class [Table]StoreRequest extends FormRequest
-{
-    public function authorize()
-    {
-        return true;
-    }
-
-    public function rules()
-    {
-        return [
-            'email' => 'required|email|unique:[table],email',
-            'user_name' => 'required|string|max:50',
-            // Thêm rules từ yêu cầu
-        ];
-    }
+Ví dụ:public function store(StoreRequest $request): Resource {
+    return new ModelResource($this->service->store($request->validated()));
 }
 
 
-Update Request: app/Http/Requests/[Table]UpdateRequest.php
 
-namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+Service
 
-class [Table]UpdateRequest extends FormRequest
-{
-    public function authorize()
-    {
-        return true;
-    }
+Vị trí: app/Services/[sub_path]/[ServiceName]Service.php.
+Định danh: [ModelName]Service, dùng PascalCase.
+Sub Path: \Master, \Management, \History\Master, \History\Management.
+Quy tắc:
+Chứa logic nghiệp vụ.
+Tương tác với repository để truy cập dữ liệu.
+Inject dependency qua interface.
 
-    public function rules()
-    {
-        return [
-            'email' => 'required|email|unique:[table],email,' . $this->route('id'),
-            'user_name' => 'required|string|max:50',
-            // Thêm rules từ yêu cầu
-        ];
-    }
+
+Ví dụ:public function store(array $data): Model {
+    return $this->repository->create($data);
 }
 
-8. Route
 
-Đường dẫn: routes/api.php
-Cấu trúc:
 
-use App\Http\Controllers\[Table]Controller;
 
-Route::prefix('[table]')->controller([Table]Controller::class)->group(function () {
-    Route::get('/', 'index');
-    Route::post('/', 'store');
-    Route::get('{id}', 'show');
-    Route::put('{id}', 'update');
-    Route::delete('{id}', 'destroy');
+Validate Request
+
+Tạo file:php artisan make:request [ModelName][Action]Request --path=app/Http/Requests/[sub_path]
+
+
+Định danh: [ModelName][Action]Request, ví dụ: CategoryStoreRequest.
+Sub Path: \Master, \Management, \History\Master, \History\Management.
+Quy tắc:
+Dùng rules() để định nghĩa quy tắc validate.
+Dùng messages() để tùy chỉnh thông báo lỗi.
+
+
+Ví dụ:public function rules(): array {
+    return ['name' => 'required|string|max:50'];
+}
+
+
+
+
+Repository
+
+Vị trí: app/Repositories/[sub_path]/[ModelName]Repository.php.
+Định danh: [ModelName]Repository, dùng PascalCase.
+Sub Path: \Master, \Management, \History\Master, \History\Management.
+Quy tắc: Tách biệt logic truy cập dữ liệu, tương tác với model.
+Ví dụ:public function create(array $data): Model {
+    return Model::create($data);
+}
+
+
+
+
+Interface
+
+Vị trí: app/Repositories/Interfaces/[ModelName]RepositoryInterface.php.
+Định danh: [ModelName]RepositoryInterface.
+Quy tắc: Định nghĩa contract cho repository.
+Ví dụ:public function create(array $data): Model;
+
+
+
+
+Resource
+
+Tạo file:php artisan make:resource [ModelName]Resource --path=app/Http/Resources/[sub_path]
+
+
+Định danh: [ModelName]Resource.
+Sub Path: \Master, \Management, \History\Master, \History\Management.
+Quy tắc: Chuyển đổi dữ liệu model thành JSON.
+Ví dụ:public function toArray($request): array {
+    return ['id' => $this->id, 'name' => $this->name];
+}
+
+
+
+
+Route
+
+Vị trí: routes/api.php.
+Quy tắc:
+Nhóm route theo phạm vi với prefix: master, management, history.
+
+
+Ví dụ:Route::prefix('master')->group(function () {
+    Route::resource('categories', CategoryController::class);
 });
 
-Ví dụ thực tế
 
-Yêu cầu AI: "Tạo mã CRUD cho bảng t_admin theo rule trong docs/crud_rule.md với các cột: id, email (string, 30), user_name (string, 50), timestamps."
-AI sẽ tạo các file theo cấu trúc trên, thay [table] bằng t_admin, [Table] bằng TAdmin.
 
-Lưu ý
 
-Đảm bảo các cột trong $fillable và rules() khớp với thiết kế bảng.
-Review mã để thêm logic nghiệp vụ nếu cần (ví dụ: mã hóa mật khẩu, quan hệ bảng).
+Mapping cấu trúc master|history|management
 
+Mỗi phạm vi có thư mục con trong: Models, Controllers, Services, Repositories, Resources, Http/Requests.
+Ví dụ:
+app/Models/Master/Category.php
+app/Http/Controllers/Master/CategoryController.php
+app/Services/Master/CategoryService.php
+
+
+
+
+Khi tạo một thành phần mới
+
+Xác định phạm vi (master, management, history).
+Tạo Model và Migration.
+Tạo Repository và Interface.
+Tạo Service.
+Tạo Controller.
+Tạo FormRequest.
+Tạo Resource.
+Định nghĩa Route.
+
+
+Kết luận
+Tài liệu này cung cấp một bộ quy tắc đầy đủ, chi tiết, giúp dự án Laravel API có cấu trúc rõ ràng, dễ mở rộng, và bảo trì. Các thành viên mới có thể dễ dàng tiếp cận và triển khai nhờ sự phân chia nhiệm vụ rõ ràng và tính nhất quán trong cách đặt tên, vị trí file, và cách các thành phần tương tác với nhau.

@@ -107,6 +107,6 @@ class Admin extends Authenticatable
 
   public function roles()
   {
-      return $this->belongsToMany(Role::class, 't_admin_role');
+    return $this->belongsToMany(Role::class, 't_admin_role');
   }
 }
