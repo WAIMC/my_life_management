@@ -1,244 +1,404 @@
-Hướng dẫn quy ước mã hóa (Coding Convention) trong dự án Laravel API
-Tài liệu này định nghĩa các quy tắc và cấu trúc cho dự án Laravel API, nhằm đảm bảo tính nhất quán, dễ mở rộng, bảo trì, và dễ tiếp cận cho các thành viên mới. Các thành phần bao gồm: Thiết kế cơ sở dữ liệu, Migration, Model, Controller, Service, Validate Request, Repository, Interface, Resource, và Route. Tất cả tuân theo chuẩn PSR-2/PSR-12 của Laravel.
+# Hướng dẫn quy ước mã hóa và kiến trúc cho dự án API Laravel
 
-Cấu trúc hoạt động của một luồng API tối ưu
-Một luồng API tối ưu được phân chia nhiệm vụ rõ ràng giữa các thành phần:
+## Giới thiệu
 
-Route: Định nghĩa endpoint API, ánh xạ đến các phương thức trong controller.
-Controller: Nhận request, validate input (sử dụng FormRequest), gọi service xử lý logic nghiệp vụ, trả về response (sử dụng Resource).
-Service: Chứa logic nghiệp vụ, tương tác với repository để truy cập dữ liệu.
-Repository: Tách biệt logic truy cập dữ liệu, tương tác trực tiếp với model.
-Model: Định nghĩa cấu trúc dữ liệu và quan hệ.
-Resource: Chuyển đổi dữ liệu model thành định dạng JSON cho API response.
-FormRequest: Xử lý validation cho request input.
+Tài liệu này cung cấp các quy tắc mã hóa và hướng dẫn kiến trúc để phát triển API sử dụng Laravel, đảm bảo tính nhất quán, khả năng mở rộng, bảo trì và dễ tiếp cận cho các nhà phát triển. Các quy tắc được thiết kế để có thể tái sử dụng cho nhiều nền tảng công nghệ với các điều chỉnh nhỏ, đồng thời áp dụng cụ thể vào dự án API Laravel.
 
+---
 
-Thiết kế cơ sở dữ liệu
-Table
+## Tổng quan kiến trúc
 
-Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh, viết tắt nếu tên dài.
-Phạm vi:
-Hậu tố _mst: Bảng master (dữ liệu chung quan trọng, ví dụ: admin, hệ thống).
-Hậu tố _mgmt: Bảng management (chức năng quản lý của phòng ban).
-Hậu tố _mst_hist hoặc _mgmt_hist: Bảng lịch sử.
+### Kiến trúc tầng
 
+Sử dụng **kiến trúc tầng (Layered Architecture)** với các tầng:
 
-Bảng trung gian (Pivot): Đặt tên gồm tên các bảng liên quan, ví dụ: product_tag_mgmt (trung gian giữa product_mgmt và tag_mgmt).
+- **Service Layer:** Chứa logic kinh doanh, phối hợp các hoạt động dữ liệu.
+- **Repository Layer:** Trừu tượng hóa truy cập dữ liệu, tách rời Service Layer khỏi nguồn dữ liệu.
+- **Domain Layer:** Đại diện cho dữ liệu và mối quan hệ, thông qua các Model.
 
-Column
+> Tổ chức theo module (ví dụ: `Master`, `Management`, `History`) để phân chia chức năng.
 
-Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh, không viết tắt.
-Yêu cầu bắt buộc: Mọi bảng phải có created_at và updated_at (kiểu timestamp).
-Khóa chính: Dùng [table_name]_id, kiểu auto-increment.
-Khóa ngoại: Dùng hậu tố _id, ví dụ: category_id.
-Boolean: Tiền tố is_ hoặc has_, ví dụ: is_active.
-Kiểu dữ liệu: Phân tích kích thước tối thiểu/tối đa, ví dụ: phone (12 ký tự), email (320 ký tự). Định nghĩa thuộc tính như nullable, default, unique.
-Chú thích: Mô tả ngắn gọn, viết hoa chữ cái đầu, giải thích chi tiết trong tài liệu riêng.
+---
 
-Procedure
+### Luồng yêu cầu và phản hồi
 
-Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
-Hậu tố: [procedure_name]_[mst|mgmt|mst_hist|mgmt_hist]_function.
+- **Yêu cầu:**  
+  `Client → Route → Middleware → Controller → Form Request (Validation) → Service → Repository → Model → Database`
 
-View
+- **Phản hồi:**  
+  `Database → Model → Repository → Service → Controller → API Resource → JSON Response`
 
-Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
-Tiền tố: view_[view_name]_[mst|mgmt|mst_hist|mgmt_hist].
+---
 
-Trigger
+## Các thành phần chính
 
-Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
-Tiền tố: trigger_[insert|update|delete]_[before|after]_[table_name]_[mst|mgmt|mst_hist|mgmt_hist].
+| Thành phần       | Vai trò                                                                 |
+|------------------|-------------------------------------------------------------------------|
+| **Route**        | Định nghĩa các endpoint API trong `routes/api.php`.                     |
+| **Controller**   | Xử lý yêu cầu HTTP, gọi `Service`, trả về phản hồi qua `API Resource`.  |
+| **Form Request** | Xác thực dữ liệu đầu vào, giữ `Controller` gọn gàng.                    |
+| **Service**      | Chứa logic kinh doanh, phối hợp với `Repository`.                       |
+| **Repository**   | Trừu tượng hóa truy cập dữ liệu, thực hiện `Interface`.                 |
+| **Model**        | Đại diện cho bảng cơ sở dữ liệu và mối quan hệ.                         |
+| **API Resource** | Chuyển đổi dữ liệu thành JSON chuẩn, che giấu cấu trúc cơ sở dữ liệu.   |
 
-Sequence
+## Quy ước mã hóa
 
-Định danh: Dùng snake_case, số ít, không dấu, tiếng Anh.
-Hậu tố: [table_name]_[mst|mgmt|mst_hist|mgmt_hist]_seq.
+### Tiêu chuẩn mã hóa
 
+- Tuân thủ **PSR-12** để đảm bảo mã nguồn nhất quán và dễ đọc.
+- Sử dụng **tiếng Anh số ít** cho tất cả tên (file, class, method, variable, comment).
 
-Migration
+---
 
-Tạo file:php artisan make:migration [create|update]_[component_name]_[component] --path=database/migrations/[sub_path]
+### Quy tắc đặt tên
 
+| Loại                        | Quy tắc        | Ví dụ                             |
+|-----------------------------|----------------|-----------------------------------|
+| **Class**<br>(Model, Controller, Service) | PascalCase     | `ProductService`, `UserController` |
+| **Method, Variable**        | camelCase      | `getAllProducts`, `userName`     |
+| **Constant**                | CONSTANT_CASE  | `STATUS_ACTIVE = 1`              |
+| **Database Table, Column**  | snake_case     | `product_mgmt`, `rank_order`     |
+| **Route File**              | kebab-case     | `user-permissions.php`           |
+| **Route Parameter**         | snake_case     | `created_from=2024-01-01`        |
 
-[create|update]: create cho mới, update cho chỉnh sửa.
-[component]: table|view|procedure|trigger|sequence.
+---
 
+### RESTful URL:
 
-Định danh: yyyy_mm_dd_hhmmss_[action]_[component_name]_[component].php.
-Sub Path:
-Table: \Table\[Master|Management|History\Master|History\Management].
-Procedure: \Procedure\[Master|Management|History\Master|History\Management].
-View: \View\[Master|Management|History\Master|History\Management].
-Trigger: \Trigger\[Master|Management|History\Master|History\Management]\[table_name].
-Sequence: \Sequence\[Master|Management|History\Master|History\Management].
+- `GET: /api/user-permissions?created_from=2024-01-01&is_active=true`
+- `POST: /api/user-permissions`
+- `PUT: /api/user-permissions/{id}`
+- `DELETE: /api/user-permissions/{id}`
 
+## Bình luận
 
-Quy tắc:
-Dùng Schema::create hoặc Schema::table cho bảng.
-Dùng DB::statement hoặc DB::unprepared cho view, procedure, trigger, sequence trong up().
-Viết logic rollback trong down() (drop hoặc update ngược lại).
+- Mỗi `method` và `class` phải có bình luận mô tả **mục đích**, **kiểu tham số**, và **kiểu trả về**.
 
+### Ví dụ:
 
-
-
-Model
-
-Tạo file:php artisan make:model [ModelName] --path=app/Models/[sub_path]
-
-
-Định danh: Dùng PascalCase, số ít, dựa trên tên bảng (snake_case → PascalCase).
-Sub Path: \Master, \Management, \History\Master, \History\Management.
-Thuộc tính:
-$table = '[table_name]': Tên bảng theo thiết kế cơ sở dữ liệu.
-$fillable = ['column1', 'column2']: Các cột cho phép gán giá trị.
-const STATUS = ['active' => 1, 'inactive' => 0]: Hằng số cho trạng thái.
-
-
-Quan hệ:public function relatedModel(): BelongsTo {
-    return $this->belongsTo(RelatedModel::class);
+```php
+/**
+ * Lấy danh sách sản phẩm theo danh mục.
+ *
+ * @param int $categoryId
+ * @return array
+ */
+public function getProductsByCategory(int $categoryId): array
+{
+    // Logic
 }
+```
 
+## Thiết kế cơ sở dữ liệu
 
-Scope:public function scopeActive($query) {
-    return $query->where('status', 1);
+### Bảng
+
+- **Tên bảng:** `snake_case`, **số ít**, với hậu tố phân loại như sau:
+
+| Hậu tố     | Ý nghĩa                         | Ví dụ               |
+|------------|----------------------------------|----------------------|
+| `_mst`     | Dữ liệu chủ (master data)       | `category_mst`       |
+| `_mgmt`    | Dữ liệu quản lý (management)    | `product_mgmt`       |
+| `_hist`    | Dữ liệu lịch sử (history)       | `order_hist`         |
+
+- **Bảng trung gian (N-N):** Kết hợp tên hai bảng theo thứ tự alphabet.  
+  **Ví dụ:** `product_tag_mgmt`
+
+---
+
+### Ví dụ schema bảng: `category_mst`
+
+| Tên cột      | Kiểu dữ liệu           | Thuộc tính                 |
+|--------------|------------------------|----------------------------|
+| `id`         | `bigIncrements`        | Primary key                |
+| `name`       | `string(255)`          |                            |
+| `description`| `text`                 | Nullable                   |
+| `is_active`  | `boolean`              | Default: true              |
+| `created_at` | `timestamp`            |                            |
+| `updated_at` | `timestamp`            |                            |
+
+### Cột
+
+#### Quy tắc đặt tên và kiểu cột
+
+| Loại cột     | Quy tắc                         | Ví dụ          |
+|--------------|----------------------------------|----------------|
+| **Khóa chính**   | `id` sử dụng `bigIncrements` hoặc `ulid` | `id`             |
+| **Khóa ngoại**   | `<table_name>_id`             | `category_id`   |
+| **Boolean**      | Bắt đầu bằng `is_` hoặc `has_` | `is_active`     |
+| **Timestamps**   | Sử dụng chuẩn Laravel          | `created_at`, `updated_at` |
+
+---
+
+#### Kiểu dữ liệu
+
+- **Phân tích kích thước tối thiểu/tối đa** để đảm bảo hiệu quả lưu trữ và tính đúng đắn:
+  - `phone_number`: `string`, tối đa 12 ký tự
+  - `email`: `string`, tối đa 320 ký tự (theo RFC)
+
+- **Định nghĩa thuộc tính**:
+  - `default`: đặt giá trị mặc định khi cần
+  - `not null`: áp dụng cho các trường bắt buộc
+  - `unique`: áp dụng cho các trường định danh (ví dụ: `email`, `username`) để tránh trùng lặp
+
+### Các đối tượng khác
+
+- **View:** Tiền tố `view_`, ví dụ: `view_category_mst`.
+- **Procedure:** Hậu tố `_function`, ví dụ: `get_category_mst_function`.
+- **Trigger:** Tiền tố `trigger_[insert|update|delete]_[before|after]_`, ví dụ: `trigger_update_before_product_mgmt`.
+- **Sequence:** Hậu tố `_seq`, ví dụ: `product_mgmt_seq`.
+
+---
+
+### Ví dụ view:
+
+```sql
+CREATE VIEW view_category_mst AS
+SELECT id, name, is_active
+FROM category_mst
+WHERE is_active = true;
+```
+
+### Migration
+
+Lệnh tạo:
+
+php artisan make:migration create_category_mst_table --path=database/migrations/master
+
+Tên file: yyyy_mm_dd_hhmmss_[action]_[component_name]_[component].php, ví dụ: 2025_06_22_175600_create_category_mst_table.php.
+
+Nội dung:
+
+- Sử dụng Schema::create hoặc Schema::table cho bảng.
+- Sử dụng DB::statement hoặc DB::unprepared cho view, procedure, trigger, sequence.
+- Viết logic rollback trong down().
+
+### Ví dụ migration:
+
+```php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateCategoryMstTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('category_mst', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('name', 255);
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('category_mst');
+    }
 }
+```
 
+### Model
 
+Lệnh tạo:
 
+php artisan make:model Master/CategoryMst --path=app/Models/Master
 
-Controller
+Quy ước:
 
-Tạo file:php artisan make:controller [ControllerName]Controller --path=app/Http/Controllers/[sub_path]
+- `$table`: Tên bảng, ví dụ:  
+  `protected $table = 'category_mst';`
 
+- `$fillable`: Các cột cho phép gán giá trị, ví dụ:  
+  `protected $fillable = ['name', 'description', 'is_active'];`
 
-Định danh: [ModelName]Controller, dùng PascalCase.
-Sub Path: \Master, \Management, \History\Master, \History\Management.
-Quy tắc:
-Dùng FormRequest để validate.
-Gọi service xử lý logic.
-Trả về Resource cho response.
-Sử dụng middleware, authentication, authorization khi cần.
+- **Hằng số:** `CONSTANT_CASE`, ví dụ:  
+  `public const STATUS_ACTIVE = 1;`
 
+- **Quan hệ:** Tên hàm `camelCase`, ví dụ:
 
-Ví dụ:public function store(StoreRequest $request): Resource {
-    return new ModelResource($this->service->store($request->validated()));
+```php
+public function products(): HasMany
+{
+    return $this->hasMany(ProductMst::class);
 }
+```
 
+- Xử lý ngày giờ: Sử dụng Carbon, ví dụ:
+$this->created_at->toIso8601String()
 
+### Controller
 
+Lệnh tạo:
 
-Service
+php artisan make:controller Master/CategoryMstController --api --path=app/Http/Controllers/Master
 
-Vị trí: app/Services/[sub_path]/[ServiceName]Service.php.
-Định danh: [ModelName]Service, dùng PascalCase.
-Sub Path: \Master, \Management, \History\Master, \History\Management.
-Quy tắc:
-Chứa logic nghiệp vụ.
-Tương tác với repository để truy cập dữ liệu.
-Inject dependency qua interface.
+Quy ước:
 
+- Không chứa logic kinh doanh, chỉ gọi Service và trả về API Resource.
 
-Ví dụ:public function store(array $data): Model {
-    return $this->repository->create($data);
-}
-
-
-
-
-Validate Request
-
-Tạo file:php artisan make:request [ModelName][Action]Request --path=app/Http/Requests/[sub_path]
-
-
-Định danh: [ModelName][Action]Request, ví dụ: CategoryStoreRequest.
-Sub Path: \Master, \Management, \History\Master, \History\Management.
-Quy tắc:
-Dùng rules() để định nghĩa quy tắc validate.
-Dùng messages() để tùy chỉnh thông báo lỗi.
-
-
-Ví dụ:public function rules(): array {
-    return ['name' => 'required|string|max:50'];
-}
-
-
-
-
-Repository
-
-Vị trí: app/Repositories/[sub_path]/[ModelName]Repository.php.
-Định danh: [ModelName]Repository, dùng PascalCase.
-Sub Path: \Master, \Management, \History\Master, \History\Management.
-Quy tắc: Tách biệt logic truy cập dữ liệu, tương tác với model.
-Ví dụ:public function create(array $data): Model {
-    return Model::create($data);
-}
-
-
-
-
-Interface
-
-Vị trí: app/Repositories/Interfaces/[ModelName]RepositoryInterface.php.
-Định danh: [ModelName]RepositoryInterface.
-Quy tắc: Định nghĩa contract cho repository.
-Ví dụ:public function create(array $data): Model;
-
-
-
-
-Resource
-
-Tạo file:php artisan make:resource [ModelName]Resource --path=app/Http/Resources/[sub_path]
-
-
-Định danh: [ModelName]Resource.
-Sub Path: \Master, \Management, \History\Master, \History\Management.
-Quy tắc: Chuyển đổi dữ liệu model thành JSON.
-Ví dụ:public function toArray($request): array {
-    return ['id' => $this->id, 'name' => $this->name];
-}
-
-
-
-
-Route
-
-Vị trí: routes/api.php.
-Quy tắc:
-Nhóm route theo phạm vi với prefix: master, management, history.
-
-
-Ví dụ:Route::prefix('master')->group(function () {
-    Route::resource('categories', CategoryController::class);
-});
-
-
-
-
-Mapping cấu trúc master|history|management
-
-Mỗi phạm vi có thư mục con trong: Models, Controllers, Services, Repositories, Resources, Http/Requests.
 Ví dụ:
-app/Models/Master/Category.php
-app/Http/Controllers/Master/CategoryController.php
-app/Services/Master/CategoryService.php
 
+```php
+public function index(CategoryMstRequest $request): CategoryResource
+{
+    $categories = $this->categoryService->getAllCategories($request->validated());
+    return CategoryResource::collection($categories);
+}
+```
 
+### Service
 
+- **Vị trí:** `app/Services/[Module]/[ServiceName]Service.php`
 
-Khi tạo một thành phần mới
+- **Kế thừa:** `SingletonService` từ `App\Services\SingletonService`
 
-Xác định phạm vi (master, management, history).
-Tạo Model và Migration.
-Tạo Repository và Interface.
-Tạo Service.
-Tạo Controller.
-Tạo FormRequest.
-Tạo Resource.
-Định nghĩa Route.
+---
 
+### Quy ước:
 
-Kết luận
-Tài liệu này cung cấp một bộ quy tắc đầy đủ, chi tiết, giúp dự án Laravel API có cấu trúc rõ ràng, dễ mở rộng, và bảo trì. Các thành viên mới có thể dễ dàng tiếp cận và triển khai nhờ sự phân chia nhiệm vụ rõ ràng và tính nhất quán trong cách đặt tên, vị trí file, và cách các thành phần tương tác với nhau.
+- Method: `camelCase`, có bình luận mô tả.
+
+Ví dụ:
+
+```php
+/**
+ * Lấy danh sách danh mục.
+ *
+ * @param array $data
+ * @return array
+ */
+public function getAllCategories(array $data): array
+{
+    $validator = (new CommonService())->validationManual(new CategoryMstRequest(), $data);
+    if ($validator->fails()) {
+        throw new ValidationException($validator);
+    }
+    return CategoryRepository::getAll($data);
+}
+```
+
+### Validate Request (Form Request)
+
+Lệnh tạo:
+
+php artisan make:request Master/CategoryMstRequest --path=app/Http/Requests/Master
+
+Quy ước:
+
+- Xác thực dựa trên schema cơ sở dữ liệu.
+
+Ví dụ:
+
+```php
+public function rules(): array
+{
+    return [
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'is_active' => 'boolean',
+    ];
+}
+```
+
+### Interface & Repository
+
+#### Interface:
+
+- **Vị trí:** `app/Interfaces/[Module]/[InterfaceName]Interface.php`
+
+Ví dụ:
+
+```php
+interface CategoryRepositoryInterface
+{
+    public function getAll(array $data): array;
+}
+```
+
+### API Resources
+
+Lệnh tạo:
+
+php artisan make:resource Master/CategoryResource --path=app/Http/Resources/Master
+
+Mục đích: Định dạng dữ liệu JSON, che giấu cấu trúc cơ sở dữ liệu.
+
+Ví dụ:
+
+```php
+public function toArray($request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'isActive' => $this->is_active,
+        'createdAt' => $this->created_at->toIso8601String(),
+    ];
+}
+```
+
+### Routing
+
+Vị trí: `routes/api.php`
+
+Quy ước:
+
+- Nhóm theo module với tiền tố, ví dụ:
+
+```php
+Route::prefix('master')->group(function () {
+    Route::get('categories', [CategoryMstController::class, 'index']);
+});
+```
+
+### Quản lý cấu hình
+
+- Sử dụng file cấu hình thay vì truy cập trực tiếp biến môi trường (`env()`).
+
+Ví dụ:
+
+Trong `config/api.php`:
+
+```php
+return [
+    'key' => env('API_KEY', 'default_key'),
+];
+```
+- Truy cập
+```config('api.key');```
+
+### Kiểm thử
+
+- **Unit Test:** Kiểm tra các thành phần riêng lẻ (Service, Repository).
+- **Feature Test:** Kiểm tra tích hợp API endpoint.
+- Sử dụng **cơ sở dữ liệu in-memory (SQLite)** để tăng tốc độ kiểm thử.
+
+Ví dụ:
+
+```php
+use Tests\TestCase;
+
+class CategoryApiTest extends TestCase
+{
+    public function test_get_categories()
+    {
+        $response = $this->get('/api/master/categories');
+        $response->assertStatus(200);
+    }
+}
+```
+
+Tài liệu API
+Sử dụng Swagger để tạo tài liệu API tự động.
+
+Đảm bảo tài liệu bao gồm:
+
+Mô tả endpoint
+
+Tham số
+
+Định dạng phản hồi
