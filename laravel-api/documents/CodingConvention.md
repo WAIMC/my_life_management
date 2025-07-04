@@ -24,29 +24,6 @@ Tài liệu này định nghĩa các quy ước và kiến trúc chuẩn cho vi�
 
 **Sơ đồ luồng hoạt động:**
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Router
-    participant Controller
-    participant FormRequest
-    participant Service
-    participant Repository
-    participant APIResource
-
-    Client->>Router: 1. Gửi HTTP Request (e.g., POST /api/products)
-    Router->>Controller: 2. Điều hướng đến ProductController@store
-    Controller->>FormRequest: 3. Kích hoạt StoreProductRequest để Validate
-    FormRequest-->>Controller: 4. Trả về dữ liệu đã được xác thực (hoặc ném lỗi)
-    Controller->>Service: 5. Gọi ProductService->createProduct(validatedData)
-    Service->>Repository: 6. Gọi ProductRepository->create(data)
-    Repository-->>Service: 7. Trả về Model Product đã tạo
-    Service-->>Controller: 8. Trả về Model Product
-    Controller->>APIResource: 9. Biến đổi Model bằng new ProductResource(product)
-    APIResource-->>Controller: 10. Trả về mảng dữ liệu chuẩn hóa
-    Controller-->>Client: 11. Trả về JSON Response (e.g., 201 Created)
-```
-
 **Ý nghĩa của các thành phần:**
 * **Route:** Định nghĩa điểm cuối (endpoint) của API.
 * **Controller:** Lớp tiếp nhận HTTP request. **Nhiệm vụ duy nhất:** điều phối request, gọi Service tương ứng, và trả về response (đã qua API Resource). Controller **không** chứa logic nghiệp vụ.
@@ -57,6 +34,9 @@ sequenceDiagram
     * **Repository:** Triển khai (implement) Interface, chứa các truy vấn đến cơ sở dữ liệu.
 * **Model:** Đại diện cho một bảng trong cơ sở dữ liệu, xử lý các mối quan hệ và định nghĩa thuộc tính.
 * **API Resource:** Lớp chịu trách nhiệm biến đổi (transform) dữ liệu từ Model thành định dạng JSON trả về cho client. Giúp tách biệt cấu trúc DB và cấu trúc API response.
+* **Middleware:** Lớp trung gian xử lý các logic trước hoặc sau khi request đến Controller. Middleware thường dùng cho xác thực (authentication), phân quyền (authorization), logging, kiểm soát rate limit, hoặc xử lý CORS. Middleware nên nhỏ gọn, chỉ thực hiện một nhiệm vụ duy nhất và có thể tái sử dụng cho nhiều route khác nhau. Đăng ký middleware trong `app/Http/Kernel.php` và gán cho route hoặc group route khi cần thiết.
+
+* **Handler:** Lớp chịu trách nhiệm xử lý các exception hoặc sự kiện đặc biệt phát sinh trong quá trình xử lý request. Handler mặc định của Laravel là `app/Exceptions/Handler.php`, nơi có thể định nghĩa cách ứng xử với từng loại exception (ví dụ: trả về mã lỗi, message phù hợp, log lỗi, hoặc custom response). Handler giúp đảm bảo API trả về thông tin lỗi nhất quán, dễ debug và thân thiện với client.
 
 ## **Cấu trúc thư mục chuẩn**
 
@@ -249,6 +229,85 @@ database/
   ```
 * **Các phương thức khác:** Đặt theo camelCase, mô tả rõ chức năng. 
 
+## Common response
+* **Meaning**
+  Trait này có nhiệm vụ chuẩn hóa response của API trả về. Dù xử lý lỗi hay không cũng sẽ trả về response theo format này
+  Trait này có 2 tham số
+    - $data: Là dữ liệu chính sau xử lý. Trả về giá trị là các loại dữ liệu cho trường hợp thành công. Trả về là null cho các trường hợp lỗi. Kiểu dữ liệu mixed
+    - $error: Để định nghĩa cho các xử lý lỗi. Tham số này cố định có 3 tham số chính
+      + status: Để nhận biết xử lý có lỗi hay không. Giá trị là false cho trường hợp xử lý thành công và true cho các trường hợp xử lý lỗi. Kiểu dữ liệu là bool
+      + code: Để phân loại lỗi. Giá trị trải dài từ 200 -> 550. Mỗi giá trị tương ứng với một loại lỗi. Kiểu giá trị là int. Trả về khoảng giá trị 200 -> 299 cho case thành công và trả về exception get code cho những trường hợp thất bại
+      + messages: Định nghĩa nội dung lỗi. Kiểu dữ liệu là null|array|string. Trả về null nếu xử lý thành công, ngược lại xử lý lỗi sẽ lấy message của exception tương ứng 
+* **Nội dung định nghĩa**
+```
+  namespace App\Traits;
+
+  trait ApiResponse {
+    /**
+    * Render response api
+    * 
+    * @param mixed $data
+    * @param array $error
+    * @return Response
+    */
+    public static function renderResponse(mixed $data, array $error): Response
+    {
+      list($status, $code, $messages) = $error;
+
+      return response()->json([
+        'data' => $data,
+        'error' => [
+          'status' => $status,
+          'code' => $code,
+          'messages' => $messages
+        ]
+      ]);
+    }
+  }
+```
+
+## Handler
+* **Meaning**
+  Tổng hợp xử lý cho các loại exception khác nhau
+* **Nội dung định nghĩa**
+  - Tạo file `app/Exceptions/Handler.php` nếu chưa có
+  - Sử dụng method register() để định nghĩa các cách render ứng với từng loại exception
+  - Sử dụng trait ApiResponse để chuẩn hóa các respose trả về
+* **Nội dung file**
+```
+  $this->renderable(function ([Exception name] $e, $request) {
+    return $this->renderResponse(
+      null,
+      [
+        true,
+        $e->getCode(),
+        $e->getMessage()
+      ]
+    );
+  }
+ ```
+  - Trong đó, các exception bao gồm:
+  AuthenticationException,
+  TokenMismatchException,
+  AuthorizationException,
+  ThrottleRequestsException,
+  MethodNotAllowedHttpException,
+  NotFoundHttpException,
+  HttpException,
+  LogicException,
+  InvalidArgumentException,
+  ValidationException,
+  Exception
+  - Riêng InvalidArgumentException và ValidationException trả về message exception là $e->validator->errors()->messages()
+
+## Handler
+* **Meaning**
+  - Phần trung gian, tiền|hậu xử lý request. Ở đây sẽ tạo 1 middleware thực hiện quản lý transaction
+* **Cách thức thực hiện**
+  - Tạo file vd: transact. Thực hiện tự bắt đầu transaction trước khi sử lý request ở controller. Nếu có bất kỳ exception nào được ném ra sẽ tự động rollback, nếu thành công thì tự động commit.
+  - Đăng ký nó ở app/Http/Kernel.php và dùng cho route tương ứng. Thường dùng cho các route [post, put, delete]
+
+
 ## Controller
 * **Lệnh tạo:**
   ```bash
@@ -258,6 +317,8 @@ database/
 ** **[path] và [Sub Path model]** tên và vị trí như thiết kế source tree bên trên
 * **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. Ví dụ:
 ```
+  class [Controller Name]Controller extends Controller
+  ...
   /**
    * [Nhiệm vụ của method này]
    *
@@ -299,6 +360,7 @@ database/
 ** **[path][Sub Path model]** tên và vị trí như thiết kế source tree bên trên
 
 * **Kế thừa:** Các class extend SingletonService từ `use App\Services\SingletonService;`
+* **Handle:** Thực hiện validate, throw validate, logic, truy vấn cơ sở dữ liệu thông qua repository, trả về kết quả format dữ liệu thông qua resource bên trong service như ví dụ bên dưới
 * **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. Ví dụ:
 ```
   /**
@@ -334,7 +396,7 @@ database/
 ** **[validate name]** Dựa vào tên [service name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryService.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php
 ** **[path] và [Sub Path model]** tên và vị trí như thiết kế source tree bên trên
 * **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. 
-* **Viết rule** Trong function rule() lấy tất cả param request, mỗi param viết rule riêng. Các param hầu hết tương ứng với column của 1 table cùng tên model, lấy các điều kiện migrate của table đó để xác định rule validate vd:
+* **Viết rule** Trong function rule() lấy tất cả param request, mỗi param viết rule riêng. Các param hầu hết tương ứng với column của 1 table cùng tên model, lấy các điều kiện migrate của table đó để xác định rule validate. Thực hiện, định nghĩa rule validate cho từng trường theo đúng kiểu dữ liệu và ràng buộc của migration. vd:
 - Ở trong migrate nội dung của table category như sau:
   $table->increments('id');
   $table->unsignedInteger('parent_id')->default(0)->comment('Parent category');
@@ -373,6 +435,8 @@ database/
       'number' => Category::LENGTH_ATTR[0],
     ]
   ),
+
+- Inject form request trực tiếp vào các method của controller
 
 ## **Interface & Repository**
 

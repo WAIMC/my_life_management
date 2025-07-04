@@ -100,3 +100,9 @@ Mỗi module bao gồm các thư mục con:
 - **Kiểm thử**: Thêm Unit Test và Feature Test để đảm bảo chất lượng.
 - **Tài liệu API**: Sử dụng công cụ như **Swagger** để tạo tự động.
 - **Tái sử dụng**: Tùy biến tên module và cấu hình phù hợp từng nền tảng.
+
+
+- Vấn đề, các AI huấn luyện dựa trên khối lượng lớn mã nguồn và lựa chọn các "best practices" của cộng đồng để ưu tiên đề xuất
+- Nội dung trải dài dễ khiến AI bị miss, chưa chỉ định rõ chi tiết từng thành phần bên trong controller và service
+- Sử dụng dependence injection: sử dụng trong constructor injection vd: constructor injection của controller là service, của service là repository, form request inject trực tiếp vào method của controller
+-> Mục đích là để dễ kiểm thử, quản lý phụ thuộc, giữ cho service tập trung vào logic nghiệp vụ

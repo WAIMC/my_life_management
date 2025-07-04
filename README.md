@@ -517,3 +517,9 @@ trực tiếp tạo một rule cụ thể để sử dụng AI (như GitHub Copi
 
 
 => Tổng hợp, thống kê một flow chuẩn bao gồm các rule, nghiệp vụ,.. của dự án. Tự định nghĩa thiết kế 1 quy tắc chuẩn áp dụng được cho mọi source, sau đó ta có 1 bộ tài liệu chuẩn để học hỏi đồng thời khi tiếp cận các dự án khác có thể nhờ AI nghiên cứu và tạo ra bộ tài liệu tương tự để bản thân có thể nhanh chóng nắm bắt thông tin dự án, làm việc hiệu quả.
+
+
+- Mỗi request có: logic xử lý, load data, thời điểm truy cập khác nhau -> response time 1 request cũng sẽ khác nhau, tài nguyên tiêu tốn để xử lý cho mỗi request cũng sẽ khác nhau
+	- 1 hệ thống sẽ có cấu hình riêng, tài nguyên hệ thống như ram, cpu, băng thông,... tối đa sẽ xử lý 1 số lượng request 
+	Làm sao tôi có thể tính toán 1 request tiêu tốn tài nguyên nào ? bao nhiêu tài nguyên ? cấu hình hệ thống sử dụng tài nguyên để xử lý request, vậy làm sao tôi tính toán được hệ thống tối 
+	đa có thể xử lý bao nhiêu request đó trong 1 thời điểm ? khiến request bị timeout, request error
