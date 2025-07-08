@@ -35,7 +35,6 @@ Tài liệu này định nghĩa các quy ước và kiến trúc chuẩn cho vi�
 * **Model:** Đại diện cho một bảng trong cơ sở dữ liệu, xử lý các mối quan hệ và định nghĩa thuộc tính.
 * **API Resource:** Lớp chịu trách nhiệm biến đổi (transform) dữ liệu từ Model thành định dạng JSON trả về cho client. Giúp tách biệt cấu trúc DB và cấu trúc API response.
 * **Middleware:** Lớp trung gian xử lý các logic trước hoặc sau khi request đến Controller. Middleware thường dùng cho xác thực (authentication), phân quyền (authorization), logging, kiểm soát rate limit, hoặc xử lý CORS. Middleware nên nhỏ gọn, chỉ thực hiện một nhiệm vụ duy nhất và có thể tái sử dụng cho nhiều route khác nhau. Đăng ký middleware trong `app/Http/Kernel.php` và gán cho route hoặc group route khi cần thiết.
-
 * **Handler:** Lớp chịu trách nhiệm xử lý các exception hoặc sự kiện đặc biệt phát sinh trong quá trình xử lý request. Handler mặc định của Laravel là `app/Exceptions/Handler.php`, nơi có thể định nghĩa cách ứng xử với từng loại exception (ví dụ: trả về mã lỗi, message phù hợp, log lỗi, hoặc custom response). Handler giúp đảm bảo API trả về thông tin lỗi nhất quán, dễ debug và thân thiện với client.
 
 ## **Cấu trúc thư mục chuẩn**
@@ -300,12 +299,57 @@ database/
   Exception
   - Riêng InvalidArgumentException và ValidationException trả về message exception là $e->validator->errors()->messages()
 
-## Handler
-* **Meaning**
-  - Phần trung gian, tiền|hậu xử lý request. Ở đây sẽ tạo 1 middleware thực hiện quản lý transaction
-* **Cách thức thực hiện**
-  - Tạo file vd: transact. Thực hiện tự bắt đầu transaction trước khi sử lý request ở controller. Nếu có bất kỳ exception nào được ném ra sẽ tự động rollback, nếu thành công thì tự động commit.
-  - Đăng ký nó ở app/Http/Kernel.php và dùng cho route tương ứng. Thường dùng cho các route [post, put, delete]
+## Middleware
+
+* **Ý nghĩa**
+  - Middleware là lớp trung gian thực hiện xử lý trước hoặc sau khi request đến controller. Trong trường hợp này, middleware sẽ quản lý transaction cho các thao tác ghi dữ liệu.
+
+* **Cách thực hiện**
+  - Tạo một middleware mới, ví dụ: `DatabaseMiddleware`. Middleware này sẽ tự động bắt đầu transaction trước khi request được xử lý ở controller. Nếu có bất kỳ exception nào xảy ra trong quá trình xử lý, transaction sẽ tự động rollback; nếu xử lý thành công, transaction sẽ được commit.
+  - Đăng ký middleware này trong `app/Http/Kernel.php` và gán cho các route phù hợp, thường là các route sử dụng method POST, PUT, DELETE.
+
+* **Ví dụ tạo middleware:**
+  ```bash
+  php artisan make:middleware DatabaseMiddleware
+  ```
+
+* **Ví dụ nội dung middleware:**
+  ```php
+  namespace App\Http\Middleware;
+
+  use Closure;
+  use Illuminate\Support\Facades\DB;
+
+  class DatabaseMiddleware
+  {
+      public function handle($request, Closure $next)
+      {
+          return DB::transaction(function () use ($request, $next) {
+              return $next($request);
+          });
+      }
+  }
+  ```
+
+* **Đăng ký middleware:**
+  - Thêm vào `$routeMiddleware` trong `app/Http/Kernel.php`:
+    ```php
+    'transaction' => \App\Http\Middleware\TransactionMiddleware::class,
+    ```
+  - Sử dụng cho các route cần quản lý transaction:
+    ```php
+    Route::middleware(['db.transaction'])->group(function () {
+        // Các route POST, PUT, DELETE
+    });
+    ```
+  - Sử dụng cho các route group API, cái này áp dụng cho toàn bộ API trong api.php:
+    ```php
+     'api' => [
+          // ...existing code...
+          // Thêm middleware transaction cho API
+          \App\Http\Middleware\DatabaseTransaction::class,
+      ],
+    ```
 
 
 ## Controller
@@ -327,29 +371,9 @@ database/
    */
   public function [function name]([data type] [tên param]): [data type trả về]
   {
-    return $this->handleRequest(function () use ([tên param]) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[x]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[x]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-
-      return [Service name]::getInstance()->[method name]([param]);
-    });
+    return [Service name]::getInstance()->[method name]([param]);
   }
 ```
-** **[x]** là phương thức ứng với request đó: 
-```[
-    0 => "GET",
-    1 => "POST",
-    2 => "PUT",
-    3 => "PATCH",
-    4 => "DELETE",
-  ];```
-
 
 ## Service
 * **Vi trí service**:
@@ -358,9 +382,7 @@ database/
   ```
 ** **[service name]** Dựa vào tên table chuyển tử **snake_case** sang **PascalCase** để đặt tên cho service
 ** **[path][Sub Path model]** tên và vị trí như thiết kế source tree bên trên
-
-* **Kế thừa:** Các class extend SingletonService từ `use App\Services\SingletonService;`
-* **Handle:** Thực hiện validate, throw validate, logic, truy vấn cơ sở dữ liệu thông qua repository, trả về kết quả format dữ liệu thông qua resource bên trong service như ví dụ bên dưới
+* **Handle:** Thực hiện logic, truy vấn cơ sở dữ liệu thông qua repository, trả về kết quả format dữ liệu thông qua resource bên trong service như ví dụ bên dưới. Dependence injection trực tiếp trong constructor của controller
 * **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. Ví dụ:
 ```
   /**
@@ -371,15 +393,7 @@ database/
    */
   public function [function name]([data type] [tên param]): [data type trả về]
   {
-    $validator = (new CommonService())->validationManual(
-      (new [validation name]Request()),
-      [param]
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
-    }
-
+    // Logic ...
     [variable] = [Repoitory name]Repository::[Method name]([param]);
 
     return [variable]
@@ -393,7 +407,7 @@ database/
   ```bash
   php artisan make:request [request name]Request --path=[path]/[sub path]
   ```
-** **[validate name]** Dựa vào tên [service name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryService.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php
+** **[validate name]** Dựa vào tên [service name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryService.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php. Dependence injection trực tiếp trong các method của của controller
 ** **[path] và [Sub Path model]** tên và vị trí như thiết kế source tree bên trên
 * **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. 
 * **Viết rule** Trong function rule() lấy tất cả param request, mỗi param viết rule riêng. Các param hầu hết tương ứng với column của 1 table cùng tên model, lấy các điều kiện migrate của table đó để xác định rule validate. Thực hiện, định nghĩa rule validate cho từng trường theo đúng kiểu dữ liệu và ràng buộc của migration. vd:
@@ -449,6 +463,7 @@ database/
             // ... Interface
         }
         ```
+    * **Handler:** Dependence injection trực tiếp trong constructor của service
 
 * **Repository:**
     * **Vị trí và Tên:** như thiết kế source tree bên trên

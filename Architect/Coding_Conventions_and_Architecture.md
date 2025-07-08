@@ -106,3 +106,24 @@ Mỗi module bao gồm các thư mục con:
 - Nội dung trải dài dễ khiến AI bị miss, chưa chỉ định rõ chi tiết từng thành phần bên trong controller và service
 - Sử dụng dependence injection: sử dụng trong constructor injection vd: constructor injection của controller là service, của service là repository, form request inject trực tiếp vào method của controller
 -> Mục đích là để dễ kiểm thử, quản lý phụ thuộc, giữ cho service tập trung vào logic nghiệp vụ
+
+*******************************
+- 2. "best practices"
+	- Tách biệt từng mối quan tâm ra thành các thành phần chuyên dụng
+	- Xử lý transaction: sử dụng middleware
+		-> Logic: Áp dụng middleware này cho các route group liên quan đến transaction (POST, PUT, DELETE). Nguyên lý, khởi tạo transaction cho những route group (POST, PUT, DELETE). Bất kỳ exception nào được throw ra, nó sẽ 
+		thực hiện roll-back. Nếu thành công sẽ commit.
+	- Xử lý exception và response: Sử dụng Exception Handler centralized centralized
+		-> Register các exception ở app/Exceptions/Handler.php. Use trait vd API response để render response
+		-> Register trait API response cho các request
+	- Xử lý validate: Inject form request tiêu chuẩn
+		-> Inject trực tiếp các form request vào các method của controller
+		
+=> So sánh 2 cách tiếp cận
+	- Handle requet common: kiểm soát tập trung, dễ hình dung. Khó bảo trì khi dự án phình to do phải xử lý ti tỉ các exception, status code, logic,.. khác nhau. Khó UT. Cùng lúc thực hiện quá nhiều vấn đề
+	- Phương pháp middleware && handler: Kiểm soát phân tán. Chia nhỏ, chuyên biệt nhiệm vụ. Dễ maintain, mở rộng. Dễ UT.
+	
+	
+- Khi yêu cầu AI thực hiện vấn đề theo 1 hướng. AI đưa ra cách tiếp cận khác với ý tưởng của bạn, khi bạn cố lặp lại yêu cầu nhưng kết quả ko thay đổi
+=> Bởi vì CHATGPT được huấn luyện trên các tập dữ liệu khổng lồ, đề xuất theo các cách tiếp cận phổ biến nhất của cộng đồng. Chúng không giải thích mindset của bạn đang gặp vân đề gì. Vấn đề đó đã diễn ra đâu đó trong quá khứ, chúng bị các vấn
+đề gì. Sau đó các vấn đề được giải quyết thế nào ? các phương pháp mới + phổ biến đang được sủ dụng để khắc phục được vấn đề gì trong các ý tưởng của bạn
