@@ -60,43 +60,27 @@ class Handler extends ExceptionHandler
                     case $e instanceof ErrorException:
                     case $e instanceof ParseError:
                     case $e instanceof ReflectionException:
-                        return self::renderResponse(
-                            null,
-                            [
-                                true,
-                                $getValidCode($e->getCode(), CommonVal::HTTP_INTERNAL_SERVER_ERROR),
-                                $e->getMessage()
-                            ]
+                        return self::errorResponse(
+                            $e->getMessage(),
+                            $getValidCode($e->getCode() CommonVal::HTTP_INTERNAL_SERVER_ERROR),
                         );
                     case $e instanceof InvalidArgumentException:
                         $code = $getValidCode($e->getCode(), CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-                        return self::renderResponse(
-                            null,
-                            [
-                                true,
-                                $code,
-                                $e->getMessage()
-                            ]
+                        return self::errorResponse(
+                            $e->getMessage(),
+                            $code
                         );
                     case $e instanceof ValidationException:
                         $code = $getValidCode($e->getCode(), CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-                        return self::renderResponse(
-                            null,
-                            [
-                                true,
-                                $code,
-                                $e->errors()
-                            ]
+                        return self::errorResponse(
+                            $e->errors(),
+                            $code
                         );
                     default:
                         Log::error($e);
-                        return self::renderResponse(
-                            null,
-                            [
-                                false,
-                                CommonVal::HTTP_INTERNAL_SERVER_ERROR,
-                                Messages::E0500
-                            ]
+                        return self::errorResponse(
+                            Messages::E0500,
+                            CommonVal::HTTP_INTERNAL_SERVER_ERROR
                         );
                 }
             }

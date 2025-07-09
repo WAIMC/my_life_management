@@ -1,47 +1,61 @@
-# **Tựa đề quy ước mã hóa**
-Hướng dẫn quy ước mã hóa (Coding Convention) trong dự án Laravel API
-Tài liệu này định nghĩa các quy tắc và cấu trúc cho dự án Laravel API, nhằm đảm bảo tính nhất quán, dễ mở rộng, bảo trì, và dễ tiếp cận cho các thành viên mới.
+# Quy ước mã hóa cho dự án Laravel API
 
-## **Tổng quan cấu trúc dự án API**
+## Mục lục
 
-Thiết kế dự án theo kiến trúc **Layered Architecture** (Service Layer, Repository Layer, Domain Layer) kết hợp **Module-based Organization** để dễ mở rộng và bảo trì. Mỗi module (theo tính năng hoặc phạm vi như Master / Management / History) được tổ chức thành các phần: Migration, Model, Repository, Service, Request Validation, Controller, Resource, Route.
+1. [Giới thiệu](#giới-thiệu)
+2. [Tổng quan cấu trúc dự án API](#tổng-quan-cấu-trúc-dự-án-api)
+3. [Luồng hoạt động của một API Request](#luồng-hoạt-động-của-một-api-request)
+4. [Cấu trúc thư mục chuẩn](#cấu-trúc-thư-mục-chuẩn)
+5. [Quy ước chung](#quy-ước-chung)
+6. [Thiết kế cơ sở dữ liệu](#thiết-kế-cơ-sở-dữ-liệu)
+7. [Migration](#migration)
+8. [Model](#model)
+9. [Common Response](#common-response)
+10. [Handler](#handler)
+11. [Middleware](#middleware)
+12. [Controller](#controller)
+13. [Service](#service)
+14. [Validate Request (Form Request)](#validate-request-form-request)
+15. [Interface & Repository](#interface--repository)
+16. [API Resources](#api-resources)
+17. [Routing](#routing)
+18. [Các bước thực hiện khi làm việc với API](#các-bước-thực-hiện-khi-làm-việc-với-api)
 
-# **Quy ước mã hóa và Kiến trúc cho dự án Laravel API**
+## Giới thiệu
 
-Tài liệu này định nghĩa các quy ước và kiến trúc chuẩn cho việc phát triển API, dựa trên nền tảng Laravel và các tiêu chuẩn PSR-2/PSR-12.
+Tài liệu này định nghĩa các quy ước và kiến trúc chuẩn cho việc phát triển API dựa trên nền tảng Laravel, tuân thủ tiêu chuẩn PSR-2/PSR-12. Mục tiêu là đảm bảo tính nhất quán, dễ mở rộng, bảo trì và dễ tiếp cận cho các thành viên mới.
 
-## **Triết lý và Luồng hoạt động của một API Request**
+## Tổng quan cấu trúc dự án API
 
-Để đảm bảo tính nhất quán và dễ mở rộng, mọi luồng xử lý cho một request API sẽ tuân thủ theo kiến trúc phân lớp rõ ràng. Mỗi lớp có một nhiệm vụ duy nhất (Single Responsibility Principle).
+Dự án được thiết kế theo kiến trúc **Layered Architecture** (Service Layer, Repository Layer, Domain Layer) kết hợp với **Module-based Organization**. Các module được tổ chức theo phạm vi: **Master** (dữ liệu gốc), **Management** (dữ liệu quản lý), và **History** (lịch sử).
 
-**Luồng xử lý (Request Flow):**
+## Luồng hoạt động của một API Request
+
+### Luồng xử lý (Request Flow)
 
 `Route` -> `Middleware` -> `Controller` -> `Form Request (Validation)` -> `Service` -> `Repository` -> `Model` -> `Database`
 
-**Luồng trả về (Response Flow):**
+### Luồng trả về (Response Flow)
 
 `Database` -> `Model` -> `Repository` -> `Service` -> `Controller` -> `API Resource (Transformation)` -> `JSON Response`
 
-**Sơ đồ luồng hoạt động:**
+### Ý nghĩa của các thành phần
 
-**Ý nghĩa của các thành phần:**
-* **Route:** Định nghĩa điểm cuối (endpoint) của API.
-* **Controller:** Lớp tiếp nhận HTTP request. **Nhiệm vụ duy nhất:** điều phối request, gọi Service tương ứng, và trả về response (đã qua API Resource). Controller **không** chứa logic nghiệp vụ.
-* **Form Request:** Lớp chịu trách nhiệm xác thực (validation) dữ liệu đầu vào. Giúp Controller luôn "sạch".
-* **Service:** Chứa toàn bộ logic nghiệp vụ (business logic) của ứng dụng. Đây là "bộ não" của tính năng. Service có thể gọi các Service khác hoặc Repository.
-* **Interface & Repository:** Lớp trừu tượng hóa việc truy xuất dữ liệu. Giúp Service không phụ thuộc trực tiếp vào Eloquent hay nguồn dữ liệu cụ thể.
-    * **Interface:** Định nghĩa các "hợp đồng" (methods) mà Repository phải tuân theo.
-    * **Repository:** Triển khai (implement) Interface, chứa các truy vấn đến cơ sở dữ liệu.
-* **Model:** Đại diện cho một bảng trong cơ sở dữ liệu, xử lý các mối quan hệ và định nghĩa thuộc tính.
-* **API Resource:** Lớp chịu trách nhiệm biến đổi (transform) dữ liệu từ Model thành định dạng JSON trả về cho client. Giúp tách biệt cấu trúc DB và cấu trúc API response.
-* **Middleware:** Lớp trung gian xử lý các logic trước hoặc sau khi request đến Controller. Middleware thường dùng cho xác thực (authentication), phân quyền (authorization), logging, kiểm soát rate limit, hoặc xử lý CORS. Middleware nên nhỏ gọn, chỉ thực hiện một nhiệm vụ duy nhất và có thể tái sử dụng cho nhiều route khác nhau. Đăng ký middleware trong `app/Http/Kernel.php` và gán cho route hoặc group route khi cần thiết.
-* **Handler:** Lớp chịu trách nhiệm xử lý các exception hoặc sự kiện đặc biệt phát sinh trong quá trình xử lý request. Handler mặc định của Laravel là `app/Exceptions/Handler.php`, nơi có thể định nghĩa cách ứng xử với từng loại exception (ví dụ: trả về mã lỗi, message phù hợp, log lỗi, hoặc custom response). Handler giúp đảm bảo API trả về thông tin lỗi nhất quán, dễ debug và thân thiện với client.
+- **Route:** Định nghĩa điểm cuối (endpoint) của API.
+- **Controller:** Tiếp nhận HTTP request, điều phối request, gọi Service, và trả về response qua API Resource. Không chứa logic nghiệp vụ.
+- **Form Request:** Xác thực dữ liệu đầu vào.
+- **Service:** Chứa logic nghiệp vụ.
+- **Interface & Repository:** Trừu tượng hóa truy xuất dữ liệu.
+- **Model:** Đại diện cho bảng trong cơ sở dữ liệu.
+- **API Resource:** Biến đổi dữ liệu thành định dạng JSON.
+- **Middleware:** Xử lý logic trước/sau khi request đến Controller (xác thực, phân quyền, logging).
+- **Handler:** Xử lý exception hoặc sự kiện đặc biệt.
 
 ## **Cấu trúc thư mục chuẩn**
 
-Cấu trúc thư mục được tổ chức theo nghiệp vụ và loại đối tượng, với việc áp dụng nhất quán phân loại `Master`, `Management`, và `History`.
+Cấu trúc thư mục được tổ chức theo nghiệp vụ và loại đối tượng, phân loại theo `Master`, `Management`, và `History`.
 
-```
+```plaintext
 app/
 ├── Http/
 │   ├── Controllers/
@@ -134,37 +148,48 @@ database/
     │       └── 2025_06_20_000001_create_product_mgmt_table.php
     └── View/
     └── Procedure/
-    └── ... (các loại khác)
+    └── ... (etc)
 ```
 
-## **Quy ước chung**
-* **Chuẩn code:** Luôn tuân thủ **PSR-12**.
-* **Ngôn ngữ:** Sử dụng tiếng Anh số ít cho toàn bộ tên file, class, method, variable, và comment.
-* **Naming Conventions:**
-    * **Class (Model, Controller, Service...):** `PascalCase`, số ít. (Vd: `ProductService`)
-    * **Method, Variable:** `camelCase`. (Vd: `getAllProducts`)
-    * **Hằng số (Constants):** `CONSTANT_CASE`. (Vd: `const STATUS_ACTIVE = 1;`)
-    * **Bảng và Cột trong DB:** `snake_case`. (Vd: `product_mgmt`, `rank_order`)
-    * **Tên file Route:** `kebab-case`, tham số `snake_case`. và thống nhất kiểu cho url. Ví dụ các loại method trong RESTful
-    ** **GET:** `/api/user-permissions?created_from=2024-01-01&is_active=true`
-    ** **POST:** `/api/user-permissions`
-    ** **UPDATE:** `/api/user-permissions/{123}`
-    ** **DELETE:** `/api/user-permissions/{123}`
+## Quy ước chung
 
-## **Thiết kế Cơ sở dữ liệu**
-* **Table:**
-    * **Định danh:** `snake_case`, số ít. (Vd: `user`, `product`)
-    * **Hậu tố `_mst`:** Bảng dữ liệu gốc, cốt lõi (master data). (Vd: `category_mst`)
-    * **Hậu tố `_mgmt`:** Bảng dữ liệu quản lý, nghiệp vụ (management data). (Vd: `product_mgmt`, `order_mgmt`)
-    * **Hậu tố `_hist`:** Bảng lưu lịch sử. (Vd: `product_mgmt_hist`)
-    * **Bảng trung gian (N-N):** Tên gồm 2 bảng liên quan, theo thứ tự alphabet. (Vd: `product_tag_mgmt`)
+- **Chuẩn code:** Tuân thủ **PSR-12**.
+- **Ngôn ngữ:** Sử dụng tiếng Anh số ít cho tên file, class, method, variable, và comment.
+- **Quy ước đặt tên:**
 
-* **Column:**
-    ** **Định danh:** Theo dạng **snake_case** số ít và ko viết tắt, ko dấu, tiếng anh.
-    * **Khóa chính (Primary Key):** Luôn là `id`, kiểu `bigIncrements` hoặc `ulid` (khuyến khích). Kiểu auto-increment.
-    * **Khóa ngoại (Foreign Key):** Tên bảng (số ít) + `_id`. (Vd: `category_id` trong bảng `product_mgmt`). Nếu có phải định nghĩa rõ trong table để toàn vẹn dữ liệu, tự động hóa (cascading), tài liệu hóa cấu trúc.
-    * **Boolean:** Tiền tố `is_` hoặc `has_`. (Vd: `is_active`, `has_stock`).
-    * **Timestamps:** Luôn có `created_at` và `updated_at` kiểu `timestamp`.
+| Thành phần            | Quy ước         | Ví dụ                     |
+|-----------------------|-----------------|---------------------------|
+| Class (Model, Controller, Service...) | PascalCase, số ít | `ProductService`          |
+| Method, Variable      | camelCase       | `getAllProducts`          |
+| Hằng số (Constants)   | CONSTANT_CASE   | `STATUS_ACTIVE = 1`       |
+| Bảng và Cột trong DB  | snake_case      | `product_mgmt`, `rank_order` |
+| Tên file Route        | kebab-case, tham số snake_case | `/api/user-permissions?created_from=2024-01-01` |
+
+  ** **GET:** `/api/user-permissions?created_from=2024-01-01&is_active=true`
+  ** **POST:** `/api/user-permissions`
+  ** **UPDATE:** `/api/user-permissions/{123}`
+  ** **DELETE:** `/api/user-permissions/{123}`
+
+## Thiết kế cơ sở dữ liệu
+
+- **Table:**
+  - **Định danh:** `snake_case`, số ít (Vd: `user`, `product`).
+  - **Hậu tố `_mst`:** Dữ liệu gốc (Vd: `category_mst`).
+  - **Hậu tố `_mgmt`:** Dữ liệu quản lý (Vd: `product_mgmt`).
+  - **Hậu tố `_hist`:** Lịch sử (Vd: `product_mgmt_hist`).
+  - **Bảng trung gian (N-N):** Tên gồm 2 bảng, theo thứ tự alphabet (Vd: `product_tag_mgmt`).
+
+- **Column:**
+  - **Định danh:** `snake_case`, số ít, không viết tắt, tiếng Anh.
+  - **Khóa chính:** `id`, kiểu `bigIncrements` hoặc `ulid`.
+  - **Khóa ngoại:** `{table}_id` (Vd: `category_id`).
+  - **Boolean:** Tiền tố `is_` hoặc `has_` (Vd: `is_active`).
+  - **Timestamps:** `created_at`, `updated_at` kiểu `timestamp`.
+
+- **Procedure:** `{function_name}_{scope}_function` (Vd: `calculate_category_mst_function`).
+- **View:** `view_{view_name}_{scope}` (Vd: `view_category_list_mst`).
+- **Trigger:** `trigger_{action}_{time}_{action}_{table}_{scope}` (Vd: `trigger_insert_before_insert_category_mst`).
+- **Sequence:** `{table}_{scope}_seq` (Vd: `category_mst_seq`).
 
 * **Loại dữ liệu:** các column cần phân tích kiểu và kích thước tối thiểu hoặc tối đa mà dữ liệu cần sử dụng hiện tại và mở rộng trong tương lai để đưa ra để đảm bảo khả năng lưu trữ. Có thể dựa theo các quy chuẩn quốc tế về các loại dữ liệu và mục đích sử dụng để triển khai. Ví dụ kích thước cho số điện thoại là 12 kí tự, email là 320 kí tự,...
 
@@ -172,140 +197,92 @@ database/
 
 * **Chú thích và giải thích:** Cần viết định nghĩa ngắn gọn về ý nghĩa. Viết hoa chữ cái đầu. Giải thích chi tiết về cách chúng sử dụng cho việc gì ? có những loại nào ? khi nào dùng ở trong 1 bộ tài liệu riêng.
 
-* **Procedure:**
-** **Đinh danh** Theo dạng **snake_case** số ít và ko viết tắt, ko dấu, tiếng anh.
-** **Hậu tố [function name]_[phạm vi: mst|[mst|mgmt]hist|mgmt]_function** Là tên của Function
-
-* **View:**
-** **Đinh danh** Theo dạng **snake_case** số ít và ko viết tắt, ko dấu, tiếng anh.
-** **Tiền tố view_[view name]_[phạm vi: mst|[mst|mgmt]hist|mgmt]** Là tên của view
-
-* **Trigger:**
-** **Đinh danh** Theo dạng **snake_case** số ít và ko viết tắt, ko dấu, tiếng anh.
-** **Tiền tố trigger_[insert|update|delete]_[before|after]_[insert|update|delete]_[table name]_[phạm vi: mst|[mst|mgmt]hist|mgmt]** Là tên của trigger
-
-* **Sequence:**
-** **Đinh danh** Theo dạng **snake_case** số ít và ko viết tắt, ko dấu, tiếng anh.
-** **Hâu tố [table name]_[phạm vi: mst|[mst|mgmt]hist|mgmt]_seq** Là tên của Sequence
-
-
-
 ## Migration
 
-* **Lệnh tạo:**
+- **Lệnh tạo:**
   ```bash
   php artisan make:migration [create|update]_[component name]_[component] --path=[path]/[sub path]
   ```
-** **[create|update]** create cho mới, update cho chỉnh sửa. [table|view|procedure|view|trigger|sequence]
-** **[component] và [path]** cho [component]: table|view|procedure|trigger|sequence. Giống như định nghĩa source tree và định danh trong database phía trên 
 
-* **Tên file:** yyyy_mm_dd_hhmmss_[action]_[component_name]_[component].php.
-* **Nội dung:**
-    * Dùng Schema::create hoặc Schema::table cho bảng.
-    * Dùng DB::statement hoặc DB::unprepared cho view, procedure, trigger, sequence trong up().
-    * Viết logic rollback trong down() (drop hoặc update ngược lại).
-* **Tạo đối tượng [view|produre|trigger|sequence]** do laravel không hỗ trợ trực tiếp tạo migrate cho các đối tượng này. Vì vậy sẽ viết sql thuần túy thông qua schema builder, cụ thể sử dụng phương thức `DB::statement()` hoặc `DB::unprepared()` để thực thi. Các đối tượng này viết trong function up() và thực hiện viết logic rollback lại các thay đổi trong function down(), như drop hoặc update
+- **Tên file:** `yyyy_mm_dd_hhmmss_[action]_[component_name]_[component].php`.
+- **Nội dung:**
+  - Dùng `Schema::create` hoặc `Schema::table` cho bảng.
+  - Dùng `DB::statement` hoặc `DB::unprepared` cho view, procedure, trigger, sequence trong `up()`.
+  - Viết logic rollback trong `down()`.
 
 
 ## Model
-* **Chạy câu lệnh tạo file model**:
-  ```
+
+- **Lệnh tạo:**
+  ```bash
   php artisan make:model [model name] --path=[path]/[sub path]
   ```
-** **[model name]** Dựa vào tên table chuyển tử **snake_case** sang **PascalCase** để đặt tên cho modal
-** **[path] và [Sub Path]** định nghĩa tên và vị trí như source tree thiết kế bên trên
 
-* **Quy ước các property và method:**
-** **Model đại diện cho table** `protected $table = '[table name]';`. Trong đó [table name] là tên bảng theo thiết kế cơ sở dữ liệu.
-** **Các column sử dụng** `protected $fillable = ['column1', 'column2'];`. Các cột cho phép gán giá trị.
-** **Trạng thái column** `public const [const name] = ['active'  => 1,...];`. Trong đó [const name] là tên hằng số đại diện cho 1 column, format dạng **CONSTANT_CASE**
-* **Quan hệ (Relation):** Tên hàm quan hệ theo **camelCase**, 
-  ```
-    public function [table name format **camelCase**](): [hasOne|HasMany|BelongsTo|BelongsToMany]
+- **Quy ước:**
+  - **Table:** `protected $table = '[table name]';`.
+  - **Fillable:** `protected $fillable = ['column1', 'column2'];`.
+  - **Hằng số:** `public const [CONST_NAME] = ['active' => 1,...];`.
+  - **Quan hệ:** Tên hàm `camelCase`:
+    ```php
+    public function [tableName](): [hasOne|HasMany|BelongsTo|BelongsToMany]
     {
-      return $this->[hasOne|HasMany|BelongsTo|BelongsToMany]([model name format **PascalCase**]::class);
+        return $this->[hasOne|HasMany|BelongsTo|BelongsToMany]([ModelName]::class);
     }
-  ```
-* **Các phương thức khác:** Đặt theo camelCase, mô tả rõ chức năng. 
+    ```
 
-## Common response
-* **Meaning**
-  Trait này có nhiệm vụ chuẩn hóa response của API trả về. Dù xử lý lỗi hay không cũng sẽ trả về response theo format này
-  Trait này có 2 tham số
-    - $data: Là dữ liệu chính sau xử lý. Trả về giá trị là các loại dữ liệu cho trường hợp thành công. Trả về là null cho các trường hợp lỗi. Kiểu dữ liệu mixed
-    - $error: Để định nghĩa cho các xử lý lỗi. Tham số này cố định có 3 tham số chính
-      + status: Để nhận biết xử lý có lỗi hay không. Giá trị là false cho trường hợp xử lý thành công và true cho các trường hợp xử lý lỗi. Kiểu dữ liệu là bool
-      + code: Để phân loại lỗi. Giá trị trải dài từ 200 -> 550. Mỗi giá trị tương ứng với một loại lỗi. Kiểu giá trị là int. Trả về khoảng giá trị 200 -> 299 cho case thành công và trả về exception get code cho những trường hợp thất bại
-      + messages: Định nghĩa nội dung lỗi. Kiểu dữ liệu là null|array|string. Trả về null nếu xử lý thành công, ngược lại xử lý lỗi sẽ lấy message của exception tương ứng 
-* **Nội dung định nghĩa**
-```
+## Common Response
+
+- **Ý nghĩa:** Chuẩn hóa response API với `$data` (dữ liệu chính) và `$error` (status, code, messages).
+- **Định nghĩa:**
+  ```php
   namespace App\Traits;
 
   trait ApiResponse {
-    /**
-    * Render response api
-    * 
-    * @param mixed $data
-    * @param array $error
-    * @return Response
-    */
-    public static function renderResponse(mixed $data, array $error): Response
-    {
-      list($status, $code, $messages) = $error;
+      /**
+       * Render response api
+       *
+       * @param mixed $data
+       * @param array $error
+       * @return Response
+       */
+      public static function renderResponse(mixed $data, array $error): Response
+      {
+          list($status, $code, $messages) = $error;
 
-      return response()->json([
-        'data' => $data,
-        'error' => [
-          'status' => $status,
-          'code' => $code,
-          'messages' => $messages
-        ]
-      ]);
-    }
+          return response()->json([
+              'data' => $data,
+              'error' => [
+                  'status' => $status,
+                  'code' => $code,
+                  'messages' => $messages
+              ]
+          ]);
+      }
   }
-```
+  ```
 
 ## Handler
-* **Meaning**
+
+- **Ý nghĩa:** Xử lý các exception.
   Tổng hợp xử lý cho các loại exception khác nhau
-* **Nội dung định nghĩa**
+* **Định nghĩa**
   - Tạo file `app/Exceptions/Handler.php` nếu chưa có
   - Sử dụng method register() để định nghĩa các cách render ứng với từng loại exception
   - Sử dụng trait ApiResponse để chuẩn hóa các respose trả về
-* **Nội dung file**
-```
-  $this->renderable(function ([Exception name] $e, $request) {
-    return $this->renderResponse(
-      null,
-      [
-        true,
-        $e->getCode(),
-        $e->getMessage()
-      ]
-    );
-  }
- ```
-  - Trong đó, các exception bao gồm:
-  AuthenticationException,
-  TokenMismatchException,
-  AuthorizationException,
-  ThrottleRequestsException,
-  MethodNotAllowedHttpException,
-  NotFoundHttpException,
-  HttpException,
-  LogicException,
-  InvalidArgumentException,
-  ValidationException,
-  Exception
-  - Riêng InvalidArgumentException và ValidationException trả về message exception là $e->validator->errors()->messages()
+  ```php
+  $this->renderable(function ([ExceptionName] $e, $request) {
+      return $this->renderResponse(null, [true, $e->getCode(), $e->getMessage()]);
+  });
+  ```
 
 ## Middleware
 
-* **Ý nghĩa**
-  - Middleware là lớp trung gian thực hiện xử lý trước hoặc sau khi request đến controller. Trong trường hợp này, middleware sẽ quản lý transaction cho các thao tác ghi dữ liệu.
+* **Nhiệm vụ**
+  - Xử lý các logic chung trước hoặc sau khi request đến Controller (xác thực, phân quyền, logging, CORS, quản lý transaction...).
 
-* **Cách thực hiện**
+* **Quy ước**
   - Tạo một middleware mới, ví dụ: `DatabaseMiddleware`. Middleware này sẽ tự động bắt đầu transaction trước khi request được xử lý ở controller. Nếu có bất kỳ exception nào xảy ra trong quá trình xử lý, transaction sẽ tự động rollback; nếu xử lý thành công, transaction sẽ được commit.
+  - Mỗi Middleware chỉ nên thực hiện một nhiệm vụ duy nhất.
   - Đăng ký middleware này trong `app/Http/Kernel.php` và gán cho các route phù hợp, thường là các route sử dụng method POST, PUT, DELETE.
 
 * **Ví dụ tạo middleware:**
@@ -313,28 +290,10 @@ database/
   php artisan make:middleware DatabaseMiddleware
   ```
 
-* **Ví dụ nội dung middleware:**
-  ```php
-  namespace App\Http\Middleware;
-
-  use Closure;
-  use Illuminate\Support\Facades\DB;
-
-  class DatabaseMiddleware
-  {
-      public function handle($request, Closure $next)
-      {
-          return DB::transaction(function () use ($request, $next) {
-              return $next($request);
-          });
-      }
-  }
-  ```
-
-* **Đăng ký middleware:**
+* **Đăng ký middleware control DB transaction:**
   - Thêm vào `$routeMiddleware` trong `app/Http/Kernel.php`:
     ```php
-    'transaction' => \App\Http\Middleware\TransactionMiddleware::class,
+    'db.transaction' => \App\Http\Middleware\DatabaseTransaction::class,
     ```
   - Sử dụng cho các route cần quản lý transaction:
     ```php
@@ -353,53 +312,46 @@ database/
 
 
 ## Controller
-* **Lệnh tạo:**
+
+- **Lệnh tạo:**
   ```bash
-  php artisan make:controller [controller name]Controller --path=[path]/[sub path]
+  php artisan make:controller [controllerName]Controller --path=[path]/[sub path]
   ```
-** **[controller name]** Dựa vào tên table chuyển tử **snake_case** sang **PascalCase** để đặt tên cho controller
-** **[path] và [Sub Path model]** tên và vị trí như thiết kế source tree bên trên
-* **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. Ví dụ:
-```
-  class [Controller Name]Controller extends Controller
-  ...
-  /**
-   * [Nhiệm vụ của method này]
-   *
-   * @param [data type] [tên param]
-   * @return [data type]
-   */
-  public function [function name]([data type] [tên param]): [data type trả về]
+
+- **Định dạng:**
+  ```php
+  class [ControllerName]Controller extends Controller
   {
-    return [Service name]::getInstance()->[method name]([param]);
+      /**
+       * [Nhiệm vụ của method]
+       * @param [dataType] [param]
+       * @return [dataType]
+       */
+      public function [functionName]([dataType] [param]): [dataType]
+      {
+          return $this->[ServiceName]->[methodName]([param]);
+      }
   }
+  ```
 ```
 
 ## Service
-* **Vi trí service**:
-  ```
-  [path]/[sub path]/[service name]Service.php
-  ```
-** **[service name]** Dựa vào tên table chuyển tử **snake_case** sang **PascalCase** để đặt tên cho service
-** **[path][Sub Path model]** tên và vị trí như thiết kế source tree bên trên
-* **Handle:** Thực hiện logic, truy vấn cơ sở dữ liệu thông qua repository, trả về kết quả format dữ liệu thông qua resource bên trong service như ví dụ bên dưới. Dependence injection trực tiếp trong constructor của controller
-* **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. Ví dụ:
-```
-  /**
-   * [Nhiệm vụ của method này]
-   *
-   * @param [data type] [tên param]
-   * @return [data type]
-   */
-  public function [function name]([data type] [tên param]): [data type trả về]
-  {
-    // Logic ...
-    [variable] = [Repoitory name]Repository::[Method name]([param]);
 
-    return [variable]
-      ? [Resource name]Resource::collection([variable])
-      : [];
+- **Vị trí:** `[path]/[sub path]/[serviceName]Service.php`.
+- **Định dạng:**
+  ```php
+  /**
+   * [Nhiệm vụ của method]
+   * @param [dataType] [param]
+   * @return [dataType]
+   */
+  public function [functionName]([dataType] [param]): [dataType]
+  {
+      $variable = [RepositoryName]Repository::[methodName]([param]);
+      return $variable ? [ResourceName]Resource::collection($variable) : [];
   }
+  ```
+- Dependence injection trực tiếp trong constructor của controller
 
 
 ## Validate Request (Form Request)
@@ -407,8 +359,8 @@ database/
   ```bash
   php artisan make:request [request name]Request --path=[path]/[sub path]
   ```
-** **[validate name]** Dựa vào tên [service name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryService.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php. Dependence injection trực tiếp trong các method của của controller
-** **[path] và [Sub Path model]** tên và vị trí như thiết kế source tree bên trên
+** **[validate name]** Dựa vào tên [controller name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryController.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php. 
+- Dependence injection trực tiếp trong các method của của controller
 * **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. 
 * **Viết rule** Trong function rule() lấy tất cả param request, mỗi param viết rule riêng. Các param hầu hết tương ứng với column của 1 table cùng tên model, lấy các điều kiện migrate của table đó để xác định rule validate. Thực hiện, định nghĩa rule validate cho từng trường theo đúng kiểu dữ liệu và ràng buộc của migration. vd:
 - Ở trong migrate nội dung của table category như sau:
@@ -422,106 +374,92 @@ database/
   $table->unsignedSmallInteger('rank_order')->default(0)->comment('Category order');
   $table->timestamps();
 - Ở file migrate thực hiện validate trước khi store với rule
+- **Ví dụ Rule:**
+  ```php
   public function rules(): array
   {
-    return [
-      'parent_id'   => 'numeric|min:0',
-      'name'        => 'required|string|min:0|max:50|unique:App\Models\Master\category,name',
-      'slug'        => 'required|string|min:0|max:50|unique:App\Models\Master\category,slug',
-      'description' => 'string|min:0|max:150',
-      'status'      => 'in:' . implode(',', array_values(Category::CATEGORY_STATUS)),
-      'is_display'  => 'bool',
-      'rank_order'  => 'numeric|min:0'
-    ];
+      return [
+          'parent_id' => 'numeric|min:0',
+          'name' => 'required|string|min:0|max:50|unique:App\Models\Master\category,name',
+          'slug' => 'required|string|min:0|max:50|unique:App\Models\Master\category,slug',
+          'description' => 'string|min:0|max:150',
+          'status' => 'in:' . implode(',', array_values(Category::CATEGORY_STATUS)),
+          'is_display' => 'bool',
+          'rank_order' => 'numeric|min:0'
+      ];
   }
+  ```
 * **Định nghĩa message validate** Ở trong function messages() return về định nghĩa từng message của từng param ứng với từng rule của param đó. Ví dụ:
-  /**
-  * Parent Id
-  */
+  ```php
   'parent_id.numeric' => Messages::getMessage(
-    Messages::E0001,
-    ['attributes' => Category::attributes()['parent_id']]
+      Messages::E0001,
+      ['attributes' => Category::attributes()['parent_id']]
   ),
-  'parent_id.min' => Messages::getMessage(
-    Messages::E0010,
-    [
-      'attributes' => Category::attributes()['parent_id'],
-      'number' => Category::LENGTH_ATTR[0],
-    ]
-  ),
-
+  ```
 - Inject form request trực tiếp vào các method của controller
 
-## **Interface & Repository**
+## Interface & Repository
 
-* **Interface:**
-    * **Vị trí và Tên:** Như thiết kế source tree bên trên
-    * **Nội dung:** Định nghĩa các method cần có.
-        ```php
-        interface [interface name]Interface {
-            public function [method name]([param name]);
-            // ... Interface
-        }
-        ```
-    * **Handler:** Dependence injection trực tiếp trong constructor của service
+- **Interface:**
+  ```php
+  interface [InterfaceName]Interface {
+      public function [methodName]([paramName]);
+  }
+  ```
+  - **Handler:** Dependence injection trực tiếp trong constructor của service
 
-* **Repository:**
-    * **Vị trí và Tên:** như thiết kế source tree bên trên
-    * **Nội dung:** Triển khai Interface và chứa logic truy vấn DB.
-        ```php
-        class [repository name]Repository implements [interface name]Interface {
-            // ... implement methods
-        }
-        ```
+- **Repository:**
+  ```php
+  class [RepositoryName]Repository implements [InterfaceName]Interface {
+      // Implement methods
+  }
+  ```
 
-* **Binding:** Đăng ký Interface với Repository trong `app/Providers/RepositoryServiceProvider.php`.
-    ```php
-    // Trong method register()
-    $this->app->bind(
-        \App\Interfaces\Management\[interface name]RepositoryInterface::class,
-        \App\Repositories\Management\[repository name]RepositoryRepository::class
-    );
-    ```
+- **Binding:** Trong `app/Providers/RepositoryServiceProvider.php`:
+  ```php
+  $this->app->bind(
+      \App\Interfaces\Management\[InterfaceName]Interface::class,
+      \App\Repositories\Management\[RepositoryName]Repository::class
+  );
+  ```
 
-## **API Resources**
+## API Resources
 
-* **Lệnh tạo:**
-    ```bash
-    php artisan make:resource [resource name]Request --path=[path]/[sub path]
-    ```
-* **Vị trí và tên:** như thiết kế source tree
-* **Mục đích:** Định dạng dữ liệu trả về theo mong muốn, đảm bảo API response nhất quán và không bị lộ cấu trúc DB. Ví dụ
-    ```php
-    public function toArray($request): array
-    {
-        return [
-            'id' => $this->id,
-            'productName' => $this->name, // Thay đổi key trả về
-            'price' => $this->price,
-            'isActive' => $this->is_active,
-            'category' => new CategoryResource($this->whenLoaded('category')), // Tải quan hệ
-            'createdAt' => $this->created_at->toIso8601String(),
-        ];
-    }
-    ```
+- **Lệnh tạo:**
+  ```bash
+  php artisan make:resource [resourceName]Request --path=[path]/[sub path]
+  ```
 
-## **Routing**
+- **Ví dụ:**
+  ```php
+  public function toArray($request): array
+  {
+      return [
+          'id' => $this->id,
+          'productName' => $this->name,
+          'price' => $this->price,
+          'isActive' => $this->is_active,
+          'category' => new CategoryResource($this->whenLoaded('category')),
+          'createdAt' => $this->created_at->toIso8601String(),
+      ];
+  }
+  ```
 
-* **Vị trí:** `routes/api.php`.
-* **Grouping:** Nhóm các route theo phạm vi với prefix để dễ quản lý.
-* **Naming:** Đặt tên cho các route.
-    ```php
-    use App\Http\Controllers\Management\DepartmentController;
+## Routing
 
-    Route::prefix('department')->group(function () {
+- **Vị trí:** `routes/api.php`.
+- **Ví dụ:**
+  ```php
+  Route::prefix('department')->group(function () {
       Route::get('list', [DepartmentController::class, 'list']);
       Route::post('store', [DepartmentController::class, 'store']);
       Route::put('update/{id}', [DepartmentController::class, 'update']);
       Route::delete('delete/{id}', [DepartmentController::class, 'delete']);
-    });
-    ```
+  });
+  ```
 
-Mỗi khi thao tác gì đố với API, thực hiện đồng bộ các bước sau:
+## Các bước thực hiện khi làm việc với API
+
 **Xác định phạm vi** (master, management, history).
 **Migration** (bao gồm table, view, procedure, sequence, trigger) và seed dữ liệu (nếu cần).
 **Model** (Eloquent) và định nghĩa quan hệ.
