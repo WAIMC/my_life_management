@@ -22,3 +22,7 @@ Thực hiện với yêu cầu:
     + Thực hiện ưu tiên các quy tắc tôi đã định nghĩa trước, những phạm vi không có trong quy ước thì hãy sử dụng các "mẫu thiết kế phổ biến (common design patterns)".
 
 - Các vấn đề hiện tại là...Hãy đề xuất,..
+
+- Các vấn đề hiện tại là...Hãy đề xuất,..
+
+- Hãy cho tôi biết bạn sẽ làm gì tiếp theo ? kế hoạch hành động tiếp theo của bạn là gì ?

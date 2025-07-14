@@ -26,10 +26,12 @@ class MigrateAll extends Command
     public function handle(): void
     {
         $paths = [
-            'database/migrations/tables/masters',
-            'database/migrations/tables/histories',
-            'database/migrations/triggers',
-            'database/migrations/views',
+            'database/migrations/Table/Master',
+            'database/migrations/Table/Management',
+            'database/migrations/Table/History/Master',
+            'database/migrations/Table/History/Management',
+            'database/migrations/Trigger',
+            'database/migrations/View',
         ];
 
         foreach ($paths as $path) {
