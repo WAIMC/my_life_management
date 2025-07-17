@@ -1,476 +1,112 @@
-Tuyệt vời\! Dưới đây là phiên bản tối ưu hóa của tệp `CodingConvention.md`.
+---
 
-Nội dung đã được cấu trúc lại để đi theo một luồng logic hơn, bắt đầu từ các quy ước chung, cấu trúc dự án, sau đó đi sâu vào từng lớp (layer) theo đúng luồng xử lý của một request. Các phần lặp lại đã được gom lại, văn phong được tinh chỉnh cho mạch lạc và dễ đọc hơn, đồng thời các khối mã được định dạng rõ ràng.
+# Hướng dẫn Tối ưu: Tự động hóa Phát triển Laravel Tuân thủ Tiêu chuẩn với AI
 
-Toàn bộ ý nghĩa, quy tắc và ví dụ trong tài liệu gốc đều được giữ lại.
+Tài liệu này là một hướng dẫn thực hành, tập trung vào các bước hành động cụ thể để tận dụng AI, đặc biệt là GitHub Copilot, trong quá trình phát triển Laravel, nhằm đảm bảo tuân thủ nghiêm ngặt các quy ước mã hóa và kiến trúc tùy chỉnh.
 
------
+## 1. Hiểu rõ AI: Trợ lý Mạnh mẽ, Không phải Tác nhân Tự động Hoàn toàn
 
-# **Quy ước Mã hóa và Kiến trúc Dự án Laravel API**
+Để sử dụng AI hiệu quả, hãy nắm vững các điểm cốt lõi sau:
 
-Tài liệu này định nghĩa các quy ước, quy tắc và kiến trúc chuẩn cho việc phát triển dự án API sử dụng Laravel. Mục tiêu là đảm bảo tính nhất quán, dễ bảo trì, dễ mở rộng và giúp các thành viên mới nhanh chóng hòa nhập vào dự án.
+- **AI là Trợ lý, không phải Tác nhân Tự động Hoàn toàn:** AI hỗ trợ tạo mã, nhưng cần sự hướng dẫn rõ ràng và xác thực liên tục từ con người để đảm bảo tuân thủ các quy tắc phức tạp, tùy chỉnh.
+- **Giới hạn Ngữ cảnh và Token:** Các công cụ AI có giới hạn về lượng thông tin mà chúng có thể "ghi nhớ" và xử lý cùng lúc. Tài liệu quá dài hoặc thiếu thông tin có thể khiến AI bỏ lỡ yêu cầu hoặc lặp lại câu hỏi.
+- **Ưu tiên Mẫu Phổ biến:** AI được đào tạo trên lượng lớn mã công khai và có xu hướng tạo ra các mẫu "phổ biến". Để tuân thủ các quy ước tùy chỉnh, nội bộ, bạn cần cung cấp hướng dẫn rất cụ thể.
+- **Bộ nhớ Ngắn hạn:** "Bộ nhớ" của AI giống một bộ đệm ngắn hạn hơn là sự hiểu biết thông minh, bền vững về toàn bộ bộ quy tắc của dự án. Điều này đòi hỏi phải lặp lại các hướng dẫn quan trọng hoặc chia nhỏ tác vụ để AI có thể duy trì ngữ cảnh hiệu quả.
 
-## **1. Triết lý và Luồng hoạt động**
+## 2. Kỹ thuật Thiết kế Prompt Tối ưu
 
-Dự án được thiết kế theo **Kiến trúc Phân lớp (Layered Architecture)**, kết hợp với việc tổ chức theo **Module (Module-based Organization)**. Mỗi lớp đảm nhiệm một trách nhiệm duy nhất (Single Responsibility Principle) để đảm bảo sự rõ ràng và tách biệt.
+Để tối đa hóa hiệu suất của AI, hãy áp dụng các chiến lược thiết kế prompt sau:
 
-#### **Luồng xử lý Request (Request Flow):**
+- **Viết Prompt Ngắn gọn, Chi tiết và Hướng hành động:**
+  - **Cụ thể hóa Yêu cầu:** Sử dụng động từ hành động để chỉ rõ hành động mong muốn (ví dụ: "Tạo", "Viết", "Sửa đổi"). Xác định rõ định dạng đầu ra và mức độ chi tiết.
+  - **Cung cấp Ví dụ:** Đưa các đoạn mã mẫu hoặc ví dụ đầu vào/đầu ra vào prompt để định hướng phản hồi của AI.
+  - **Chia nhỏ Tác vụ Phức tạp:** Thay vì yêu cầu tạo toàn bộ module cùng lúc, hãy chia nhỏ thành các tác vụ nhỏ hơn (ví dụ: tạo migration, sau đó model, rồi repository, v.v.).
+  - **Tránh Mơ hồ:** Sử dụng các thuật ngữ chính xác và tránh các tham chiếu không rõ ràng.
 
-`Route` → `Middleware` → `Controller` → `Form Request (Validation)` → `Service` → `Repository` → `Model` → `Database`
+- **Tận dụng Tệp Hướng dẫn Tùy chỉnh (.github/copilot-instructions.md):**
+  - **Chuyển đổi Quy ước:** Chuyển đổi các quy tắc cốt lõi từ CodingConvention.md sang tệp .github/copilot-instructions.md. Ưu tiên các quy tắc quan trọng nhất và thường xuyên áp dụng.
+  - **Kích hoạt:** Đặt cài đặt `github.copilot.chat.codeGeneration.useInstructionFiles` thành `true` trong VS Code.
 
-#### **Luồng trả về Response (Response Flow):**
+- **Quản lý Ngữ cảnh Đa tệp và Lặp lại:**
+  - **Chỉ định Ngữ cảnh:** Mở các tệp liên quan, tô sáng mã, hoặc sử dụng `@workspace` (cho toàn bộ dự án đang mở) hoặc `#file:filename.ext` (cho các tệp cụ thể).
+  - **Kiểm tra và Tinh chỉnh:** Nếu phản hồi ban đầu không như mong đợi, hãy lặp lại prompt, xóa các đề xuất không phù hợp hoặc yêu cầu sửa đổi cụ thể.
+  - **Quản lý Lịch sử Chat:** Sử dụng các luồng chat mới cho các tác vụ mới để giữ lịch sử liên quan.
 
-`Database` → `Model` → `Repository` → `Service` → `Controller` → `API Resource (Transformation)` → `JSON Response`
+## 3. Lộ trình Hành động: Xây dựng Module Laravel Tuân thủ Tiêu chuẩn
 
------
+Đây là kế hoạch hành động chi tiết, từng bước để xây dựng các module API trên Laravel tuân thủ CodingConvention.md.
 
-## **2. Quy ước chung**
+### 3.1. Giai đoạn 1: Thiết lập Quy ước Ban đầu
 
-Tất cả mã nguồn trong dự án phải tuân thủ các quy tắc sau:
+- **Thiết lập Quy ước trong AI:**
+  - **Hành động:** Chuyển đổi các quy tắc cốt lõi từ CodingConvention.md sang .github/copilot-instructions.md. Chia nhỏ các quy tắc phức tạp thành các câu lệnh đơn giản hơn.
+  - **Lưu ý:** Tách các quy tắc thành rule common (cấu trúc thư mục chuẩn và quy ước chung) và rule thành phần (migration, model, controller, v.v.).
 
-  * **Chuẩn Code:** Tuân thủ nghiêm ngặt **PSR-12**.
-  * **Ngôn ngữ:** Sử dụng **tiếng Anh, số ít** cho toàn bộ tên file, class, method, biến và comment.
-  * **Quy ước Đặt tên (Naming Conventions):**
-      * **Class (Model, Controller, Service...):** `PascalCase`, số ít. (Vd: `ProductService`, `CategoryMst`)
-      * **Method, Variable:** `camelCase`. (Vd: `getAllProducts`, `productDetail`)
-      * **Hằng số (Constants):** `UPPER_CASE_SNAKE_CASE`. (Vd: `const STATUS_ACTIVE = 1;`)
-      * **Bảng và Cột trong Database:** `snake_case`, số ít. (Vd: `product_mgmt`, `rank_order`)
-      * **File Route:** `kebab-case`. (Vd: `product-management.php`)
-      * **URL Endpoint:** `kebab-case`, tham số `snake_case`. (Vd: `/user-permissions/{user_id}`)
+- **Thiết lập Ngữ cảnh Dự án:**
+  - **Hành động:** Mở thư mục gốc của dự án trong VS Code để tận dụng ngữ cảnh `@workspace`.
 
------
+### 3.2. Giai đoạn 2: Tạo Module Lặp lại (Tự động hóa có sự hỗ trợ của Con người)
 
-## **3. Cấu trúc Thư mục**
+Thực hiện lần lượt theo thứ tự ưu tiên cho các module (ví dụ: Master > Management > History/Master > History/Management). Trừ admin.
 
-Cấu trúc thư mục được tổ chức theo nghiệp vụ (`Master`, `Management`, `History`) và theo từng lớp kiến trúc.
+**Trong mỗi Module:**
 
-```
-app/
-├── Http/
-│   ├── Controllers/
-│   │   ├── Master/
-│   │   └── Management/
-│   ├── Middleware/
-│   ├── Requests/
-│   │   ├── Master/
-│   │   └── Management/
-│   └── Resources/
-│       ├── Master/
-│       └── Management/
-├── Interfaces/
-│   ├── Master/
-│   └── Management/
-├── Models/
-│   ├── Master/
-│   └── Management/
-├── Providers/
-│   └── RepositoryServiceProvider.php
-├── Repository/
-│   ├── Master/
-│   └── Management/
-└── Services/
-    ├── Master/
-    └── Management/
-    └── ... (Tương tự cho History)
+- **Liệt kê và Quét tệp Migration:**
+  - **Hành động:** Liệt kê các tệp migration trong thư mục module (ví dụ: `database/migrations/master/`). Trong mỗi tệp migration, quét nội dung để trích xuất tên bảng và các trường.
 
-database/
-└── migrations/
-    ├── Table/
-    │   ├── Master/
-    │   ├── Management/
-    │   └── History/
-    ├── View/
-    └── Procedure/
-```
+- **Vòng lặp Tạo Thành phần (theo từng Bảng):**
+  - **Hành động:** Đối với mỗi bảng được xác định từ migration, thực hiện tạo (nếu chưa có) hoặc sửa lại (nếu đã tồn tại) các thành phần sau, tuân thủ các quy ước đã định nghĩa.
 
------
+**Quy trình Mẫu cho một Thành phần (Ví dụ: Model):**
 
-## **4. Thiết kế Cơ sở dữ liệu và Migrations**
+- **Xác định Table, Field:** (Ví dụ: bảng `products` với các trường `id`, `name`, `description`, `price`, `stock`).
+- **Tạo Prompt cho Model:**
+  - **Hành động:** Viết prompt ngắn gọn, chi tiết, dựa trên rule common và rule Model.
+  - **Ví dụ Prompt:**
+    > Tạo Eloquent Model `Product` trong thư mục `App/Modules/Master/Models` cho bảng `products`.
+    > Model này phải có các thuộc tính `$fillable` cho `name`, `description`, `price`, `stock`.
+    > Đảm bảo class và các phương thức công khai có JSDoc-style comment đầy đủ.
+    > Tuân thủ các quy ước đặt tên và cấu trúc thư mục đã định nghĩa trong `.github/copilot-instructions.md`.
+  - **Cung cấp Prompt này cho Copilot.**
 
-#### **4.1. Quy ước Đặt tên (Database)**
+- **Thu thập và Xác thực Đầu ra:** Kiểm tra tên folder, file, class name, nội dung theo quy ước.
+- **Yêu cầu Chỉnh sửa:** Nếu đầu ra không đúng, cung cấp phản hồi cụ thể cho Copilot để sửa đổi.
 
-  * **Table:**
+- **Lặp lại tương tự cho các Thành phần khác:**
+  - Repository: Dựa theo rule common và rule Repository.
+  - Interface: Dựa theo rule common và rule Interface.
+  - Service: Dựa theo rule common và rule Service.
+  - Validate: Dựa theo rule common và rule Validate.
+  - Controller: Dựa theo rule common và rule Controller.
+  - Resource: Dựa theo rule common và rule Resource.
+  - Route: Dựa theo rule common và rule Route.
 
-      * **Định danh:** `snake_case`, số ít. (Vd: `user`, `product`)
-      * **Hậu tố `_mst`:** Bảng dữ liệu gốc, cốt lõi (master data). (Vd: `category_mst`)
-      * **Hậu tố `_mgmt`:** Bảng dữ liệu quản lý, nghiệp vụ (management data). (Vd: `product_mgmt`)
-      * **Hậu tố `_hist`:** Bảng lưu lịch sử thay đổi. (Vd: `product_mgmt_hist`)
-      * **Bảng trung gian (N-N):** Tên gồm 2 bảng liên quan, theo thứ tự alphabet. (Vd: `product_tag_mgmt`)
+- **Xem xét và Xác nhận Sample:**
+  - **Hành động:** Yêu cầu tạo 1 bản sample để chính người dùng review và confirm lại các nội dung chỉnh sửa trước khi apply.
+  - **Lưu ý:** Nếu bản sample đầu tiên được chấp nhận hoặc yêu cầu chỉnh sửa đã được ghi nhận và áp dụng, hãy bỏ qua bước này cho các lần lặp lại sau nếu nội dung tương tự.
 
-  * **View:** Tiền tố `view_` + tên view + hậu tố phạm vi. (Vd: `view_active_products_mgmt`)
+### 3.3. Giai đoạn 3: Mở rộng và Tự động hóa Nâng cao (Chiến lược Dài hạn)
 
-  * **Procedure:** Hậu tố tên function + `_` + phạm vi + `_function`. (Vd: `calculate_revenue_mgmt_function`)
+- **Điều phối bằng Script:**
+  - **Hành động:** Phát triển một script phức tạp hơn để tự động hóa việc tạo các prompt, sử dụng công cụ đó để tương tác với AI khác. Script này sẽ quản lý luồng "Thực hiện lần lượt, tương tự cho các module khác một cách tự động".
+  - **Mục tiêu:** Xây dựng một script tự động từ A-Z, thống kê, liệt kê chi tiết tỉ mỉ từng bước nhỏ nhất, từ đầu đến cuối. Điều này đòi hỏi kiến thức và kinh nghiệm chuyên môn sâu rộng để bao quát toàn bộ luồng xử lý tùy chỉnh phức tạp. Khi setup chuẩn chỉ, bao quát, các công cụ AI sẽ thực hiện tất cả các khâu một cách tự động, nhanh chóng, chính xác.
 
-  * **Trigger:** Tiền tố `trigger_` + `[before|after]` + `_[insert|update|delete]` + `_` + tên bảng. (Vd: `trigger_after_update_product_mgmt`)
+- **Fine-tuning LLM Tùy chỉnh:**
+  - **Hành động:** Nếu khối lượng tạo mã tùy chỉnh cao và sự tuân thủ nghiêm ngặt là không thể thương lượng, hãy khám phá việc tạo một mô hình GitHub Copilot tùy chỉnh bằng cách đào tạo nó trên cơ sở mã hiện có, tuân thủ của tổ chức bạn.
+  - **Lợi ích:** Đây là cách hiệu quả nhất để nhúng các quy ước cụ thể trực tiếp vào kiến thức của AI, giúp đạt được độ chính xác và tuân thủ gần như 100% cho các mẫu đã xác định.
+  - **Lưu ý:** Việc fine-tuning trực tiếp nhúng các quy ước tùy chỉnh vào trọng số của mô hình, đây là giải pháp tối ưu nhất để giải quyết vấn đề "bộ nhớ ngắn hạn" của AI và đảm bảo sự tuân thủ nhất quán.
 
-  * **Sequence:** Hậu tố tên bảng + `_seq`. (Vd: `product_mgmt_seq`)
+## 4. Kết luận
 
-#### **4.2. Cột (Columns)**
+Việc tự động hóa phát triển Laravel với AI là một mục tiêu khả thi, nhưng đòi hỏi một cách tiếp cận có hệ thống và hiểu biết sâu sắc về khả năng của AI. Bằng cách:
 
-  * **Định danh:** `snake_case`, số ít, tiếng Anh, không viết tắt.
-  * **Khóa chính (Primary Key):** `id` (khuyến khích `ULID`) hoặc `bigIncrements`.
-  * **Khóa ngoại (Foreign Key):** `[tên_bảng_số_ít]_id`. (Vd: `category_id`). Luôn định nghĩa foreign key constraint để đảm bảo toàn vẹn dữ liệu.
-  * **Boolean:** Tiền tố `is_` hoặc `has_`. (Vd: `is_active`, `has_stock`).
-  * **Timestamps:** Luôn có `created_at` và `updated_at` kiểu `timestamp`.
-  * **Ghi chú (Comment):** Mỗi cột cần có comment ngắn gọn, viết hoa chữ cái đầu, giải thích ý nghĩa.
+- Nắm vững kỹ thuật thiết kế prompt: Cụ thể, chi tiết và hướng hành động.
+- Tận dụng các tệp hướng dẫn tùy chỉnh: Để nhúng các quy tắc cốt lõi.
+- Áp dụng lộ trình từng bước: Với sự xác thực và tinh chỉnh liên tục của con người.
+- Đầu tư vào tự động hóa nâng cao và fine-tuning: Cho mục tiêu dài hạn.
 
-#### **4.3. Migrations**
+Bạn có thể biến AI từ một trợ lý đơn thuần thành một công cụ mạnh mẽ, giúp tăng tốc độ phát triển và đảm bảo chất lượng mã, tuân thủ các tiêu chuẩn cao nhất của dự án.
 
-  * **Mục đích:** Quản lý phiên bản và thay đổi cấu trúc cơ sở dữ liệu.
 
-  * **Lệnh tạo:**
-
-    ```bash
-    php artisan make:migration [action]_[component_name]_[component] --path=database/migrations/[ComponentType]/[Scope]
-    ```
-
-      * `[action]`: `create` hoặc `update`.
-      * `[component]`: `table`, `view`, `procedure`...
-      * `[ComponentType]` và `[Scope]`: `Table/Master`, `View/Management`...
-
-  * **Nội dung:**
-
-      * Sử dụng `Schema::create` hoặc `Schema::table` cho bảng.
-      * Sử dụng `DB::statement()` hoặc `DB::unprepared()` cho View, Procedure, Trigger. Luôn đặt trong `up()` và viết logic rollback (Vd: `DROP VIEW IF EXISTS...`) trong `down()`.
-
------
-
-## **5. Các thành phần trong Luồng xử lý**
-
-#### **5.1. Routing (`routes/api.php`)**
-
-  * **Nhiệm vụ:** Định nghĩa các điểm cuối (endpoint) và liên kết chúng với Controller.
-
-  * **Quy ước:**
-
-      * Nhóm các route theo nghiệp vụ hoặc tài nguyên bằng `Route::prefix()` và `Route::group()`.
-      * Đặt tên cho route bằng `->name()`.
-      * Sử dụng các động từ HTTP (`get`, `post`, `put`, `delete`) một cách hợp lý theo chuẩn RESTful.
-
-  * **Ví dụ:**
-
-    ```php
-    use App\Http\Controllers\Management\DepartmentController;
-
-    Route::prefix('departments')->name('departments.')->group(function () {
-      Route::get('/', [DepartmentController::class, 'list'])->name('list');
-      Route::post('/', [DepartmentController::class, 'store'])->name('store');
-      Route::put('/{id}', [DepartmentController::class, 'update'])->name('update');
-      Route::delete('/{id}', [DepartmentController::class, 'delete'])->name('delete');
-    });
-    ```
-
-#### **5.2. Middleware**
-
-  * **Nhiệm vụ:** Xử lý các logic chung trước hoặc sau khi request đến Controller (xác thực, phân quyền, logging, CORS, quản lý transaction...).
-
-  * **Quy ước:**
-
-      * Mỗi Middleware chỉ nên thực hiện một nhiệm vụ duy nhất.
-      * Đăng ký Middleware trong `app/Http/Kernel.php` và gán vào route hoặc group.
-
-  * **Ví dụ: Middleware quản lý Transaction:**
-
-    1.  Tạo Middleware: `php artisan make:middleware DatabaseTransactionMiddleware`
-    2.  Trong `app/Http/Kernel.php`, đăng ký vào `$routeMiddleware`:
-        ```php
-        'db.transaction' => \App\Http\Middleware\DatabaseTransactionMiddleware::class,
-        ```
-    3.  Áp dụng cho các route ghi dữ liệu (POST, PUT, DELETE):
-        ```php
-        Route::middleware(['auth:api', 'db.transaction'])->group(function () {
-            Route::post('/products', [ProductMgmtController::class, 'store']);
-            Route::put('/products/{id}', [ProductMgmtController::class, 'update']);
-        });
-        ```
-
-#### **5.3. Form Request (Validation)**
-
-  * **Nhiệm vụ:** Chịu trách nhiệm duy nhất cho việc xác thực (validation) dữ liệu đầu vào.
-
-  * **Lệnh tạo:**
-
-    ```bash
-    php artisan make:request [Path]/[RequestName]Request
-    ```
-
-      * `[RequestName]`: `[ModelName][ActionName]`. Vd: `CategoryStore`, `ProductUpdate`.
-      * `[Path]`: Đường dẫn tương ứng trong `app/Http/Requests`. Vd: `Master`, `Management`.
-
-  * **Quy ước:**
-
-      * Trong phương thức `rules()`, định nghĩa các quy tắc validation. Các quy tắc này phải khớp với ràng buộc trong file migration (kiểu dữ liệu, độ dài, unique...).
-      * Trong phương thức `messages()`, tùy chỉnh các thông báo lỗi cho thân thiện.
-      * Inject trực tiếp Form Request vào phương thức của Controller để tự động validation.
-
-  * **Ví dụ:**
-
-    ```php
-    // app/Http/Requests/Master/CategoryStoreRequest.php
-    public function rules(): array
-    {
-        return [
-            'parent_id'   => 'sometimes|numeric|min:0',
-            'name'        => 'required|string|max:50|unique:category_mst,name',
-            'slug'        => 'required|string|max:50|unique:category_mst,slug',
-            'status'      => 'required|in:' . implode(',', CategoryMst::STATUS_LIST),
-            'is_display'  => 'required|boolean',
-        ];
-    }
-    ```
-
-#### **5.4. Controller**
-
-  * **Nhiệm vụ:** Tiếp nhận request, điều phối, gọi Service tương ứng và trả về response.
-
-  * **Quy ước:**
-
-      * **KHÔNG** chứa logic nghiệp vụ (business logic).
-      * Tên Controller theo tên Model với hậu tố `Controller`. (Vd: `ProductMgmtController`).
-      * Giữ cho các phương thức tinh gọn: nhận request, gọi service, trả về response.
-
-  * **Ví dụ:**
-
-    ```php
-    use App\Http\Requests\Management\ProductStoreRequest;
-    use App\Services\Management\ProductMgmtService;
-
-    class ProductMgmtController extends Controller
-    {
-        protected $productService;
-
-        public function __construct(ProductMgmtService $productService)
-        {
-            $this->productService = $productService;
-        }
-
-        public function store(ProductStoreRequest $request)
-        {
-            $product = $this->productService->createProduct($request->validated());
-            // Giả sử có 1 Trait Response chuẩn hóa
-            return $this->successResponse($product, 201);
-        }
-    }
-    ```
-
-#### **5.5. Service**
-
-  * **Nhiệm vụ:** Là "bộ não" của ứng dụng, chứa toàn bộ logic nghiệp vụ.
-
-  * **Quy ước:**
-
-      * Tên Service theo tên Model với hậu tố `Service`. (Vd: `ProductMgmtService`).
-      * Service có thể gọi các Repository hoặc các Service khác.
-      * Service được inject vào Controller thông qua constructor (Dependency Injection).
-
-  * **Ví dụ:**
-
-    ```php
-    use App\Interfaces\Management\ProductMgmtInterface;
-    use App\Resources\Management\ProductMgmtResource;
-
-    class ProductMgmtService
-    {
-        protected $productRepo;
-
-        public function __construct(ProductMgmtInterface $productRepo)
-        {
-            $this->productRepo = $productRepo;
-        }
-
-        public function createProduct(array $data): ProductMgmtResource
-        {
-            // Có thể có thêm logic ở đây:
-            // - Gửi email thông báo
-            // - Ghi log nghiệp vụ
-            // - Gọi một service khác để cập nhật kho hàng
-            $product = $this->productRepo->create($data);
-            return new ProductMgmtResource($product);
-        }
-    }
-    ```
-
-#### **5.6. Interface & Repository**
-
-  * **Nhiệm vụ:** Trừu tượng hóa lớp truy cập dữ liệu, giúp Service không phụ thuộc vào Eloquent hay một nguồn dữ liệu cụ thể.
-
-  * **Interface:**
-
-      * **Nhiệm vụ:** Định nghĩa các "hợp đồng" (các phương thức) mà Repository phải tuân theo.
-      * **Tên:** `[ModelName]Interface`. (Vd: `ProductMgmtInterface`).
-
-  * **Repository:**
-
-      * **Nhiệm vụ:** Triển khai (implement) Interface, chứa các truy vấn đến cơ sở dữ liệu (sử dụng Eloquent).
-      * **Tên:** `[ModelName]Repository`. (Vd: `ProductMgmtRepository`).
-
-  * **Binding:** Đăng ký việc triển khai Interface trong `app/Providers/RepositoryServiceProvider.php`.
-
-  * **Ví dụ Binding:**
-
-    ```php
-    // app/Providers/RepositoryServiceProvider.php
-    public function register()
-    {
-        $this->app->bind(
-            \App\Interfaces\Management\ProductMgmtInterface::class,
-            \App\Repository\Management\ProductMgmtRepository::class
-        );
-    }
-    ```
-
-#### **5.7. Model**
-
-  * **Nhiệm vụ:** Đại diện cho một bảng trong cơ sở dữ liệu, định nghĩa các mối quan hệ (relationships) và các thuộc tính.
-
-  * **Lệnh tạo:** `php artisan make:model [Path]/[ModelName]`
-
-  * **Quy ước:**
-
-      * Tên Model là `PascalCase` từ tên bảng. (Vd: `product_mgmt` -\> `ProductMgmt`).
-      * Khai báo rõ `protected $table = 'table_name';`.
-      * Sử dụng `protected $fillable = [...];` để định nghĩa các cột được phép mass-assignment.
-      * Các hàm quan hệ đặt tên theo `camelCase`.
-
-  * **Ví dụ:**
-
-    ```php
-    // app/Models/Management/ProductMgmt.php
-    class ProductMgmt extends Model
-    {
-        protected $table = 'product_mgmt';
-
-        protected $fillable = ['name', 'price', 'is_active', 'category_id'];
-
-        public function categoryMst(): BelongsTo
-        {
-            return $this->belongsTo(CategoryMst::class, 'category_id');
-        }
-    }
-    ```
-
-#### **5.8. API Resource**
-
-  * **Nhiệm vụ:** Biến đổi (transform) dữ liệu từ Model/Collection thành định dạng JSON trả về cho client.
-
-  * **Quy ước:**
-
-      * Tách biệt cấu trúc cơ sở dữ liệu khỏi cấu trúc response của API.
-      * Cho phép tùy chỉnh key, định dạng dữ liệu và tải các quan hệ một cách có điều kiện.
-
-  * **Lệnh tạo:** `php artisan make:resource [Path]/[ResourceName]Resource`
-
-  * **Ví dụ:**
-
-    ```php
-    // app/Http/Resources/Management/ProductMgmtResource.php
-    public function toArray($request): array
-    {
-        return [
-            'productId' => $this->id,
-            'productName' => $this->name, // Thay đổi key 'name' -> 'productName'
-            'price' => (float) $this->price,
-            'status' => $this->is_active ? 'active' : 'inactive',
-            'category' => new CategoryMstResource($this->whenLoaded('categoryMst')),
-            'createdAt' => $this->created_at->toIso8601String(),
-        ];
-    }
-    ```
-
------
-
-## **6. Xử lý Lỗi và Chuẩn hóa Response**
-
-Để đảm bảo mọi phản hồi từ API đều nhất quán, ta sử dụng một `Trait` chung và `Handler` để xử lý lỗi.
-
-#### **6.1. Trait `ApiResponse`**
-
-  * **Nhiệm vụ:** Cung cấp một phương thức `renderResponse` để chuẩn hóa cấu trúc JSON trả về.
-  * **Ví dụ:**
-    ```php
-    // app/Traits/ApiResponse.php
-    namespace App\Traits;
-
-    trait ApiResponse {
-        public function renderResponse(mixed $data, bool $status, int $code, mixed $messages)
-        {
-            return response()->json([
-                'data' => $data,
-                'error' => [
-                    'status' => $status,
-                    'code' => $code,
-                    'messages' => $messages
-                ]
-            ], $code);
-        }
-
-        public function successResponse($data, $code = 200)
-        {
-            return $this->renderResponse($data, false, $code, null);
-        }
-
-        public function errorResponse($message, $code)
-        {
-            return $this->renderResponse(null, true, $code, $message);
-        }
-    }
-    ```
-
-#### **6.2. Exception Handler (`app/Exceptions/Handler.php`)**
-
-  * **Nhiệm vụ:** Bắt các Exception phát sinh trong ứng dụng và sử dụng `ApiResponse` trait để trả về lỗi theo định dạng chuẩn.
-
-  * **Quy ước:**
-
-      * Sử dụng phương thức `register()` để định nghĩa cách xử lý cho từng loại Exception.
-
-  * **Ví dụ:**
-
-    ```php
-    // app/Exceptions/Handler.php
-    use App\Traits\ApiResponse;
-    use Illuminate\Database\Eloquent\ModelNotFoundException;
-    use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-
-    class Handler extends ExceptionHandler
-    {
-        use ApiResponse;
-
-        public function register()
-        {
-            $this->renderable(function (NotFoundHttpException $e, $request) {
-                if ($request->is('api/*')) {
-                    return $this->errorResponse('Resource not found.', 404);
-                }
-            });
-
-            $this->renderable(function (ModelNotFoundException $e, $request) {
-                if ($request->is('api/*')) {
-                    return $this->errorResponse('The requested item was not found.', 404);
-                }
-            });
-        }
-    }
-    ```
-
------
-
-## **7. Quy trình Phát triển một Tính năng mới**
-
-Khi bắt đầu một tính năng, hãy thực hiện tuần tự các bước sau để đảm bảo tuân thủ kiến trúc:
-
-1.  **Xác định Phạm vi:** Quyết định tính năng thuộc `Master`, `Management`, hay `History`.
-2.  **Migration & Database:**
-      * Tạo file migration cho bảng (`table`), view, procedure...
-      * Chạy migrate để cập nhật CSDL.
-      * (Tùy chọn) Tạo Seeder để có dữ liệu mẫu.
-3.  **Model:** Tạo Eloquent Model, định nghĩa `$table`, `$fillable` và các quan hệ (relationships).
-4.  **Repository & Interface:**
-      * Định nghĩa các phương thức cần thiết trong Interface.
-      * Tạo Repository để triển khai (implement) Interface và viết logic truy vấn CSDL.
-      * Binding Interface và Repository trong `RepositoryServiceProvider`.
-5.  **Service:** Tạo Service, inject Repository, và viết toàn bộ logic nghiệp vụ (business logic).
-6.  **Validation:** Tạo Form Request để định nghĩa các `rules` và `messages` cho dữ liệu đầu vào.
-7.  **Controller:** Tạo Controller, inject Service. Viết các phương thức để nhận Form Request, gọi Service và trả về response.
-8.  **API Resource:** Tạo Resource để định dạng dữ liệu trả về từ Service/Model.
-9.  **Route:** Khai báo endpoint trong file `routes/api.php`, trỏ đến phương thức trong Controller.
+https://www.youtube.com/watch?v=ualSK9XsZ4o&list=RDualSK9XsZ4o&start_radio=1&t=2654s
+24:30

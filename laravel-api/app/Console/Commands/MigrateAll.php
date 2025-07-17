@@ -26,6 +26,7 @@ class MigrateAll extends Command
     public function handle(): void
     {
         $paths = [
+            'database/migrations/Table/Other',
             'database/migrations/Table/Master',
             'database/migrations/Table/Management',
             'database/migrations/Table/History/Master',
