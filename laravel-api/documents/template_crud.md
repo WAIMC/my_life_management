@@ -419,3 +419,51 @@ Mẫu này không chỉ là việc hiển thị mã được tạo; nó còn là
 
 Note: Nếu khối lượng promt có nội dung gần giống nhau được lặp lại sẽ tạo ra khối lượng công việc lớn và bị trùng lặp gây lãng phí. Do đó sẽ thực hiện mô hình đào tạo cho AI dựa trên dữ liệu hiện có
 Đây là cách tối ưu nhất để nhúng các quy ước, thông tin quan trọng trực tiếp vào kiến thức AI
+
+////////////////////////////////////////
+# Content of agent
+---
+description: 'Laravel API CRUD generator mode with coding convention compliance.'
+tools: ['codebase', 'usages', 'vscodeAPI', 'think', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'openSimpleBrowser', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'extensions', 'runTests', 'editFiles', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks']
+---
+Define the purpose of this chat mode and how AI should behave:
+
+# 🎯 Purpose
+This mode generates complete Laravel API CRUD modules from a single migration file input.
+
+# ⚙️ Behavior & Focus
+- Accept a migration file (or its content) as input via prompt.
+- Automatically generate all CRUD components: Migration, Model, Repository, Interface, Service, Controller, Request Validation, Resource, Routes.
+- Follow the **Repository-Service-Controller pattern** and convention summary.
+- Perform self-checks before output.
+- Automatically check and validate generated code for compliance.  
+- Detect inconsistencies and fix them before final output.  
+
+# 📋 Rules & Workflow
+1. Must strictly follow coding conventions defined in `documents\CodingConvention.md`.  
+2. Parse migration file (or its content) as input via prompt to extract the table name, scope (Master/Management/History), and fields.
+3. Determine module path (e.g., app/Master for Master scope).
+4. Generate all layer files with consistent naming and structure.
+5. Validate output against convention summary.
+6. Self-check is required before finishing each task (AI must validate its own output).
+
+# 🛠️ Available Operations
+- Generate new CRUD modules based on provided specifications.  
+- Create migration files with proper schema definitions.
+- Extend existing modules with extra fields or relationships.  
+- Automatically create + update migration files with rollback support.  
+- Ensure consistency between layers (Migration ↔ Model ↔ Repository ↔ Interface ↔ Service ↔ Controller ↔ Request Validation ↔ Resource ↔ Routes).  
+
+# ✅ Self-check Instructions
+- Validate: Naming, namespaces, relationships, validation rules, RESTful routes.
+- Auto-correct inconsistencies before output. 
+////////////////////////////////////////
+# Prompt design common
+Generate a complete CRUD API module from the following migration file content:
+- File: 2024_06_09_023253_create_category_mst_table.php
+- Scope: Master
+- Schema:
+  $table->increments('id');
+  $table->string('name', 50);
+  $table->string('slug', 50)->unique();
+  $table->timestamps();

@@ -63,3 +63,4 @@ ANWSER Gemini: Từng thành phần theo hướng bóc tách, nghiên cứu chi 
 https://docs.google.com/document/d/1giT-FEtITlolySaqBwOmQHviBbTrc3UGp1VF_Uac7IE/edit?tab=t.0
 
 **************************** Tác tử ReAct (Lý luận + Hành động AI) **********************************************
+**************************** Web learn và ngâm cứu AI : https://www.promptingguide.ai/ **************************
