@@ -35,10 +35,6 @@ Dự án được thiết kế theo kiến trúc **Layered Architecture** (Servi
 
 `Route` -> `Middleware` -> `Controller` -> `Form Request (Validation)` -> `Service` -> `Repository` -> `Model` -> `Database`
 
-### Luồng trả về (Response Flow)
-
-`Database` -> `Model` -> `Repository` -> `Service` -> `Controller` -> `API Resource (Transformation)` -> `JSON Response`
-
 ### Ý nghĩa của các thành phần
 
 - **Route:** Định nghĩa điểm cuối (endpoint) của API.
@@ -201,27 +197,36 @@ database/
 
 - **Lệnh tạo:**
   ```bash
-  php artisan make:migration [create|update]_[component name]_[component] --path=[path]/[sub path]
+  php artisan make:migration [create|update]_[table name]_[table] --path=[scope]
   ```
-
-- **Tên file:** `yyyy_mm_dd_hhmmss_[action]_[component_name]_[component].php`.
 - **Nội dung:**
   - Dùng `Schema::create` hoặc `Schema::table` cho bảng.
   - Dùng `DB::statement` hoặc `DB::unprepared` cho view, procedure, trigger, sequence trong `up()`.
   - Viết logic rollback trong `down()`.
 
 
+## Const
+
+- **Quy ước nội dung file const:**
+  - Nếu table có định nghĩa column dạng status, tạo mới enum nếu chưa có
+  - Tên file enum là tên status đó, nội dung file định nghĩa key và value tương ứng mỗi loại status của status đó
+
+## Message
+
+- **Quy ước nội dung file message:**
+  - Sử dụng column name làm key và comment làm message. Định nghĩa chúng trong file resources/lang/en/messages.php
+  - File này return về array, bên trong chứa key/value các message common
+
 ## Model
 
 - **Lệnh tạo:**
   ```bash
-  php artisan make:model [model name] --path=[path]/[sub path]
+  php artisan make:model [table name] --path=[scope]
   ```
 
-- **Quy ước:**
+- **Quy ước nội dung file model:**
   - **Table:** `protected $table = '[table name]';`.
-  - **Fillable:** `protected $fillable = ['column1', 'column2'];`.
-  - **Hằng số:** `public const [CONST_NAME] = ['active' => 1,...];`.
+  - **Fillable:** `protected $fillable = ['column1', 'column2',...];`.
   - **Quan hệ:** Tên hàm `camelCase`:
     ```php
     public function [tableName](): [hasOne|HasMany|BelongsTo|BelongsToMany]
@@ -229,6 +234,95 @@ database/
         return $this->[hasOne|HasMany|BelongsTo|BelongsToMany]([ModelName]::class);
     }
     ```
+
+## Interface & Repository
+
+- **Interface:**
+  ```php
+  interface [table name]Interface {
+      public function [method Name]([param Name]);
+  }
+  ```
+  - **Handler:** Dependence injection trực tiếp trong constructor của service
+
+- **Repository:**
+  ```php
+  class [table name]Repository implements [InterfaceName]Interface {
+      // Implement methods
+  }
+  ```
+  + Logic get list (param payload):
+		select *
+		from
+			* Nếu là Table trung gian: from table left join với table trung gian và left join với table liên kết với table trung gian
+			* Nếu là Table liên kết N-1: from table N inner join với table 1
+			* Nếu là Table liên kết 1-N: from table 1
+		where
+      Mỗi column của table đem ra kiểm tra param truyền vào có key đó không. Nếu có thì compare query column đó với payload có key tương ứng
+		order by table.id
+  + Logic create (param payload):
+    Mỗi column của table đem ra kiểm tra param truyền vào có key đó không.
+    Nếu có thì gán value đó tương ứng với các column trong table rồi mới save
+  + Logic update (param payload, id):
+    Từ id check tồn tại record có id đó trong table hiện tại không. Ko thì văng exception. Nếu có, gán từng column table ứng với payload có key tương ứng
+
+- **Binding:** Trong `app/Providers/RepositoryServiceProvider.php`:
+  ```php
+  $this->app->bind(
+      \App\Interfaces\[scope]\[InterfaceName]Interface::class,
+      \App\Repositories\[scope]\[RepositoryName]Repository::class
+  );
+  ```
+
+## API Resources
+
+- **Lệnh tạo:**
+  ```bash
+  php artisan make:resource [resource Name]Resource --path=[scope]
+  ```
+
+- **Ví dụ:**
+  ```php
+  public function toArray($request): array
+  {
+      return [
+          'id' => $this->id,
+          'productName' => $this->name,
+          'price' => $this->price,
+          'isActive' => $this->is_active,
+          'category' => new CategoryResource($this->whenLoaded('category')),
+          'createdAt' => $this->created_at->toIso8601String(),
+      ];
+  }
+  ```
+
+## Service
+
+- **Vị trí:** `[scope]/[serviceName]Service.php`.
+- **Định dạng:**
+  ```php
+  /**
+   * [Nhiệm vụ của method]
+   * @param [dataType] [param]
+   * @return [dataType]
+   */
+  public function [functionName]([dataType] [param]): [dataType]
+  {
+      $variable = [RepositoryName]Repository::[methodName]([param]);
+      return $variable ? [ResourceName]Resource::collection($variable) : [];
+  }
+  ```
+- Dependence injection trực tiếp trong constructor của controller
++ logic delete: 
+  * Nếu là Table trung gian (table liên kết giữa các table): Xóa ko cần điều kiện
+  * Nếu là Table liên kết N-1: Xóa ko cần điều kiện
+  * Nếu là Table liên kết 1-N: Kiểm tra tồn tại ở model N đó, nếu ko tồn tại thì mới được xóa
+  * Common: Trước khi xóa cái gì cần kiểm tra tồn tại mới xóa
++ Logic create:
+  * Nếu là Table trung gian (table liên kết giữa các table): Check tồn tại table liên kết rồi mới tạo
+  * Nếu là Table liên kết N-1: Tạo thêm logic check tồn tại table 1 thì mới tạo
+  * Nếu là Table liên kết 1-N: Tạo không cần thêm logic
+
 
 ## Common Response
 
@@ -312,16 +406,28 @@ database/
     ```
 
 
+## Validate Request (Form Request)
+* **Lệnh tạo:**
+  ```bash
+  php artisan make:request [request name]Request --path=[scope]
+  ```
+** **[validate name]** Dựa vào tên [controller name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryController.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php. 
+- Dependence injection trực tiếp trong các method của của controller 
+* **Viết rule** Trong function rule() lấy tất cả param request, mỗi param viết rule riêng. Các param hầu hết tương ứng với column của 1 table cùng tên model, lấy các điều kiện migrate của table đó để xác định rule validate. Thực hiện, định nghĩa rule validate cho từng trường theo đúng kiểu dữ liệu và ràng buộc của migration
+* **Định nghĩa attributes:** Mỗi column validate, định nghĩa name là các message column đã định nghĩa trong file lang/en/message.php 
+- Inject form request trực tiếp vào các method của controller
+* **Note** Tạo validate cho bất kỳ request: search by condition, store, update, delete.
+
 ## Controller
 
 - **Lệnh tạo:**
   ```bash
-  php artisan make:controller [controllerName]Controller --path=[path]/[sub path]
+  php artisan make:controller [table name]Controller --path=[scope]
   ```
 
 - **Định dạng:**
   ```php
-  class [ControllerName]Controller extends Controller
+  class [table name]Controller extends Controller
   {
       /**
        * [Nhiệm vụ của method]
@@ -336,128 +442,17 @@ database/
   ```
 - **Note :** Vì các controller được bọc và xử lý response thành công (xử lý ở middleware) và response thất bại (xử lý ở handle) nên mỗi controller hãy return thẳng service
 
-
-## Service
-
-- **Vị trí:** `[path]/[sub path]/[serviceName]Service.php`.
-- **Định dạng:**
-  ```php
-  /**
-   * [Nhiệm vụ của method]
-   * @param [dataType] [param]
-   * @return [dataType]
-   */
-  public function [functionName]([dataType] [param]): [dataType]
-  {
-      $variable = [RepositoryName]Repository::[methodName]([param]);
-      return $variable ? [ResourceName]Resource::collection($variable) : [];
-  }
-  ```
-- Dependence injection trực tiếp trong constructor của controller
-
-
-## Validate Request (Form Request)
-* **Lệnh tạo:**
-  ```bash
-  php artisan make:request [request name]Request --path=[path]/[sub path]
-  ```
-** **[validate name]** Dựa vào tên [controller name] + [tên method] + hậu tố "Request" dạng **PascalCase** để đặt tên cho validate. VÍ dụ: CategoryController.php có function store() thì tạo tên file kiểu như sau: Category/CategoryStoreRequest.php. 
-- Dependence injection trực tiếp trong các method của của controller
-* **Định dạng:** Các property và method format dạng **camelCase**. Các method phải có comment: ý nghĩa method, mô tả data type của param, data type trả về. 
-* **Viết rule** Trong function rule() lấy tất cả param request, mỗi param viết rule riêng. Các param hầu hết tương ứng với column của 1 table cùng tên model, lấy các điều kiện migrate của table đó để xác định rule validate. Thực hiện, định nghĩa rule validate cho từng trường theo đúng kiểu dữ liệu và ràng buộc của migration. vd:
-- Ở trong migrate nội dung của table category như sau:
-  $table->increments('id');
-  $table->unsignedInteger('parent_id')->default(0)->comment('Parent category');
-  $table->string('name', 50)->comment('Category name');
-  $table->string('slug', 50)->comment('Category slug');
-  $table->string('description', 150)->nullable()->comment('Category description');
-  $table->unsignedTinyInteger('status')->default(0)->comment('Category status');
-  $table->boolean('is_display')->default(false)->comment('Display category');
-  $table->unsignedSmallInteger('rank_order')->default(0)->comment('Category order');
-  $table->timestamps();
-- Ở file migrate thực hiện validate trước khi store với rule
-- **Ví dụ Rule:**
-  ```php
-  public function rules(): array
-  {
-      return [
-          'parent_id' => 'numeric|min:0',
-          'name' => 'required|string|min:0|max:50|unique:App\Models\Master\category,name',
-          'slug' => 'required|string|min:0|max:50|unique:App\Models\Master\category,slug',
-          'description' => 'string|min:0|max:150',
-          'status' => 'in:' . implode(',', array_values(Category::CATEGORY_STATUS)),
-          'is_display' => 'bool',
-          'rank_order' => 'numeric|min:0'
-      ];
-  }
-  ```
-* **Định nghĩa message validate** Ở trong function messages() return về định nghĩa từng message của từng param ứng với từng rule của param đó. Ví dụ:
-  ```php
-  'parent_id.numeric' => Messages::getMessage(
-      Messages::E0001,
-      ['attributes' => Category::attributes()['parent_id']]
-  ),
-  ```
-- Inject form request trực tiếp vào các method của controller
-* **Note** Tạo validate cho bất kỳ request: search by condition, store, update, delete.
-
-## Interface & Repository
-
-- **Interface:**
-  ```php
-  interface [InterfaceName]Interface {
-      public function [methodName]([paramName]);
-  }
-  ```
-  - **Handler:** Dependence injection trực tiếp trong constructor của service
-
-- **Repository:**
-  ```php
-  class [RepositoryName]Repository implements [InterfaceName]Interface {
-      // Implement methods
-  }
-  ```
-
-- **Binding:** Trong `app/Providers/RepositoryServiceProvider.php`:
-  ```php
-  $this->app->bind(
-      \App\Interfaces\Management\[InterfaceName]Interface::class,
-      \App\Repositories\Management\[RepositoryName]Repository::class
-  );
-  ```
-
-## API Resources
-
-- **Lệnh tạo:**
-  ```bash
-  php artisan make:resource [resourceName]Request --path=[path]/[sub path]
-  ```
-
-- **Ví dụ:**
-  ```php
-  public function toArray($request): array
-  {
-      return [
-          'id' => $this->id,
-          'productName' => $this->name,
-          'price' => $this->price,
-          'isActive' => $this->is_active,
-          'category' => new CategoryResource($this->whenLoaded('category')),
-          'createdAt' => $this->created_at->toIso8601String(),
-      ];
-  }
-  ```
-
 ## Routing
 
 - **Vị trí:** `routes/api.php`.
-- **Ví dụ:**
+- Tạo nếu chưa có prefix('admin')->group. Bên trong tạo nếu chưa có prefix(scope)->group
+- Bên trong scope group đó, tạo group theo format
   ```php
-  Route::prefix('department')->group(function () {
-      Route::get('list', [DepartmentController::class, 'list']);
-      Route::post('store', [DepartmentController::class, 'store']);
-      Route::put('update/{id}', [DepartmentController::class, 'update']);
-      Route::delete('delete/{id}', [DepartmentController::class, 'delete']);
+  Route::prefix([table])->group(function () {
+    Route::get('list', [table]Controller::class, 'list']);
+    Route::post('store', [table]Controller::class, 'store']);
+    Route::put('update/{id}', [table]Controller::class, 'update']);
+    Route::delete('delete/{id}', [table]Controller::class, 'delete']);
   });
   ```
 
@@ -468,9 +463,9 @@ database/
 **Model** (Eloquent) và định nghĩa quan hệ.
 **Repository** + **Interface** để tách rời logic truy cập dữ liệu.
 **Service** để chứa Business Logic và validation bổ sung.
+**Resource** (API Resource) để định dạng đầu ra chuẩn.
 **Request Validation** (FormRequest) để định nghĩa rule và message.
 **Controller** để chuyển tiếp request vào service và xử lý response.
-**Resource** (API Resource) để định dạng đầu ra chuẩn.
 **Route** khai báo trong file route module.
 
 ---
