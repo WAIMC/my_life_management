@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Constants\CommonVal;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -13,9 +14,10 @@ class DatabaseTransaction
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
+     * @throws Throwable
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -24,7 +26,7 @@ class DatabaseTransaction
             $response = $next($request);
             if (
                 method_exists($response, 'getStatusCode')
-                && $response->getStatusCode() >= 400
+                && $response->getStatusCode() >= CommonVal::HTTP_BAD_REQUEST
             ) {
                 DB::rollBack();
             } else {

@@ -2,18 +2,18 @@
 
 namespace App\Services\Master;
 
-use App\Constants\Messages;
 use App\Constants\CommonVal;
-use InvalidArgumentException;
-use App\Models\Master\Category;
-use App\Services\CommonService;
-use App\Services\SingletonService;
-use Illuminate\Validation\ValidationException;
-use App\Http\Resources\Master\CategoryResource;
-use App\Repositories\Master\CategoryRepository;
+use App\Constants\Messages;
 use App\Http\Requests\Master\Category\CategoryListRequest;
 use App\Http\Requests\Master\Category\CategoryStoreRequest;
 use App\Http\Requests\Master\Category\CategoryUpdateRequest;
+use App\Http\Resources\Master\CategoryResource;
+use App\Models\Management\Category;
+use App\Repositories\Master\CategoryRepository;
+use App\Services\CommonService;
+use App\Services\SingletonService;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class CategoryService extends SingletonService
 {

@@ -62,4 +62,10 @@ class CommonVal
 
   public const DATE_FORMAT = 'd/m/Y';
   public const BLACKLIST = 'blacklist';
+
+  /**
+   * Admin
+   */
+  public const ROOT = 'root';
+  public const ADMIN_TYPE = 'admin';
 }

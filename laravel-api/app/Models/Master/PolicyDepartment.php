@@ -9,12 +9,7 @@ class PolicyDepartment extends Model
 {
   use HasFactory;
 
-  protected $table = 't_policy_department';
-
-  public const LENGTH_ATTR = [
-    0   => 0,
-    20  => 20, // table_name
-  ];
+  protected $table = 'policy_department_mst';
 
   /**
    * The attributes that are mass assignable.
@@ -32,20 +27,4 @@ class PolicyDepartment extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'id'         => 'Policy department ID',
-      'table_name' => 'table name',
-      'row_id'     => 'row id',
-      'created_at' => 'created at',
-      'updated_at' => 'created at',
-    ];
-  }
 }

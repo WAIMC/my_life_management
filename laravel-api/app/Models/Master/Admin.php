@@ -9,34 +9,7 @@ class Admin extends Authenticatable
 {
   use Notifiable;
 
-  protected $table = 't_admin';
-  public const TYPE = 'admin';
-  public const ROOT = 'root';
-
-  public const ADMIN_STATUS = [
-    'inactive'  => 0,
-    'active'    => 1,
-    'waiting'   => 2,
-    'suspended' => 3,
-  ];
-
-  public const IS_ACTIVE = [
-    'disabled' => false,
-    'enable'   => true
-  ];
-
-  public const GENDER = [
-    'male'   => 0,
-    'female' => 1
-  ];
-
-  public const LENGTH_ATTR = [
-    0   => 0,
-    20  => 20, // first_name, last_name, phone_number
-    30  => 30, // email, avatar
-    50  => 50, // user_name
-    100 => 100 // password, address
-  ];
+  protected $table = 'admin_mst';
 
   /**
    * The attributes that are mass assignable.
@@ -76,37 +49,4 @@ class Admin extends Authenticatable
   protected $casts = [
     'email_verified_at' => 'datetime',
   ];
-
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'id'                => 'Admin ID',
-      'email'             => 'email',
-      'user_name'         => 'user name',
-      'password'          => 'password',
-      'first_name'        => 'first name',
-      'last_name'         => 'last name',
-      'address'           => 'address',
-      'phone_number'      => 'phone_number',
-      'birth'             => 'birth',
-      'gender'            => 'gender',
-      'status'            => 'status',
-      'is_active'         => 'is active',
-      'avatar'            => 'avatar',
-      'email_verified_at' => 'email verified',
-      'remember_token'    => 'remember token',
-      'created_at'        => 'created at',
-      'updated_at'        => 'created at',
-    ];
-  }
-
-  public function roles()
-  {
-    return $this->belongsToMany(Role::class, 't_admin_role');
-  }
 }

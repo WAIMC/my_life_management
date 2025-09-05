@@ -16,7 +16,7 @@ class AdminDepartmentRepository
   /**
    * Get admin department list
    *
-   * @param array @payload
+   * @param array $payload
    * @return Collection
    */
   public static function list(array $payload): Collection

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\Master\Category;
 
 use App\Constants\Messages;
-use App\Models\Master\Category;
-use Illuminate\Validation\Rule;
+use App\Models\Management\Category;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CategoryUpdateRequest extends FormRequest
 {

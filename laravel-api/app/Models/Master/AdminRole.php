@@ -14,7 +14,7 @@ class AdminRole extends Model
    *
    * @var string
    */
-  protected $table = 't_admin_role';
+  protected $table = 'admin_role_mst';
 
   public $incrementing = false;
   protected $primaryKey = null;
@@ -32,17 +32,4 @@ class AdminRole extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Attributes for api
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'admin_id' => 'Admin id',
-      'role_id'  => 'Role id',
-    ];
-  }
 }

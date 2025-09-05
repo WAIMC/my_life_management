@@ -9,16 +9,12 @@ class ApiRole extends Model
 {
   use HasFactory;
 
-  public const LENGTH_ATTR = [
-    0   => 0,
-  ];
-
   /**
    * The table associated with the model.
    *
    * @var string
    */
-  protected $table = 't_api_role';
+  protected $table = 'api_role_mst';
 
   public $incrementing = false;
   protected $primaryKey = null;
@@ -36,17 +32,4 @@ class ApiRole extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Attributes for api
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'api_id' => 'API id',
-      'role_id' => 'Role id',
-    ];
-  }
 }

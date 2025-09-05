@@ -9,15 +9,12 @@ class AdminDepartment extends Model
 {
   use HasFactory;
 
-  public const LENGTH_ATTR = [
-    0 => 0
-  ];
   /**
    * The table associated with the model.
    *
    * @var string
    */
-  protected $table = 't_admin_department';
+  protected $table = 'admin_department_mst';
 
   public $incrementing = false;
   protected $primaryKey = null;
@@ -35,17 +32,4 @@ class AdminDepartment extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Attributes for api
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'admin_id'      => 'Admin id',
-      'department_id' => 'Department id',
-    ];
-  }
 }

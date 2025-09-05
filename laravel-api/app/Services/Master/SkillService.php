@@ -2,18 +2,18 @@
 
 namespace App\Services\Master;
 
-use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Models\Master\Skill;
-use InvalidArgumentException;
-use App\Services\CommonService;
-use App\Services\SingletonService;
-use App\Http\Resources\Master\SkillResource;
-use App\Repositories\Master\SkillRepository;
-use Illuminate\Validation\ValidationException;
+use App\Constants\Messages;
 use App\Http\Requests\Master\Skill\SkillListRequest;
 use App\Http\Requests\Master\Skill\SkillStoreRequest;
 use App\Http\Requests\Master\Skill\SkillUpdateRequest;
+use App\Http\Resources\Master\SkillResource;
+use App\Models\Management\Skill;
+use App\Repositories\Master\SkillRepository;
+use App\Services\CommonService;
+use App\Services\SingletonService;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class SkillService extends SingletonService
 {

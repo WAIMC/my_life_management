@@ -17,104 +17,120 @@ use App\Http\Controllers\Master\PolicyDepartmentController;
 use App\Http\Controllers\Master\DepartmentManagementController;
 
 Route::prefix('admin')->group(function () {
-  Route::prefix('account')->group(function () {
-    Route::post('login', [AdminController::class, 'login']);
-    Route::post('refresh-token', [AdminController::class, 'refreshToken']);
-  });
-
-  Route::middleware(AdminMiddleware::class)->group(function () {
-
-    // Admin
     Route::prefix('account')->group(function () {
-      Route::post('logout', [AdminController::class, 'logout']);
-      Route::get('list', [AdminController::class, 'list']);
-      Route::post('store', [AdminController::class, 'store']);
-      Route::put('update/{id}', [AdminController::class, 'update']);
-      Route::delete('delete/{id}', [AdminController::class, 'delete']);
+        Route::post('login', [AdminController::class, 'login']);
+        Route::post('refresh-token', [AdminController::class, 'refreshToken']);
     });
 
-    // Role
-    Route::prefix('role')->group(function () {
-      Route::get('list', [RoleController::class, 'list']);
-      Route::post('store', [RoleController::class, 'store']);
-      Route::put('update/{id}', [RoleController::class, 'update']);
-      Route::delete('delete/{id}', [RoleController::class, 'delete']);
-    });
+    Route::middleware(AdminMiddleware::class)->group(function () {
 
-    // Admin role
-    Route::prefix('admin-role')->group(function () {
-      Route::get('list', [AdminRoleController::class, 'list']);
-      Route::put('update', [AdminRoleController::class, 'update']);
-    });
+        // Department master
+        Route::prefix('master')->group(function () {
+            // Admin
+            Route::prefix('account')->group(function () {
+                Route::post('logout', [AdminController::class, 'logout']);
+                Route::get('list', [AdminController::class, 'list']);
+                Route::post('store', [AdminController::class, 'store']);
+                Route::put('update/{id}', [AdminController::class, 'update']);
+                Route::delete('delete/{id}', [AdminController::class, 'delete']);
+            });
 
-    // Feature
-    Route::prefix('feature')->group(function () {
-      Route::get('list', [FeatureController::class, 'list']);
-      Route::post('store', [FeatureController::class, 'store']);
-      Route::put('update/{id}', [FeatureController::class, 'update']);
-      Route::delete('delete/{id}', [FeatureController::class, 'delete']);
-    });
+            // Role
+            Route::prefix('role')->group(function () {
+                Route::get('list', [RoleController::class, 'list']);
+                Route::post('store', [RoleController::class, 'store']);
+                Route::put('update/{id}', [RoleController::class, 'update']);
+                Route::delete('delete/{id}', [RoleController::class, 'delete']);
+            });
 
-    // Api
-    Route::prefix('api')->group(function () {
-      Route::get('list', [ApiController::class, 'list']);
-      Route::post('store', [ApiController::class, 'store']);
-      Route::put('update/{id}', [ApiController::class, 'update']);
-      Route::delete('delete/{id}', [ApiController::class, 'delete']);
-    });
+            // Admin role
+            Route::prefix('admin-role')->group(function () {
+                Route::get('list', [AdminRoleController::class, 'list']);
+                Route::put('update', [AdminRoleController::class, 'update']);
+            });
 
-    // Api role
-    Route::prefix('api-role')->group(function () {
-      Route::get('list', [ApiRoleController::class, 'list']);
-      Route::put('update', [ApiRoleController::class, 'update']);
-    });
+            // Feature
+            Route::prefix('feature')->group(function () {
+                Route::get('list', [FeatureController::class, 'list']);
+                Route::post('store', [FeatureController::class, 'store']);
+                Route::put('update/{id}', [FeatureController::class, 'update']);
+                Route::delete('delete/{id}', [FeatureController::class, 'delete']);
+            });
 
-    // Department
-    Route::prefix('department')->group(function () {
-      Route::get('list', [DepartmentController::class, 'list']);
-      Route::post('store', [DepartmentController::class, 'store']);
-      Route::put('update/{id}', [DepartmentController::class, 'update']);
-      Route::delete('delete/{id}', [DepartmentController::class, 'delete']);
-    });
+            // Api
+            Route::prefix('api')->group(function () {
+                Route::get('list', [ApiController::class, 'list']);
+                Route::post('store', [ApiController::class, 'store']);
+                Route::put('update/{id}', [ApiController::class, 'update']);
+                Route::delete('delete/{id}', [ApiController::class, 'delete']);
+            });
 
-    // Admin department
-    Route::prefix('admin-department')->group(function () {
-      Route::get('list', [AdminDepartmentController::class, 'list']);
-      Route::put('update', [AdminDepartmentController::class, 'update']);
-    });
+            // Api role
+            Route::prefix('api-role')->group(function () {
+                Route::get('list', [ApiRoleController::class, 'list']);
+                Route::put('update', [ApiRoleController::class, 'update']);
+            });
 
-    // Policy department
-    Route::prefix('policy-department')->group(function () {
-      Route::get('list', [PolicyDepartmentController::class, 'list']);
-      Route::post('store', [PolicyDepartmentController::class, 'store']);
-      Route::put('update/{id}', [PolicyDepartmentController::class, 'update']);
-      Route::delete('delete/{id}', [PolicyDepartmentController::class, 'delete']);
-    });
+            // Department
+            Route::prefix('department')->group(function () {
+                Route::get('list', [DepartmentController::class, 'list']);
+                Route::post('store', [DepartmentController::class, 'store']);
+                Route::put('update/{id}', [DepartmentController::class, 'update']);
+                Route::delete('delete/{id}', [DepartmentController::class, 'delete']);
+            });
 
-    // Department management
-    Route::prefix('department-management')->group(function () {
-      Route::get('list', [DepartmentManagementController::class, 'list']);
-      Route::put('update', [DepartmentManagementController::class, 'update']);
-    });
+            // Admin department
+            Route::prefix('admin-department')->group(function () {
+                Route::get('list', [AdminDepartmentController::class, 'list']);
+                Route::put('update', [AdminDepartmentController::class, 'update']);
+            });
 
-    // Category
-    Route::prefix('category')->group(function () {
-      Route::get('list', [CategoryController::class, 'list']);
-      Route::post('store', [CategoryController::class, 'store']);
-      Route::put('update/{id}', [CategoryController::class, 'update']);
-      Route::delete('delete/{id}', [CategoryController::class, 'delete']);
-    });
+            // Policy department
+            Route::prefix('policy-department')->group(function () {
+                Route::get('list', [PolicyDepartmentController::class, 'list']);
+                Route::post('store', [PolicyDepartmentController::class, 'store']);
+                Route::put('update/{id}', [PolicyDepartmentController::class, 'update']);
+                Route::delete('delete/{id}', [PolicyDepartmentController::class, 'delete']);
+            });
 
-    // Skill
-    Route::prefix('skill')->group(function () {
-      Route::get('list', [SkillController::class, 'list']);
-      Route::post('store', [SkillController::class, 'store']);
-      Route::put('update/{id}', [SkillController::class, 'update']);
-      Route::delete('delete/{id}', [SkillController::class, 'delete']);
+            // Department management
+            Route::prefix('department-management')->group(function () {
+                Route::get('list', [DepartmentManagementController::class, 'list']);
+                Route::put('update', [DepartmentManagementController::class, 'update']);
+            });
+        });
+
+        // Department management
+        Route::prefix('management')->group(function () {
+            // Category
+            Route::prefix('category')->group(function () {
+                Route::get('list', [CategoryController::class, 'list']);
+                Route::post('store', [CategoryController::class, 'store']);
+                Route::put('update/{id}', [CategoryController::class, 'update']);
+                Route::delete('delete/{id}', [CategoryController::class, 'delete']);
+            });
+
+            // Skill
+            Route::prefix('skill')->group(function () {
+                Route::get('list', [SkillController::class, 'list']);
+                Route::post('store', [SkillController::class, 'store']);
+                Route::put('update/{id}', [SkillController::class, 'update']);
+                Route::delete('delete/{id}', [SkillController::class, 'delete']);
+            });
+        });
+
+        // Department master history
+        Route::prefix('history/master')->group(function () {
+
+        });
+
+        // Department management history
+        Route::prefix('history/management')->group(function () {
+
+        });
     });
-  });
 });
 
 Route::get('/user', function (Request $request) {
-  return $request->user();
+    return $request->user();
 })->middleware('auth:sanctum');

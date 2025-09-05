@@ -2,14 +2,14 @@
 
 namespace App\Repositories\Master;
 
-use DateTime;
-use LogicException;
-use App\Utilities\Tmp;
-use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Models\Master\Category;
-use Illuminate\Support\Facades\DB;
+use App\Constants\Messages;
+use App\Models\Management\Category;
+use App\Utilities\Tmp;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use LogicException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CategoryRepository

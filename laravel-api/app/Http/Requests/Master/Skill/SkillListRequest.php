@@ -2,11 +2,11 @@
 
 namespace App\Http\Requests\Master\Skill;
 
-use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Models\Master\Skill;
-use Illuminate\Validation\Validator;
+use App\Constants\Messages;
+use App\Models\Management\Skill;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class SkillListRequest extends FormRequest
 {

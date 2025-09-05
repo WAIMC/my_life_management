@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Master\Category;
 
 use App\Constants\Messages;
-use App\Models\Master\Category;
+use App\Models\Management\Category;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CategoryStoreRequest extends FormRequest

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Master;
 
 use App\Constants\CommonVal;
 use App\Constants\Messages;
+use App\Http\Requests\Master\Admin\AdminListRequest;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Master\Api;
@@ -13,175 +15,179 @@ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
 class AdminController extends Controller
 {
-  /**
-   * Admin list
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function list(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[0]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
+    protected AdminService $adminService;
+    public function __construct(AdminService $adminService) {
+        $this->adminService = $adminService;
+    }
 
-      $payload = $request->all();
-      $payload['admin_id'] = $request->attributes->get('admin_id');
+    /**
+     * Admin list
+     *
+     * @param AdminListRequest $request
+     * @return Response
+     * @throws AuthorizationException
+     */
+    public function list(AdminListRequest $request): Response
+    {
+        // Check valid method
+        if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
+            throw new MethodNotAllowedException(
+                [Api::TYPE_OF_METHOD[0]],
+                Messages::E0405,
+                CommonVal::HTTP_METHOD_NOT_ALLOWED
+            );
+        }
 
-      return AdminService::getInstance()->list($payload);
-    });
-  }
+        $payload = $request->all();
+        $payload['admin_id'] = $request->attributes->get('admin_id');
 
-  /**
-   * Store admin
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function store(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[1]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
+        return $this->adminService->list($payload);
+    }
 
-      $payload = $request->all();
-      $payload['admin_id'] = $request->attributes->get('admin_id');
+    /**
+     * Store admin
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function store(Request $request): Response
+    {
+        return $this->handleRequest(function () use ($request) {
+            // Check valid method
+            if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
+                throw new MethodNotAllowedException(
+                    [Api::TYPE_OF_METHOD[1]],
+                    Messages::E0405,
+                    CommonVal::HTTP_METHOD_NOT_ALLOWED
+                );
+            }
 
-      return AdminService::getInstance()->store($payload);
-    });
-  }
+            $payload = $request->all();
+            $payload['admin_id'] = $request->attributes->get('admin_id');
 
-  /**
-   * Login admin account
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function login(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[1]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $credentials = $request->only('user_name', 'password');
+            return AdminService::getInstance()->store($payload);
+        });
+    }
 
-      return AdminService::getInstance()->login($credentials);
-    });
-  }
+    /**
+     * Login admin account
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function login(Request $request): Response
+    {
+        return $this->handleRequest(function () use ($request) {
+            // Check valid method
+            if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
+                throw new MethodNotAllowedException(
+                    [Api::TYPE_OF_METHOD[1]],
+                    Messages::E0405,
+                    CommonVal::HTTP_METHOD_NOT_ALLOWED
+                );
+            }
+            $credentials = $request->only('user_name', 'password');
 
-  /**
-   * Refresh token admin account
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function refreshToken(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[1]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $refreshToken = $request->bearerToken();
+            return AdminService::getInstance()->login($credentials);
+        });
+    }
 
-      return AdminService::getInstance()->refreshToken($refreshToken);
-    });
-  }
+    /**
+     * Refresh token admin account
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function refreshToken(Request $request): Response
+    {
+        return $this->handleRequest(function () use ($request) {
+            // Check valid method
+            if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
+                throw new MethodNotAllowedException(
+                    [Api::TYPE_OF_METHOD[1]],
+                    Messages::E0405,
+                    CommonVal::HTTP_METHOD_NOT_ALLOWED
+                );
+            }
+            $refreshToken = $request->bearerToken();
 
-  /**
-   * Logout admin account
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function logout(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[1]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $refreshToken = $request['refresh_token'];
+            return AdminService::getInstance()->refreshToken($refreshToken);
+        });
+    }
 
-      return AdminService::getInstance()->logout($refreshToken);
-    });
-  }
+    /**
+     * Logout admin account
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function logout(Request $request): Response
+    {
+        return $this->handleRequest(function () use ($request) {
+            // Check valid method
+            if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
+                throw new MethodNotAllowedException(
+                    [Api::TYPE_OF_METHOD[1]],
+                    Messages::E0405,
+                    CommonVal::HTTP_METHOD_NOT_ALLOWED
+                );
+            }
+            $refreshToken = $request['refresh_token'];
 
-  /**
-   * Update account
-   *
-   * @param Request $request
-   * @param string $id
-   * @return Response
-   */
-  public function update(Request $request, string $id): Response
-  {
-    return $this->handleRequest(function () use ($request, $id) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[2]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[2]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
+            return AdminService::getInstance()->logout($refreshToken);
+        });
+    }
 
-      $payload = $request->all();
-      $payload['admin_id'] = $request->attributes->get('admin_id');
-      $payload['id'] = $id;
+    /**
+     * Update account
+     *
+     * @param Request $request
+     * @param string $id
+     * @return Response
+     */
+    public function update(Request $request, string $id): Response
+    {
+        return $this->handleRequest(function () use ($request, $id) {
+            // Check valid method
+            if ($request->method() !== Api::TYPE_OF_METHOD[2]) {
+                throw new MethodNotAllowedException(
+                    [Api::TYPE_OF_METHOD[2]],
+                    Messages::E0405,
+                    CommonVal::HTTP_METHOD_NOT_ALLOWED
+                );
+            }
 
-      return AdminService::getInstance()->update($payload);
-    });
-  }
+            $payload = $request->all();
+            $payload['admin_id'] = $request->attributes->get('admin_id');
+            $payload['id'] = $id;
 
-  /**
-   * Delete account
-   *
-   * @param Request $request
-   * @param string $id
-   * @return Response
-   */
-  public function delete(Request $request, string $id): Response
-  {
-    return $this->handleRequest(function () use ($request, $id) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[4]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[4]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
+            return AdminService::getInstance()->update($payload);
+        });
+    }
 
-      $payload['id'] = $id;
-      $payload['admin_id'] = $request->attributes->get('admin_id');
+    /**
+     * Delete account
+     *
+     * @param Request $request
+     * @param string $id
+     * @return Response
+     */
+    public function delete(Request $request, string $id): Response
+    {
+        return $this->handleRequest(function () use ($request, $id) {
+            // Check valid method
+            if ($request->method() !== Api::TYPE_OF_METHOD[4]) {
+                throw new MethodNotAllowedException(
+                    [Api::TYPE_OF_METHOD[4]],
+                    Messages::E0405,
+                    CommonVal::HTTP_METHOD_NOT_ALLOWED
+                );
+            }
 
-      return AdminService::getInstance()->delete($payload);
-    });
-  }
+            $payload['id'] = $id;
+            $payload['admin_id'] = $request->attributes->get('admin_id');
+
+            return AdminService::getInstance()->delete($payload);
+        });
+    }
 }

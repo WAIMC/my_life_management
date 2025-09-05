@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -25,7 +26,6 @@ use DomainException;
 use TypeError;
 use ErrorException;
 use ParseError;
-use ReflectionException;
 use App\Constants\Messages;
 use Illuminate\Support\Facades\Log;
 
@@ -37,7 +37,7 @@ class Handler extends ExceptionHandler
     {
         $this->renderable(function (Throwable $e, $request) {
             if ($request->is('api/*')) {
-                $getValidCode = function($code, $default) {
+                $getValidCode = function ($code, $default) {
                     return (is_numeric($code) && (int)$code > 0) ? (int)$code : $default;
                 };
                 switch (true) {
@@ -59,10 +59,9 @@ class Handler extends ExceptionHandler
                     case $e instanceof TypeError:
                     case $e instanceof ErrorException:
                     case $e instanceof ParseError:
-                    case $e instanceof ReflectionException:
                         return self::errorResponse(
                             $e->getMessage(),
-                            $getValidCode($e->getCode() CommonVal::HTTP_INTERNAL_SERVER_ERROR),
+                            $getValidCode($e->getCode(), CommonVal::HTTP_INTERNAL_SERVER_ERROR),
                         );
                     case $e instanceof InvalidArgumentException:
                         $code = $getValidCode($e->getCode(), CommonVal::HTTP_UNPROCESSABLE_CONTENT);
@@ -84,6 +83,8 @@ class Handler extends ExceptionHandler
                         );
                 }
             }
+
+            return [];
         });
     }
 }

@@ -9,24 +9,12 @@ class Feature extends Model
 {
   use HasFactory;
 
-  public const FEATURE_STATUS = [
-    'inactive' => 0,
-    'active'   => 1,
-    'planned'  => 2,
-  ];
-
-  public const LENGTH_ATTR = [
-    0   => 0,
-    50  => 50, // name, group_name
-    100 => 100 // description
-  ];
-
   /**
    * The table associated with the model.
    *
    * @var string
    */
-  protected $table = 't_feature';
+  protected $table = 'feature_mst';
 
   /**
    * The attributes that are mass assignable.
@@ -41,31 +29,4 @@ class Feature extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Attributes for feature
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'table_name'  => 'Feature',
-      'id'          => 'Feature ID',
-      'name'        => 'Feature name',
-      'group_name'  => 'Feature group name',
-      'description' => 'Feature description',
-      'status'      => 'Feature status',
-    ];
-  }
-
-  public function apis()
-  {
-      return $this->hasMany(Api::class, 'feature_id');
-  }
-
-  public function roles()
-  {
-      return $this->belongsToMany(Role::class, 't_role_feature');
-  }
 }

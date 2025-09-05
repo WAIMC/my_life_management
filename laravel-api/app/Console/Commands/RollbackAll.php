@@ -26,10 +26,13 @@ class RollbackAll extends Command
     public function handle()
     {
         $paths = [
-            'database/migrations/views',
-            'database/migrations/triggers',
-            'database/migrations/tables/histories',
-            'database/migrations/tables/masters',
+            'database/migrations/View',
+            'database/migrations/Trigger',
+            'database/migrations/Table/History/Management',
+            'database/migrations/Table/History/Master',
+            'database/migrations/Table/Management',
+            'database/migrations/Table/Master',
+            'database/migrations/Table/Other',
         ];
 
         foreach ($paths as $path) {

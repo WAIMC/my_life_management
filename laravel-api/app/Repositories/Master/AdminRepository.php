@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
 use DateTime;
@@ -11,17 +13,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\AuthorizationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class AdminRepository
+class AdminRepository extends abtrac
 {
+    public function getModel(): string
+    {
+        return Admin::class;
+    }
+
   /**
    * Get account list
    *
    * @param array $payload
-   * @return \Illuminate\Support\Collection
+   * @return Collection
    */
-  public static function list(array $payload): Collection
+  public function list(array $payload): Collection
   {
-    $query = DB::table("t_admin")
+    $query = DB::table("admin_mst")
       ->select([
         'id',
         'email',

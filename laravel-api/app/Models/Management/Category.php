@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Models\Master;
+namespace App\Models\Management;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Api extends Model
+class Category extends Model
 {
   use HasFactory;
 
@@ -14,14 +14,14 @@ class Api extends Model
    *
    * @var string
    */
-  protected $table = 'api_mst';
+  protected $table = 'category_mgmt';
 
   /**
    * The attributes that are mass assignable.
    *
    * @var array
    */
-  protected $fillable = ['type', 'name', 'path', 'is_active', 'feature_id'];
+  protected $fillable = ['parent_id', 'name', 'slug', 'description', 'status', 'is_display', 'rank_order'];
 
   /**
    * Indicates if the model should be timestamped.

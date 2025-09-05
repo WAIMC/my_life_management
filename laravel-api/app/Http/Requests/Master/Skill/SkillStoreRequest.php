@@ -3,8 +3,7 @@
 namespace App\Http\Requests\Master\Skill;
 
 use App\Constants\Messages;
-use App\Constants\CommonVal;
-use App\Models\Master\Skill;
+use App\Models\Management\Skill;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SkillStoreRequest extends FormRequest

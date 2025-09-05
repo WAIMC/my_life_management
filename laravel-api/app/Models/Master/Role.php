@@ -14,18 +14,7 @@ class Role extends Model
    *
    * @var string
    */
-  protected $table = 't_role';
-
-  public const IS_ACTIVE = [
-    'disabled' => false,
-    'enable'   => true
-  ];
-
-  public const LENGTH_ATTR = [
-    0   => 0,
-    30  => 30, // name
-    50  => 50, // permission
-  ];
+  protected $table = 'role_mst';
 
   /**
    * The attributes that are mass assignable.
@@ -40,24 +29,4 @@ class Role extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Attributes for Role
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'id'         => 'Role ID',
-      'name'       => 'Role name',
-      'permission' => 'Role description',
-      'is_active'  => 'Active role',
-    ];
-  }
-
-  public function features()
-  {
-      return $this->belongsToMany(Feature::class, 't_role_feature');
-  }
 }

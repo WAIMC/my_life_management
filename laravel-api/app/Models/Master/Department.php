@@ -9,18 +9,7 @@ class Department extends Model
 {
   use HasFactory;
 
-  protected $table = 't_department';
-
-  public const LENGTH_ATTR = [
-    0   => 0,
-    50  => 50, // code, name
-  ];
-
-  public const STATUS = [
-    'inactive'  => 0,
-    'active'    => 1,
-    'planned'   => 2,
-  ];
+  protected $table = 'department_mst';
 
   /**
    * The attributes that are mass assignable.
@@ -35,21 +24,4 @@ class Department extends Model
    * @var bool
    */
   public $timestamps = true;
-
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public static function attributes(): array
-  {
-    return [
-      'id'         => 'Department ID',
-      'code'       => 'code',
-      'name'       => 'name',
-      'status'     => 'status',
-      'created_at' => 'created at',
-      'updated_at' => 'created at',
-    ];
-  }
 }

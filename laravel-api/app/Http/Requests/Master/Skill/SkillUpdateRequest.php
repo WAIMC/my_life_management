@@ -3,9 +3,9 @@
 namespace App\Http\Requests\Master\Skill;
 
 use App\Constants\Messages;
-use App\Models\Master\Skill;
-use Illuminate\Validation\Rule;
+use App\Models\Management\Skill;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SkillUpdateRequest extends FormRequest
 {
