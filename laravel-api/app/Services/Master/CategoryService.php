@@ -9,7 +9,7 @@ use App\Http\Requests\Master\Category\CategoryStoreRequest;
 use App\Http\Requests\Master\Category\CategoryUpdateRequest;
 use App\Http\Resources\Master\CategoryResource;
 use App\Models\Management\Category;
-use App\Repositories\Master\CategoryRepository;
+//use App\Repositories\Master\CategoryRepository;
 use App\Services\CommonService;
 use App\Services\SingletonService;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +34,7 @@ class CategoryService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    $list = CategoryRepository::list($payload);
+//    $list = CategoryRepository::list($payload);
 
     return $list
       ? CategoryResource::collection($list)
@@ -58,7 +58,7 @@ class CategoryService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    CategoryRepository::store($payload);
+//    CategoryRepository::store($payload);
 
     return true;
   }
@@ -80,7 +80,7 @@ class CategoryService extends SingletonService
       throw new ValidationException($validator);
     }
 
-    CategoryRepository::update($payload);
+//    CategoryRepository::update($payload);
 
     return true;
   }
@@ -101,7 +101,7 @@ class CategoryService extends SingletonService
       throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
     }
 
-    CategoryRepository::delete($id);
+//    CategoryRepository::delete($id);
 
     return true;
   }

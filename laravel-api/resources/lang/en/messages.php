@@ -4,6 +4,7 @@
 return [
     'welcome' => 'Welcome to our application!',
     'goodbye' => 'Thank you for visiting!',
+    'admin_mst' => 'Admin Master',
     'admin_id' => 'Admin ID',
     'email' => 'email',
     'user_name' => 'user name',
@@ -21,7 +22,9 @@ return [
     'remember_token' => 'remember token',
     'created_at' => 'created at',
     'updated_at' => 'created at',
+    'department_mst' => 'Department Master',
     'department_id' => 'Department id',
+    'role_mst' => 'Role Master',
     'role_id'  => 'Role id',
     'api_id'         => 'API ID',
     'api_type'       => 'Type of api',
@@ -42,4 +45,5 @@ return [
     'skill_slug'        => 'Skill slug',
     'skill_status'      => 'Skill status',
     'skill_rank_order'  => 'Skill rank order',
+    'record'            => 'Record',
 ];

@@ -64,3 +64,48 @@ https://docs.google.com/document/d/1giT-FEtITlolySaqBwOmQHviBbTrc3UGp1VF_Uac7IE/
 
 **************************** Tác tử ReAct (Lý luận + Hành động AI) **********************************************
 **************************** Web learn và ngâm cứu AI : https://www.promptingguide.ai/ **************************
+
+
+
+************************* Xây dựng *************************
+Trong cơ sở dữ liệu quan hệ bao gồm các mối liên kết sau: không liên kết, liên kết 1-1, liên kết 1-N
+Khi thao tác với dữ liệu, tôi thực hiện logic kiểm tra sự tồn tại phụ thuộc trước khi thay đổi dữ liệu. Cụ thể như sau:
+- Tất cả các table đều kiểm tra tồn tại của chính nó trước khi xóa or update
+- Chức năng xóa: Kiểm tra tồn tại table 1 trong quan hệ 1-1, Table 1 trong quan hệ 1-N
+- Chức năng tạo mới or cập nhật: Kiểm tra tồn tại table 1 trong quan hệ 1-1, dùng cho table N trong quan hệ 1-N
+
+Tiếp tục, tôi đang xây dựng các tham số để truyền vào function để thao tác
+- Liên kết 1-1 or 1-N tôi sẽ gửi param là foreign key và kiểm tra vd: category_id = 1
+- Liên kết N-N (table trung gian) gửi param là các tổ hợp primary key vd: [[admin_id = 1, role_id = 1], [admin_id = 2, role_id = 2]]. Tôi thường sử dụng bảng trung gian là table bao gồm nhiều primary key, mỗi primary key liên kết
+  với id của 1 table.
+
+Tiếp theo, tôi đang cân nhắc xây dựng 1 common function xử lý kiểm tra tồn tại phụ thuộc ở trong repository hay là tôi sẽ kiểm tra chúng trong validate. Hãy nghiên cứu, phân tích xem liệu nó có hữu ích không ? nếu có hãy để xuất phương án xử lý
+tối ưu ? nếu không cho tôi biết phương án xử lý khác ?
+
+=> Xây dựng common function kiểm tra tồn tại phụ thuộc
+
+
+=> Kết luận: không tạo common cho kiểm tra phụ thuộc. Để đơn giản hóa logic, phân tách logic, tránh tạo function common 
+lớn đảm nhiệm nhiều logic dễ gây ảnh hưởng với quá nhiều thành phần, khó khăn khi cần thay đổi. Việc lặp lại các kiểm tra
+phụ thuộc là lựa chọn đơn giản, bền vững cho ứng dụng sau này. Có thể kiểm tra chúng trong validate, service để phân hóa
+nhiệm vụ thay vì quăng hết chúng vào 1 chỗ
+
+Trong cơ sở dữ liệu quan hệ bao gồm các mối liên kết sau: không liên kết, liên kết 1-1, liên kết 1-N
+Khi thao tác với dữ liệu, tôi thực hiện logic kiểm tra sự tồn tại phụ thuộc trước khi thay đổi dữ liệu. Cụ thể như sau:
+- Tất cả các table đều kiểm tra tồn tại của chính nó trước khi xóa or update
+- Chức năng xóa: Kiểm tra tồn tại table 1 trong quan hệ 1-1, Table 1 trong quan hệ 1-N
+- Chức năng tạo mới or cập nhật: Kiểm tra tồn tại table 1 trong quan hệ 1-1, dùng cho table N trong quan hệ 1-N
+**********************************************************
+
+Mindset thao tác CRUD với cơ sở dũ liệu quan hệ
+| Loại bảng / Quan hệ         | Create                                                                                   | Read        | Update                                             | Delete                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Bảng độc lập (không FK)** | – (chỉ check dữ liệu chính nó)                                                           | Tìm theo PK | Check bản ghi chính tồn tại trước khi update       | Check bản ghi chính tồn tại trước khi delete                                             |
+| **1-1 (phía 1)**            | –                                                                                        | –           | –                                                  | ✅ Check xem phía còn lại (FK) có đang tham chiếu không                                   |
+| **1-1 (phía N)**            | ✅ Check tồn tại bản ghi phía 1 (FK `exists`)                                             | –           | ✅ Check tồn tại bản ghi phía 1 trước khi update FK | –                                                                                        |
+| **1-N (phía 1)**            | –                                                                                        | –           | –                                                  | ✅ Check xem phía N có đang tham chiếu không (con tồn tại thì chặn)                       |
+| **1-N (phía N)**            | ✅ Check tồn tại bản ghi phía 1 (FK `exists`)                                             | –           | ✅ Check tồn tại bản ghi phía 1 trước khi update FK | –                                                                                        |
+| **N-N (bảng trung gian)**   | ✅ Check tồn tại từng FK trong 2 bảng liên kết<br>✅ Check uniqueness nếu có rule business | –           | ✅ Check tồn tại từng FK khi update pivot           | – (xóa pivot thường không cần check vì chỉ xóa quan hệ, không ảnh hưởng bản ghi cha/con) |
+
+-> Kiểm tra phụ thuộc trước khi thao tác tiếp theo ở validate. Case sử dụng dữ liệu thay đổi trong luồng logic run time thì check trong service
+**********************************************************

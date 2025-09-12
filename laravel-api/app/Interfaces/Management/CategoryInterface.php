@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Interfaces\Master;
+namespace App\Interfaces\Management;
 
 use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface AdminInterface extends BaseInterface
+interface CategoryInterface extends BaseInterface
 {
     /**
-     * Get account list
+     * Get category list
      *
      * @param array $payload
      * @return Collection
@@ -18,7 +18,7 @@ interface AdminInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new admin account
+     * Create new category
      *
      * @param array $payload
      * @return void
@@ -26,7 +26,7 @@ interface AdminInterface extends BaseInterface
     public function executeStore(array $payload): void;
 
     /**
-     * Update admin
+     * Update category
      *
      * @param array $payload
      * @return void
@@ -34,7 +34,7 @@ interface AdminInterface extends BaseInterface
     public function executeUpdate(array $payload): void;
 
     /**
-     * Delete admin
+     * Delete category
      *
      * @param array $ids
      * @return void
