@@ -2,65 +2,37 @@
 
 namespace App\Http\Controllers\Master;
 
-use App\Models\Master\Api;
-use App\Constants\Messages;
-use App\Constants\CommonVal;
-use Illuminate\Http\Request;
-use InvalidArgumentException;
+use App\Http\Requests\Master\AdminDepartment\AdminDepartmentListRequest;
+use App\Http\Requests\Master\AdminDepartment\AdminDepartmentUpdateRequest;
 use App\Http\Controllers\Controller;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Resources\Json\JsonResource;
 use App\Services\Master\AdminDepartmentService;
-use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
 class AdminDepartmentController extends Controller
 {
-  /**
-   * Admin department list
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function list(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[0]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $payload = $request->all();
+    public function __construct(
+        private AdminDepartmentService $adminDepartmentService
+    ) {}
 
-      return AdminDepartmentService::getInstance()->list($payload);
-    });
-  }
+    /**
+     * Admin department list
+     *
+     * @param AdminDepartmentListRequest $request
+     * @return JsonResource
+     */
+    public function list(AdminDepartmentListRequest $request): JsonResource
+    {
+        return $this->adminDepartmentService->list($request->all());
+    }
 
-  /**
-   * Update admin department
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function update(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[2]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[2]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-
-      $payload = $request->all();
-      if (!$payload) {
-        throw new InvalidArgumentException(Messages::E0422, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-      }
-
-      return AdminDepartmentService::getInstance()->update($payload);
-    });
-  }
+    /**
+     * Update admin department
+     *
+     * @param AdminDepartmentUpdateRequest $request
+     * @return bool
+     */
+    public function update(AdminDepartmentUpdateRequest $request): bool
+    {
+        return $this->adminDepartmentService->update($request->all());
+    }
 }

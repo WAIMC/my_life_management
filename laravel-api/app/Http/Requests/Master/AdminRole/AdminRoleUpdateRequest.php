@@ -2,170 +2,52 @@
 
 namespace App\Http\Requests\Master\AdminRole;
 
-use App\Constants\Messages;
-use App\Models\Master\Admin;
-use App\Models\Master\AdminRole;
+use App\Constants\CommonVal;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AdminRoleUpdateRequest extends FormRequest
 {
-  /**
-   * Determine if the user is authorized to make this request.
-   */
-  public function authorize(): bool
-  {
-    return true;
-  }
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-  /**
-   * Get the validation rules that apply to the request.
-   *
-   * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-   */
-  public function rules(): array
-  {
-    return [
-      'insert'            => 'array',
-      'insert.*'          => 'array',
-      'insert.*.admin_id' => 'required|numeric|min:0',
-      'insert.*.role_id'  => 'required|numeric|min:0',
-      'delete'            => 'array',
-      'delete.*'          => 'array',
-      'delete.*.admin_id' => 'required|numeric|min:0',
-      'delete.*.role_id'  => 'required|numeric|min:0',
-    ];
-  }
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'insert' => ['nullable', 'array'],
+            'insert.*' => 'array',
+            'insert.*.admin_id' => ['required', 'numeric', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER],
+            'insert.*.role_id' => ['required', 'numeric', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER],
+            'delete' => ['nullable', 'array'],
+            'delete.*' => 'array',
+            'delete.*.admin_id' => ['required', 'numeric', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER],
+            'delete.*.role_id' => ['required', 'numeric', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER],
+        ];
+    }
 
-  /**
-   * Get custom attributes for validator errors.
-   *
-   * @return array<string, string>
-   */
-  public function attributes(): array
-  {
-    return [
-      'insert'   => 'Payload insert',
-      'insert.*' => 'Items payload insert',
-      'delete'   => 'Payload delete',
-      'delete.*' => 'Items payload delete',
-    ];
-  }
-
-  /**
-   * Get the error messages for the defined validation rules.
-   *
-   * @return array<string, string>
-   */
-  public function messages(): array
-  {
-    return [
-      /**
-       * Insert
-       */
-      'insert.array' => Messages::getMessage(
-        Messages::E0019,
-        ['attributes' => $this->attributes()['insert']]
-      ),
-
-      /**
-       * Items payload insert
-       */
-      'insert.*.array' => Messages::getMessage(
-        Messages::E0019,
-        ['attributes' => $this->attributes()['insert.*']]
-      ),
-
-      /**
-       * Delete
-       */
-      'delete.array' => Messages::getMessage(
-        Messages::E0019,
-        ['attributes' => $this->attributes()['delete']]
-      ),
-
-      /**
-       * Items payload delete
-       */
-      'delete.*.array' => Messages::getMessage(
-        Messages::E0019,
-        ['attributes' => $this->attributes()['delete.*']]
-      ),
-
-      /**
-       * Admin ID of payload insert
-       */
-      'insert.*.admin_id.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => AdminRole::attributes()['admin_id']]
-      ),
-      'insert.*.admin_id.numeric' => Messages::getMessage(
-        Messages::E0001,
-        ['attributes' => AdminRole::attributes()['admin_id']]
-      ),
-      'insert.*.admin_id.min' => Messages::getMessage(
-        Messages::E0010,
-        [
-          'attributes' => AdminRole::attributes()['admin_id'],
-          'number' => Admin::LENGTH_ATTR[0]
-        ]
-      ),
-
-      /**
-       * Role ID of payload insert
-       */
-      'insert.*.role_id.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => AdminRole::attributes()['role_id']]
-      ),
-      'insert.*.role_id.numeric' => Messages::getMessage(
-        Messages::E0001,
-        ['attributes' => AdminRole::attributes()['role_id']]
-      ),
-      'insert.*.role_id.min' => Messages::getMessage(
-        Messages::E0010,
-        [
-          'attributes' => AdminRole::attributes()['role_id'],
-          'number' => Admin::LENGTH_ATTR[0]
-        ]
-      ),
-
-      /**
-       * Api ID of payload delete
-       */
-      'delete.*.admin_id.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => AdminRole::attributes()['admin_id']]
-      ),
-      'delete.*.admin_id.numeric' => Messages::getMessage(
-        Messages::E0001,
-        ['attributes' => AdminRole::attributes()['admin_id']]
-      ),
-      'delete.*.admin_id.min' => Messages::getMessage(
-        Messages::E0010,
-        [
-          'attributes' => AdminRole::attributes()['admin_id'],
-          'number' => Admin::LENGTH_ATTR[0]
-        ]
-      ),
-
-      /**
-       * Role ID of payload delete
-       */
-      'delete.*.role_id.required' => Messages::getMessage(
-        Messages::E0007,
-        ['attributes' => AdminRole::attributes()['role_id']]
-      ),
-      'delete.*.role_id.numeric' => Messages::getMessage(
-        Messages::E0001,
-        ['attributes' => AdminRole::attributes()['role_id']]
-      ),
-      'delete.*.role_id.min' => Messages::getMessage(
-        Messages::E0010,
-        [
-          'attributes' => AdminRole::attributes()['role_id'],
-          'number' => Admin::LENGTH_ATTR[0]
-        ]
-      ),
-    ];
-  }
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'insert' => __('messages.payload_insert'),
+            'insert.*' => __('messages.item_insert'),
+            'delete' => __('messages.payload_delete'),
+            'delete.*' => __('messages.item_delete'),
+            'admin_id' => __('messages.admin_id'),
+            'role_id' => __('messages.role_id'),
+        ];
+    }
 }

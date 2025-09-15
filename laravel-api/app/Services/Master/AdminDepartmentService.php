@@ -2,68 +2,123 @@
 
 namespace App\Services\Master;
 
-use App\Services\CommonService;
-use App\Services\SingletonService;
-use Illuminate\Validation\ValidationException;
-use App\Repositories\Master\AdminDepartmentRepository;
-use App\Http\Requests\Master\AdminDepartment\AdminDepartmentListRequest;
-use App\Http\Requests\Master\AdminDepartment\AdminDepartmentUpdateRequest;
+use App\Constants\CommonVal;
+use App\Constants\Messages;
+use App\Interfaces\Master\AdminDepartmentInterface;
 use App\Http\Resources\Master\AdminDepartmentResource;
+use Illuminate\Http\Resources\Json\JsonResource;
+use LogicException;
 
-class AdminDepartmentService extends SingletonService
+class AdminDepartmentService
 {
-  /**
-   * Get admin department list
-   *
-   * @param array $payload
-   * @return mixed
-   */
-  public function list(array $payload): mixed
-  {
-    $validator = (new CommonService())->validationManual(
-      (new AdminDepartmentListRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    public function __construct(
+        private AdminDepartmentInterface $adminDepartment
+    )
+    {
     }
 
-    $list = AdminDepartmentRepository::list($payload);
+    /**
+     * Get admin department list
+     *
+     * @param array $payload
+     * @return JsonResource
+     */
+    public function list(array $payload): JsonResource
+    {
+        $list = $this->adminDepartment->list($payload);
 
-    return $list
-      ? AdminDepartmentResource::collection($list)
-      : [];
-  }
-
-  /**
-   * Update admin department
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function update(array $payload): bool
-  {
-    // Validation payload
-    $validator = (new CommonService())->validationManual(
-      (new AdminDepartmentUpdateRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+        return AdminDepartmentResource::collection($list);
     }
 
-    // Insert admin department
-    if ($payload['insert']) {
-      AdminDepartmentRepository::store($payload['insert']);
+    /**
+     * Update admin department
+     *
+     * @param array $payload
+     * @return bool
+     */
+    public function update(array $payload): bool
+    {
+        // Delete admin department
+        if ($payload['delete']) {
+            self::checkExistsAdminDepartment($payload['delete']);
+            $this->adminDepartment->executeDelete($payload['delete']);
+        }
+
+        // Insert admin department
+        if ($payload['insert']) {
+            self::checkNotExistsAdminDepartment($payload['insert']);
+            $this->adminDepartment->executeStore($payload['insert']);
+        }
+
+        return true;
     }
 
-    // Delete admin department
-    if ($payload['delete']) {
-      AdminDepartmentRepository::delete($payload['delete']);
+    /**
+     * Check exist admin department
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkExistsAdminDepartment(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['admin_id'] . ', ' . (int)$item['department_id'] . ')';
+        })->all();
+
+        $adminDepartmentId = $this->adminDepartment->getAdminDepartmentId($values);
+
+        // Compare $values and $adminDepartmentId, get the differences
+        $differences = array_udiff($values, $adminDepartmentId, function ($a, $b) {
+            return strcmp((string)$a, (string)$b);
+        });
+
+        // Join the differences into a string
+        $diffString = implode(', ', $differences);
+
+        // Throw exception if there are differences
+        if (!empty($differences)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0017,
+                    [
+                        'attributes' => __('messages.admin_department_id') . ': ' . $diffString,
+                        'tableName' => __('messages.admin_department_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
+        }
     }
 
-    return true;
-  }
+    /**
+     * Check not exist admin department
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkNotExistsAdminDepartment(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['admin_id'] . ', ' . (int)$item['department_id'] . ')';
+        })->all();
+
+        $adminDepartmentId = $this->adminDepartment->getAdminDepartmentId($values)->toArray();
+        $diffString = implode(', ', $adminDepartmentId);
+
+        // Throw exception if there are exist
+        if (!empty($adminDepartmentId)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0020,
+                    [
+                        'attributes' => __('messages.admin_department_id') . ': ' . $diffString,
+                        'tableName' => __('messages.admin_department_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
+        }
+    }
 }

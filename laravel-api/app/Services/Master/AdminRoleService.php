@@ -2,77 +2,123 @@
 
 namespace App\Services\Master;
 
+use App\Interfaces\Master\AdminRoleInterface;
+use Illuminate\Http\Resources\Json\JsonResource;
 use LogicException;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Services\CommonService;
-use App\Services\SingletonService;
-use App\Repositories\Master\RoleRepository;
-use Illuminate\Validation\ValidationException;
 use App\Http\Resources\Master\AdminRoleResource;
-use App\Repositories\Master\AdminRoleRepository;
-use App\Http\Requests\Master\AdminRole\AdminRoleListRequest;
-use App\Http\Requests\Master\AdminRole\AdminRoleUpdateRequest;
 
-class AdminRoleService extends SingletonService
+class AdminRoleService
 {
-  /**
-   * Get admin role list
-   *
-   * @param array $payload
-   * @return mixed
-   */
-  public function list(array $payload): mixed
-  {
-    $validator = (new CommonService())->validationManual(
-      (new AdminRoleListRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    public function __construct(
+        private AdminRoleInterface $adminRole
+    )
+    {
     }
 
-    $list = AdminRoleRepository::list($payload);
+    /**
+     * Get admin role list
+     *
+     * @param array $payload
+     * @return JsonResource
+     */
+    public function list(array $payload): JsonResource
+    {
+        $list = $this->adminRole->list($payload);
 
-    return $list
-      ? AdminRoleResource::collection($list)
-      : [];
-  }
-
-  /**
-   * Update admin role
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function update(array $payload): bool
-  {
-    // Validation payload
-    $validator = (new CommonService())->validationManual(
-      (new AdminRoleUpdateRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+        return AdminRoleResource::collection($list);
     }
 
-    // Don't allow editing of personal role without role admin
-    if (!RoleRepository::isRoot($payload["admin_id"])) {
-      throw new LogicException(Messages::E0018, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    /**
+     * Update admin role
+     *
+     * @param array $payload
+     * @return bool
+     */
+    public function update(array $payload): bool
+    {
+        // Delete api role
+        if ($payload['delete']) {
+            self::checkExistsAdminRole($payload['delete']);
+            $this->adminRole->executeDelete($payload['delete']);
+        }
+
+        // Insert api role
+        if ($payload['insert']) {
+            self::checkNotExistsAdminRole($payload['insert']);
+            $this->adminRole->executeStore($payload['insert']);
+        }
+
+        return true;
     }
 
-    // Insert api role
-    if ($payload['insert']) {
-      AdminRoleRepository::store($payload['insert']);
+    /**
+     * Check exist admin role
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkExistsAdminRole(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['admin_id'] . ', ' . (int)$item['role_id'] . ')';
+        })->all();
+
+        $adminRoleId = $this->adminRole->getAdminRoleId($values);
+
+        // Compare $values and $adminRoleId, get the differences
+        $differences = array_udiff($values, $adminRoleId, function ($a, $b) {
+            return strcmp((string)$a, (string)$b);
+        });
+
+        // Join the differences into a string
+        $diffString = implode(', ', $differences);
+
+        // Throw exception if there are differences
+        if (!empty($differences)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0017,
+                    [
+                        'attributes' => __('messages.admin_role_id') . ': ' . $diffString,
+                        'tableName' => __('messages.admin_role_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
+        }
     }
 
-    // Delete api role
-    if ($payload['delete']) {
-      AdminRoleRepository::delete($payload['delete']);
-    }
+    /**
+     * Check not exist admin role
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkNotExistsAdminRole(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['admin_id'] . ', ' . (int)$item['role_id'] . ')';
+        })->all();
 
-    return true;
-  }
+        $adminRoleId =  $this->adminRole->getAdminRoleId($values)->toArray();
+        $diffString = implode(', ', $adminRoleId);
+
+        // Throw exception if there are exist
+        if (!empty($adminRoleId)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0020,
+                    [
+                        'attributes' => __('messages.admin_role_id') . ': ' . $diffString,
+                        'tableName' => __('messages.admin_role_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
+        }
+    }
 }

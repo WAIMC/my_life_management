@@ -92,4 +92,18 @@ class AdminRoleRepository extends BaseRepository implements AdminRoleInterface
             ->whereRaw("(admin_id, role_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
+
+
+    /**
+     * Get admin role id
+     *
+     * @param array $adminIds
+     * @return Collection
+     */
+    public function getAdminRoleId(array $adminIds): Collection
+    {
+        return $this->model
+            ->whereRaw("(admin_id, role_id) IN (" . implode(", ", $adminIds) . ")")
+            ->pluck('admin_id', 'role_id');
+    }
 }

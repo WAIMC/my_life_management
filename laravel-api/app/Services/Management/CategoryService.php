@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Master;
+namespace App\Services\Management;
 
 use App\Constants\CommonVal;
 use App\Constants\Messages;
@@ -9,11 +9,12 @@ use App\Http\Requests\Master\Category\CategoryStoreRequest;
 use App\Http\Requests\Master\Category\CategoryUpdateRequest;
 use App\Http\Resources\Master\CategoryResource;
 use App\Models\Management\Category;
-//use App\Repositories\Master\CategoryRepository;
 use App\Services\CommonService;
 use App\Services\SingletonService;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+
+//use App\Repositories\Master\CategoryRepository;
 
 class CategoryService extends SingletonService
 {

@@ -132,4 +132,18 @@ class ApiRoleRepository extends BaseRepository implements ApiRoleInterface
 
         return $query->exists();
     }
+
+
+    /**
+     * Get api role id
+     *
+     * @param array $apiRoleIds
+     * @return Collection
+     */
+    public function getApiRoleId(array $apiRoleIds): Collection
+    {
+        return $this->model
+            ->whereRaw("(api_id, role_id) IN (" . implode(", ", $apiRoleIds) . ")")
+            ->pluck('api_id', 'role_id');
+    }
 }

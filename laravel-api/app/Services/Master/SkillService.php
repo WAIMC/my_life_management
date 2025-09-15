@@ -9,7 +9,7 @@ use App\Http\Requests\Master\Skill\SkillStoreRequest;
 use App\Http\Requests\Master\Skill\SkillUpdateRequest;
 use App\Http\Resources\Master\SkillResource;
 use App\Models\Management\Skill;
-use App\Repositories\Master\SkillRepository;
+use App\Repositories\Management\SkillRepository;
 use App\Services\CommonService;
 use App\Services\SingletonService;
 use Illuminate\Validation\ValidationException;

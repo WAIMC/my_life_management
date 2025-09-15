@@ -37,6 +37,7 @@ class Messages
     const E0017 = '{attributes} not exist in {tableName}';  // Not exit in table
     const E0018 = 'Do not allow editing of personal role';  // Don't edit my role
     const E0019 = '{attributes} invalid type array';        // Array
+    const E0020 = '{attributes} exist in {tableName}';      // Exit in table
 
     /**
      * Errors http messages

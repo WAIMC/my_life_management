@@ -21,17 +21,17 @@ interface ApiInterface extends BaseInterface
      * Store admin role
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeStore(array $payload): void;
+    public function executeStore(array $payload): int;
 
     /**
      * Update api
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeUpdate(array $payload): void;
+    public function executeUpdate(array $payload): int;
 
     /**
      * Delete admin role

@@ -2,6 +2,8 @@
 
 namespace App\Services\Master;
 
+use App\Interfaces\Master\ApiRoleInterface;
+use Illuminate\Http\Resources\Json\JsonResource;
 use LogicException;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
@@ -14,71 +16,124 @@ use App\Http\Requests\Master\ApiRole\ApiRoleListRequest;
 use App\Http\Requests\Master\ApiRole\ApiRoleUpdateRequest;
 use App\Repositories\Master\RoleRepository;
 
-class ApiRoleService extends SingletonService
+class ApiRoleService
 {
-  /**
-   * Get api role list
-   *
-   * @param array $payload
-   * @return mixed
-   */
-  public function list(array $payload): mixed
-  {
-    $validator = (new CommonService())->validationManual(
-      (new ApiRoleListRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    public function __construct(
+        private ApiRoleInterface $apiRole,
+    )
+    {
     }
 
-    $list = ApiRoleRepository::list($payload);
+    /**
+     * Get api role list
+     *
+     * @param array $payload
+     * @return JsonResource
+     */
+    public function list(array $payload): JsonResource
+    {
+        $list = $this->apiRole->list($payload);
 
-    return $list
-      ? ApiRoleResource::collection($list)
-      : [];
-  }
-
-  /**
-   * Update api role
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function update(array $payload): bool
-  {
-    // Validation payload
-    $validator = (new CommonService())->validationManual(
-      (new ApiRoleUpdateRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+        return ApiRoleResource::collection($list);
     }
 
-    // TODO: Check current request role edit another role
-    // Tip : create parent role and child role
+    /**
+     * Update api role
+     *
+     * @param array $payload
+     * @return bool
+     */
+    public function update(array $payload): bool
+    {
+        // TODO: Check current request role edit another role
+        // Tip : create parent role and child role
 
-    // Don't allow editing of personal role without role admin
-    if (
-      !RoleRepository::isRoot($payload["admin_id"])
-      && ApiRoleRepository::isMyRole($payload)
-    ) {
-      throw new LogicException(Messages::E0018, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+        // Don't allow editing of personal role without role admin
+        if ($this->apiRole->isMyRole($payload)) {
+            throw new LogicException(Messages::E0018, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+        }
+
+        // Delete api role
+        if ($payload['delete']) {
+            self::checkExistsApiRole($payload['delete']);
+            $this->apiRole->executeDelete($payload['delete']);
+        }
+
+        // Insert api role
+        if ($payload['insert']) {
+            self::checkNotExistsApiRole($payload['insert']);
+            $this->apiRole->executeStore($payload['insert']);
+        }
+
+        return true;
     }
 
-    // Insert api role
-    if ($payload['insert']) {
-      ApiRoleRepository::store($payload['insert']);
+    /**
+     * Check exist api role
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkExistsApiRole(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['api_id'] . ', ' . (int)$item['role_id'] . ')';
+        })->all();
+
+        $apiRoleId = $this->apiRole->getApiRoleId($values);
+
+        // Compare $values and $apiRoleId, get the differences
+        $differences = array_udiff($values, $apiRoleId, function ($a, $b) {
+            return strcmp((string)$a, (string)$b);
+        });
+
+        // Join the differences into a string
+        $diffString = implode(', ', $differences);
+
+        // Throw exception if there are differences
+        if (!empty($differences)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0017,
+                    [
+                        'attributes' => __('messages.api_role_id') . ': ' . $diffString,
+                        'tableName' => __('messages.api_role_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
+        }
     }
 
-    // Delete api role
-    if ($payload['delete']) {
-      ApiRoleRepository::delete($payload['delete']);
-    }
+    /**
+     * Check not exist api role
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkNotExistsApiRole(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['api_id'] . ', ' . (int)$item['role_id'] . ')';
+        })->all();
 
-    return true;
-  }
+        $apiRoleId = $this->apiRole->getApiRoleId($values)->toArray();
+        $diffString = implode(', ', $apiRoleId);
+
+        // Throw exception if there are exist
+        if (!empty($apiRoleId)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0020,
+                    [
+                        'attributes' => __('messages.api_role_id') . ': ' . $diffString,
+                        'tableName' => __('messages.api_role_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
+        }
+    }
 }

@@ -2,108 +2,73 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Http\Requests\Master\Api\ApiDeleteRequest;
+use App\Http\Requests\Master\Api\ApiListRequest;
+use App\Http\Requests\Master\Api\ApiStoreRequest;
+use App\Http\Requests\Master\Api\ApiUpdateRequest;
 use App\Models\Master\Api;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
 use Illuminate\Http\Request;
 use App\Services\Master\ApiService;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
 class ApiController extends Controller
 {
-  /**
-   * Api list
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function list(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[0]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $payload = $request->all();
+    public function __construct(
+        private ApiService $apiService
+    )
+    {
+    }
 
-      return ApiService::getInstance()->list($payload);
-    });
-  }
+    /**
+     * Api list
+     *
+     * @param ApiListRequest $request
+     * @return JsonResource
+     */
+    public function list(ApiListRequest $request): JsonResource
+    {
+        return $this->apiService->list($request->all());
+    }
 
-  /**
-   * Store api
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function store(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[1]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[1]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $payload = $request->all();
+    /**
+     * Store api
+     *
+     * @param ApiStoreRequest $request
+     * @return int
+     */
+    public function store(ApiStoreRequest $request): int
+    {
+        return $this->apiService->store($request->all());
+    }
 
-      return ApiService::getInstance()->store($payload);
-    });
-  }
+    /**
+     * Update api
+     *
+     * @param ApiUpdateRequest $request
+     * @param string $id
+     * @return int
+     */
+    public function update(ApiUpdateRequest $request, string $id): int
+    {
+        $payload = $request->all();
+        $payload['id'] = $id;
 
-  /**
-   * Update api
-   *
-   * @param Request $request
-   * @param string $id
-   * @return Response
-   */
-  public function update(Request $request, string $id): Response
-  {
-    return $this->handleRequest(function () use ($request, $id) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[2]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[2]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $payload = $request->all();
-      $payload['id'] = $id;
+        return $this->apiService->update($payload);
+    }
 
-      return ApiService::getInstance()->update($payload);
-    });
-  }
-
-  /**
-   * Delete api
-   *
-   * @param Request $request
-   * @param string $id
-   * @return Response
-   */
-  public function delete(Request $request, string $id): Response
-  {
-    return $this->handleRequest(function () use ($request, $id) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[4]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[4]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-
-      return ApiService::getInstance()->delete($id);
-    });
-  }
+    /**
+     * Delete api
+     *
+     * @param ApiDeleteRequest $request
+     * @return Void
+     */
+    public function delete(ApiDeleteRequest $request): Void
+    {
+        $this->apiService->delete($request->all());
+    }
 }

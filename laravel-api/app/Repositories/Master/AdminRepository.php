@@ -105,9 +105,9 @@ class AdminRepository extends BaseRepository implements AdminInterface
      * Create new admin account
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeStore(array $payload): void
+    public function executeStore(array $payload): int
     {
         $data = [];
         $data['email'] = $payload['email'] ?? null;
@@ -121,8 +121,9 @@ class AdminRepository extends BaseRepository implements AdminInterface
         $data['gender'] = $payload['gender'] ?? null;
         $data['status'] = $payload['status'] ?? null;
         $data['avatar'] = $payload['avatar'] ?? null;
-
         $this->model->create($data);
+
+        return $this->model->id;
     }
 
 
@@ -130,9 +131,9 @@ class AdminRepository extends BaseRepository implements AdminInterface
      * Update admin
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeUpdate(array $payload): void
+    public function executeUpdate(array $payload): int
     {
         $admin = $this->model->findById($payload['id']);
         $admin['email'] = $payload['email'] ?? null;
@@ -147,6 +148,8 @@ class AdminRepository extends BaseRepository implements AdminInterface
         $admin['status'] = $payload['status'] ?? null;
         $admin['avatar'] = $payload['avatar'] ?? null;
         $admin->save();
+
+        return $admin->id;
     }
 
     /**

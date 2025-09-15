@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Master;
+namespace App\Repositories\Management;
 
 use App\Constants\CommonVal;
 use App\Constants\Messages;

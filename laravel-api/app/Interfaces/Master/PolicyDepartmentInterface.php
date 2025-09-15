@@ -7,10 +7,10 @@ namespace App\Interfaces\Master;
 use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface AdminInterface extends BaseInterface
+interface PolicyDepartmentInterface extends BaseInterface
 {
     /**
-     * Get account list
+     * Get policy department list
      *
      * @param array $payload
      * @return Collection
@@ -18,23 +18,23 @@ interface AdminInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new admin account
+     * Store policy department
      *
      * @param array $payload
-     * @return int
+     * @return void
      */
-    public function executeStore(array $payload): int;
+    public function executeStore(array $payload): void;
 
     /**
-     * Update admin
+     * Update policy department
      *
      * @param array $payload
-     * @return int
+     * @return void
      */
-    public function executeUpdate(array $payload): int;
+    public function executeUpdate(array $payload): void;
 
     /**
-     * Delete admin
+     * Delete policy department
      *
      * @param array $ids
      * @return void

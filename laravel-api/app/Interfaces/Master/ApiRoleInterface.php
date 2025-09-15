@@ -40,4 +40,12 @@ interface ApiRoleInterface extends BaseInterface
      * @return bool
      */
     public function isMyRole(array $payload): bool;
+
+    /**
+     * Get api role id
+     *
+     * @param array $apiRoleIds
+     * @return Collection
+     */
+    public function getApiRoleId(array $apiRoleIds): Collection;
 }

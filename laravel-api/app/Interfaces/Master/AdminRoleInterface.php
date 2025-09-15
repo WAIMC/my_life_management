@@ -32,4 +32,12 @@ interface AdminRoleInterface extends BaseInterface
      * @return void
      */
     public function executeDelete(array $payload): void;
+
+    /**
+     * Get admin role id
+     *
+     * @param array $adminIds
+     * @return Collection
+     */
+    public function getAdminRoleId(array $adminIds): Collection;
 }

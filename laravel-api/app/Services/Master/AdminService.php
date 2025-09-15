@@ -4,93 +4,67 @@ namespace App\Services\Master;
 
 use App\Constants\Messages;
 use App\Constants\CommonVal;
+use App\Interfaces\Master\AdminInterface;
 use App\Models\Master\Admin;
-use Illuminate\Http\Request;
-use InvalidArgumentException;
-use App\Services\CommonService;
+use Illuminate\Http\Resources\Json\JsonResource;
 use App\Utilities\JsonWebToken;
-use App\Services\SingletonService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
-use App\Repositories\Master\RoleRepository;
 use App\Http\Resources\Master\AdminResource;
-use App\Repositories\Master\AdminRepository;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
-use App\Http\Requests\Master\Admin\AdminListRequest;
-use App\Http\Requests\Master\Admin\AdminStoreRequest;
-use App\Http\Requests\Master\Admin\AdminUpdateRequest;
 
-class AdminService extends SingletonService
+class AdminService
 {
+    public function __construct(
+        private AdminInterface $admin
+    )
+    {
+    }
+
     /**
      * Handle find admin list
      *
      * @param array $payload
-     * @throws AuthorizationException
+     * @return JsonResource
      */
-    public function list(array $payload): array
+    public function list(array $payload): JsonResource
     {
-        // Check is role admin root
-        if (!RoleRepository::isRoot($payload["admin_id"])) {
-            throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
-        }
+        $list = $this->admin->list($payload);
 
-        $list = AdminRepository::list($payload);
-
-        return $list
-            ? AdminResource::collection($list)
-            : [];
+        return AdminResource::collection($list);
     }
 
     /**
      * Handle store account admin
      *
      * @param array $payload
-     * @return bool
+     * @return int
      */
-    public function store(array $payload): bool
+    public function store(array $payload): int
     {
-        // Validate
-        $validator = (new CommonService())->validationManual(
-            (new AdminStoreRequest()),
-            $payload
-        );
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        // Check is role admin root
-        if (!RoleRepository::isRoot($payload["admin_id"])) {
-            throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
-        }
-
-        AdminRepository::store($payload);
-
-        return true;
+        return $this->admin->executeStore($payload);
     }
 
     /**
      * Handle update account
      *
-     * @param array @payload
-     * @return bool
+     * @param array $payload
+     * @return int
      */
-    public function update(array $payload): bool
+    public function update(array $payload): int
     {
-        $validator = (new CommonService())->validationManual(
-            (new AdminUpdateRequest()),
-            $payload
-        );
+        return $this->admin->executeUpdate($payload);
+    }
 
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        AdminRepository::update($payload);
-
-        return true;
+    /**
+     * Delete account
+     *
+     * @param array $payload
+     * @return void
+     */
+    public function delete(array $payload): void
+    {
+        $this->admin->executeDelete($payload['ids']);
     }
 
     /**
@@ -98,8 +72,9 @@ class AdminService extends SingletonService
      *
      * @param array $payload
      * @return array
+     * @throws AuthorizationException
      */
-    public function login($payload): array
+    public function login(array $payload): array
     {
         $admin = Admin::where('user_name', $payload['user_name'])->first();
 
@@ -109,7 +84,7 @@ class AdminService extends SingletonService
 
         $payload = [
             'id' => (string)$admin->id,
-            'type' => Admin::TYPE,
+            'type' => CommonVal::ADMIN_TYPE,
             'role' => 'admin'
         ];
 
@@ -138,13 +113,14 @@ class AdminService extends SingletonService
      *
      * @param string|null $refreshToken
      * @return array
+     * @throws AuthorizationException
      */
     public function refreshToken(string|null $refreshToken): array
     {
         $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
 
         // Check refresh token had exited in black list
-        $key = CommonVal::BLACKLIST . ':' . Admin::TYPE . ':' . $payload['signature'];
+        $key = CommonVal::BLACKLIST . ':' . CommonVal::ADMIN_TYPE . ':' . $payload['signature'];
         if (Redis::hget($key, 'id')) {
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
         }
@@ -172,13 +148,14 @@ class AdminService extends SingletonService
      *
      * @param string|null $refreshToken
      * @return array
+     * @throws AuthorizationException
      */
     public function logout(string|null $refreshToken): array
     {
         $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
         $body = $payload['body'];
 
-        $key = CommonVal::BLACKLIST . ':' . Admin::TYPE . ':' . $payload['signature'];
+        $key = CommonVal::BLACKLIST . ':' . CommonVal::ADMIN_TYPE . ':' . $payload['signature'];
 
         if (Redis::hget($key, 'id')) { // Check already exit in blacklist
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
@@ -188,31 +165,5 @@ class AdminService extends SingletonService
         }
 
         return [];
-    }
-
-    /**
-     * Delete account
-     *
-     * @param array $payload
-     * @return bool
-     */
-    public function delete(array $payload): bool
-    {
-        if (!is_numeric($payload['id'])) {
-            $message = Messages::getMessage(
-                Messages::E0001,
-                ['attributes' => Admin::attributes()['id']]
-            );
-            throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-        }
-
-        // Only root can delete account
-        if (!RoleRepository::isRoot($payload["admin_id"])) {
-            throw new AuthorizationException(Messages::E0403, CommonVal::HTTP_FORBIDDEN);
-        }
-
-        AdminRepository::delete($payload['id']);
-
-        return true;
     }
 }

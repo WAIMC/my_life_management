@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Http\Requests\Master\ApiRole\ApiRoleListRequest;
+use App\Http\Requests\Master\ApiRole\ApiRoleUpdateRequest;
 use App\Models\Master\Api;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use App\Http\Controllers\Controller;
 use App\Services\Master\ApiRoleService;
@@ -14,54 +18,32 @@ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
 class ApiRoleController extends Controller
 {
-  /**
-   * Api role list
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function list(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[0]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[0]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-      $payload = $request->all();
+    public function __construct(
+        private ApiRoleService $apiRoleService
+    )
+    {
+    }
 
-      return ApiRoleService::getInstance()->list($payload);
-    });
-  }
+    /**
+     * Api role list
+     *
+     * @param ApiRoleListRequest $request
+     * @return JsonResource
+     */
+    public function list(ApiRoleListRequest $request): JsonResource
+    {
+        return $this->apiRoleService->list($request->all());
+    }
 
-  /**
-   * Update api role
-   *
-   * @param Request $request
-   * @return Response
-   */
-  public function update(Request $request): Response
-  {
-    return $this->handleRequest(function () use ($request) {
-      // Check valid method
-      if ($request->method() !== Api::TYPE_OF_METHOD[2]) {
-        throw new MethodNotAllowedException(
-          [Api::TYPE_OF_METHOD[2]],
-          Messages::E0405,
-          CommonVal::HTTP_METHOD_NOT_ALLOWED
-        );
-      }
-
-      $payload = $request->all();
-      if (!$payload) {
-        throw new InvalidArgumentException(Messages::E0422, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-      }
-      $payload['admin_id'] = $request->attributes->get('admin_id');
-
-      return ApiRoleService::getInstance()->update($payload);
-    });
-  }
+    /**
+     * Update api role
+     *
+     * @param ApiRoleUpdateRequest $request
+     * @return bool
+     * @throws ValidationException
+     */
+    public function update(ApiRoleUpdateRequest $request): bool
+    {
+        return $this->apiRoleService->update($request->all());
+    }
 }

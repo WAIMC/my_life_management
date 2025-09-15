@@ -90,4 +90,17 @@ class AdminDepartmentRepository extends BaseRepository implements AdminDepartmen
             ->whereRaw("(admin_id, department_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
+
+    /**
+     * Get admin departments id
+     *
+     * @param array $adminIds
+     * @return Collection
+     */
+    public function getAdminDepartmentId(array $adminIds): Collection
+    {
+        return $this->model
+            ->whereRaw("(admin_id, department_id) IN (" . implode(", ", $adminIds) . ")")
+            ->pluck('admin_id', 'department_id');
+    }
 }

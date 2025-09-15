@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Master;
 
-use App\Models\Master\Api;
-use App\Constants\Messages;
 use App\Constants\CommonVal;
-use Illuminate\Http\Request;
+use App\Constants\Messages;
 use App\Http\Controllers\Controller;
-use App\Services\Master\CategoryService;
+use App\Models\Master\Api;
+use App\Services\Management\CategoryService;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 

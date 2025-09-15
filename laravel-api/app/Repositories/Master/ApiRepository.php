@@ -88,9 +88,9 @@ class ApiRepository extends BaseRepository implements ApiInterface
      * Store api
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeStore(array $payload): void
+    public function executeStore(array $payload): int
     {
         $data = [];
         $data['type'] = $payload['type'] ?? null;
@@ -100,15 +100,17 @@ class ApiRepository extends BaseRepository implements ApiInterface
         $data['feature_id'] = $payload['feature_id'] ?? null;
 
         $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update api
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeUpdate(array $payload): void
+    public function executeUpdate(array $payload): int
     {
         $api = $this->model->findById($payload['id']);
         $data['type'] = $payload['type'] ?? null;
@@ -117,6 +119,8 @@ class ApiRepository extends BaseRepository implements ApiInterface
         $data['is_active'] = $payload['is_active'] ?? null;
         $data['feature_id'] = $payload['feature_id'] ?? null;
         $api->save($data);
+
+        return $api->id;
     }
 
     /**

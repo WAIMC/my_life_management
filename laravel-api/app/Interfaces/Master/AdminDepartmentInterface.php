@@ -32,4 +32,12 @@ interface AdminDepartmentInterface extends BaseInterface
      * @return void
      */
     public function executeDelete(array $payload): void;
+
+    /**
+     * Get admin departments id
+     *
+     * @param array $adminIds
+     * @return Collection
+     */
+    public function getAdminDepartmentId(array $adminIds): Collection;
 }

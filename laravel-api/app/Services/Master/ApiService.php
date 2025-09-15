@@ -4,9 +4,10 @@ namespace App\Services\Master;
 
 use App\Constants\Messages;
 use App\Constants\CommonVal;
+use App\Interfaces\Master\ApiInterface;
+use Illuminate\Http\Resources\Json\JsonResource;
 use InvalidArgumentException;
 use App\Services\CommonService;
-use App\Services\SingletonService;
 use App\Http\Resources\Master\ApiResource;
 use App\Repositories\Master\ApiRepository;
 use Illuminate\Validation\ValidationException;
@@ -15,94 +16,57 @@ use App\Http\Requests\Master\Api\ApiStoreRequest;
 use App\Http\Requests\Master\Api\ApiUpdateRequest;
 use App\Models\Master\Api;
 
-class ApiService extends SingletonService
+class ApiService
 {
-  /**
-   * Get api list
-   *
-   * @param array $payload
-   * @return mixed
-   */
-  public function list(array $payload): mixed
-  {
-    $validator = (new CommonService())->validationManual(
-      (new ApiListRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    public function __construct(
+        private ApiInterface $api
+    )
+    {
     }
 
-    $list = ApiRepository::list($payload);
+    /**
+     * Get api list
+     *
+     * @param array $payload
+     * @return JsonResource
+     */
+    public function list(array $payload): JsonResource
+    {
+        $list = $this->api->list($payload);
 
-    return $list
-      ? ApiResource::collection($list)
-      : [];
-  }
-
-  /**
-   * Store api
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function store(array $payload): bool
-  {
-    $validator = (new CommonService())->validationManual(
-      (new ApiStoreRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+        return ApiResource::collection($list);
     }
 
-    ApiRepository::store($payload);
-
-    return true;
-  }
-
-  /**
-   * Update api
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function update(array $payload): bool
-  {
-    $validator = (new CommonService())->validationManual(
-      (new ApiUpdateRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    /**
+     * Store api
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function store(array $payload): int
+    {
+        return $this->api->executeStore($payload);
     }
 
-    ApiRepository::update($payload);
-
-    return true;
-  }
-
-  /**
-   * Delete api
-   *
-   * @param string $id
-   * @return bool
-   */
-  public function delete(string $id): bool
-  {
-    if (!is_numeric($id)) {
-      $message = Messages::getMessage(
-        Messages::E0001,
-        ['attributes' => Api::attributes()['id']]
-      );
-      throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    /**
+     * Update api
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function update(array $payload): int
+    {
+        return $this->api->executeUpdate($payload);
     }
 
-    ApiRepository::delete($id);
-
-    return true;
-  }
+    /**
+     * Delete api
+     *
+     * @param array $payload
+     * @return Void
+     */
+    public function delete(array $payload): void
+    {
+        $this->api->executeDelete($payload['ids']);
+    }
 }
