@@ -1,0 +1,2504 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PostgreSQL DDL Schema",
+  "description": "JSON schema generated from PostgreSQL DDL for a vector database.",
+  "type": "object",
+  "properties": {
+    "admin_department_mst": {
+      "type": "object",
+      "properties": {
+        "admin_id": {
+          "type": "integer"
+        },
+        "department_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "admin_id",
+        "department_id"
+      ]
+    },
+    "admin_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Admin email"
+        },
+        "user_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Admin user name"
+        },
+        "password": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Admin password"
+        },
+        "first_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Admin first name"
+        },
+        "last_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Admin last name"
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Admin address"
+        },
+        "phone_number": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Admin phone number"
+        },
+        "birth": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Admin birth"
+        },
+        "gender": {
+          "type": "integer",
+          "description": "Admin gender",
+          "default": 0
+        },
+        "status": {
+          "type": "integer",
+          "description": "Admin status",
+          "default": 0
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Admin active",
+          "default": false
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Admin avatar name"
+        },
+        "email_verified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Verified email time"
+        },
+        "remember_token": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "user_name",
+        "password",
+        "first_name",
+        "last_name",
+        "gender",
+        "status",
+        "is_active"
+      ]
+    },
+    "admin_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "admin_mst_id": {
+          "type": "integer",
+          "description": "Admin id"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Admin email"
+        },
+        "user_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Admin user name"
+        },
+        "password": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Admin password"
+        },
+        "first_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Admin first name"
+        },
+        "last_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Admin last name"
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Admin address"
+        },
+        "phone_number": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Admin phone number"
+        },
+        "birth": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Admin birth"
+        },
+        "gender": {
+          "type": "integer",
+          "description": "Admin gender"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Admin status"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Admin active"
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Admin avatar name"
+        },
+        "email_verified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Verified email time"
+        },
+        "remember_token": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Admin remember token"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Admin action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "admin_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "admin_role_mst": {
+      "type": "object",
+      "properties": {
+        "admin_id": {
+          "type": "integer"
+        },
+        "role_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "admin_id",
+        "role_id"
+      ]
+    },
+    "api_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "integer",
+          "description": "Api type",
+          "default": 0
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Api name"
+        },
+        "path": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Api path"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Api status",
+          "default": false
+        },
+        "feature_id": {
+          "type": "integer",
+          "description": "Feature ID"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "name",
+        "path",
+        "is_active",
+        "feature_id"
+      ]
+    },
+    "api_role_mst": {
+      "type": "object",
+      "properties": {
+        "api_id": {
+          "type": "integer"
+        },
+        "role_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "api_id",
+        "role_id"
+      ]
+    },
+    "feature_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Feature name"
+        },
+        "group_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Feature group name"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Feature description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Feature status",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "group_name",
+        "description",
+        "status"
+      ]
+    },
+    "role_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Role name"
+        },
+        "permission": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Role description"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Role active",
+          "default": false
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "permission",
+        "is_active"
+      ]
+    },
+    "department_management_mst": {
+      "type": "object",
+      "properties": {
+        "department_id": {
+          "type": "integer"
+        },
+        "policy_department_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "department_id",
+        "policy_department_id"
+      ]
+    },
+    "department_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Department code"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Department name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Department status",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "name",
+        "status"
+      ]
+    },
+    "policy_department_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "table_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Table name"
+        },
+        "row_id": {
+          "type": "integer",
+          "description": "Row id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "table_name",
+        "row_id"
+      ]
+    },
+    "api_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "api_mst_id": {
+          "type": "integer",
+          "description": "Api id"
+        },
+        "type": {
+          "type": "integer",
+          "description": "Api type"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Api name"
+        },
+        "path": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Api path"
+        },
+        "is_active": {
+          "type": "integer",
+          "description": "Api status"
+        },
+        "feature_id": {
+          "type": "integer",
+          "description": "Feature id"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Api action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "api_mst_id",
+        "feature_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "banner_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Banner title"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Banner slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Banner description"
+        },
+        "link": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Banner path image"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Banner image name"
+        },
+        "position": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Banner display position"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Banner status",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "slug",
+        "description",
+        "link",
+        "image",
+        "position",
+        "status"
+      ]
+    },
+    "banner_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "banner_mgmt_id": {
+          "type": "integer",
+          "description": "Banner id"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Banner title"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Banner slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Banner description"
+        },
+        "link": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Banner path image"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Banner image name"
+        },
+        "position": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Banner display position"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Banner status"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Banner action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "banner_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "value": {
+          "type": "string"
+        },
+        "expiration": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "value",
+        "expiration"
+      ]
+    },
+    "cache_locks": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "owner": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "expiration": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "owner",
+        "expiration"
+      ]
+    },
+    "category_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": "integer",
+          "description": "Parent category",
+          "default": 0
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Category description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Category status",
+          "default": 0
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display category",
+          "default": false
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Category order",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "parent_id",
+        "name",
+        "slug",
+        "status",
+        "is_display",
+        "rank_order"
+      ]
+    },
+    "category_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "category_mgmt_id": {
+          "type": "integer",
+          "description": "Category mgmt hist id"
+        },
+        "parent_id": {
+          "type": "integer",
+          "description": "Parent category"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Category description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Category status"
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display category"
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Category order"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Category action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "category_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "category_skill_mgmt": {
+      "type": "object",
+      "properties": {
+        "category_id": {
+          "type": "integer"
+        },
+        "skill_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "category_id",
+        "skill_id"
+      ]
+    },
+    "department_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "department_mst_id": {
+          "type": "integer",
+          "description": "Department id"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Department code"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Department name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Department status"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Department action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "department_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "failed_jobs": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "uuid": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "connection": {
+          "type": "string"
+        },
+        "queue": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "string"
+        },
+        "exception": {
+          "type": "string"
+        },
+        "failed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "uuid",
+        "connection",
+        "queue",
+        "payload",
+        "exception",
+        "failed_at"
+      ]
+    },
+    "feature_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "feature_mst_id": {
+          "type": "integer",
+          "description": "Feature id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Feature name"
+        },
+        "group_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Feature group name"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Feature description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Feature status"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Feature action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "feature_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "job_batches": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "total_jobs": {
+          "type": "integer"
+        },
+        "pending_jobs": {
+          "type": "integer"
+        },
+        "failed_jobs": {
+          "type": "integer"
+        },
+        "failed_job_ids": {
+          "type": "string"
+        },
+        "options": {
+          "type": "string"
+        },
+        "cancelled_at": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "integer"
+        },
+        "finished_at": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "total_jobs",
+        "pending_jobs",
+        "failed_jobs",
+        "failed_job_ids",
+        "created_at"
+      ]
+    },
+    "jobs": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "queue": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "payload": {
+          "type": "string"
+        },
+        "attempts": {
+          "type": "integer"
+        },
+        "reserved_at": {
+          "type": "integer"
+        },
+        "available_at": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "queue",
+        "payload",
+        "attempts",
+        "available_at",
+        "created_at"
+      ]
+    },
+    "language_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "abbreviation": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Language abbreviation"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Language name"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Language active",
+          "default": false
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "abbreviation",
+        "name",
+        "is_active"
+      ]
+    },
+    "language_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "language_mst_id": {
+          "type": "integer",
+          "description": "Language id"
+        },
+        "abbreviation": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Language abbreviation"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Language name"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Language active"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Language action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "language_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "migrations": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "migration": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "batch": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "migration",
+        "batch"
+      ]
+    },
+    "original_translator_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "table": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Table name"
+        },
+        "column": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Column name"
+        },
+        "field_id": {
+          "type": "integer",
+          "description": "Field id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "table",
+        "column",
+        "field_id"
+      ]
+    },
+    "original_translator_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "original_translator_mst_id": {
+          "type": "integer",
+          "description": "Original translator id"
+        },
+        "table": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Table name"
+        },
+        "column": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Column name"
+        },
+        "field_id": {
+          "type": "integer",
+          "description": "Field id"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "original_translator_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "password_resets": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "token": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "email",
+        "token"
+      ]
+    },
+    "personal_access_tokens": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "tokenable_type": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "tokenable_id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "token": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "abilities": {
+          "type": "string"
+        },
+        "last_used_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "tokenable_type",
+        "tokenable_id",
+        "name",
+        "token"
+      ]
+    },
+    "policy_department_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "policy_department_mst_id": {
+          "type": "integer",
+          "description": "Policy department id"
+        },
+        "table_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Table name"
+        },
+        "row_id": {
+          "type": "integer",
+          "description": "Row id"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "policy_department_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "product_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "category_id": {
+          "type": "integer",
+          "description": "Product category"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Product code"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Product name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Product slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Product description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Product status",
+          "default": 0
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display product",
+          "default": false
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Product order",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "category_id",
+        "code",
+        "name",
+        "slug",
+        "description",
+        "status",
+        "is_display",
+        "rank_order"
+      ]
+    },
+    "product_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "product_mgmt_id": {
+          "type": "integer",
+          "description": "Product id"
+        },
+        "category_id": {
+          "type": "integer",
+          "description": "Product category"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Product code"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Product name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Product slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Product description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Product status"
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display product"
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Product order"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Product action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "product_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "project_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "category_id": {
+          "type": "integer",
+          "description": "Project category"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Project code"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Project name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Project slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Project description"
+        },
+        "customer": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Project customer"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Project status",
+          "default": 0
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display project",
+          "default": false
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Project order",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "category_id",
+        "code",
+        "name",
+        "slug",
+        "description",
+        "customer",
+        "status",
+        "is_display",
+        "rank_order"
+      ]
+    },
+    "project_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "project_mgmt_id": {
+          "type": "integer",
+          "description": "Project id"
+        },
+        "category_id": {
+          "type": "integer",
+          "description": "Project category"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Project code"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Project name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Project slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Project description"
+        },
+        "customer": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Project customer"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Project status"
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display project"
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Project order"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Project action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "project_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "request_detail": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "value": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Request status"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "request_id",
+        "key",
+        "value",
+        "status"
+      ]
+    },
+    "request_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer",
+          "description": "User id"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Request title"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Request slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Request description"
+        },
+        "content": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Request image name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Request status"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "title",
+        "slug",
+        "description",
+        "content",
+        "image",
+        "status"
+      ]
+    },
+    "request_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "request_mgmt_id": {
+          "type": "integer",
+          "description": "Request id"
+        },
+        "user_id": {
+          "type": "integer",
+          "description": "User id"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Request title"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Request slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Request description"
+        },
+        "content": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Request image name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Request status"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Request action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "request_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "role_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "role_mst_id": {
+          "type": "integer",
+          "description": "Role id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Role name"
+        },
+        "permission": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Role description"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Role active"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Role action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "role_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "setting_link_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Link name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Link slug"
+        },
+        "link": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Link path"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Link image name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Link status",
+          "default": 0
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display link",
+          "default": false
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Link order",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "link",
+        "image",
+        "status",
+        "is_display",
+        "rank_order"
+      ]
+    },
+    "setting_link_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "setting_link_mgmt_id": {
+          "type": "integer",
+          "description": "Setting link id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Link name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Link slug"
+        },
+        "link": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Link path"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Link image name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Link status"
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display link"
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Link order"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "setting_link_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "skill_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Skill name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Skill slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Skill description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Skill status",
+          "default": 0
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display skill",
+          "default": false
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Skill order",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "description",
+        "status",
+        "is_display",
+        "rank_order"
+      ]
+    },
+    "skill_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "skill_mgmt_id": {
+          "type": "integer",
+          "description": "Skill id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Skill name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Skill slug"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Skill description"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Skill status"
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display skill"
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Skill order"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "skill_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "social_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Social network name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Social network slug"
+        },
+        "link": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Social network link"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Social network image name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Social network status",
+          "default": 0
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display social network",
+          "default": false
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Social network order",
+          "default": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "link",
+        "image",
+        "status",
+        "is_display",
+        "rank_order"
+      ]
+    },
+    "social_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "social_mgmt_id": {
+          "type": "integer",
+          "description": "Social network id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Social network name"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Social network slug"
+        },
+        "link": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Social network link"
+        },
+        "image": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Social network image name"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Social network status"
+        },
+        "is_display": {
+          "type": "boolean",
+          "description": "Display social network"
+        },
+        "rank_order": {
+          "type": "integer",
+          "description": "Social network order"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "social_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "translation_mst": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "language_id": {
+          "type": "integer",
+          "description": "Language id"
+        },
+        "original_id": {
+          "type": "integer",
+          "description": "Original id"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Value"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "language_id",
+        "original_id",
+        "value"
+      ]
+    },
+    "translation_mst_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "translation_mst_id": {
+          "type": "integer",
+          "description": "Translation id"
+        },
+        "language_id": {
+          "type": "integer",
+          "description": "Language id"
+        },
+        "original_id": {
+          "type": "integer",
+          "description": "Original id"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Value"
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "translation_mst_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    },
+    "user_mgmt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "role_id": {
+          "type": "integer",
+          "description": "User role"
+        },
+        "department_id": {
+          "type": "integer",
+          "description": "User department"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "User email"
+        },
+        "user_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "User name"
+        },
+        "password": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User password"
+        },
+        "first_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "User first name"
+        },
+        "last_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "User last name"
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User address"
+        },
+        "phone_number": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "User phone number"
+        },
+        "birth": {
+          "type": "string",
+          "format": "date-time",
+          "description": "User birth"
+        },
+        "gender": {
+          "type": "integer",
+          "description": "User gender",
+          "default": 0
+        },
+        "status": {
+          "type": "integer",
+          "description": "User status",
+          "default": 0
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "User active",
+          "default": false
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "User avatar name"
+        },
+        "email_verified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Verified email time"
+        },
+        "remember_token": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "role_id",
+        "department_id",
+        "email",
+        "user_name",
+        "password",
+        "first_name",
+        "last_name",
+        "gender",
+        "status",
+        "is_active"
+      ]
+    },
+    "user_mgmt_hist": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "user_mgmt_id": {
+          "type": "integer",
+          "description": "User id"
+        },
+        "role_id": {
+          "type": "integer",
+          "description": "User role"
+        },
+        "department_id": {
+          "type": "integer",
+          "description": "User department"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "User email"
+        },
+        "user_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "User name"
+        },
+        "password": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User password"
+        },
+        "first_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "User first name"
+        },
+        "last_name": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "User last name"
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User address"
+        },
+        "phone_number": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "User phone number"
+        },
+        "birth": {
+          "type": "string",
+          "format": "date-time",
+          "description": "User birth"
+        },
+        "gender": {
+          "type": "integer",
+          "description": "User gender"
+        },
+        "status": {
+          "type": "integer",
+          "description": "User status"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "User active"
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "User avatar name"
+        },
+        "email_verified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Verified email time"
+        },
+        "remember_token": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "action": {
+          "type": "integer",
+          "description": "Action"
+        },
+        "author_id": {
+          "type": "integer",
+          "description": "Author id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created time"
+        }
+      },
+      "required": [
+        "id",
+        "user_mgmt_id",
+        "action",
+        "author_id",
+        "created_at"
+      ]
+    }
+  }
+}

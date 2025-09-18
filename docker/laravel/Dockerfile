@@ -9,6 +9,9 @@ RUN apk add --no-cache \
     make \
     libc-dev \
     redis \
+    postgresql-client \
+    nodejs \
+    npm \
     && docker-php-ext-install pdo_pgsql \
     && pecl install redis-5.3.7 \
     && docker-php-ext-enable redis pdo_pgsql
