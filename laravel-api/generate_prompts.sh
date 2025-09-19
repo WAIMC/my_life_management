@@ -93,7 +93,8 @@ for table_name, table_data in schema_data["properties"].items():
         
         column_block = "\n".join(columns)
         scope = detect_scope(table_name)
-        prompt = f"""Generate a complete CRUD API module from the following migration file content:
+        prompt = f"""You are a Senior Backend Engineer.
+      Generate a complete CRUD API module from the following migration file content:
 
 - Scope: {scope}
 
