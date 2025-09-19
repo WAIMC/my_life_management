@@ -10,11 +10,11 @@ return new class extends Migration
         Schema::create('skill_mgmt', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('parent_id')->default(0)->comment('Parent skill');
-            $table->string('name', 50)->comment('Skill name');
-            $table->string('slug', 50)->comment('Skill slug');
-            $table->unsignedTinyInteger('status')->default(0)->comment('Skill status');
+            $table->string('name', 50)->comment('SkillMgmt name');
+            $table->string('slug', 50)->comment('SkillMgmt slug');
+            $table->unsignedTinyInteger('status')->default(0)->comment('SkillMgmt status');
             $table->boolean('is_display')->default(false)->comment('Display skill');
-            $table->unsignedSmallInteger('rank_order')->default(0)->comment('Skill order');
+            $table->unsignedSmallInteger('rank_order')->default(0)->comment('SkillMgmt order');
             $table->timestamps();
         });
     }

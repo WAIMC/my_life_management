@@ -10,12 +10,12 @@ return new class extends Migration
         Schema::create('category_mgmt', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('parent_id')->default(0)->comment('Parent category');
-            $table->string('name', 50)->comment('Category name');
-            $table->string('slug', 50)->comment('Category slug');
-            $table->string('description', 150)->nullable()->comment('Category description');
-            $table->unsignedTinyInteger('status')->default(0)->comment('Category status');
+            $table->string('name', 50)->comment('CategoryMgmt name');
+            $table->string('slug', 50)->comment('CategoryMgmt slug');
+            $table->string('description', 150)->nullable()->comment('CategoryMgmt description');
+            $table->unsignedTinyInteger('status')->default(0)->comment('CategoryMgmt status');
             $table->boolean('is_display')->default(false)->comment('Display category');
-            $table->unsignedSmallInteger('rank_order')->default(0)->comment('Category order');
+            $table->unsignedSmallInteger('rank_order')->default(0)->comment('CategoryMgmt order');
             $table->timestamps();
         });
     }

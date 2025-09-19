@@ -9,9 +9,9 @@ return new class extends Migration
     {
         Schema::create('role_mst', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 30)->unique()->comment('Role name');
-            $table->string('permission', 50)->comment('Role description');
-            $table->boolean('is_active')->default(false)->comment('Role active');
+            $table->string('name', 30)->unique()->comment('RoleMst name');
+            $table->string('permission', 50)->comment('RoleMst description');
+            $table->boolean('is_active')->default(false)->comment('RoleMst active');
             $table->timestamps();
         });
     }

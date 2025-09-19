@@ -17,10 +17,10 @@ return new class extends Migration
             $table->string('title', 100)->comment('Title skill description');
             $table->string('summary', 255)->comment('Summary skill description');
             $table->text('article')->comment('Article skill description');
-            $table->unsignedTinyInteger('status')->default(0)->comment('Skill description status');
+            $table->unsignedTinyInteger('status')->default(0)->comment('SkillMgmt description status');
             $table->boolean('is_display')->default(false)->comment('Display skill description');
-            $table->unsignedSmallInteger('rank_order')->default(0)->comment('Skill description order');
-            $table->unsignedInteger('skill_id')->comment('Skill id primary key');
+            $table->unsignedSmallInteger('rank_order')->default(0)->comment('SkillMgmt description order');
+            $table->unsignedInteger('skill_id')->comment('SkillMgmt id primary key');
             $table->timestamps();
         });
     }

@@ -7,12 +7,12 @@ use App\Constants\Messages;
 class JsonWebToken
 {
   public const ALGORITHM_HS256 = 'HS256';
-  public const TTL_ACCESS = 3600 * 5;   // Time to live (second) 
-  public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second) 
+  public const TTL_ACCESS = 3600 * 5;   // Time to live (second)
+  public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second)
 
   /**
    * Generate JWT header
-   * 
+   *
    * @param string $algorithm
    * @return array
    */
@@ -26,7 +26,7 @@ class JsonWebToken
 
   /**
    * Generate JWT payload
-   * 
+   *
    * @param array $payload
    * @param bool $isRefresh
    * @return array
@@ -36,7 +36,7 @@ class JsonWebToken
     return [
       'id'   => $payload['id'] ?? '',                                        // ID of the token (member id)
       'type' => $payload['type'] ?? '',                                      // Type of the token (member type)
-      'role' => $payload['role'] ?? '',                                      // Role of the token (member role)
+      'role' => $payload['role'] ?? '',                                      // RoleMst of the token (member role)
       'iat'  => time(),                                                      // Time when JWT was issued.
       'exp'  => time() + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS) // Expiration time
     ];
@@ -44,7 +44,7 @@ class JsonWebToken
 
   /**
    * Encode JWT
-   * 
+   *
    * @param array $params
    * @param string $key
    * @param string $alg
@@ -86,7 +86,7 @@ class JsonWebToken
 
   /**
    * Decode JWT
-   * 
+   *
    * @param string $jwt
    * @param string $key
    * @param bool $isRefresh

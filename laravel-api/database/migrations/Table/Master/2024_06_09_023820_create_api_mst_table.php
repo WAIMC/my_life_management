@@ -9,11 +9,11 @@ return new class extends Migration
     {
         Schema::create('api_mst', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedTinyInteger('type')->default(0)->comment('Api type');
-            $table->string('name', 50)->comment('Api name');
-            $table->string('path', 100)->comment('Api path');
-            $table->boolean('is_active')->default(false)->comment('Api status');
-            $table->unsignedInteger('feature_id')->comment('Feature ID');
+            $table->unsignedTinyInteger('type')->default(0)->comment('ApiMst type');
+            $table->string('name', 50)->comment('ApiMst name');
+            $table->string('path', 100)->comment('ApiMst path');
+            $table->boolean('is_active')->default(false)->comment('ApiMst status');
+            $table->unsignedInteger('feature_id')->comment('FeatureMst ID');
             $table->timestamps();
         });
     }

@@ -367,8 +367,8 @@ php artisan make:migrate database/migrations/tables/masters/create_t_admin_table
 ```php
 Schema::create('t_admin', function (Blueprint $table) {
     $table->id(); // hoặc $table->bigIncrements('id')
-    $table->string('email', 30)->comment('Admin email');
-    $table->string('user_name', 50)->comment('Admin user name');
+    $table->string('email', 30)->comment('AdminMst email');
+    $table->string('user_name', 50)->comment('AdminMst user name');
     ...
     $table->timestamps();
 });
@@ -424,7 +424,7 @@ DB::statement("
 ### ✅ Kiểm tra & tạo:
 
 ```bash
-php artisan make:model App/Models/Master/Admin
+php artisan make:model App/Models/Master/AdminMst
 ```
 
 ### ✅ Phân loại:

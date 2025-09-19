@@ -20,7 +20,7 @@ return new class extends Migration {
           FROM
             admin_mst am                                                                -- Account
             INNER JOIN admin_department_mst adm ON adm.admin_id = am.id                 --
-            INNER JOIN department_mst dm ON dm.id = adm.department_id                   -- Department
+            INNER JOIN department_mst dm ON dm.id = adm.department_id                   -- DepartmentMst
             INNER JOIN department_management_mst dmm ON dmm.department_id = dm.id       --
             INNER JOIN policy_department_mst pdm ON pdm.id = dmm.policy_department_id   -- Policy
           WHERE

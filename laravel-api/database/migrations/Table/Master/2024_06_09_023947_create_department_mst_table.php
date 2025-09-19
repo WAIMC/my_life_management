@@ -9,9 +9,9 @@ return new class extends Migration
     {
         Schema::create('department_mst', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('code', 50)->comment('Department code');
-            $table->string('name', 50)->comment('Department name');
-            $table->unsignedTinyInteger('status')->default(0)->comment('Department status');
+            $table->string('code', 50)->comment('DepartmentMst code');
+            $table->string('name', 50)->comment('DepartmentMst name');
+            $table->unsignedTinyInteger('status')->default(0)->comment('DepartmentMst status');
             $table->timestamps();
         });
     }

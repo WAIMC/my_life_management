@@ -29,11 +29,11 @@ return new class extends Migration {
               fm.group_name AS feature_group
             FROM
               admin_mst am                                              -- Account
-              INNER JOIN admin_role_mst arm ON arm.admin_id = am.id 	  -- Admin role
-              INNER JOIN role_mst rm ON rm.id = arm.role_id             -- Role
-              INNER JOIN api_role_mst arm2 ON arm2.role_id = rm.id		    -- Api feature
-              INNER JOIN api_mst am2 ON am2.id = arm2.api_id 			      -- Api id
-              INNER JOIN feature_mst fm ON fm.id = am2.feature_id 		  -- Feature
+              INNER JOIN admin_role_mst arm ON arm.admin_id = am.id 	  -- AdminMst role
+              INNER JOIN role_mst rm ON rm.id = arm.role_id             -- RoleMst
+              INNER JOIN api_role_mst arm2 ON arm2.role_id = rm.id		    -- ApiMst feature
+              INNER JOIN api_mst am2 ON am2.id = arm2.api_id 			      -- ApiMst id
+              INNER JOIN feature_mst fm ON fm.id = am2.feature_id 		  -- FeatureMst
             WHERE
               am.status = 1
               AND am.is_active = TRUE

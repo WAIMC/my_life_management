@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Management\Category;
+use App\Models\Management\CategoryMgmt;
 use Illuminate\Database\Seeder;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Category::factory(10)->create();
+        CategoryMgmt::factory(10)->create();
         // User::factory(10)->create();
 
         // User::factory()->create([

@@ -8,7 +8,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Models\Master\Admin;
+use App\Models\Master\AdminMst;
 use Illuminate\Http\Request;
 use App\Utilities\JsonWebToken;
 use App\Http\Controllers\Controller;
@@ -39,7 +39,7 @@ class AdminMiddleware
             $payload = JsonWebToken::decode($token, env('ACCESS_TOKEN_SECRET'));
             $credentials = $payload['body'];
             // Check request from member type admin
-            if ($credentials['type'] !== Admin::TYPE) {
+            if ($credentials['type'] !== AdminMst::TYPE) {
                 throw new \UnexpectedValueException(Messages::E0608);
             }
 

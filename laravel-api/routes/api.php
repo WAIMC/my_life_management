@@ -1,130 +1,124 @@
 <?php
 
+use App\Http\Controllers\History\Master\AdminMstHistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\Master\ApiController;
-use App\Http\Controllers\Master\RoleController;
-use App\Http\Controllers\Master\AdminController;
-use App\Http\Controllers\Master\SkillController;
-use App\Http\Controllers\Master\ApiRoleController;
-use App\Http\Controllers\Master\FeatureController;
-use App\Http\Controllers\Master\CategoryController;
-use App\Http\Controllers\Master\AdminRoleController;
-use App\Http\Controllers\Master\DepartmentController;
-use App\Http\Controllers\Master\AdminDepartmentController;
-use App\Http\Controllers\Master\PolicyDepartmentController;
-use App\Http\Controllers\Master\DepartmentManagementController;
+use App\Http\Controllers\Master\ApiMstController;
+use App\Http\Controllers\Master\RoleMstController;
+use App\Http\Controllers\Master\AdminMstController;
+use App\Http\Controllers\Master\SkillMstController;
+use App\Http\Controllers\Master\ApiRoleMstController;
+use App\Http\Controllers\Master\FeatureMstController;
+use App\Http\Controllers\Master\CategoryMstController;
+use App\Http\Controllers\Master\AdminRoleMstController;
+use App\Http\Controllers\Master\DepartmentMstController;
+use App\Http\Controllers\Master\AdminDepartmentMstController;
+use App\Http\Controllers\Master\PolicyDepartmentMstController;
+use App\Http\Controllers\Master\DepartmentManagementMstController;
 
 Route::prefix('admin')->group(function () {
     Route::prefix('account')->group(function () {
-        Route::post('login', [AdminController::class, 'login']);
-        Route::post('refresh-token', [AdminController::class, 'refreshToken']);
+        Route::post('login', [AdminMstController::class, 'login']);
+        Route::post('refresh-token', [AdminMstController::class, 'refreshToken']);
     });
 
     Route::middleware(AdminMiddleware::class)->group(function () {
 
-        // Department master
+        // DepartmentMst master
         Route::prefix('master')->group(function () {
-            // Admin
+            // AdminMst
             Route::prefix('account')->group(function () {
-                Route::post('logout', [AdminController::class, 'logout']);
-                Route::get('list', [AdminController::class, 'list']);
-                Route::post('store', [AdminController::class, 'store']);
-                Route::put('update/{id}', [AdminController::class, 'update']);
-                Route::delete('delete/{id}', [AdminController::class, 'delete']);
+                Route::post('logout', [AdminMstController::class, 'logout']);
+                Route::get('list', [AdminMstController::class, 'list']);
+                Route::post('store', [AdminMstController::class, 'store']);
+                Route::put('update/{id}', [AdminMstController::class, 'update']);
+                Route::delete('delete/{id}', [AdminMstController::class, 'delete']);
             });
 
-            // Role
-            Route::prefix('role')->group(function () {
-                Route::get('list', [RoleController::class, 'list']);
-                Route::post('store', [RoleController::class, 'store']);
-                Route::put('update/{id}', [RoleController::class, 'update']);
-                Route::delete('delete/{id}', [RoleController::class, 'delete']);
-            });
+            // Role Master
+            Route::apiResource('roles', RoleMstController::class);
 
-            // Admin role
+            // AdminMst role
             Route::prefix('admin-role')->group(function () {
-                Route::get('list', [AdminRoleController::class, 'list']);
-                Route::put('update', [AdminRoleController::class, 'update']);
+                Route::get('list', [AdminRoleMstController::class, 'list']);
+                Route::put('update', [AdminRoleMstController::class, 'update']);
             });
 
-            // Feature
-            Route::prefix('feature')->group(function () {
-                Route::get('list', [FeatureController::class, 'list']);
-                Route::post('store', [FeatureController::class, 'store']);
-                Route::put('update/{id}', [FeatureController::class, 'update']);
-                Route::delete('delete/{id}', [FeatureController::class, 'delete']);
-            });
+            // Feature Master
+            Route::apiResource('features', FeatureMstController::class);
 
-            // Api
+            // ApiMst
             Route::prefix('api')->group(function () {
-                Route::get('list', [ApiController::class, 'list']);
-                Route::post('store', [ApiController::class, 'store']);
-                Route::put('update/{id}', [ApiController::class, 'update']);
-                Route::delete('delete/{id}', [ApiController::class, 'delete']);
+                Route::get('list', [ApiMstController::class, 'list']);
+                Route::post('store', [ApiMstController::class, 'store']);
+                Route::put('update/{id}', [ApiMstController::class, 'update']);
+                Route::delete('delete/{id}', [ApiMstController::class, 'delete']);
             });
 
-            // Api role
+            // ApiMst role
             Route::prefix('api-role')->group(function () {
-                Route::get('list', [ApiRoleController::class, 'list']);
-                Route::put('update', [ApiRoleController::class, 'update']);
+                Route::get('list', [ApiRoleMstController::class, 'list']);
+                Route::put('update', [ApiRoleMstController::class, 'update']);
             });
 
-            // Department
+            // DepartmentMst
             Route::prefix('department')->group(function () {
-                Route::get('list', [DepartmentController::class, 'list']);
-                Route::post('store', [DepartmentController::class, 'store']);
-                Route::put('update/{id}', [DepartmentController::class, 'update']);
-                Route::delete('delete/{id}', [DepartmentController::class, 'delete']);
+                Route::get('list', [DepartmentMstController::class, 'list']);
+                Route::post('store', [DepartmentMstController::class, 'store']);
+                Route::put('update/{id}', [DepartmentMstController::class, 'update']);
+                Route::delete('delete/{id}', [DepartmentMstController::class, 'delete']);
             });
 
-            // Admin department
+            // AdminMst department
             Route::prefix('admin-department')->group(function () {
-                Route::get('list', [AdminDepartmentController::class, 'list']);
-                Route::put('update', [AdminDepartmentController::class, 'update']);
+                Route::get('list', [AdminDepartmentMstController::class, 'list']);
+                Route::put('update', [AdminDepartmentMstController::class, 'update']);
             });
 
             // Policy department
             Route::prefix('policy-department')->group(function () {
-                Route::get('list', [PolicyDepartmentController::class, 'list']);
-                Route::post('store', [PolicyDepartmentController::class, 'store']);
-                Route::put('update/{id}', [PolicyDepartmentController::class, 'update']);
-                Route::delete('delete/{id}', [PolicyDepartmentController::class, 'delete']);
+                Route::get('list', [PolicyDepartmentMstController::class, 'list']);
+                Route::post('store', [PolicyDepartmentMstController::class, 'store']);
+                Route::put('update/{id}', [PolicyDepartmentMstController::class, 'update']);
+                Route::delete('delete/{id}', [PolicyDepartmentMstController::class, 'delete']);
             });
 
-            // Department management
-            Route::prefix('department-management')->group(function () {
-                Route::get('list', [DepartmentManagementController::class, 'list']);
-                Route::put('update', [DepartmentManagementController::class, 'update']);
-            });
+            // Department Management master
+            Route::get('department-managements', [DepartmentManagementMstController::class, 'index']);
+            Route::post('department-managements', [DepartmentManagementMstController::class, 'store']);
+            Route::get('department-managements/{departmentId}/{policyDepartmentId}', [DepartmentManagementMstController::class, 'show']);
+            Route::delete('department-managements/{departmentId}/{policyDepartmentId}', [DepartmentManagementMstController::class, 'destroy']);
+            Route::get('department-managements/department/{departmentId}', [DepartmentManagementMstController::class, 'getByDepartmentId']);
+            Route::get('department-managements/policy-department/{policyDepartmentId}', [DepartmentManagementMstController::class, 'getByPolicyDepartmentId']);
         });
 
-        // Department management
+        // DepartmentMst management
         Route::prefix('management')->group(function () {
-            // Category
+            // CategoryMgmt
             Route::prefix('category')->group(function () {
-                Route::get('list', [CategoryController::class, 'list']);
-                Route::post('store', [CategoryController::class, 'store']);
-                Route::put('update/{id}', [CategoryController::class, 'update']);
-                Route::delete('delete/{id}', [CategoryController::class, 'delete']);
+                Route::get('list', [CategoryMstController::class, 'list']);
+                Route::post('store', [CategoryMstController::class, 'store']);
+                Route::put('update/{id}', [CategoryMstController::class, 'update']);
+                Route::delete('delete/{id}', [CategoryMstController::class, 'delete']);
             });
 
-            // Skill
+            // SkillMgmt
             Route::prefix('skill')->group(function () {
-                Route::get('list', [SkillController::class, 'list']);
-                Route::post('store', [SkillController::class, 'store']);
-                Route::put('update/{id}', [SkillController::class, 'update']);
-                Route::delete('delete/{id}', [SkillController::class, 'delete']);
+                Route::get('list', [SkillMstController::class, 'list']);
+                Route::post('store', [SkillMstController::class, 'store']);
+                Route::put('update/{id}', [SkillMstController::class, 'update']);
+                Route::delete('delete/{id}', [SkillMstController::class, 'delete']);
             });
         });
 
-        // Department master history
+        // DepartmentMst master history
         Route::prefix('history/master')->group(function () {
-
+            // Admin History CRUD routes
+            Route::apiResource('admin-histories', AdminMstHistController::class);
         });
 
-        // Department management history
+        // DepartmentMst management history
         Route::prefix('history/management')->group(function () {
 
         });

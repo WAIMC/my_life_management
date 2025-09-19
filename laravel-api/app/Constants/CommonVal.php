@@ -73,7 +73,7 @@ class CommonVal
     public const MAX_PHONE_NUMBER = 12;
 
     /**
-     * Admin
+     * AdminMst
      */
     public const ROOT = 'root';
     public const ADMIN_TYPE = 'admin';

@@ -2,14 +2,14 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Master\Admin;
-use App\Models\Master\AdminDepartment;
-use App\Models\Master\AdminRole;
-use App\Models\Master\Api;
-use App\Models\Master\ApiRole;
-use App\Models\Master\Department;
-use App\Models\Master\Feature;
-use App\Models\Master\Role;
+use App\Models\Master\AdminMst;
+use App\Models\Master\AdminDepartmentMst;
+use App\Models\Master\AdminRoleMst;
+use App\Models\Master\ApiMst;
+use App\Models\Master\ApiRoleMst;
+use App\Models\Master\DepartmentMst;
+use App\Models\Master\FeatureMst;
+use App\Models\Master\RoleMst;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -52,7 +52,7 @@ class SyncApiPermissions extends Command
   public function handle(): void
   {
     DB::transaction(function () {
-      $adminAccount = Admin::firstOrCreate(
+      $adminAccount = AdminMst::firstOrCreate(
         ['email' => 'root@gmail.com'],
         [
           'user_name' => $this->root,
@@ -66,7 +66,7 @@ class SyncApiPermissions extends Command
         ]
       );
 
-      $rootRole = Role::firstOrCreate(
+      $rootRole = RoleMst::firstOrCreate(
         ['name' => $this->root],
         [
           'permission' => $this->root,
@@ -76,7 +76,7 @@ class SyncApiPermissions extends Command
         ]
       );
 
-      AdminRole::firstOrCreate(
+      AdminRoleMst::firstOrCreate(
         [
           'admin_id' => $adminAccount->id,
           'role_id' => $rootRole->id
@@ -104,7 +104,7 @@ class SyncApiPermissions extends Command
             $featureName = str_replace('-', ' ', $featureSlug);
 
             // Update feature
-            $feature = Feature::firstOrCreate(
+            $feature = FeatureMst::firstOrCreate(
               ['name' => $featureName],
               [
                 'group_name' => $this->adminGroup,
@@ -117,12 +117,12 @@ class SyncApiPermissions extends Command
 
             // Update API
             $apiPath = $route->uri();
-            $api = Api::firstOrCreate(
+            $api = ApiMst::firstOrCreate(
               [
                 'path' => $apiPath
               ],
               [
-                'type' => array_search($route->methods()[0], Api::TYPE_OF_METHOD),
+                'type' => array_search($route->methods()[0], ApiMst::TYPE_OF_METHOD),
                 'name' => $action . ' ' . $featureName,
                 'path' => $apiPath,
                 'is_active' => true,
@@ -133,7 +133,7 @@ class SyncApiPermissions extends Command
             );
 
             // Link to admin role
-            ApiRole::firstOrCreate(
+            ApiRoleMst::firstOrCreate(
               [
                 'api_id' => $api->id,
                 'role_id' => $rootRole->id,
@@ -151,7 +151,7 @@ class SyncApiPermissions extends Command
         }
       }
 
-      $department = Department::firstOrCreate(
+      $department = DepartmentMst::firstOrCreate(
         ['name' => $this->root],
         [
           'code' => '1',
@@ -161,7 +161,7 @@ class SyncApiPermissions extends Command
         ]
       );
 
-      AdminDepartment::firstOrCreate(
+      AdminDepartmentMst::firstOrCreate(
         [
           'admin_id' => $adminAccount->id,
           'department_id' => $department->id,

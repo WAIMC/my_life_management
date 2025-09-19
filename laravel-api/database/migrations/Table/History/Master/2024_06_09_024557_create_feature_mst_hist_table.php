@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('feature_mst_hist', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('feature_mst_id')->comment('Feature id');
-            $table->string('name', 50)->nullable()->comment('Feature name');
-            $table->string('group_name', 50)->nullable()->comment('Feature group name');
-            $table->string('description', 100)->nullable()->comment('Feature description');
-            $table->tinyInteger('status')->nullable()->comment('Feature status');
-            $table->unsignedTinyInteger('action')->comment('Feature action');
+            $table->unsignedInteger('feature_mst_id')->comment('FeatureMst id');
+            $table->string('name', 50)->nullable()->comment('FeatureMst name');
+            $table->string('group_name', 50)->nullable()->comment('FeatureMst group name');
+            $table->string('description', 100)->nullable()->comment('FeatureMst description');
+            $table->tinyInteger('status')->nullable()->comment('FeatureMst status');
+            $table->unsignedTinyInteger('action')->comment('FeatureMst action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
         });

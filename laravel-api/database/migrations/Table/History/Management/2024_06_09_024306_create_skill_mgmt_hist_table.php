@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('skill_mgmt_hist', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('skill_mgmt_id')->comment('Skill id');
+            $table->unsignedInteger('skill_mgmt_id')->comment('SkillMgmt id');
             $table->unsignedInteger('parent_id')->nullable()->comment('Parent skill');
-            $table->string('name', 50)->nullable()->comment('Skill name');
-            $table->string('slug', 50)->nullable()->comment('Skill slug');
-            $table->unsignedTinyInteger('status')->nullable()->comment('Skill status');
+            $table->string('name', 50)->nullable()->comment('SkillMgmt name');
+            $table->string('slug', 50)->nullable()->comment('SkillMgmt slug');
+            $table->unsignedTinyInteger('status')->nullable()->comment('SkillMgmt status');
             $table->boolean('is_display')->nullable()->comment('Display skill');
-            $table->unsignedSmallInteger('rank_order')->nullable()->comment('Skill order');
-            $table->unsignedTinyInteger('action')->comment('Skill action');
+            $table->unsignedSmallInteger('rank_order')->nullable()->comment('SkillMgmt order');
+            $table->unsignedTinyInteger('action')->comment('SkillMgmt action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
         });
