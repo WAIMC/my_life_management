@@ -22,6 +22,9 @@ return new class extends Migration
             $table->unsignedTinyInteger('action')->comment('ApiMst action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
+
+            // $table->foreign('api_mst_id')->references('id')->on('api_mst');
+            // $table->foreign('feature_id')->references('id')->on('feature_mst');
         });
     }
 

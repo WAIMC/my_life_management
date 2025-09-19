@@ -1,43 +1,64 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Interfaces\Master;
 
-use App\Interfaces\BaseInterface;
-use Illuminate\Support\Collection;
-
-interface PolicyDepartmentMstInterface extends BaseInterface
+interface PolicyDepartmentMstInterface
 {
     /**
-     * Get policy department list
+     * Get all policy departments with optional filtering
      *
      * @param array $payload
-     * @return Collection
+     * @return mixed
      */
-    public function list(array $payload): Collection;
+    public function getAll(array $payload): mixed;
 
     /**
-     * Store policy department
+     * Get policy department by ID
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function getById(int $id): mixed;
+
+    /**
+     * Get policy departments by table name
+     *
+     * @param string $tableName
+     * @return mixed
+     */
+    public function getByTableName(string $tableName): mixed;
+
+    /**
+     * Get policy department by table name and row ID
+     *
+     * @param string $tableName
+     * @param int $rowId
+     * @return mixed
+     */
+    public function getByTableNameAndRowId(string $tableName, int $rowId): mixed;
+
+    /**
+     * Create new policy department
      *
      * @param array $payload
-     * @return void
+     * @return mixed
      */
-    public function executeStore(array $payload): void;
+    public function create(array $payload): mixed;
 
     /**
      * Update policy department
      *
      * @param array $payload
-     * @return void
+     * @param int $id
+     * @return mixed
      */
-    public function executeUpdate(array $payload): void;
+    public function update(array $payload, int $id): mixed;
 
     /**
      * Delete policy department
      *
-     * @param array $ids
-     * @return void
+     * @param int $id
+     * @return mixed
      */
-    public function executeDelete(array $ids): void;
+    public function delete(int $id): mixed;
 }

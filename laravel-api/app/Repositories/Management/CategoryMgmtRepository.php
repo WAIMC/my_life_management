@@ -1,48 +1,37 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Repositories\Management;
 
-use App\Constants\CommonVal;
 use App\Interfaces\Management\CategoryMgmtInterface;
 use App\Models\Management\CategoryMgmt;
-use App\Repositories\BaseRepository;
-use DateTime;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
-class CategoryMgmtRepository extends BaseRepository implements CategoryMgmtInterface
+class CategoryMgmtRepository implements CategoryMgmtInterface
 {
-    public function __construct(CategoryMgmt $model)
+    protected CategoryMgmt $model;
+
+    /**
+     * CategoryMgmtRepository constructor
+     */
+    public function __construct()
     {
-        parent::__construct($model);
+        $this->model = new CategoryMgmt();
     }
 
     /**
-     * CategoryMgmt list
+     * Get all categories with pagination and filtering
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function getAll(array $payload): LengthAwarePaginator
     {
-        $query = $this->model->query()
-            ->select('id', 'parent_id', 'name', 'slug', 'description', 'status', 'is_display', 'rank_order', 'updated_at');
+        $query = $this->model->query();
 
-        if (isset($payload['parent_id'])) {
-            $query->where('parent_id', $payload['parent_id']);
-        }
-
+        // Apply filters from payload
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
-        }
-
-        if (isset($payload['slug'])) {
-            $query->where('slug', 'like', '%' . $payload['slug'] . '%');
-        }
-
-        if (isset($payload['description'])) {
-            $query->where('description', 'like', '%' . $payload['description'] . '%');
         }
 
         if (isset($payload['status'])) {
@@ -53,70 +42,209 @@ class CategoryMgmtRepository extends BaseRepository implements CategoryMgmtInter
             $query->where('is_display', $payload['is_display']);
         }
 
+        if (isset($payload['parent_id'])) {
+            $query->where('parent_id', $payload['parent_id']);
+        }
+
+        // Apply sorting
+        $sortBy = $payload['sort_by'] ?? 'rank_order';
+        $sortOrder = $payload['sort_order'] ?? 'asc';
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Apply pagination
+        $perPage = $payload['per_page'] ?? 15;
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Find category by ID
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function findById(int $id): mixed
+    {
+        return $this->model->find($id);
+    }
+
+    /**
+     * Create new category
+     *
+     * @param array $payload
+     * @return mixed
+     */
+    public function create(array $payload): mixed
+    {
+        $category = new $this->model;
+
+        if (isset($payload['parent_id'])) {
+            $category->parent_id = $payload['parent_id'];
+        }
+
+        if (isset($payload['name'])) {
+            $category->name = $payload['name'];
+        }
+
+        if (isset($payload['slug'])) {
+            $category->slug = $payload['slug'];
+        } else if (isset($payload['name'])) {
+            $category->slug = Str::slug($payload['name']);
+        }
+
+        if (isset($payload['description'])) {
+            $category->description = $payload['description'];
+        }
+
+        if (isset($payload['status'])) {
+            $category->status = $payload['status'];
+        }
+
+        if (isset($payload['is_display'])) {
+            $category->is_display = $payload['is_display'];
+        }
+
         if (isset($payload['rank_order'])) {
-            $query->where('rank_order', $payload['rank_order']);
+            $category->rank_order = $payload['rank_order'];
+        } else {
+            // Get the highest rank_order and add 1
+            $highestRank = $this->model->max('rank_order');
+            $category->rank_order = $highestRank ? $highestRank + 1 : 1;
         }
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        $category->created_at = now()->format('Y-m-d H:i:s');
+        $category->updated_at = now()->format('Y-m-d H:i:s');
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        return $query->get();
-    }
-
-    /**
-     * Store category
-     *
-     * @param array $payload
-     * @return void
-     */
-    public function executeStore(array $payload): void
-    {
-        $data = [];
-        $data['parent_id'] = $payload['parent_id'] ?? null;
-        $data['name'] = $payload['name'] ?? null;
-        $data['slug'] = $payload['slug'] ?? null;
-        $data['description'] = $payload['description'] ?? null;
-        $data['status'] = $payload['status'] ?? null;
-        $data['is_display'] = $payload['is_display'] ?? null;
-        $data['rank_order'] = $payload['rank_order'] ?? null;
-
-        $this->model->create($data);
-    }
-
-    /**
-     * Update category
-     *
-     * @param array $payload
-     * @return void
-     */
-    public function executeUpdate(array $payload): void
-    {
-        $category = $this->model->findById($payload['id']);
-        $category['parent_id'] = $payload['parent_id'] ?? null;
-        $category['name'] = $payload['name'] ?? null;
-        $category['slug'] = $payload['slug'] ?? null;
-        $category['description'] = $payload['description'] ?? null;
-        $category['status'] = $payload['status'] ?? null;
-        $category['is_display'] = $payload['is_display'] ?? null;
-        $category['rank_order'] = $payload['rank_order'] ?? null;
         $category->save();
+        return $category;
     }
 
     /**
-     * Delete category
+     * Update category by ID
      *
-     * @param array $ids
-     * @return void
+     * @param int $id
+     * @param array $payload
+     * @return mixed
      */
-    public function executeDelete(array $ids): void
+    public function update(int $id, array $payload): mixed
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $category = $this->model->find($id);
+
+        if (!$category) {
+            return null;
+        }
+
+        if (isset($payload['parent_id'])) {
+            // Prevent circular references
+            if ($payload['parent_id'] != $id) {
+                $category->parent_id = $payload['parent_id'];
+            }
+        }
+
+        if (isset($payload['name'])) {
+            $category->name = $payload['name'];
+        }
+
+        if (isset($payload['slug'])) {
+            $category->slug = $payload['slug'];
+        } else if (isset($payload['name'])) {
+            $category->slug = Str::slug($payload['name']);
+        }
+
+        if (isset($payload['description'])) {
+            $category->description = $payload['description'];
+        }
+
+        if (isset($payload['status'])) {
+            $category->status = $payload['status'];
+        }
+
+        if (isset($payload['is_display'])) {
+            $category->is_display = $payload['is_display'];
+        }
+
+        if (isset($payload['rank_order'])) {
+            $category->rank_order = $payload['rank_order'];
+        }
+
+        $category->updated_at = now()->format('Y-m-d H:i:s');
+
+        $category->save();
+        return $category;
+    }
+
+    /**
+     * Delete category by ID
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function delete($id): mixed
+    {
+        $category = $this->model->find($id);
+
+        if (!$category) {
+            return false;
+        }
+
+        return $category->delete();
+    }
+
+    /**
+     * Get categories by parent ID
+     *
+     * @param int $parentId
+     * @param array $payload
+     * @return mixed
+     */
+    public function getByParentId(int $parentId, array $payload): mixed
+    {
+        $query = $this->model->where('parent_id', $parentId);
+
+        // Apply filters from payload
+        if (isset($payload['status'])) {
+            $query->where('status', $payload['status']);
+        }
+
+        if (isset($payload['is_display'])) {
+            $query->where('is_display', $payload['is_display']);
+        }
+
+        // Apply sorting
+        $sortBy = $payload['sort_by'] ?? 'rank_order';
+        $sortOrder = $payload['sort_order'] ?? 'asc';
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Apply pagination
+        $perPage = $payload['per_page'] ?? 15;
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Get categories that have no parent (root categories)
+     *
+     * @param array $payload
+     * @return mixed
+     */
+    public function getRootCategories(array $payload): mixed
+    {
+        $query = $this->model->where('parent_id', 0);
+
+        // Apply filters from payload
+        if (isset($payload['status'])) {
+            $query->where('status', $payload['status']);
+        }
+
+        if (isset($payload['is_display'])) {
+            $query->where('is_display', $payload['is_display']);
+        }
+
+        // Apply sorting
+        $sortBy = $payload['sort_by'] ?? 'rank_order';
+        $sortOrder = $payload['sort_order'] ?? 'asc';
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Apply pagination
+        $perPage = $payload['per_page'] ?? 15;
+        return $query->paginate($perPage);
     }
 }

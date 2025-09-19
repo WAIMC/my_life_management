@@ -1,43 +1,55 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Interfaces\Master;
 
-use App\Interfaces\BaseInterface;
-use Illuminate\Support\Collection;
-
-interface DepartmentMstInterface extends BaseInterface
+interface DepartmentMstInterface
 {
     /**
-     * Get department list
+     * Get all departments with optional filtering
      *
      * @param array $payload
-     * @return Collection
+     * @return mixed
      */
-    public function list(array $payload): Collection;
+    public function getAll(array $payload): mixed;
 
     /**
-     * Store department
+     * Get department by ID
      *
-     * @param array $payload
-     * @return void
+     * @param int $id
+     * @return mixed
      */
-    public function executeStore(array $payload): void;
+    public function getById(int $id): mixed;
 
     /**
-     * Update api
+     * Get department by code
+     *
+     * @param string $code
+     * @return mixed
+     */
+    public function getByCode(string $code): mixed;
+
+    /**
+     * Create new department
      *
      * @param array $payload
-     * @return void
+     * @return mixed
      */
-    public function executeUpdate(array $payload): void;
+    public function create(array $payload): mixed;
+
+    /**
+     * Update department
+     *
+     * @param array $payload
+     * @param int $id
+     * @return mixed
+     */
+    public function update(array $payload, int $id): mixed;
 
     /**
      * Delete department
      *
-     * @param array $ids
-     * @return void
+     * @param int $id
+     * @return mixed
      */
-    public function executeDelete(array $ids): void;
+    public function delete(int $id): mixed;
 }

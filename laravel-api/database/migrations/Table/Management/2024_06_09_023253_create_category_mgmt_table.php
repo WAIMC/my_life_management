@@ -17,6 +17,9 @@ return new class extends Migration
             $table->boolean('is_display')->default(false)->comment('Display category');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('CategoryMgmt order');
             $table->timestamps();
+
+            // Self-referencing foreign key
+            //$table->foreign('parent_id')->references('id')->on('category_mgmt')->onDelete('cascade');
         });
     }
     public function down(): void

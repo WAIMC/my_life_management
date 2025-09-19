@@ -2,107 +2,152 @@
 
 namespace App\Services\Master;
 
-use App\Constants\Messages;
-use App\Models\Master\RoleMst;
-use App\Constants\CommonVal;
-use InvalidArgumentException;
-use App\Services\CommonService;
-use App\Services\SingletonService;
-use Illuminate\Validation\ValidationException;
-use App\Http\Resources\Master\DepartmentResource;
-use App\Repositories\Master\DepartmentMstRepository;
-use App\Http\Requests\Master\Department\DepartmentMstListRequest;
-use App\Http\Requests\Master\Department\DepartmentMstStoreRequest;
-use App\Http\Requests\Master\Department\DepartmentMstUpdateRequest;
-use App\Models\Master\DepartmentMst;
+use App\Interfaces\Master\DepartmentMstInterface;
+use App\Http\Resources\Master\DepartmentMstResource;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
-class DepartmentMstService extends SingletonService
+class DepartmentMstService
 {
-  /**
-   * Get department list
-   *
-   * @param array $payload
-   * @return mixed
-   */
-  public function list(array $payload): mixed
-  {
-    $validator = (new CommonService())->validationManual(
-      (new DepartmentMstListRequest()),
-      $payload
-    );
+    protected DepartmentMstInterface $departmentMstRepository;
 
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    /**
+     * Constructor
+     *
+     * @param DepartmentMstInterface $departmentMstRepository
+     */
+    public function __construct(DepartmentMstInterface $departmentMstRepository)
+    {
+        $this->departmentMstRepository = $departmentMstRepository;
     }
 
-    $list = DepartmentMstRepository::list($payload);
-
-    return $list
-      ? DepartmentResource::collection($list)
-      : [];
-  }
-
-  /**
-   * Store department
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function store(array $payload): bool
-  {
-    $validator = (new CommonService())->validationManual(
-      (new DepartmentMstStoreRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
-    }
-    DepartmentMstRepository::store($payload);
-
-    return true;
-  }
-
-  /**
-   * Update department
-   *
-   * @param array $payload
-   * @return bool
-   */
-  public function update(array $payload): bool
-  {
-    $validator = (new CommonService())->validationManual(
-      (new DepartmentMstUpdateRequest()),
-      $payload
-    );
-
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
+    /**
+     * Get all departments with optional filtering
+     *
+     * @param array $payload
+     * @return AnonymousResourceCollection
+     */
+    public function getAll(array $payload): AnonymousResourceCollection
+    {
+        $records = $this->departmentMstRepository->getAll($payload);
+        return DepartmentMstResource::collection($records);
     }
 
-    DepartmentMstRepository::update($payload);
-
-    return true;
-  }
-
-  /**
-   * Delete department
-   *
-   * @param string $id
-   * @return bool
-   */
-  public function delete(string $id): bool
-  {
-    if (!is_numeric($id)) {
-      $message = Messages::getMessage(
-        Messages::E0001,
-        ['attributes' => DepartmentMst::attributes()['id']]
-      );
-      throw new InvalidArgumentException($message, CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    /**
+     * Get department by ID
+     *
+     * @param int $id
+     * @return DepartmentMstResource
+     */
+    public function getById(int $id): DepartmentMstResource
+    {
+        try {
+            $record = $this->departmentMstRepository->getById($id);
+            return new DepartmentMstResource($record);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Department not found: ' . $id);
+            throw $e;
+        }
     }
 
-    DepartmentMstRepository::delete($id);
+    /**
+     * Get department by code
+     *
+     * @param string $code
+     * @return DepartmentMstResource
+     */
+    public function getByCode(string $code): DepartmentMstResource
+    {
+        try {
+            $record = $this->departmentMstRepository->getByCode($code);
+            return new DepartmentMstResource($record);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Department not found with code: ' . $code);
+            throw $e;
+        }
+    }
 
-    return true;
-  }
+    /**
+     * Create new department
+     *
+     * @param array $payload
+     * @return DepartmentMstResource
+     * @throws Exception
+     */
+    public function create(array $payload): DepartmentMstResource
+    {
+        // Check if code already exists
+        try {
+            $existingDepartment = $this->departmentMstRepository->getByCode($payload['code']);
+            if ($existingDepartment) {
+                throw new Exception('Department with code ' . $payload['code'] . ' already exists');
+            }
+        } catch (ModelNotFoundException $e) {
+            // Code doesn't exist, which is what we want
+        }
+
+        $record = $this->departmentMstRepository->create($payload);
+        return new DepartmentMstResource($record);
+    }
+
+    /**
+     * Update department
+     *
+     * @param array $payload
+     * @param int $id
+     * @return DepartmentMstResource
+     * @throws Exception
+     */
+    public function update(array $payload, int $id): DepartmentMstResource
+    {
+        try {
+            // Check if code is being updated and already exists for another department
+            if (isset($payload['code'])) {
+                try {
+                    $existingDepartment = $this->departmentMstRepository->getByCode($payload['code']);
+                    if ($existingDepartment && $existingDepartment->id != $id) {
+                        throw new Exception('Department with code ' . $payload['code'] . ' already exists');
+                    }
+                } catch (ModelNotFoundException $e) {
+                    // Code doesn't exist, which is what we want
+                }
+            }
+
+            $record = $this->departmentMstRepository->update($payload, $id);
+            return new DepartmentMstResource($record);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Department not found for update: ' . $id);
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete department
+     *
+     * @param int $id
+     * @return bool
+     * @throws Exception
+     */
+    public function delete(int $id): bool
+    {
+        try {
+            // Check if the department is used by any admin or management relation
+            $department = $this->departmentMstRepository->getById($id);
+
+            if ($department->adminDepartments()->count() > 0) {
+                throw new Exception('Cannot delete department that is assigned to admins');
+            }
+
+            if ($department->departmentManagements()->count() > 0) {
+                throw new Exception('Cannot delete department that has management relations');
+            }
+
+            return $this->departmentMstRepository->delete($id);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Department not found for deletion: ' . $id);
+            throw $e;
+        }
+    }
 }

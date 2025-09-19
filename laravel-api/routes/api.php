@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\History\Management\BannerMgmtHistController;
 use App\Http\Controllers\History\Master\AdminMstHistController;
+use App\Http\Controllers\History\Master\ApiMstHistController;
+use App\Http\Controllers\Management\BannerMgmtController;
+use App\Http\Controllers\Management\CategoryMgmtController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AdminMiddleware;
@@ -62,13 +66,9 @@ Route::prefix('admin')->group(function () {
                 Route::put('update', [ApiRoleMstController::class, 'update']);
             });
 
-            // DepartmentMst
-            Route::prefix('department')->group(function () {
-                Route::get('list', [DepartmentMstController::class, 'list']);
-                Route::post('store', [DepartmentMstController::class, 'store']);
-                Route::put('update/{id}', [DepartmentMstController::class, 'update']);
-                Route::delete('delete/{id}', [DepartmentMstController::class, 'delete']);
-            });
+            // Department Master
+            Route::apiResource('departments', DepartmentMstController::class);
+            Route::get('departments/code/{code}', [DepartmentMstController::class, 'getByCode']);
 
             // AdminMst department
             Route::prefix('admin-department')->group(function () {
@@ -76,13 +76,10 @@ Route::prefix('admin')->group(function () {
                 Route::put('update', [AdminDepartmentMstController::class, 'update']);
             });
 
-            // Policy department
-            Route::prefix('policy-department')->group(function () {
-                Route::get('list', [PolicyDepartmentMstController::class, 'list']);
-                Route::post('store', [PolicyDepartmentMstController::class, 'store']);
-                Route::put('update/{id}', [PolicyDepartmentMstController::class, 'update']);
-                Route::delete('delete/{id}', [PolicyDepartmentMstController::class, 'delete']);
-            });
+            // Policy Department Master
+            Route::apiResource('policy-departments', PolicyDepartmentMstController::class);
+            Route::get('policy-departments/table/{tableName}', [PolicyDepartmentMstController::class, 'getByTableName']);
+            Route::get('policy-departments/table/{tableName}/row/{rowId}', [PolicyDepartmentMstController::class, 'getByTableNameAndRowId']);
 
             // Department Management master
             Route::get('department-managements', [DepartmentManagementMstController::class, 'index']);
@@ -93,33 +90,61 @@ Route::prefix('admin')->group(function () {
             Route::get('department-managements/policy-department/{policyDepartmentId}', [DepartmentManagementMstController::class, 'getByPolicyDepartmentId']);
         });
 
-        // DepartmentMst management
+        // Management
         Route::prefix('management')->group(function () {
-            // CategoryMgmt
-            Route::prefix('category')->group(function () {
-                Route::get('list', [CategoryMstController::class, 'list']);
-                Route::post('store', [CategoryMstController::class, 'store']);
-                Route::put('update/{id}', [CategoryMstController::class, 'update']);
-                Route::delete('delete/{id}', [CategoryMstController::class, 'delete']);
+            // Category management
+            Route::prefix('categories')->group(function () {
+                Route::get('/', [CategoryMgmtController::class, 'index']);
+                Route::post('/', [CategoryMgmtController::class, 'store']);
+                Route::get('/{id}', [CategoryMgmtController::class, 'show']);
+                Route::put('/{id}', [CategoryMgmtController::class, 'update']);
+                Route::delete('/{id}', [CategoryMgmtController::class, 'destroy']);
+                Route::get('/parent/{parentId}', [CategoryMgmtController::class, 'getByParentId']);
+                Route::get('/root/list', [CategoryMgmtController::class, 'getRootCategories']);
             });
 
-            // SkillMgmt
+            // Skill management
             Route::prefix('skill')->group(function () {
                 Route::get('list', [SkillMstController::class, 'list']);
                 Route::post('store', [SkillMstController::class, 'store']);
                 Route::put('update/{id}', [SkillMstController::class, 'update']);
                 Route::delete('delete/{id}', [SkillMstController::class, 'delete']);
             });
+
+            // Banner management
+            Route::prefix('banners')->group(function () {
+                Route::get('/', [BannerMgmtController::class, 'index']);
+                Route::post('/', [BannerMgmtController::class, 'store']);
+                Route::get('/{id}', [BannerMgmtController::class, 'show']);
+                Route::put('/{id}', [BannerMgmtController::class, 'update']);
+                Route::delete('/{id}', [BannerMgmtController::class, 'destroy']);
+            });
         });
 
-        // DepartmentMst master history
+        // Master history
         Route::prefix('history/master')->group(function () {
             // Admin History CRUD routes
-            Route::apiResource('admin-histories', AdminMstHistController::class);
+            Route::apiResource('admin-master-histories', AdminMstHistController::class);
+
+            // API master history
+            Route::prefix('api-master-hist')->group(function () {
+                Route::get('/', [ApiMstHistController::class, 'index']);
+                Route::post('/', [ApiMstHistController::class, 'store']);
+                Route::get('/{id}', [ApiMstHistController::class, 'show']);
+                Route::get('/by-api/{apiMstId}', [ApiMstHistController::class, 'getByApiMstId']);
+            });
         });
 
-        // DepartmentMst management history
+        // Management history
         Route::prefix('history/management')->group(function () {
+
+            // Banner management history
+            Route::prefix('banner-histories')->group(function () {
+                Route::get('/', [BannerMgmtHistController::class, 'index']);
+                Route::post('/', [BannerMgmtHistController::class, 'store']);
+                Route::get('/{id}', [BannerMgmtHistController::class, 'show']);
+                Route::get('/by-banner/{bannerId}', [BannerMgmtHistController::class, 'getByBannerId']);
+            });
 
         });
     });
