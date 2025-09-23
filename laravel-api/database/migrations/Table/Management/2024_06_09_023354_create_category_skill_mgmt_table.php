@@ -12,6 +12,9 @@ return new class extends Migration
             $table->unsignedInteger('skill_id');
             $table->primary(['category_id', 'skill_id']);
             $table->timestamps();
+
+            // $table->foreign('category_id')->references('id')->on('category_mgmt')->onDelete('cascade');
+            // $table->foreign('skill_id')->references('id')->on('skill_mgmt')->onDelete('cascade');
         });
     }
     public function down(): void

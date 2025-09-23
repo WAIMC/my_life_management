@@ -7,7 +7,10 @@ use App\Http\Requests\Management\Category\CategoryMgmtListRequest;
 use App\Http\Requests\Management\Category\StoreCategoryMgmtRequest;
 use App\Http\Requests\Management\Category\UpdateCategoryMgmtRequest;
 use App\Http\Requests\Management\Category\DeleteCategoryMgmtRequest;
+use App\Http\Resources\Management\CategoryMgmtResource;
 use App\Services\Management\CategoryMgmtService;
+use Exception;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CategoryMgmtController extends Controller
 {
@@ -27,9 +30,9 @@ class CategoryMgmtController extends Controller
      * Get a listing of categories
      *
      * @param CategoryMgmtListRequest $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return AnonymousResourceCollection
      */
-    public function index(CategoryMgmtListRequest $request)
+    public function index(CategoryMgmtListRequest $request): AnonymousResourceCollection
     {
         return $this->categoryMgmtService->getAll($request->validated());
     }
@@ -38,9 +41,10 @@ class CategoryMgmtController extends Controller
      * Get category by ID
      *
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return CategoryMgmtResource
+     * @throws Exception
      */
-    public function show($id)
+    public function show(int $id): CategoryMgmtResource
     {
         return $this->categoryMgmtService->findById($id);
     }
@@ -49,9 +53,10 @@ class CategoryMgmtController extends Controller
      * Create a new category
      *
      * @param StoreCategoryMgmtRequest $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return CategoryMgmtResource
+     * @throws Exception
      */
-    public function store(StoreCategoryMgmtRequest $request)
+    public function store(StoreCategoryMgmtRequest $request): CategoryMgmtResource
     {
         return $this->categoryMgmtService->create($request->validated());
     }
@@ -61,9 +66,10 @@ class CategoryMgmtController extends Controller
      *
      * @param UpdateCategoryMgmtRequest $request
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return CategoryMgmtResource
+     * @throws Exception
      */
-    public function update(UpdateCategoryMgmtRequest $request, $id)
+    public function update(UpdateCategoryMgmtRequest $request, int $id): CategoryMgmtResource
     {
         return $this->categoryMgmtService->update($id, $request->validated());
     }
@@ -73,9 +79,10 @@ class CategoryMgmtController extends Controller
      *
      * @param DeleteCategoryMgmtRequest $request
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return array
+     * @throws Exception
      */
-    public function destroy(DeleteCategoryMgmtRequest $request, $id)
+    public function destroy(DeleteCategoryMgmtRequest $request, int $id): array
     {
         return $this->categoryMgmtService->delete($id, $request->validated());
     }
@@ -85,9 +92,9 @@ class CategoryMgmtController extends Controller
      *
      * @param CategoryMgmtListRequest $request
      * @param int $parentId
-     * @return \Illuminate\Http\JsonResponse
+     * @return AnonymousResourceCollection
      */
-    public function getByParentId(CategoryMgmtListRequest $request, $parentId)
+    public function getByParentId(CategoryMgmtListRequest $request, int $parentId): AnonymousResourceCollection
     {
         return $this->categoryMgmtService->getByParentId($parentId, $request->validated());
     }
@@ -96,9 +103,9 @@ class CategoryMgmtController extends Controller
      * Get root categories
      *
      * @param CategoryMgmtListRequest $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return AnonymousResourceCollection
      */
-    public function getRootCategories(CategoryMgmtListRequest $request)
+    public function getRootCategories(CategoryMgmtListRequest $request): AnonymousResourceCollection
     {
         return $this->categoryMgmtService->getRootCategories($request->validated());
     }

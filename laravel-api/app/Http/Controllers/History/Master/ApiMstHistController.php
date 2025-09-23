@@ -15,7 +15,7 @@ class ApiMstHistController extends Controller
     protected ApiMstHistService $apiMstHistService;
 
     /**
-     * ApiMstHistController constructor
+     * Constructor
      *
      * @param ApiMstHistService $apiMstHistService
      */

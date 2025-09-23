@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\History\Master\AdminMstHist;
+namespace App\Http\Requests\History\Master\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
