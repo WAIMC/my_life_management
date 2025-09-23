@@ -20,6 +20,12 @@ return new class extends Migration
             $table->unsignedTinyInteger('action')->comment('Original translator action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
+
+            // Foreign key relationships
+//            $table->foreign('original_translator_mst_id')
+//                ->references('id')
+//                ->on('original_translator_mst')
+//                ->onDelete('cascade');
         });
     }
 

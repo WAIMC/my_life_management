@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Interfaces\Master;
+namespace App\Interfaces\History\Master;
 
-interface OriginalTranslatorMstInterface
+interface OriginalTranslatorMstHistInterface
 {
     /**
-     * Get list of original translators
+     * Get all history records.
      *
      * @param array $payload
      * @return mixed
      */
-    public function getList(array $payload): mixed;
+    public function getAll(array $payload): mixed;
 
     /**
-     * Get original translator by ID
+     * Get history record by ID.
      *
      * @param int $id
      * @return mixed
@@ -21,7 +21,7 @@ interface OriginalTranslatorMstInterface
     public function getById(int $id): mixed;
 
     /**
-     * Create original translator
+     * Create new history record.
      *
      * @param array $payload
      * @return mixed
@@ -29,7 +29,7 @@ interface OriginalTranslatorMstInterface
     public function create(array $payload): mixed;
 
     /**
-     * Update original translator
+     * Update history record.
      *
      * @param array $payload
      * @param int $id
@@ -38,7 +38,7 @@ interface OriginalTranslatorMstInterface
     public function update(array $payload, int $id): mixed;
 
     /**
-     * Delete original translator
+     * Delete history record.
      *
      * @param int $id
      * @return mixed

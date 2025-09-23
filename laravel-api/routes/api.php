@@ -7,9 +7,12 @@ use App\Http\Controllers\History\Master\ApiMstHistController;
 use App\Http\Controllers\History\Master\DepartmentMstHistController;
 use App\Http\Controllers\History\Master\FeatureMstHistController;
 use App\Http\Controllers\History\Master\LanguageMstHistController;
+use App\Http\Controllers\History\Master\OriginalTranslatorMstHistController;
+use App\Http\Controllers\History\Master\PolicyDepartmentMstHistController;
 use App\Http\Controllers\Management\BannerMgmtController;
 use App\Http\Controllers\Management\CategoryMgmtController;
 use App\Http\Controllers\Management\CategorySkillMgmtController;
+use App\Http\Controllers\Management\ProductMgmtController;
 use App\Http\Controllers\Master\AdminDepartmentMstController;
 use App\Http\Controllers\Master\AdminMstController;
 use App\Http\Controllers\Master\AdminRoleMstController;
@@ -153,6 +156,9 @@ Route::prefix('admin')->group(function () {
                 Route::delete('/category/{categoryId}/skill/{skillId}', [CategorySkillMgmtController::class, 'detachSkill']);
                 Route::put('/category/{categoryId}/sync', [CategorySkillMgmtController::class, 'syncSkills']);
             });
+
+            // Product
+            Route::apiResource('product', ProductMgmtController::class);
         });
 
         // Master history
@@ -197,6 +203,24 @@ Route::prefix('admin')->group(function () {
                 Route::delete('delete/{id}', [LanguageMstHistController::class, 'delete']);
             });
 
+            // Original translator
+            Route::prefix('original-translator')->group(function () {
+                Route::get('/', [OriginalTranslatorMstHistController::class, 'index']);
+                Route::post('/', [OriginalTranslatorMstHistController::class, 'store']);
+                Route::get('/{id}', [OriginalTranslatorMstHistController::class, 'show']);
+                Route::put('/{id}', [OriginalTranslatorMstHistController::class, 'update']);
+                Route::delete('/{id}', [OriginalTranslatorMstHistController::class, 'destroy']);
+            });
+
+            // Policy Department
+            Route::prefix('policy-department')->group(function () {
+                Route::get('/', [PolicyDepartmentMstHistController::class, 'index']);
+                Route::post('/', [PolicyDepartmentMstHistController::class, 'store']);
+                Route::get('/{id}', [PolicyDepartmentMstHistController::class, 'show']);
+                Route::put('/{id}', [PolicyDepartmentMstHistController::class, 'update']);
+                Route::delete('/{id}', [PolicyDepartmentMstHistController::class, 'destroy']);
+            });
+
         });
 
         // Management history
@@ -220,7 +244,3 @@ Route::prefix('admin')->group(function () {
         });
     });
 });
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');

@@ -4,6 +4,7 @@ namespace App\Repositories\Master;
 
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use App\Models\Master\OriginalTranslatorMst;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
@@ -11,7 +12,7 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
     /**
      * @var OriginalTranslatorMst
      */
-    protected $model;
+    protected OriginalTranslatorMst $model;
 
     /**
      * OriginalTranslatorMstRepository constructor.
@@ -27,9 +28,9 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
      * Get list of original translators
      *
      * @param array $payload
-     * @return mixed
+     * @return LengthAwarePaginator
      */
-    public function getList(array $payload)
+    public function getList(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query();
 
@@ -64,7 +65,7 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
         }
 
         $perPage = $payload['per_page'] ?? 10;
-        
+
         return $query->paginate($perPage);
     }
 
@@ -74,7 +75,7 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
      * @param int $id
      * @return mixed
      */
-    public function getById(int $id)
+    public function getById(int $id): mixed
     {
         return $this->model->findOrFail($id);
     }
@@ -85,17 +86,17 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
      * @param array $payload
      * @return mixed
      */
-    public function create(array $payload)
+    public function create(array $payload): mixed
     {
         $originalTranslator = new $this->model;
-        
+
         $originalTranslator->id = $payload['id'] ?? $this->getNextId();
         $originalTranslator->table = $payload['table'];
         $originalTranslator->column = $payload['column'];
         $originalTranslator->field_id = $payload['field_id'];
-        
+
         $originalTranslator->save();
-        
+
         return $originalTranslator;
     }
 
@@ -106,24 +107,24 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
      * @param int $id
      * @return mixed
      */
-    public function update(array $payload, int $id)
+    public function update(array $payload, int $id): mixed
     {
         $originalTranslator = $this->model->findOrFail($id);
-        
+
         if (isset($payload['table'])) {
             $originalTranslator->table = $payload['table'];
         }
-        
+
         if (isset($payload['column'])) {
             $originalTranslator->column = $payload['column'];
         }
-        
+
         if (isset($payload['field_id'])) {
             $originalTranslator->field_id = $payload['field_id'];
         }
-        
+
         $originalTranslator->save();
-        
+
         return $originalTranslator;
     }
 
@@ -133,7 +134,7 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
      * @param int $id
      * @return mixed
      */
-    public function delete(int $id)
+    public function delete(int $id): mixed
     {
         $originalTranslator = $this->model->findOrFail($id);
         return $originalTranslator->delete();
@@ -144,7 +145,7 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
      *
      * @return int
      */
-    private function getNextId()
+    private function getNextId(): int
     {
         $statement = DB::select("SELECT nextval('original_translator_mst_seq')");
         return $statement[0]->nextval;

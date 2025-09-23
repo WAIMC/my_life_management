@@ -5,6 +5,7 @@ namespace App\Services\Master;
 use App\Http\Resources\Master\OriginalTranslatorMstResource;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use Exception;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
 class OriginalTranslatorMstService
@@ -12,7 +13,7 @@ class OriginalTranslatorMstService
     /**
      * @var OriginalTranslatorMstInterface
      */
-    protected $originalTranslatorMstRepository;
+    protected OriginalTranslatorMstInterface $originalTranslatorMstRepository;
 
     /**
      * OriginalTranslatorMstService constructor.
@@ -28,9 +29,9 @@ class OriginalTranslatorMstService
      * Get list of original translators
      *
      * @param array $payload
-     * @return mixed
+     * @return AnonymousResourceCollection
      */
-    public function getList(array $payload)
+    public function getList(array $payload): AnonymousResourceCollection
     {
         $result = $this->originalTranslatorMstRepository->getList($payload);
         return OriginalTranslatorMstResource::collection($result);
@@ -40,9 +41,9 @@ class OriginalTranslatorMstService
      * Get original translator by ID
      *
      * @param int $id
-     * @return mixed
+     * @return OriginalTranslatorMstResource
      */
-    public function getById(int $id)
+    public function getById(int $id): OriginalTranslatorMstResource
     {
         $originalTranslator = $this->originalTranslatorMstRepository->getById($id);
         return new OriginalTranslatorMstResource($originalTranslator);
@@ -52,10 +53,10 @@ class OriginalTranslatorMstService
      * Create original translator
      *
      * @param array $payload
-     * @return mixed
+     * @return OriginalTranslatorMstResource
      * @throws Exception
      */
-    public function create(array $payload)
+    public function create(array $payload): OriginalTranslatorMstResource
     {
         try {
             DB::beginTransaction();
@@ -76,10 +77,10 @@ class OriginalTranslatorMstService
      *
      * @param array $payload
      * @param int $id
-     * @return mixed
+     * @return OriginalTranslatorMstResource
      * @throws Exception
      */
-    public function update(array $payload, int $id)
+    public function update(array $payload, int $id): OriginalTranslatorMstResource
     {
         try {
             DB::beginTransaction();
@@ -102,7 +103,7 @@ class OriginalTranslatorMstService
      * @return mixed
      * @throws Exception
      */
-    public function delete(int $id)
+    public function delete(int $id): mixed
     {
         try {
             // Check if translator is being used in translations

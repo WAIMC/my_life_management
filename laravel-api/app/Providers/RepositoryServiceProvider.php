@@ -11,9 +11,12 @@ use App\Interfaces\History\Master\ApiMstHistInterface;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
 use App\Interfaces\History\Master\FeatureMstHistInterface;
 use App\Interfaces\History\Master\LanguageMstHistInterface;
+use App\Interfaces\History\Master\OriginalTranslatorMstHistInterface;
+use App\Interfaces\History\Master\PolicyDepartmentMstHistInterface;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\Management\CategoryMgmtInterface;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
+use App\Interfaces\Management\ProductMgmtInterface;
 use App\Interfaces\Master\AdminDepartmentMstInterface;
 use App\Interfaces\Master\AdminMstInterface;
 use App\Interfaces\Master\AdminRoleMstInterface;
@@ -33,9 +36,12 @@ use App\Repositories\History\Master\ApiMstHistRepository;
 use App\Repositories\History\Master\DepartmentMstHistRepository;
 use App\Repositories\History\Master\FeatureMstHistRepository;
 use App\Repositories\History\Master\LanguageMstHistRepository;
+use App\Repositories\History\Master\OriginalTranslatorMstHistRepository;
+use App\Repositories\History\Master\PolicyDepartmentMstHistRepository;
 use App\Repositories\Management\BannerMgmtRepository;
 use App\Repositories\Management\CategoryMgmtRepository;
 use App\Repositories\Management\CategorySkillMgmtRepository;
+use App\Repositories\Management\ProductMgmtRepository;
 use App\Repositories\Master\AdminDepartmentMstRepository;
 use App\Repositories\Master\AdminMstRepository;
 use App\Repositories\Master\AdminRoleMstRepository;
@@ -71,6 +77,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         CategoryMgmtInterface::class => CategoryMgmtRepository::class,
         BannerMgmtInterface::class => BannerMgmtRepository::class,
         CategorySkillMgmtInterface::class => CategorySkillMgmtRepository::class,
+        ProductMgmtInterface::class => ProductMgmtRepository::class,
 
         // Master History
         AdminMstHistInterface::class => AdminMstHistRepository::class,
@@ -78,6 +85,8 @@ final class RepositoryServiceProvider extends ServiceProvider
         DepartmentMstHistInterface::class => DepartmentMstHistRepository::class,
         FeatureMstHistInterface::class => FeatureMstHistRepository::class,
         LanguageMstHistInterface::class => LanguageMstHistRepository::class,
+        OriginalTranslatorMstHistInterface::class => OriginalTranslatorMstHistRepository::class,
+        PolicyDepartmentMstHistInterface::class => PolicyDepartmentMstHistRepository::class,
 
         // Management history
         BannerMgmtHistInterface::class => BannerMgmtHistRepository::class,
