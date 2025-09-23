@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\History\Management\BannerMgmtHistController;
 use App\Http\Controllers\History\Management\CategoryMgmtHistController;
+use App\Http\Controllers\History\Management\ProductMgmtHistController;
+use App\Http\Controllers\History\Management\SkillMgmtHistController;
 use App\Http\Controllers\History\Master\AdminMstHistController;
 use App\Http\Controllers\History\Master\ApiMstHistController;
 use App\Http\Controllers\History\Master\DepartmentMstHistController;
@@ -9,10 +11,12 @@ use App\Http\Controllers\History\Master\FeatureMstHistController;
 use App\Http\Controllers\History\Master\LanguageMstHistController;
 use App\Http\Controllers\History\Master\OriginalTranslatorMstHistController;
 use App\Http\Controllers\History\Master\PolicyDepartmentMstHistController;
+use App\Http\Controllers\History\Master\RoleMstHistController;
 use App\Http\Controllers\Management\BannerMgmtController;
 use App\Http\Controllers\Management\CategoryMgmtController;
 use App\Http\Controllers\Management\CategorySkillMgmtController;
 use App\Http\Controllers\Management\ProductMgmtController;
+use App\Http\Controllers\Management\SkillMgmtController;
 use App\Http\Controllers\Master\AdminDepartmentMstController;
 use App\Http\Controllers\Master\AdminMstController;
 use App\Http\Controllers\Master\AdminRoleMstController;
@@ -132,10 +136,11 @@ Route::prefix('admin')->group(function () {
 
             // Skill
             Route::prefix('skill')->group(function () {
-                Route::get('list', [SkillMstController::class, 'list']);
-                Route::post('store', [SkillMstController::class, 'store']);
-                Route::put('update/{id}', [SkillMstController::class, 'update']);
-                Route::delete('delete/{id}', [SkillMstController::class, 'delete']);
+                Route::get('/', [SkillMgmtController::class, 'index']);
+                Route::post('/', [SkillMgmtController::class, 'store']);
+                Route::get('/{id}', [SkillMgmtController::class, 'show']);
+                Route::put('/{id}', [SkillMgmtController::class, 'update']);
+                Route::delete('/{id}', [SkillMgmtController::class, 'destroy']);
             });
 
             // Banner
@@ -221,6 +226,16 @@ Route::prefix('admin')->group(function () {
                 Route::delete('/{id}', [PolicyDepartmentMstHistController::class, 'destroy']);
             });
 
+            // Role
+            Route::prefix('role')->group(function () {
+                Route::get('/', [RoleMstHistController::class, 'index']);
+                Route::post('/', [RoleMstHistController::class, 'store']);
+                Route::get('/{id}', [RoleMstHistController::class, 'show']);
+                Route::get('/role-id/{id}', [RoleMstHistController::class, 'getByRoleId']);
+                Route::get('/get-by-author-id/{id}', [RoleMstHistController::class, 'getByAuthorId']);
+                Route::get('/get-by-action/{id}', [RoleMstHistController::class, 'getByAction']);
+            });
+
         });
 
         // Management history
@@ -240,6 +255,23 @@ Route::prefix('admin')->group(function () {
                 Route::post('/', [CategoryMgmtHistController::class, 'store']);
                 Route::get('/{id}', [CategoryMgmtHistController::class, 'show']);
                 Route::get('/by-category/{categoryId}', [CategoryMgmtHistController::class, 'getByCategoryId']);
+            });
+
+            // Product
+            Route::prefix('product')->group(function () {
+                Route::get('/', [ProductMgmtHistController::class, 'index']);
+                Route::post('/', [ProductMgmtHistController::class, 'store']);
+                Route::get('/{id}', [ProductMgmtHistController::class, 'show']);
+                Route::put('/{id}', [ProductMgmtHistController::class, 'update']);
+                Route::get('/{id}', [ProductMgmtHistController::class, 'destroy']);
+            });
+
+            // Skill
+            Route::prefix('skill')->group(function () {
+                Route::get('/', [SkillMgmtHistController::class, 'index']);
+                Route::post('/', [SkillMgmtHistController::class, 'store']);
+                Route::get('/{id}', [SkillMgmtHistController::class, 'show']);
+                Route::get('/by-skill/{skillId}', [SkillMgmtHistController::class, 'getBySkillId']);
             });
         });
     });

@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Interfaces\History\Management\BannerMgmtHistInterface;
 use App\Interfaces\History\Management\CategoryMgmtHistInterface;
+use App\Interfaces\History\Management\ProductMgmtHistInterface;
+use App\Interfaces\History\Management\SkillMgmtHistInterface;
 use App\Interfaces\History\Master\AdminMstHistInterface;
 use App\Interfaces\History\Master\ApiMstHistInterface;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
@@ -13,10 +15,12 @@ use App\Interfaces\History\Master\FeatureMstHistInterface;
 use App\Interfaces\History\Master\LanguageMstHistInterface;
 use App\Interfaces\History\Master\OriginalTranslatorMstHistInterface;
 use App\Interfaces\History\Master\PolicyDepartmentMstHistInterface;
+use App\Interfaces\History\Master\RoleMstHistInterface;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\Management\CategoryMgmtInterface;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
 use App\Interfaces\Management\ProductMgmtInterface;
+use App\Interfaces\Management\SkillMgmtInterface;
 use App\Interfaces\Master\AdminDepartmentMstInterface;
 use App\Interfaces\Master\AdminMstInterface;
 use App\Interfaces\Master\AdminRoleMstInterface;
@@ -31,6 +35,8 @@ use App\Interfaces\Master\PolicyDepartmentMstInterface;
 use App\Interfaces\Master\RoleMstInterface;
 use App\Repositories\History\Management\BannerMgmtHistRepository;
 use App\Repositories\History\Management\CategoryMgmtHistRepository;
+use App\Repositories\History\Management\ProductMgmtHistRepository;
+use App\Repositories\History\Management\SkillMgmtHistRepository;
 use App\Repositories\History\Master\AdminMstHistRepository;
 use App\Repositories\History\Master\ApiMstHistRepository;
 use App\Repositories\History\Master\DepartmentMstHistRepository;
@@ -38,10 +44,12 @@ use App\Repositories\History\Master\FeatureMstHistRepository;
 use App\Repositories\History\Master\LanguageMstHistRepository;
 use App\Repositories\History\Master\OriginalTranslatorMstHistRepository;
 use App\Repositories\History\Master\PolicyDepartmentMstHistRepository;
+use App\Repositories\History\Master\RoleMstHistRepository;
 use App\Repositories\Management\BannerMgmtRepository;
 use App\Repositories\Management\CategoryMgmtRepository;
 use App\Repositories\Management\CategorySkillMgmtRepository;
 use App\Repositories\Management\ProductMgmtRepository;
+use App\Repositories\Management\SkillMgmtRepository;
 use App\Repositories\Master\AdminDepartmentMstRepository;
 use App\Repositories\Master\AdminMstRepository;
 use App\Repositories\Master\AdminRoleMstRepository;
@@ -78,6 +86,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         BannerMgmtInterface::class => BannerMgmtRepository::class,
         CategorySkillMgmtInterface::class => CategorySkillMgmtRepository::class,
         ProductMgmtInterface::class => ProductMgmtRepository::class,
+        SkillMgmtInterface::class => SkillMgmtRepository::class,
 
         // Master History
         AdminMstHistInterface::class => AdminMstHistRepository::class,
@@ -87,10 +96,13 @@ final class RepositoryServiceProvider extends ServiceProvider
         LanguageMstHistInterface::class => LanguageMstHistRepository::class,
         OriginalTranslatorMstHistInterface::class => OriginalTranslatorMstHistRepository::class,
         PolicyDepartmentMstHistInterface::class => PolicyDepartmentMstHistRepository::class,
+        RoleMstHistInterface::class => RoleMstHistRepository::class,
 
         // Management history
         BannerMgmtHistInterface::class => BannerMgmtHistRepository::class,
         CategoryMgmtHistInterface::class => CategoryMgmtHistRepository::class,
+        ProductMgmtHistInterface::class => ProductMgmtHistRepository::class,
+        SkillMgmtHistInterface::class => SkillMgmtHistRepository::class,
     ];
 
     /**
