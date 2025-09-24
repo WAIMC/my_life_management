@@ -9,14 +9,16 @@ return new class extends Migration
     {
         Schema::create('social_mgmt_hist', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('social_mgmt_id')->comment('Social mgmt hist id');
-            $table->string('name', 30)->nullable()->comment('Social name');
-            $table->string('url', 100)->nullable()->comment('Social url');
-            $table->string('icon', 30)->nullable()->comment('Social icon name');
-            $table->string('description', 100)->nullable()->comment('Social description');
-            $table->unsignedTinyInteger('status')->nullable()->comment('Social status');
-            $table->unsignedTinyInteger('action')->comment('Social action');
-            $table->unsignedInteger('author_id')->comment('Author id');
+            $table->unsignedInteger('social_mgmt_id')->comment('Social mgmt id');
+            $table->string('name', 50)->nullable()->comment('Social name');
+            $table->string('slug', 50)->nullable()->comment('Social slug');
+            $table->string('link', 255)->nullable()->comment('Social link');
+            $table->string('image', 100)->nullable()->comment('Social image name');
+            $table->integer('status')->nullable()->comment('Social status');
+            $table->boolean('is_display')->nullable()->default(false)->comment('Social display status');
+            $table->integer('rank_order')->nullable()->default(0)->comment('Social rank order');
+            $table->integer('action')->comment('Social action');
+            $table->integer('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
         });
     }

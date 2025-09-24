@@ -4,6 +4,8 @@ use App\Http\Controllers\History\Management\BannerMgmtHistController;
 use App\Http\Controllers\History\Management\CategoryMgmtHistController;
 use App\Http\Controllers\History\Management\ProductMgmtHistController;
 use App\Http\Controllers\History\Management\SkillMgmtHistController;
+use App\Http\Controllers\History\Management\SocialMgmtHistController;
+use App\Http\Controllers\History\Management\UserMgmtHistController;
 use App\Http\Controllers\History\Master\AdminMstHistController;
 use App\Http\Controllers\History\Master\ApiMstHistController;
 use App\Http\Controllers\History\Master\DepartmentMstHistController;
@@ -12,11 +14,14 @@ use App\Http\Controllers\History\Master\LanguageMstHistController;
 use App\Http\Controllers\History\Master\OriginalTranslatorMstHistController;
 use App\Http\Controllers\History\Master\PolicyDepartmentMstHistController;
 use App\Http\Controllers\History\Master\RoleMstHistController;
+use App\Http\Controllers\History\Master\TranslationMstHistController;
 use App\Http\Controllers\Management\BannerMgmtController;
 use App\Http\Controllers\Management\CategoryMgmtController;
 use App\Http\Controllers\Management\CategorySkillMgmtController;
 use App\Http\Controllers\Management\ProductMgmtController;
 use App\Http\Controllers\Management\SkillMgmtController;
+use App\Http\Controllers\Management\SocialMgmtController;
+use App\Http\Controllers\Management\UserMgmtController;
 use App\Http\Controllers\Master\AdminDepartmentMstController;
 use App\Http\Controllers\Master\AdminMstController;
 use App\Http\Controllers\Master\AdminRoleMstController;
@@ -28,6 +33,7 @@ use App\Http\Controllers\Master\FeatureMstController;
 use App\Http\Controllers\Master\LanguageMstController;
 use App\Http\Controllers\Master\OriginalTranslatorMstController;
 use App\Http\Controllers\Master\PolicyDepartmentMstController;
+use App\Http\Controllers\Master\TranslationMstController;
 use App\Http\Controllers\Master\RoleMstController;
 use App\Http\Controllers\Master\SkillMstController;
 use App\Http\Middleware\AdminMiddleware;
@@ -119,6 +125,17 @@ Route::prefix('admin')->group(function () {
                 Route::put('update/{id}', [OriginalTranslatorMstController::class, 'update']);
                 Route::delete('delete/{id}', [OriginalTranslatorMstController::class, 'delete']);
             });
+            
+            // Translation
+            Route::prefix('translation')->group(function () {
+                Route::get('/', [TranslationMstController::class, 'index']);
+                Route::get('/{id}', [TranslationMstController::class, 'show']);
+                Route::post('/', [TranslationMstController::class, 'store']);
+                Route::put('/{id}', [TranslationMstController::class, 'update']);
+                Route::delete('/{id}', [TranslationMstController::class, 'destroy']);
+                Route::get('/language/{languageId}', [TranslationMstController::class, 'getByLanguageId']);
+                Route::get('/original/{originalId}', [TranslationMstController::class, 'getByOriginalId']);
+            });
         });
 
         // Management
@@ -152,6 +169,15 @@ Route::prefix('admin')->group(function () {
                 Route::delete('/{id}', [BannerMgmtController::class, 'destroy']);
             });
 
+            // Social
+            Route::prefix('social')->group(function () {
+                Route::get('/', [SocialMgmtController::class, 'index']);
+                Route::post('/', [SocialMgmtController::class, 'store']);
+                Route::get('/{id}', [SocialMgmtController::class, 'show']);
+                Route::put('/{id}', [SocialMgmtController::class, 'update']);
+                Route::delete('/{id}', [SocialMgmtController::class, 'destroy']);
+            });
+
             // Category skill
             Route::prefix('category-skill')->group(function () {
                 Route::get('/', [CategorySkillMgmtController::class, 'index']);
@@ -164,6 +190,13 @@ Route::prefix('admin')->group(function () {
 
             // Product
             Route::apiResource('product', ProductMgmtController::class);
+            
+            // User
+            Route::apiResource('user', UserMgmtController::class);
+            Route::get('user/email/{email}', [UserMgmtController::class, 'getByEmail']);
+            Route::get('user/username/{userName}', [UserMgmtController::class, 'getByUserName']);
+            Route::get('user/department/{departmentId}', [UserMgmtController::class, 'getByDepartmentId']);
+            Route::get('user/role/{roleId}', [UserMgmtController::class, 'getByRoleId']);
         });
 
         // Master history
@@ -236,6 +269,16 @@ Route::prefix('admin')->group(function () {
                 Route::get('/get-by-action/{id}', [RoleMstHistController::class, 'getByAction']);
             });
 
+            // Translation
+            Route::prefix('translation')->group(function () {
+                Route::get('/', [TranslationMstHistController::class, 'index']);
+                Route::post('/', [TranslationMstHistController::class, 'store']);
+                Route::get('/{id}', [TranslationMstHistController::class, 'show']);
+                Route::get('/by-translation/{translationId}', [TranslationMstHistController::class, 'getByTranslationId']);
+                Route::get('/by-language/{languageId}', [TranslationMstHistController::class, 'getByLanguageId']);
+                Route::get('/by-original/{originalId}', [TranslationMstHistController::class, 'getByOriginalId']);
+            });
+
         });
 
         // Management history
@@ -272,6 +315,24 @@ Route::prefix('admin')->group(function () {
                 Route::post('/', [SkillMgmtHistController::class, 'store']);
                 Route::get('/{id}', [SkillMgmtHistController::class, 'show']);
                 Route::get('/by-skill/{skillId}', [SkillMgmtHistController::class, 'getBySkillId']);
+            });
+            
+            // Social
+            Route::prefix('social')->group(function () {
+                Route::get('/', [SocialMgmtHistController::class, 'index']);
+                Route::post('/', [SocialMgmtHistController::class, 'store']);
+                Route::get('/{id}', [SocialMgmtHistController::class, 'show']);
+                Route::put('/{id}', [SocialMgmtHistController::class, 'update']);
+                Route::delete('/{id}', [SocialMgmtHistController::class, 'delete']);
+                Route::get('/by-social/{socialMgmtId}', [SocialMgmtHistController::class, 'getBySocialMgmtId']);
+            });
+
+            // User
+            Route::prefix('user')->group(function () {
+                Route::get('/', [UserMgmtHistController::class, 'index']);
+                Route::post('/', [UserMgmtHistController::class, 'store']);
+                Route::get('/{id}', [UserMgmtHistController::class, 'show']);
+                Route::get('/by-user/{user_mgmt_id}', [UserMgmtHistController::class, 'getByUserId']);
             });
         });
     });
