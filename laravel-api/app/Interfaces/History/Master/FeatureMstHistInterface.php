@@ -2,55 +2,39 @@
 
 namespace App\Interfaces\History\Master;
 
+use Illuminate\Support\Collection;
+
 interface FeatureMstHistInterface
 {
     /**
-     * Get all feature history records
+     * Get feature master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload);
+    public function list(array $payload): Collection;
 
     /**
-     * Get feature history record by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
-
-    /**
-     * Get history records by feature ID
-     *
-     * @param int $featureMstId
-     * @param array $payload
-     * @return mixed
-     */
-    public function getByFeatureId(int $featureMstId, array $payload);
-
-    /**
-     * Create new feature history record
+     * Create new feature master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload);
+    public function executeStore(array $payload): int;
 
     /**
-     * Update feature history record
+     * Update feature master history
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id);
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete feature history record
+     * Delete feature master history
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id);
+    public function executeDelete(array $ids): void;
 }

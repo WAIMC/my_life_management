@@ -2,34 +2,35 @@
 
 namespace App\Repositories\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Management\SkillMgmtInterface;
 use App\Models\Management\SkillMgmt;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class SkillMgmtRepository implements SkillMgmtInterface
+class SkillMgmtRepository extends BaseRepository implements SkillMgmtInterface
 {
-    protected SkillMgmt $model;
-
-    /**
-     * SkillMgmtRepository constructor
-     */
-    public function __construct()
+    public function __construct(SkillMgmt $model)
     {
-        $this->model = new SkillMgmt();
+        parent::__construct($model);
     }
 
     /**
      * Get all skills with pagination and filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
         }
@@ -46,143 +47,69 @@ class SkillMgmtRepository implements SkillMgmtInterface
             $query->where('parent_id', $payload['parent_id']);
         }
 
-        // Apply sorting
-        $sortField = $payload['sort_field'] ?? 'rank_order';
-        $sortOrder = $payload['sort_order'] ?? 'asc';
-        $query->orderBy($sortField, $sortOrder);
-
-        // With parent relationship
-        if (isset($payload['with_parent']) && $payload['with_parent']) {
-            $query->with('parent');
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        // With children relationship
-        if (isset($payload['with_children']) && $payload['with_children']) {
-            $query->with('children');
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Paginate results
-        $perPage = $payload['per_page'] ?? 15;
-        
-        return $query->paginate($perPage);
-    }
+        $query->orderBy('id', 'desc');
 
-    /**
-     * Find skill by ID
-     *
-     * @param int $id
-     * @return SkillMgmt|null
-     */
-    public function findById(int $id): ?SkillMgmt
-    {
-        return $this->model->with(['parent', 'children'])->find($id);
+        return $query->get();
     }
 
     /**
      * Create new skill
      *
      * @param array $payload
-     * @return SkillMgmt
+     * @return int
      */
-    public function create(array $payload): SkillMgmt
+    public function executeStore(array $payload): int
     {
-        $skill = new SkillMgmt();
+        $data = [];
+        $data['parent_id'] = $payload['parent_id'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'] ? Str::slug($payload['slug']) : Str::slug($payload['name']);
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $this->model->create($data);
 
-        if (isset($payload['parent_id'])) {
-            $skill->parent_id = $payload['parent_id'];
-        }
-        
-        if (isset($payload['name'])) {
-            $skill->name = $payload['name'];
-        }
-        
-        if (isset($payload['slug'])) {
-            $skill->slug = $payload['slug'];
-        } else {
-            $skill->slug = Str::slug($payload['name']);
-        }
-        
-        if (isset($payload['status'])) {
-            $skill->status = $payload['status'];
-        }
-        
-        if (isset($payload['is_display'])) {
-            $skill->is_display = $payload['is_display'];
-        }
-        
-        if (isset($payload['rank_order'])) {
-            $skill->rank_order = $payload['rank_order'];
-        }
-
-        $skill->save();
-        
-        return $skill;
+        return $this->model->id;
     }
 
     /**
      * Update skill by ID
      *
-     * @param int $id
      * @param array $payload
-     * @return SkillMgmt|null
+     * @return int
      */
-    public function update(int $id, array $payload): ?SkillMgmt
+    public function executeUpdate(array $payload): int
     {
-        $skill = $this->findById($id);
-        
-        if (!$skill) {
-            return null;
-        }
+        $data = $this->model->findById($payload['id']);
+        $data['parent_id'] = $payload['parent_id'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'] ? Str::slug($payload['slug']) : Str::slug($payload['name']);
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data->save();
 
-        if (isset($payload['parent_id'])) {
-            $skill->parent_id = $payload['parent_id'];
-        }
-        
-        if (isset($payload['name'])) {
-            $skill->name = $payload['name'];
-        }
-        
-        if (isset($payload['slug'])) {
-            $skill->slug = $payload['slug'];
-        }
-        
-        if (isset($payload['status'])) {
-            $skill->status = $payload['status'];
-        }
-        
-        if (isset($payload['is_display'])) {
-            $skill->is_display = $payload['is_display'];
-        }
-        
-        if (isset($payload['rank_order'])) {
-            $skill->rank_order = $payload['rank_order'];
-        }
-
-        $skill->save();
-        
-        return $skill;
+        return $data->id;
     }
 
     /**
      * Delete skill by ID
      *
-     * @param int $id
-     * @return bool
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): bool
+    public function executeDelete(array $ids): void
     {
-        $skill = $this->findById($id);
-        
-        if (!$skill) {
-            return false;
-        }
-        
-        // Check if this skill has children
-        if ($skill->children()->count() > 0) {
-            // Set children's parent_id to null or to the parent of the skill being deleted
-            $skill->children()->update(['parent_id' => $skill->parent_id]);
-        }
-        
-        return $skill->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

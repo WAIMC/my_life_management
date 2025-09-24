@@ -2,33 +2,34 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\AdminMstHistInterface;
 use App\Models\History\Master\AdminMstHist;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class AdminMstHistRepository implements AdminMstHistInterface
+class AdminMstHistRepository extends BaseRepository implements AdminMstHistInterface
 {
-    protected AdminMstHist $model;
-
-    /**
-     * Constructor
-     */
-    public function __construct()
+    public function __construct(AdminMstHist $model)
     {
-        $this->model = new AdminMstHist();
+        parent::__construct($model);
     }
 
     /**
      * Get all admin history records
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters based on payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['admin_mst_id'])) {
             $query->where('admin_mst_id', $payload['admin_mst_id']);
         }
@@ -57,72 +58,89 @@ class AdminMstHistRepository implements AdminMstHistInterface
             $query->where('author_id', $payload['author_id']);
         }
 
-        // Date range filter
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        return $query->orderBy('id', 'desc')->paginate(
-            $payload['per_page'] ?? 15
-        );
-    }
+        $query->orderBy('id', 'desc');
 
-    /**
-     * Get admin history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->findOrFail($id);
+        return $query->get();
     }
 
     /**
      * Create new admin history record
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['admin_mst_id'] = $payload['admin_mst_id'];
+        $data['email'] = $payload['email'];
+        $data['user_name'] = $payload['user_name'];
+        $data['password'] = $payload['password'];
+        $data['first_name'] = $payload['first_name'];
+        $data['last_name'] = $payload['last_name'];
+        $data['address'] = $payload['address'];
+        $data['phone_number'] = $payload['phone_number'];
+        $data['birth'] = $payload['birth'];
+        $data['gender'] = $payload['gender'];
+        $data['status'] = $payload['status'];
+        $data['avatar'] = $payload['avatar'];
+        $data['email_verified_at'] = $payload['email_verified_at'];
+        $data['remember_token'] = $payload['remember_token'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update admin history record
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $record = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['admin_mst_id'] = $payload['admin_mst_id'];
+        $data['email'] = $payload['email'];
+        $data['user_name'] = $payload['user_name'];
+        $data['password'] = $payload['password'];
+        $data['first_name'] = $payload['first_name'];
+        $data['last_name'] = $payload['last_name'];
+        $data['address'] = $payload['address'];
+        $data['phone_number'] = $payload['phone_number'];
+        $data['birth'] = $payload['birth'];
+        $data['gender'] = $payload['gender'];
+        $data['status'] = $payload['status'];
+        $data['avatar'] = $payload['avatar'];
+        $data['email_verified_at'] = $payload['email_verified_at'];
+        $data['remember_token'] = $payload['remember_token'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
 
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->model->getFillable())) {
-                $record->{$key} = $value;
-            }
-        }
-
-        $record->save();
-        return $record;
+        return $data->id;
     }
 
     /**
      * Delete admin history record
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $ids): void
     {
-        $record = $this->model->findOrFail($id);
-        return $record->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

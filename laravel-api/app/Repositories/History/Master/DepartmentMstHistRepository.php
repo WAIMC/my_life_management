@@ -2,37 +2,32 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
 use App\Models\History\Master\DepartmentMstHist;
+use App\Repositories\BaseRepository;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
-class DepartmentMstHistRepository implements DepartmentMstHistInterface
+class DepartmentMstHistRepository extends BaseRepository implements DepartmentMstHistInterface
 {
-    /**
-     * @var DepartmentMstHist
-     */
-    protected DepartmentMstHist $model;
-
-    /**
-     * DepartmentMstHistRepository constructor.
-     *
-     * @param DepartmentMstHist $model
-     */
     public function __construct(DepartmentMstHist $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get all department history records
      *
      * @param array $payload
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function getAll(array $payload): Collection
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
+
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
 
         if (isset($payload['department_mst_id'])) {
             $query->where('department_mst_id', $payload['department_mst_id']);
@@ -58,62 +53,17 @@ class DepartmentMstHistRepository implements DepartmentMstHistInterface
             $query->where('author_id', $payload['author_id']);
         }
 
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Order by
-        $orderBy = isset($payload['order_by']) ? $payload['order_by'] : 'created_at';
-        $order = isset($payload['order']) ? $payload['order'] : 'desc';
-        $query->orderBy($orderBy, $order);
-
-        // Pagination
-        if (isset($payload['per_page'])) {
-            return $query->paginate($payload['per_page']);
-        }
-
-        return $query->get();
-    }
-
-    /**
-     * Get department history record by ID
-     *
-     * @param int $id
-     * @return DepartmentMstHist|null
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->find($id);
-    }
-
-    /**
-     * Get history records by department ID
-     *
-     * @param int $departmentMstId
-     * @param array $payload
-     * @return Collection|LengthAwarePaginator
-     */
-    public function getByDepartmentId(int $departmentMstId, array $payload): mixed
-    {
-        $query = $this->model->where('department_mst_id', $departmentMstId);
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        // Order by
-        $orderBy = isset($payload['order_by']) ? $payload['order_by'] : 'created_at';
-        $order = isset($payload['order']) ? $payload['order'] : 'desc';
-        $query->orderBy($orderBy, $order);
-
-        // Pagination
-        if (isset($payload['per_page'])) {
-            return $query->paginate($payload['per_page']);
-        }
+        $query->orderBy('id', 'desc');
 
         return $query->get();
     }
@@ -122,105 +72,52 @@ class DepartmentMstHistRepository implements DepartmentMstHistInterface
      * Create new department history record
      *
      * @param array $payload
-     * @return DepartmentMstHist
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        $departmentMstHist = new $this->model;
+        $data = [];
+        $data['id'] = $payload['id'];
+        $data['department_mst_id'] = $payload['department_mst_id'];
+        $data['code'] = $payload['code'];
+        $data['name'] = $payload['name'];
+        $data['status'] = $payload['status'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
 
-        if (isset($payload['id'])) {
-            $departmentMstHist->id = $payload['id'];
-        }
-
-        if (isset($payload['department_mst_id'])) {
-            $departmentMstHist->department_mst_id = $payload['department_mst_id'];
-        }
-
-        if (isset($payload['code'])) {
-            $departmentMstHist->code = $payload['code'];
-        }
-
-        if (isset($payload['name'])) {
-            $departmentMstHist->name = $payload['name'];
-        }
-
-        if (isset($payload['status'])) {
-            $departmentMstHist->status = $payload['status'];
-        }
-
-        if (isset($payload['action'])) {
-            $departmentMstHist->action = $payload['action'];
-        }
-
-        if (isset($payload['author_id'])) {
-            $departmentMstHist->author_id = $payload['author_id'];
-        }
-
-        $departmentMstHist->created_at = now()->format('Y-m-d H:i:s');
-
-        $departmentMstHist->save();
-
-        return $departmentMstHist;
+        return $this->model->id;
     }
 
     /**
      * Update department history record
      *
      * @param array $payload
-     * @param int $id
-     * @return DepartmentMstHist|null
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $departmentMstHist = $this->model->find($id);
+        $data = $this->model->findById($payload['id']);
+        $data['id'] = $payload['id'];
+        $data['department_mst_id'] = $payload['department_mst_id'];
+        $data['code'] = $payload['code'];
+        $data['name'] = $payload['name'];
+        $data['status'] = $payload['status'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
 
-        if (!$departmentMstHist) {
-            return null;
-        }
-
-        if (isset($payload['department_mst_id'])) {
-            $departmentMstHist->department_mst_id = $payload['department_mst_id'];
-        }
-
-        if (isset($payload['code'])) {
-            $departmentMstHist->code = $payload['code'];
-        }
-
-        if (isset($payload['name'])) {
-            $departmentMstHist->name = $payload['name'];
-        }
-
-        if (isset($payload['status'])) {
-            $departmentMstHist->status = $payload['status'];
-        }
-
-        if (isset($payload['action'])) {
-            $departmentMstHist->action = $payload['action'];
-        }
-
-        if (isset($payload['author_id'])) {
-            $departmentMstHist->author_id = $payload['author_id'];
-        }
-
-        $departmentMstHist->save();
-
-        return $departmentMstHist;
+        return $data->id;
     }
 
     /**
      * Delete department history record
      *
-     * @param int $id
-     * @return bool
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $ids): void
     {
-        $departmentMstHist = $this->model->find($id);
-
-        if (!$departmentMstHist) {
-            return false;
-        }
-
-        return $departmentMstHist->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\History\Master;
 
+use Illuminate\Support\Collection;
+
 interface LanguageMstHistInterface
 {
     /**
-     * Get list of language history
+     * Get language master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getList(array $payload);
+    public function list(array $payload): Collection;
 
     /**
-     * Get language history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
-
-    /**
-     * Create language history
+     * Create new language master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload);
+    public function executeStore(array $payload): int;
 
     /**
-     * Update language history
+     * Update language master history
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id);
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete language history
+     * Delete language master history
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id);
+    public function executeDelete(array $ids): void;
 }

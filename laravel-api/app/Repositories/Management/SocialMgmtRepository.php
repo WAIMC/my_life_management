@@ -2,38 +2,34 @@
 
 namespace App\Repositories\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Management\SocialMgmtInterface;
 use App\Models\Management\SocialMgmt;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class SocialMgmtRepository implements SocialMgmtInterface
+class SocialMgmtRepository extends BaseRepository implements SocialMgmtInterface
 {
-    /**
-     * @var SocialMgmt
-     */
-    protected $model;
-
-    /**
-     * SocialMgmtRepository constructor.
-     *
-     * @param SocialMgmt $model
-     */
     public function __construct(SocialMgmt $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get all socials with pagination
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getList(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters if provided
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
         }
@@ -46,107 +42,71 @@ class SocialMgmtRepository implements SocialMgmtInterface
             $query->where('is_display', $payload['is_display']);
         }
 
-        // Apply sorting
-        $sortBy = $payload['sort_by'] ?? 'rank_order';
-        $sortDirection = $payload['sort_direction'] ?? 'asc';
-        $query->orderBy($sortBy, $sortDirection);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
 
-        // Paginate results
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
-    }
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
 
-    /**
-     * Get social by ID
-     *
-     * @param int $id
-     * @return object|null
-     */
-    public function getById(int $id)
-    {
-        return $this->model->find($id);
+        $query->orderBy('id', 'desc');
+
+        return $query->get();
     }
 
     /**
      * Create a new social
      *
      * @param array $payload
-     * @return object
+     * @return int
      */
-    public function create(array $payload)
+    public function executeStore(array $payload): int
     {
-        return $this->model->create([
-            'name' => $payload['name'],
-            'slug' => $payload['slug'],
-            'link' => $payload['link'],
-            'image' => $payload['image'],
-            'status' => $payload['status'],
-            'is_display' => $payload['is_display'],
-            'rank_order' => $payload['rank_order'],
-        ]);
+        $data = [];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['link'] = $payload['link'];
+        $data['image'] = $payload['image'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update an existing social
      *
      * @param array $payload
-     * @param int $id
-     * @return object|bool
+     * @return int
      */
-    public function update(array $payload, int $id)
+    public function executeUpdate(array $payload): int
     {
-        $social = $this->model->find($id);
-        
-        if (!$social) {
-            return false;
-        }
+        $data = $this->model->findById($payload['id']);
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['link'] = $payload['link'];
+        $data['image'] = $payload['image'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data->save();
 
-        if (isset($payload['name'])) {
-            $social->name = $payload['name'];
-        }
-
-        if (isset($payload['slug'])) {
-            $social->slug = $payload['slug'];
-        }
-
-        if (isset($payload['link'])) {
-            $social->link = $payload['link'];
-        }
-
-        if (isset($payload['image'])) {
-            $social->image = $payload['image'];
-        }
-
-        if (isset($payload['status'])) {
-            $social->status = $payload['status'];
-        }
-
-        if (isset($payload['is_display'])) {
-            $social->is_display = $payload['is_display'];
-        }
-
-        if (isset($payload['rank_order'])) {
-            $social->rank_order = $payload['rank_order'];
-        }
-
-        $social->save();
-        return $social;
+        return $data->id;
     }
 
     /**
      * Delete a social
      *
-     * @param int $id
-     * @return bool
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id)
+    public function executeDelete(array $ids): void
     {
-        $social = $this->model->find($id);
-        
-        if (!$social) {
-            return false;
-        }
-
-        return $social->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

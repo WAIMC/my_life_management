@@ -2,39 +2,34 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\RoleMstHistInterface;
 use App\Models\History\Master\RoleMstHist;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
 use Illuminate\Support\Collection;
 
-class RoleMstHistRepository implements RoleMstHistInterface
+class RoleMstHistRepository extends BaseRepository implements RoleMstHistInterface
 {
-    /**
-     * @var RoleMstHist
-     */
-    protected RoleMstHist $model;
-
-    /**
-     * RoleMstHistRepository constructor.
-     *
-     * @param RoleMstHist $model
-     */
     public function __construct(RoleMstHist $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get all role histories with pagination
      *
-     * @param array $params
-     * @return LengthAwarePaginator
+     * @param array $payload
+     * @return Collection
      */
-    public function getAll(array $params = []): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply role filter if provided
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($params['role_mst_id']) && !empty($params['role_mst_id'])) {
             $query->where('role_mst_id', $params['role_mst_id']);
         }
@@ -49,84 +44,69 @@ class RoleMstHistRepository implements RoleMstHistInterface
             $query->where('action', $params['action']);
         }
 
-        // Apply date range filter if provided
-        if (isset($params['date_from']) && !empty($params['date_from'])) {
-            $query->whereDate('created_at', '>=', $params['date_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($params['date_to']) && !empty($params['date_to'])) {
-            $query->whereDate('created_at', '<=', $params['date_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Apply sorting
-        $sortField = $params['sort_by'] ?? 'created_at';
-        $sortDirection = $params['sort_direction'] ?? 'desc';
-        $query->orderBy($sortField, $sortDirection);
+        $query->orderBy('id', 'desc');
 
-        // Get paginated results
-        $perPage = $params['per_page'] ?? 15;
-
-        return $query->with(['role', 'author'])->paginate($perPage);
-    }
-
-    /**
-     * Get role history by ID
-     *
-     * @param int $id
-     * @return object|null
-     */
-    public function findById(int $id): ?object
-    {
-        return $this->model->with(['role', 'author'])->find($id);
+        return $query->get();
     }
 
     /**
      * Create new role history
      *
-     * @param array $data
-     * @return object
+     * @param array $payload
+     * @return int
      */
-    public function create(array $data): object
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($data);
+        $data = [];
+        $data['role_mst_id'] = $payload['role_mst_id'];
+        $data['name'] = $payload['name'];
+        $data['permission'] = $payload['permission'];
+        $data['is_active'] = $payload['is_active'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
-     * Get history by role ID
+     * Update role history record
      *
-     * @param int $roleId
-     * @return Collection
+     * @param array $payload
+     * @return int
      */
-    public function getByRoleId(int $roleId): Collection
+    public function executeUpdate(array $payload): int
     {
-        return $this->model->where('role_mst_id', $roleId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $data = $this->model->findById($payload['id']);
+        $data['role_mst_id'] = $payload['role_mst_id'];
+        $data['name'] = $payload['name'];
+        $data['permission'] = $payload['permission'];
+        $data['is_active'] = $payload['is_active'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
+
+        return $data->id;
     }
 
     /**
-     * Get history by author ID
+     * Delete role history record
      *
-     * @param int $authorId
-     * @return Collection
+     * @param array $ids
+     * @return void
      */
-    public function getByAuthorId(int $authorId): Collection
+    public function executeDelete(array $ids): void
     {
-        return $this->model->where('author_id', $authorId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
-
-    /**
-     * Get history by action type
-     *
-     * @param int $action
-     * @return Collection
-     */
-    public function getByAction(int $action): Collection
-    {
-        return $this->model->where('action', $action)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

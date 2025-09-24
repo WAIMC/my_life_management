@@ -2,37 +2,33 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\FeatureMstHistInterface;
-use App\Models\History\Master\FeatureMstHist;
+use App\Models\History\Master\AdminMstHist;
+use App\Repositories\BaseRepository;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
-class FeatureMstHistRepository implements FeatureMstHistInterface
+class FeatureMstHistRepository extends BaseRepository implements FeatureMstHistInterface
 {
-    /**
-     * @var FeatureMstHist
-     */
-    protected $model;
-
-    /**
-     * FeatureMstHistRepository constructor.
-     *
-     * @param FeatureMstHist $model
-     */
-    public function __construct(FeatureMstHist $model)
+    public function __construct(AdminMstHist $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get all feature history records
      *
      * @param array $payload
-     * @return Collection|LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
+
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
 
         if (isset($payload['feature_mst_id'])) {
             $query->where('feature_mst_id', $payload['feature_mst_id']);
@@ -62,62 +58,17 @@ class FeatureMstHistRepository implements FeatureMstHistInterface
             $query->where('author_id', $payload['author_id']);
         }
 
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Order by
-        $orderBy = isset($payload['order_by']) ? $payload['order_by'] : 'created_at';
-        $order = isset($payload['order']) ? $payload['order'] : 'desc';
-        $query->orderBy($orderBy, $order);
-
-        // Pagination
-        if (isset($payload['per_page'])) {
-            return $query->paginate($payload['per_page']);
-        }
-
-        return $query->get();
-    }
-
-    /**
-     * Get feature history record by ID
-     *
-     * @param int $id
-     * @return FeatureMstHist|null
-     */
-    public function getById(int $id)
-    {
-        return $this->model->find($id);
-    }
-
-    /**
-     * Get history records by feature ID
-     *
-     * @param int $featureMstId
-     * @param array $payload
-     * @return Collection|LengthAwarePaginator
-     */
-    public function getByFeatureId(int $featureMstId, array $payload)
-    {
-        $query = $this->model->where('feature_mst_id', $featureMstId);
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        // Order by
-        $orderBy = isset($payload['order_by']) ? $payload['order_by'] : 'created_at';
-        $order = isset($payload['order']) ? $payload['order'] : 'desc';
-        $query->orderBy($orderBy, $order);
-
-        // Pagination
-        if (isset($payload['per_page'])) {
-            return $query->paginate($payload['per_page']);
-        }
+        $query->orderBy('id', 'desc');
 
         return $query->get();
     }
@@ -126,113 +77,52 @@ class FeatureMstHistRepository implements FeatureMstHistInterface
      * Create new feature history record
      *
      * @param array $payload
-     * @return FeatureMstHist
+     * @return int
      */
-    public function create(array $payload)
+    public function executeStore(array $payload): int
     {
-        $featureMstHist = new $this->model;
+        $data = [];
+        $data['feature_mst_id'] = $payload['feature_mst_id'];
+        $data['name'] = $payload['name'];
+        $data['group_name'] = $payload['group_name'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
 
-        if (isset($payload['id'])) {
-            $featureMstHist->id = $payload['id'];
-        }
-        
-        if (isset($payload['feature_mst_id'])) {
-            $featureMstHist->feature_mst_id = $payload['feature_mst_id'];
-        }
-        
-        if (isset($payload['name'])) {
-            $featureMstHist->name = $payload['name'];
-        }
-        
-        if (isset($payload['group_name'])) {
-            $featureMstHist->group_name = $payload['group_name'];
-        }
-        
-        if (isset($payload['description'])) {
-            $featureMstHist->description = $payload['description'];
-        }
-        
-        if (isset($payload['status'])) {
-            $featureMstHist->status = $payload['status'];
-        }
-        
-        if (isset($payload['action'])) {
-            $featureMstHist->action = $payload['action'];
-        }
-        
-        if (isset($payload['author_id'])) {
-            $featureMstHist->author_id = $payload['author_id'];
-        }
-        
-        $featureMstHist->created_at = now()->format('Y-m-d H:i:s');
-        
-        $featureMstHist->save();
-        
-        return $featureMstHist;
+        return $this->model->id;
     }
 
     /**
      * Update feature history record
      *
      * @param array $payload
-     * @param int $id
-     * @return FeatureMstHist|null
+     * @return int
      */
-    public function update(array $payload, int $id)
+    public function executeUpdate(array $payload): int
     {
-        $featureMstHist = $this->model->find($id);
-        
-        if (!$featureMstHist) {
-            return null;
-        }
-        
-        if (isset($payload['feature_mst_id'])) {
-            $featureMstHist->feature_mst_id = $payload['feature_mst_id'];
-        }
-        
-        if (isset($payload['name'])) {
-            $featureMstHist->name = $payload['name'];
-        }
-        
-        if (isset($payload['group_name'])) {
-            $featureMstHist->group_name = $payload['group_name'];
-        }
-        
-        if (isset($payload['description'])) {
-            $featureMstHist->description = $payload['description'];
-        }
-        
-        if (isset($payload['status'])) {
-            $featureMstHist->status = $payload['status'];
-        }
-        
-        if (isset($payload['action'])) {
-            $featureMstHist->action = $payload['action'];
-        }
-        
-        if (isset($payload['author_id'])) {
-            $featureMstHist->author_id = $payload['author_id'];
-        }
-        
-        $featureMstHist->save();
-        
-        return $featureMstHist;
+        $data = $this->model->findById($payload['id']);
+        $data['feature_mst_id'] = $payload['feature_mst_id'];
+        $data['name'] = $payload['name'];
+        $data['group_name'] = $payload['group_name'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
+
+        return $data->id;
     }
 
     /**
      * Delete feature history record
      *
-     * @param int $id
-     * @return bool
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id)
+    public function executeDelete(array $ids): void
     {
-        $featureMstHist = $this->model->find($id);
-        
-        if (!$featureMstHist) {
-            return false;
-        }
-        
-        return $featureMstHist->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

@@ -2,33 +2,34 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\ApiMstHistInterface;
 use App\Models\History\Master\ApiMstHist;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class ApiMstHistRepository implements ApiMstHistInterface
+class ApiMstHistRepository extends BaseRepository implements ApiMstHistInterface
 {
-    protected ApiMstHist $model;
-
-    /**
-     * ApiMstHistRepository constructor
-     */
-    public function __construct()
+    public function __construct(ApiMstHist $model)
     {
-        $this->model = new ApiMstHist();
+        parent::__construct($model);
     }
 
     /**
-     * Get all API history records
+     * Get all api history records
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters from payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['api_mst_id'])) {
             $query->where('api_mst_id', $payload['api_mst_id']);
         }
@@ -45,46 +46,74 @@ class ApiMstHistRepository implements ApiMstHistInterface
             $query->where('feature_id', $payload['feature_id']);
         }
 
-        // Apply sorting
-        $sortBy = $payload['sort_by'] ?? 'created_at';
-        $sortOrder = $payload['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
 
-        // Apply pagination
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
+
+        $query->orderBy('id', 'desc');
+
+        return $query->get();
     }
 
-    /**
-     * Get API history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed
-    {
-        return $this->model->find($id);
-    }
 
     /**
-     * Get API history by API master ID
-     *
-     * @param int $apiMstId
-     * @return mixed
-     */
-    public function findByApiMstId(int $apiMstId): mixed
-    {
-        return $this->model->where('api_mst_id', $apiMstId)->orderBy('created_at', 'desc')->get();
-    }
-
-    /**
-     * Create new API history record
+     * Create new api history record
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['api_mst_id'] = $payload['api_mst_id'];
+        $data['type'] = $payload['type'];
+        $data['name'] = $payload['name'];
+        $data['path'] = $payload['path'];
+        $data['is_active'] = $payload['is_active'];
+        $data['feature_id'] = $payload['feature_id'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
+    }
+
+    /**
+     * Update api history record
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function executeUpdate(array $payload): int
+    {
+        $data = $this->model->findById($payload['id']);
+        $data['api_mst_id'] = $payload['api_mst_id'];
+        $data['type'] = $payload['type'];
+        $data['name'] = $payload['name'];
+        $data['path'] = $payload['path'];
+        $data['is_active'] = $payload['is_active'];
+        $data['feature_id'] = $payload['feature_id'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
+
+        return $data->id;
+    }
+
+    /**
+     * Delete api history record
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void
+    {
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

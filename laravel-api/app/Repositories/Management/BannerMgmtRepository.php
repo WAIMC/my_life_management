@@ -2,34 +2,35 @@
 
 namespace App\Repositories\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Models\Management\BannerMgmt;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class BannerMgmtRepository implements BannerMgmtInterface
+class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
 {
-    protected BannerMgmt $model;
-
-    /**
-     * BannerMgmtRepository constructor
-     */
-    public function __construct()
+    public function __construct(BannerMgmt $model)
     {
-        $this->model = new BannerMgmt();
+        parent::__construct($model);
     }
 
     /**
      * Get all banners with pagination and filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters from payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['title'])) {
             $query->where('title', 'like', '%' . $payload['title'] . '%');
         }
@@ -42,139 +43,71 @@ class BannerMgmtRepository implements BannerMgmtInterface
             $query->where('position', $payload['position']);
         }
 
-        // Apply sorting
-        $sortBy = $payload['sort_by'] ?? 'id';
-        $sortOrder = $payload['sort_order'] ?? 'asc';
-        $query->orderBy($sortBy, $sortOrder);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
 
-        // Apply pagination
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
-    }
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
 
-    /**
-     * Find banner by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed
-    {
-        return $this->model->find($id);
+        $query->orderBy('id', 'desc');
+
+        return $query->get();
     }
 
     /**
      * Create new banner
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        $banner = new $this->model;
+        $data = [];
+        $data['title'] = $payload['title'];
+        $data['slug'] = $payload['slug'] ?? Str::slug($payload['title']);
+        $data['description'] = $payload['description'] ?? '';
+        $data['link'] = $payload['link'] ?? '';
+        $data['image'] = $payload['image'] ?? '';
+        $data['position'] = $payload['position'] ?? '';
+        $data['status'] = $payload['status'] ?? '';
+        $this->model->create($data);
 
-        if (isset($payload['title'])) {
-            $banner->title = $payload['title'];
-        }
-
-        if (isset($payload['slug'])) {
-            $banner->slug = $payload['slug'];
-        } else if (isset($payload['title'])) {
-            $banner->slug = Str::slug($payload['title']);
-        }
-
-        if (isset($payload['description'])) {
-            $banner->description = $payload['description'];
-        }
-
-        if (isset($payload['link'])) {
-            $banner->link = $payload['link'];
-        }
-
-        if (isset($payload['image'])) {
-            $banner->image = $payload['image'];
-        }
-
-        if (isset($payload['position'])) {
-            $banner->position = $payload['position'];
-        }
-
-        if (isset($payload['status'])) {
-            $banner->status = $payload['status'];
-        }
-
-        $banner->created_at = now()->format('Y-m-d H:i:s');
-        $banner->updated_at = now()->format('Y-m-d H:i:s');
-
-        $banner->save();
-        return $banner;
+        return $this->model->id;
     }
 
     /**
      * Update banner by ID
      *
-     * @param int $id
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function update(int $id, array $payload): mixed
+    public function executeUpdate(array $payload): int
     {
-        $banner = $this->model->find($id);
+        $data = $this->model->findById($payload['id']);
+        $data['title'] = $payload['title'];
+        $data['slug'] = $payload['slug'] ?? Str::slug($payload['title']);
+        $data['description'] = $payload['description'];
+        $data['link'] = $payload['link'];
+        $data['image'] = $payload['image'];
+        $data['position'] = $payload['position'];
+        $data['status'] = $payload['status'];
+        $data->save();
 
-        if (!$banner) {
-            return null;
-        }
-
-        if (isset($payload['title'])) {
-            $banner->title = $payload['title'];
-        }
-
-        if (isset($payload['slug'])) {
-            $banner->slug = $payload['slug'];
-        } else if (isset($payload['title'])) {
-            $banner->slug = Str::slug($payload['title']);
-        }
-
-        if (isset($payload['description'])) {
-            $banner->description = $payload['description'];
-        }
-
-        if (isset($payload['link'])) {
-            $banner->link = $payload['link'];
-        }
-
-        if (isset($payload['image'])) {
-            $banner->image = $payload['image'];
-        }
-
-        if (isset($payload['position'])) {
-            $banner->position = $payload['position'];
-        }
-
-        if (isset($payload['status'])) {
-            $banner->status = $payload['status'];
-        }
-
-        $banner->updated_at = now()->format('Y-m-d H:i:s');
-
-        $banner->save();
-        return $banner;
+        return $data->id;
     }
 
     /**
      * Delete banner by ID
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $ids): void
     {
-        $banner = $this->model->find($id);
-
-        if (!$banner) {
-            return false;
-        }
-
-        return $banner->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

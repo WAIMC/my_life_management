@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\History\Master;
 
+use Illuminate\Support\Collection;
+
 interface AdminMstHistInterface
 {
     /**
-     * Get all admin history records
+     * Get admin master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Get admin history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed;
-
-    /**
-     * Create new admin history record
+     * Create new admin master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update admin history record
+     * Update admin master history
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete admin history record
+     * Delete admin master history
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $ids): void;
 }

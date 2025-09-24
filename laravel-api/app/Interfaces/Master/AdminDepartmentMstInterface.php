@@ -18,7 +18,7 @@ interface AdminDepartmentMstInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store api role
+     * Store admin department
      *
      * @param array $payload
      * @return void
@@ -34,7 +34,7 @@ interface AdminDepartmentMstInterface extends BaseInterface
     public function executeDelete(array $payload): void;
 
     /**
-     * Get admin departments id
+     * Get admin department id
      *
      * @param array $adminIds
      * @return Collection

@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\Management;
 
+use Illuminate\Support\Collection;
+
 interface BannerMgmtInterface
 {
     /**
-     * Get all banners with pagination and filtering
+     * Get banner list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
-
-    /**
-     * Find banner by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed;
+    public function list(array $payload): Collection;
 
     /**
      * Create new banner
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update banner by ID
+     * Update banner
      *
-     * @param int $id
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function update(int $id, array $payload): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete banner by ID
+     * Delete banner
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $ids): void;
 }

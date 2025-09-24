@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\History\Master;
 
+use Illuminate\Support\Collection;
+
 interface PolicyDepartmentMstHistInterface
 {
     /**
-     * Get all history records.
+     * Get policy department master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Get history record by ID.
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed;
-
-    /**
-     * Create new history record.
+     * Create new policy department master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update history record.
+     * Update policy department master history
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete history record.
+     * Delete policy department master history
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $ids): void;
 }

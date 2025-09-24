@@ -2,35 +2,30 @@
 
 namespace App\Repositories\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
 use App\Models\Management\CategorySkillMgmt;
-use App\Models\Management\CategoryMgmt;
-use App\Models\Management\SkillMgmt;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class CategorySkillMgmtRepository implements CategorySkillMgmtInterface
+class CategorySkillMgmtRepository extends BaseRepository implements CategorySkillMgmtInterface
 {
-    protected CategorySkillMgmt $model;
-
-    /**
-     * CategorySkillMgmtRepository constructor
-     */
-    public function __construct()
+    public function __construct(CategorySkillMgmt $model)
     {
-        $this->model = new CategorySkillMgmt();
+        parent::__construct($model);
     }
 
     /**
      * Get all category-skill relationships
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters
         if (isset($payload['category_id'])) {
             $query->where('category_id', $payload['category_id']);
         }
@@ -39,135 +34,62 @@ class CategorySkillMgmtRepository implements CategorySkillMgmtInterface
             $query->where('skill_id', $payload['skill_id']);
         }
 
-        // Apply pagination
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
-    }
-
-    /**
-     * Get skills by category ID
-     *
-     * @param int $categoryId
-     * @return mixed
-     */
-    public function getSkillsByCategoryId(int $categoryId): mixed
-    {
-        $category = CategoryMgmt::find($categoryId);
-
-        if (!$category) {
-            return collect();
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('tad.updated_at', '>=', $fromDate);
         }
 
-        $skillIds = $this->model->where('category_id', $categoryId)
-            ->pluck('skill_id')
-            ->toArray();
-
-        return SkillMgmt::whereIn('id', $skillIds)->get();
-    }
-
-    /**
-     * Get categories by skill ID
-     *
-     * @param int $skillId
-     * @return mixed
-     */
-    public function getCategoriesBySkillId(int $skillId): mixed
-    {
-        $skill = SkillMgmt::find($skillId);
-
-        if (!$skill) {
-            return collect();
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('tad.updated_at', '<=', $toDate);
         }
 
-        $categoryIds = $this->model->where('skill_id', $skillId)
-            ->pluck('category_id')
-            ->toArray();
+        $query->orderBy('category_id')->orderBy('skill_id');
 
-        return CategoryMgmt::whereIn('id', $categoryIds)->get();
+        return $query->get();
     }
 
     /**
-     * Attach a skill to a category
+     * Store category skill
      *
-     * @param int $categoryId
-     * @param int $skillId
-     * @return mixed
+     * @param array $payload
+     * @return void
      */
-    public function attachSkill(int $categoryId, int $skillId): mixed
+    public function executeStore(array $payload): void
     {
-        // Check if already exists
-        if ($this->exists($categoryId, $skillId)) {
-            return null;
-        }
-
-        $relation = new $this->model;
-        $relation->category_id = $categoryId;
-        $relation->skill_id = $skillId;
-        $relation->created_at = now()->format('Y-m-d H:i:s');
-        $relation->updated_at = now()->format('Y-m-d H:i:s');
-        $relation->save();
-
-        return $relation;
+        // Handle bulk insert
+        $this->model->create($payload);
     }
 
     /**
-     * Detach a skill from a category
+     * Delete category skill
      *
-     * @param int $categoryId
-     * @param int $skillId
-     * @return mixed
+     * @param array $payload
+     * @return void
      */
-    public function detachSkill(int $categoryId, int $skillId): mixed
+    public function executeDelete(array $payload): void
     {
-        return $this->model->where('category_id', $categoryId)
-            ->where('skill_id', $skillId)
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['category_id'] . ', ' . (int)$item['skill_id'] . ')';
+        })->all();
+
+        // Handle bulk delete
+        $this->model
+            ->whereRaw("(category_id, skill_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
 
     /**
-     * Sync skills for a category
+     * Get admin departments id
      *
-     * @param int $categoryId
-     * @param array $skillIds
-     * @return mixed
+     * @param array $categorySkillIds
+     * @return Collection
      */
-    public function syncSkills(int $categoryId, array $skillIds): mixed
+    public function getCategorySkillId(array $categorySkillIds): Collection
     {
-        // Get current skill IDs for this category
-        $currentSkillIds = $this->model->where('category_id', $categoryId)
-            ->pluck('skill_id')
-            ->toArray();
-
-        // Determine which skills to add and which to remove
-        $skillsToAdd = array_diff($skillIds, $currentSkillIds);
-        $skillsToRemove = array_diff($currentSkillIds, $skillIds);
-
-        // Remove skills not in the new list
-        if (!empty($skillsToRemove)) {
-            $this->model->where('category_id', $categoryId)
-                ->whereIn('skill_id', $skillsToRemove)
-                ->delete();
-        }
-
-        // Add new skills
-        foreach ($skillsToAdd as $skillId) {
-            $this->attachSkill($categoryId, $skillId);
-        }
-
-        return $this->getSkillsByCategoryId($categoryId);
-    }
-
-    /**
-     * Check if a relationship exists
-     *
-     * @param int $categoryId
-     * @param int $skillId
-     * @return bool
-     */
-    public function exists(int $categoryId, int $skillId): bool
-    {
-        return $this->model->where('category_id', $categoryId)
-            ->where('skill_id', $skillId)
-            ->exists();
+        return $this->model
+            ->whereRaw("(category_id, skill_id) IN (" . implode(", ", $categorySkillIds) . ")")
+            ->pluck('category_id', 'skill_id');
     }
 }

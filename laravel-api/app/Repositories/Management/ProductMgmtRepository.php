@@ -2,39 +2,34 @@
 
 namespace App\Repositories\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Management\ProductMgmtInterface;
 use App\Models\Management\ProductMgmt;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class ProductMgmtRepository implements ProductMgmtInterface
+class ProductMgmtRepository extends BaseRepository implements ProductMgmtInterface
 {
-    /**
-     * @var ProductMgmt
-     */
-    protected ProductMgmt $model;
-
-    /**
-     * ProductMgmtRepository constructor.
-     *
-     * @param ProductMgmt $product
-     */
-    public function __construct(ProductMgmt $product)
+    public function __construct(ProductMgmt $model)
     {
-        $this->model = $product;
+        parent::__construct($model);
     }
 
     /**
      * Get all products with optional filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters if provided
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['category_id'])) {
             $query->where('category_id', $payload['category_id']);
         }
@@ -47,80 +42,85 @@ class ProductMgmtRepository implements ProductMgmtInterface
             $query->where('is_display', $payload['is_display']);
         }
 
-        if (isset($payload['search'])) {
-            $search = $payload['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
+        if (isset($payload['name'])) {
+            $query->where('name', 'like', "%{$payload['name']}%");
         }
 
-        // Order by
-        $sortBy = $payload['sort_by'] ?? 'rank_order';
-        $sortOrder = $payload['sort_order'] ?? 'asc';
-        $query->orderBy($sortBy, $sortOrder);
+        if (isset($payload['code'])) {
+            $query->where('code', 'like', "%{$payload['code']}%");
+        }
 
-        // Paginate results
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
-    }
+        if (isset($payload['description'])) {
+            $query->where('description', 'like', "%{$payload['description']}%");
+        }
 
-    /**
-     * Get product by ID
-     *
-     * @param int $id
-     * @return mixed
-     * @throws ModelNotFoundException
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->with('category')->findOrFail($id);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
+
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
+
+        $query->orderBy('id', 'desc');
+
+        return $query->get();
     }
 
     /**
      * Create a new product
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['category_id'] = $payload['category_id'];
+        $data['code'] = $payload['code'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update an existing product
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
-     * @throws ModelNotFoundException
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $product = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['category_id'] = $payload['category_id'];
+        $data['code'] = $payload['code'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data->save();
 
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->model->getFillable())) {
-                $product->{$key} = $value;
-            }
-        }
-
-        $product->save();
-        return $product;
+        return $data->id;
     }
 
     /**
      * Delete a product
      *
-     * @param int $id
-     * @return bool
-     * @throws ModelNotFoundException
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): bool
+    public function executeDelete(array $ids): void
     {
-        $product = $this->model->findOrFail($id);
-        return $product->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

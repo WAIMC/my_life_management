@@ -71,7 +71,7 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
         $data['field_id'] = $payload['field_id'];
         $this->model->create($data);
 
-        return $data->id;
+        return $this->model->id;
     }
 
     /**

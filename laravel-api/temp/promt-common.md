@@ -12,9 +12,3 @@ Generate a COMPLETE Laravel CRUD API module based on this migration:
   action int4 NOT NULL,
   author_id int4 NOT NULL,
   created_at varchar NOT NULL
-
-REQUIREMENTS:
-1. Always generate the FULL set of files: Migration, Model, Controller, FormRequest, Resource, Routes, and Tests.
-2. Do not skip, shorten, or summarize. Even if request is similar to previous.
-3. Output must be complete code blocks, nothing omitted.
-4. No explanations, no comments outside the code.

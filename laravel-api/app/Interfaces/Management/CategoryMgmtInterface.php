@@ -2,63 +2,39 @@
 
 namespace App\Interfaces\Management;
 
+use Illuminate\Support\Collection;
+
 interface CategoryMgmtInterface
 {
     /**
-     * Get all categories with pagination and filtering
+     * Get category list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
-
-    /**
-     * Find category by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed;
+    public function list(array $payload): Collection;
 
     /**
      * Create new category
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update category by ID
-     *
-     * @param int $id
-     * @param array $payload
-     * @return mixed
-     */
-    public function update(int $id, array $payload): mixed;
-
-    /**
-     * Delete category by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function delete(int $id): mixed;
-
-    /**
-     * Get categories by parent ID
-     *
-     * @param int $parentId
-     * @param array $payload
-     * @return mixed
-     */
-    public function getByParentId(int $parentId, array $payload): mixed;
-
-    /**
-     * Get categories that have no parent (root categories)
+     * Update category
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function getRootCategories(array $payload): mixed;
+    public function executeUpdate(array $payload): int;
+
+    /**
+     * Delete category
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void;
 }

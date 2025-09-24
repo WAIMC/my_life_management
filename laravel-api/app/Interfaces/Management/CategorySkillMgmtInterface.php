@@ -2,65 +2,39 @@
 
 namespace App\Interfaces\Management;
 
+use Illuminate\Support\Collection;
+
 interface CategorySkillMgmtInterface
 {
     /**
-     * Get all category-skill relationships
+     * Get category skill list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Get skills by category ID
+     * Store category skill
      *
-     * @param int $categoryId
-     * @return mixed
+     * @param array $payload
+     * @return void
      */
-    public function getSkillsByCategoryId(int $categoryId): mixed;
+    public function executeStore(array $payload): void;
 
     /**
-     * Get categories by skill ID
+     * Delete category skill
      *
-     * @param int $skillId
-     * @return mixed
+     * @param array $payload
+     * @return void
      */
-    public function getCategoriesBySkillId(int $skillId): mixed;
+    public function executeDelete(array $payload): void;
 
     /**
-     * Attach a skill to a category
+     * Get category skill id
      *
-     * @param int $categoryId
-     * @param int $skillId
-     * @return mixed
+     * @param array $categorySkillIds
+     * @return Collection
      */
-    public function attachSkill(int $categoryId, int $skillId): mixed;
-
-    /**
-     * Detach a skill from a category
-     *
-     * @param int $categoryId
-     * @param int $skillId
-     * @return mixed
-     */
-    public function detachSkill(int $categoryId, int $skillId): mixed;
-
-    /**
-     * Sync skills for a category
-     *
-     * @param int $categoryId
-     * @param array $skillIds
-     * @return mixed
-     */
-    public function syncSkills(int $categoryId, array $skillIds): mixed;
-
-    /**
-     * Check if a relationship exists
-     *
-     * @param int $categoryId
-     * @param int $skillId
-     * @return bool
-     */
-    public function exists(int $categoryId, int $skillId): bool;
+    public function getCategorySkillId(array $categorySkillIds): Collection;
 }

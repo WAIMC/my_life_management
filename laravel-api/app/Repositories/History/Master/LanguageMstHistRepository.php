@@ -2,34 +2,27 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\LanguageMstHistInterface;
 use App\Models\History\Master\LanguageMstHist;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class LanguageMstHistRepository implements LanguageMstHistInterface
+class LanguageMstHistRepository extends BaseRepository implements LanguageMstHistInterface
 {
-    /**
-     * @var LanguageMstHist
-     */
-    protected $model;
-
-    /**
-     * LanguageMstHistRepository constructor.
-     *
-     * @param LanguageMstHist $model
-     */
     public function __construct(LanguageMstHist $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get list of language history
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getList(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
@@ -61,116 +54,69 @@ class LanguageMstHistRepository implements LanguageMstHistInterface
             $query->where('author_id', $payload['author_id']);
         }
 
-        if (isset($payload['created_at'])) {
-            $query->whereDate('created_at', $payload['created_at']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['sort_by']) && isset($payload['sort_direction'])) {
-            $query->orderBy($payload['sort_by'], $payload['sort_direction']);
-        } else {
-            $query->orderBy('id', 'desc');
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $perPage = $payload['per_page'] ?? 10;
-        
-        return $query->paginate($perPage);
-    }
+        $query->orderBy('id', 'desc');
 
-    /**
-     * Get language history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id)
-    {
-        return $this->model->findOrFail($id);
+        return $query->get();
     }
 
     /**
      * Create language history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload)
+    public function executeStore(array $payload): int
     {
-        $languageHist = new $this->model;
-        
-        $languageHist->id = $payload['id'] ?? $this->getNextId();
-        $languageHist->language_mst_id = $payload['language_mst_id'];
-        $languageHist->abbreviation = $payload['abbreviation'] ?? null;
-        $languageHist->name = $payload['name'] ?? null;
-        $languageHist->is_active = $payload['is_active'] ?? false;
-        $languageHist->action = $payload['action'];
-        $languageHist->author_id = $payload['author_id'];
-        $languageHist->created_at = now();
-        
-        $languageHist->save();
-        
-        return $languageHist;
+        $data = [];
+        $data['language_mst_id'] = $payload['language_mst_id'];
+        $data['abbreviation'] = $payload['abbreviation'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? false;
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update language history
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
-     */
-    public function update(array $payload, int $id)
-    {
-        $languageHist = $this->model->findOrFail($id);
-        
-        if (isset($payload['language_mst_id'])) {
-            $languageHist->language_mst_id = $payload['language_mst_id'];
-        }
-        
-        if (isset($payload['abbreviation'])) {
-            $languageHist->abbreviation = $payload['abbreviation'];
-        }
-        
-        if (isset($payload['name'])) {
-            $languageHist->name = $payload['name'];
-        }
-        
-        if (isset($payload['is_active'])) {
-            $languageHist->is_active = $payload['is_active'];
-        }
-        
-        if (isset($payload['action'])) {
-            $languageHist->action = $payload['action'];
-        }
-        
-        if (isset($payload['author_id'])) {
-            $languageHist->author_id = $payload['author_id'];
-        }
-        
-        $languageHist->save();
-        
-        return $languageHist;
-    }
-
-    /**
-     * Delete language history
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function delete(int $id)
-    {
-        $languageHist = $this->model->findOrFail($id);
-        return $languageHist->delete();
-    }
-
-    /**
-     * Get next ID for the model
-     *
      * @return int
      */
-    private function getNextId()
+    public function executeUpdate(array $payload): int
     {
-        $statement = DB::select("SELECT nextval('language_mst_hist_seq')");
-        return $statement[0]->nextval;
+        $data = $this->model->findById($payload['id']);
+        $data['language_mst_id'] = $payload['language_mst_id'];
+        $data['abbreviation'] = $payload['abbreviation'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? false;
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
+
+        return $data->id;
+    }
+
+    /**
+     * Delete language history record
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void
+    {
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

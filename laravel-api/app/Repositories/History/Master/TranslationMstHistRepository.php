@@ -2,34 +2,27 @@
 
 namespace App\Repositories\History\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Models\History\Master\TranslationMstHist;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class TranslationMstHistRepository implements TranslationMstHistInterface
+class TranslationMstHistRepository extends BaseRepository implements TranslationMstHistInterface
 {
-    /**
-     * @var TranslationMstHist
-     */
-    protected $model;
-
-    /**
-     * TranslationMstHistRepository constructor.
-     *
-     * @param TranslationMstHist $model
-     */
     public function __construct(TranslationMstHist $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get list of translation history
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getList(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
@@ -61,73 +54,69 @@ class TranslationMstHistRepository implements TranslationMstHistInterface
             $query->where('author_id', $payload['author_id']);
         }
 
-        if (isset($payload['created_at'])) {
-            $query->whereDate('created_at', $payload['created_at']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['sort_by']) && isset($payload['sort_direction'])) {
-            $query->orderBy($payload['sort_by'], $payload['sort_direction']);
-        } else {
-            $query->orderBy('id', 'desc');
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $perPage = $payload['per_page'] ?? 10;
-        
-        return $query->paginate($perPage);
-    }
+        $query->orderBy('id', 'desc');
 
-    /**
-     * Get translation history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id)
-    {
-        return $this->model->find($id);
+        return $query->get();
     }
 
     /**
      * Create translation history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload)
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['translation_mst_id'] = $payload['translation_mst_id'];
+        $data['language_id'] = $payload['language_id'];
+        $data['original_id'] = $payload['original_id'];
+        $data['value'] = $payload['value'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
-     * Get translation history by translation ID
+     * Update translation history record
      *
-     * @param int $translationId
-     * @return mixed
+     * @param array $payload
+     * @return int
      */
-    public function getByTranslationId(int $translationId)
+    public function executeUpdate(array $payload): int
     {
-        return $this->model->where('translation_mst_id', $translationId)->orderBy('id', 'desc')->get();
+        $data = $this->model->findById($payload['id']);
+        $data['translation_mst_id'] = $payload['translation_mst_id'];
+        $data['language_id'] = $payload['language_id'];
+        $data['original_id'] = $payload['original_id'];
+        $data['value'] = $payload['value'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
+
+        return $data->id;
     }
 
     /**
-     * Get translation history by language ID
+     * Delete translation history record
      *
-     * @param int $languageId
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function getByLanguageId(int $languageId)
+    public function executeDelete(array $ids): void
     {
-        return $this->model->where('language_id', $languageId)->orderBy('id', 'desc')->get();
-    }
-
-    /**
-     * Get translation history by original ID
-     *
-     * @param int $originalId
-     * @return mixed
-     */
-    public function getByOriginalId(int $originalId)
-    {
-        return $this->model->where('original_id', $originalId)->orderBy('id', 'desc')->get();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

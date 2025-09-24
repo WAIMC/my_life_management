@@ -2,37 +2,39 @@
 
 namespace App\Interfaces\History\Master;
 
+use Illuminate\Support\Collection;
+
 interface ApiMstHistInterface
 {
     /**
-     * Get all API history records
+     * Get api master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Get API history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed;
-
-    /**
-     * Get API history by API master ID
-     *
-     * @param int $apiMstId
-     * @return mixed
-     */
-    public function findByApiMstId(int $apiMstId): mixed;
-
-    /**
-     * Create new API history record
+     * Create new api master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
+
+    /**
+     * Update api master history
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function executeUpdate(array $payload): int;
+
+    /**
+     * Delete api master history
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void;
 }

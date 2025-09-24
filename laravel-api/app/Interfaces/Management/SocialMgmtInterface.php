@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\Management;
 
+use Illuminate\Support\Collection;
+
 interface SocialMgmtInterface
 {
     /**
-     * Get all socials with pagination
+     * Get social list
      *
      * @param array $payload
-     * @return object
+     * @return Collection
      */
-    public function getList(array $payload);
+    public function list(array $payload): Collection;
 
     /**
-     * Get social by ID
-     *
-     * @param int $id
-     * @return object|null
-     */
-    public function getById(int $id);
-
-    /**
-     * Create a new social
+     * Create new social
      *
      * @param array $payload
-     * @return object
+     * @return int
      */
-    public function create(array $payload);
+    public function executeStore(array $payload): int;
 
     /**
-     * Update an existing social
+     * Update social
      *
      * @param array $payload
-     * @param int $id
-     * @return object|bool
+     * @return int
      */
-    public function update(array $payload, int $id);
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete a social
+     * Delete social
      *
-     * @param int $id
-     * @return bool
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id);
+    public function executeDelete(array $ids): void;
 }

@@ -2,53 +2,39 @@
 
 namespace App\Interfaces\History\Master;
 
+use Illuminate\Support\Collection;
+
 interface TranslationMstHistInterface
 {
     /**
-     * Get list of translation history
+     * Get translation master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getList(array $payload);
+    public function list(array $payload): Collection;
 
     /**
-     * Get translation history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
-
-    /**
-     * Create translation history
+     * Create new translation master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload);
+    public function executeStore(array $payload): int;
 
     /**
-     * Get translation history by translation ID
+     * Update translation master history
      *
-     * @param int $translationId
-     * @return mixed
+     * @param array $payload
+     * @return int
      */
-    public function getByTranslationId(int $translationId);
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Get translation history by language ID
+     * Delete translation master history
      *
-     * @param int $languageId
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function getByLanguageId(int $languageId);
-
-    /**
-     * Get translation history by original ID
-     *
-     * @param int $originalId
-     * @return mixed
-     */
-    public function getByOriginalId(int $originalId);
+    public function executeDelete(array $ids): void;
 }

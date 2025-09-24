@@ -8,50 +8,34 @@ use Illuminate\Support\Collection;
 interface RoleMstHistInterface
 {
     /**
-     * Get all role histories with pagination
+     * Get role master history list
      *
-     * @param array $params
-     * @return LengthAwarePaginator
-     */
-    public function getAll(array $params = []): LengthAwarePaginator;
-
-    /**
-     * Get role history by ID
-     *
-     * @param int $id
-     * @return object|null
-     */
-    public function findById(int $id): ?object;
-
-    /**
-     * Create new role history
-     *
-     * @param array $data
-     * @return object
-     */
-    public function create(array $data): object;
-
-    /**
-     * Get history by role ID
-     *
-     * @param int $roleId
+     * @param array $payload
      * @return Collection
      */
-    public function getByRoleId(int $roleId): Collection;
+    public function list(array $payload): Collection;
 
     /**
-     * Get history by author ID
+     * Create new role master history
      *
-     * @param int $authorId
-     * @return Collection
+     * @param array $payload
+     * @return int
      */
-    public function getByAuthorId(int $authorId): Collection;
+    public function executeStore(array $payload): int;
 
     /**
-     * Get history by action type
+     * Update role master history
      *
-     * @param int $action
-     * @return Collection
+     * @param array $payload
+     * @return int
      */
-    public function getByAction(int $action): Collection;
+    public function executeUpdate(array $payload): int;
+
+    /**
+     * Delete role master history
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void;
 }

@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\Management;
 
+use Illuminate\Support\Collection;
+
 interface SkillMgmtInterface
 {
     /**
-     * Get all skills with pagination and filtering
+     * Get skill list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
-
-    /**
-     * Find skill by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed;
+    public function list(array $payload): Collection;
 
     /**
      * Create new skill
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update skill by ID
+     * Update skill
      *
-     * @param int $id
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function update(int $id, array $payload): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete skill by ID
+     * Delete skill
      *
-     * @param int $id
-     * @return bool
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): bool;
+    public function executeDelete(array $ids): void;
 }

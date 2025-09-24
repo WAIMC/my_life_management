@@ -2,78 +2,39 @@
 
 namespace App\Interfaces\Management;
 
+use Illuminate\Support\Collection;
+
 interface UserMgmtInterface
 {
     /**
-     * Get list of users
+     * Get User list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getList(array $payload);
+    public function list(array $payload): Collection;
 
     /**
-     * Get user by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
-
-    /**
-     * Get user by email
-     *
-     * @param string $email
-     * @return mixed
-     */
-    public function getByEmail(string $email);
-
-    /**
-     * Get user by username
-     *
-     * @param string $userName
-     * @return mixed
-     */
-    public function getByUserName(string $userName);
-
-    /**
-     * Create user
+     * Create new User
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload);
+    public function executeStore(array $payload): int;
 
     /**
-     * Update user
+     * Update User
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id);
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete user
+     * Delete User
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id);
-
-    /**
-     * Get users by department ID
-     *
-     * @param int $departmentId
-     * @return mixed
-     */
-    public function getByDepartmentId(int $departmentId);
-
-    /**
-     * Get users by role ID
-     *
-     * @param int $roleId
-     * @return mixed
-     */
-    public function getByRoleId(int $roleId);
+    public function executeDelete(array $ids): void;
 }
