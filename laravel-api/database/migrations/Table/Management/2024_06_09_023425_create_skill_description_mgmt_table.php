@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,14 +12,14 @@ return new class extends Migration
     {
         Schema::create('skill_description_mgmt', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('parent_id')->default(0)->comment('Parent skill description');
-            $table->string('title', 100)->comment('Title skill description');
-            $table->string('summary', 255)->comment('Summary skill description');
-            $table->text('article')->comment('Article skill description');
-            $table->unsignedTinyInteger('status')->default(0)->comment('SkillMgmt description status');
-            $table->boolean('is_display')->default(false)->comment('Display skill description');
-            $table->unsignedSmallInteger('rank_order')->default(0)->comment('SkillMgmt description order');
-            $table->unsignedInteger('skill_id')->comment('SkillMgmt id primary key');
+            $table->unsignedInteger('parent_id')->default(0)->comment('Parent skill');
+            $table->string('title', 100)->comment('Title skill');
+            $table->string('summary', 255)->comment('Summary skill');
+            $table->text('article')->comment('Article skill');
+            $table->unsignedTinyInteger('status')->default(0)->comment('Skill status');
+            $table->boolean('is_display')->default(false)->comment('Display skill');
+            $table->unsignedSmallInteger('rank_order')->default(0)->comment('Rank order');
+            $table->unsignedInteger('skill_id')->comment('Skill ID');
             $table->timestamps();
         });
     }

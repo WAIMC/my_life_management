@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('policy_department_mst', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('id')->comment('Policy department ID');
             $table->string('table_name', 20)->comment('Table name');
             $table->integer('row_id')->comment('Row id');
             $table->timestamps();

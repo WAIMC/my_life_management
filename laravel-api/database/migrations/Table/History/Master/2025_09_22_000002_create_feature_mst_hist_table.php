@@ -14,12 +14,12 @@ class CreateFeatureMstHistTable extends Migration
     public function up(): void
     {
         Schema::create('feature_mst_hist', function (Blueprint $table) {
-            $table->integer('id')->primary();
-            $table->integer('feature_mst_id');
-            $table->string('name', 50)->nullable();
-            $table->string('group_name', 50)->nullable();
-            $table->string('description', 100)->nullable();
-            $table->integer('status')->nullable();
+            $table->increments('id')->comment('Feature history id');
+            $table->integer('feature_mst_id')->comment('FeatureMst id');
+            $table->string('name', 50)->nullable()->comment('name');
+            $table->string('group_name', 50)->nullable()->comment('group name');
+            $table->string('description', 100)->nullable()->comment('description');
+            $table->integer('status')->nullable()->comment('status');
             $table->integer('action');
             $table->integer('author_id');
             $table->string('created_at');

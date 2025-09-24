@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -14,10 +13,10 @@ return new class extends Migration
         Schema::create('language_mst_hist', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('language_mst_id')->comment('Language id');
-            $table->string('abbreviation', 10)->nullable()->comment('Language abbreviation');
-            $table->string('name', 30)->nullable()->comment('Language name');
-            $table->boolean('is_active')->nullable()->comment('Language active');
-            $table->unsignedTinyInteger('action')->comment('Language action');
+            $table->string('abbreviation', 10)->nullable()->comment('abbreviation');
+            $table->string('name', 30)->nullable()->comment('name');
+            $table->boolean('is_active')->nullable()->comment('active');
+            $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
         });

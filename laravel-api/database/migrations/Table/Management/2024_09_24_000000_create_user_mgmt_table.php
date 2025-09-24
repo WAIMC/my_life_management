@@ -12,25 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_mgmt', function (Blueprint $table) {
-            $table->integer('id')->primary();
-            $table->integer('role_id');
-            $table->integer('department_id');
-            $table->string('email', 30);
-            $table->string('user_name', 50);
-            $table->string('password', 100);
-            $table->string('first_name', 20);
-            $table->string('last_name', 20);
-            $table->string('address', 100)->nullable();
-            $table->string('phone_number', 20)->nullable();
-            $table->string('birth')->nullable();
-            $table->integer('gender');
-            $table->integer('status');
-            $table->boolean('is_active');
-            $table->string('avatar', 30)->nullable();
-            $table->string('email_verified_at')->nullable();
-            $table->string('remember_token', 100)->nullable();
-            $table->string('created_at')->nullable();
-            $table->string('updated_at')->nullable();
+            $table->increments('id')->comment('User ID');
+            $table->string('email', 30)->comment('User email');
+            $table->string('user_name', 50)->comment('User name');
+            $table->string('password', 100)->comment('User password');
+            $table->string('first_name', 20)->comment('User first name');
+            $table->string('last_name', 20)->comment('User last name');
+            $table->string('address', 100)->nullable()->comment('User address');
+            $table->string('phone_number', 20)->nullable()->comment('User phone number');
+            $table->string('birth')->nullable()->comment('User birthday');
+            $table->integer('gender')->nullable()->comment('User gender');
+            $table->integer('status')->nullable()->comment('User status');
+            $table->boolean('is_active')->default(false)->comment('User active status');
+            $table->string('avatar', 30)->nullable()->comment('User avatar');
+            $table->string('email_verified_at')->nullable()->comment('User email verified at');
+            $table->string('remember_token', 100)->nullable()->comment('Remember token');
+            $table->string('created_at')->nullable()->comment('User created at');
+            $table->string('updated_at')->nullable()->comment('User updated status');
 
             //$table->foreign('role_id')->references('id')->on('role_mst');
             //$table->foreign('department_id')->references('id')->on('department_mst');

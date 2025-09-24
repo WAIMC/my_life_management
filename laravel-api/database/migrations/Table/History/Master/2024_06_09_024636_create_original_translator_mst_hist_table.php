@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,7 +16,7 @@ return new class extends Migration
             $table->string('table', 64)->nullable()->comment('Table name');
             $table->string('column', 64)->nullable()->comment('Column name');
             $table->unsignedInteger('field_id')->nullable()->comment('Field id');
-            $table->unsignedTinyInteger('action')->comment('Original translator action');
+            $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
 

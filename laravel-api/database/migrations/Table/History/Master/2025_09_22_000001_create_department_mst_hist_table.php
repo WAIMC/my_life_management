@@ -14,12 +14,12 @@ class CreateDepartmentMstHistTable extends Migration
     public function up(): void
     {
         Schema::create('department_mst_hist', function (Blueprint $table) {
-            $table->integer('id')->primary();
-            $table->integer('department_mst_id');
-            $table->string('code', 50)->nullable();
-            $table->string('name', 50)->nullable();
-            $table->integer('status')->nullable();
-            $table->integer('action');
+            $table->increments('id')->comment('Department history id');
+            $table->integer('department_mst_id')->comment('Department id');
+            $table->string('code', 50)->nullable()->comment('code');
+            $table->string('name', 50)->nullable()->comment('name');
+            $table->integer('status')->nullable()->comment('status');
+            $table->integer('action')->comment('Action');
             $table->integer('author_id');
             $table->string('created_at');
 
