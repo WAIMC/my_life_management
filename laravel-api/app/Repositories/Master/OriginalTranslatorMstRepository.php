@@ -2,40 +2,32 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use App\Models\Master\OriginalTranslatorMst;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
+class OriginalTranslatorMstRepository extends BaseRepository implements OriginalTranslatorMstInterface
 {
-    /**
-     * @var OriginalTranslatorMst
-     */
-    protected OriginalTranslatorMst $model;
-
-    /**
-     * OriginalTranslatorMstRepository constructor.
-     *
-     * @param OriginalTranslatorMst $model
-     */
     public function __construct(OriginalTranslatorMst $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get list of original translators
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getList(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
         if (isset($payload['id'])) {
-            $query->where('id', $payload['id']);
+            $query->whereIn('id', $payload['id']);
         }
 
         if (isset($payload['table'])) {
@@ -50,104 +42,63 @@ class OriginalTranslatorMstRepository implements OriginalTranslatorMstInterface
             $query->where('field_id', $payload['field_id']);
         }
 
-        if (isset($payload['created_at'])) {
-            $query->whereDate('created_at', $payload['created_at']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['updated_at'])) {
-            $query->whereDate('updated_at', $payload['updated_at']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        if (isset($payload['sort_by']) && isset($payload['sort_direction'])) {
-            $query->orderBy($payload['sort_by'], $payload['sort_direction']);
-        } else {
-            $query->orderBy('id', 'desc');
-        }
+        $query->orderBy('id', 'desc');
 
-        $perPage = $payload['per_page'] ?? 10;
-
-        return $query->paginate($perPage);
-    }
-
-    /**
-     * Get original translator by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->findOrFail($id);
+        return $query->get();
     }
 
     /**
      * Create original translator
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        $originalTranslator = new $this->model;
+        $data = [];
+        $data['table'] = $payload['table'];
+        $data['column'] = $payload['column'];
+        $data['field_id'] = $payload['field_id'];
+        $this->model->create($data);
 
-        $originalTranslator->id = $payload['id'] ?? $this->getNextId();
-        $originalTranslator->table = $payload['table'];
-        $originalTranslator->column = $payload['column'];
-        $originalTranslator->field_id = $payload['field_id'];
-
-        $originalTranslator->save();
-
-        return $originalTranslator;
+        return $data->id;
     }
 
     /**
      * Update original translator
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $originalTranslator = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['table'] = $payload['table'];
+        $data['column'] = $payload['column'];
+        $data['field_id'] = $payload['field_id'];
+        $data->save();
 
-        if (isset($payload['table'])) {
-            $originalTranslator->table = $payload['table'];
-        }
-
-        if (isset($payload['column'])) {
-            $originalTranslator->column = $payload['column'];
-        }
-
-        if (isset($payload['field_id'])) {
-            $originalTranslator->field_id = $payload['field_id'];
-        }
-
-        $originalTranslator->save();
-
-        return $originalTranslator;
+        return $data->id;
     }
 
     /**
      * Delete original translator
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $ids): void
     {
-        $originalTranslator = $this->model->findOrFail($id);
-        return $originalTranslator->delete();
-    }
-
-    /**
-     * Get next ID for the model
-     *
-     * @return int
-     */
-    private function getNextId(): int
-    {
-        $statement = DB::select("SELECT nextval('original_translator_mst_seq')");
-        return $statement[0]->nextval;
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

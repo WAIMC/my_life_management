@@ -2,7 +2,9 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\OriginalTranslatorMstHist;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OriginalTranslatorMst extends Model
 {
@@ -30,16 +32,16 @@ class OriginalTranslatorMst extends Model
     /**
      * Get the translations for this original translator.
      */
-    public function translations()
+    public function translations(): HasMany
     {
-        return $this->hasMany('App\Models\Master\TranslationMst', 'original_id');
+        return $this->hasMany(TranslationMst::class, 'original_id');
     }
 
     /**
      * Get the history records for this original translator.
      */
-    public function history()
+    public function history(): HasMany
     {
-        return $this->hasMany('App\Models\History\Master\OriginalTranslatorMstHist', 'original_translator_mst_id');
+        return $this->hasMany(OriginalTranslatorMstHist::class, 'original_translator_mst_id');
     }
 }

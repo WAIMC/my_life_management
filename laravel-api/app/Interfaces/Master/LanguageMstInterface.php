@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\Master;
 
+use Illuminate\Support\Collection;
+
 interface LanguageMstInterface
 {
     /**
-     * Get all languages
+     * Get language list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload);
-
-    /**
-     * Get language by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
+    public function list(array $payload): Collection;
 
     /**
      * Create new language
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload);
+    public function executeStore(array $payload): int;
 
     /**
      * Update language
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id);
+    public function executeUpdate(array $payload): int;
 
     /**
      * Delete language
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id);
+    public function executeDelete(array $ids): void;
 }

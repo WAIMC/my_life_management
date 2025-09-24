@@ -2,55 +2,39 @@
 
 namespace App\Interfaces\Master;
 
+use Illuminate\Support\Collection;
+
 interface DepartmentManagementMstInterface
 {
     /**
-     * Get all department management relations with optional filtering
+     * Get department management list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Get department management relation by IDs
-     *
-     * @param int $departmentId
-     * @param int $policyDepartmentId
-     * @return mixed
-     */
-    public function getById(int $departmentId, int $policyDepartmentId): mixed;
-
-    /**
-     * Create new department management relation
+     * Store department management
      *
      * @param array $payload
-     * @return mixed
+     * @return void
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): void;
 
     /**
-     * Delete department management relation
+     * Delete department management
      *
-     * @param int $departmentId
-     * @param int $policyDepartmentId
-     * @return mixed
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $departmentId, int $policyDepartmentId): mixed;
+    public function executeDelete(array $payload): void;
 
     /**
-     * Get department management relations by department ID
+     * Get department management id
      *
-     * @param int $departmentId
-     * @return mixed
+     * @param array $departmentMgmtIds
+     * @return Collection
      */
-    public function getByDepartmentId(int $departmentId): mixed;
-
-    /**
-     * Get department management relations by policy department ID
-     *
-     * @param int $policyDepartmentId
-     * @return mixed
-     */
-    public function getByPolicyDepartmentId(int $policyDepartmentId): mixed;
+    public function getDepartmentMgmtMstId(array $departmentMgmtIds): Collection;
 }

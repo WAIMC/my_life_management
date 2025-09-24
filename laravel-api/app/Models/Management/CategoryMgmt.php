@@ -2,6 +2,7 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\CategoryMgmtHist;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -63,14 +64,6 @@ class CategoryMgmt extends Model
     public function products(): HasMany
     {
         return $this->hasMany(ProductMgmt::class, 'category_id');
-    }
-
-    /**
-     * Get all projects associated with this category
-     */
-    public function projects(): HasMany
-    {
-        return $this->hasMany(ProjectMgmt::class, 'category_id');
     }
 
     /**

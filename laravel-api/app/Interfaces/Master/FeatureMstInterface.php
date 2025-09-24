@@ -2,46 +2,40 @@
 
 namespace App\Interfaces\Master;
 
+use Illuminate\Support\Collection;
+
 interface FeatureMstInterface
 {
     /**
      * Get all features with optional filtering
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
-
-    /**
-     * Get feature by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed;
+    public function list(array $payload): Collection;
 
     /**
      * Create new feature
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
      * Update feature
      *
      * @param array $payload
      * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed;
+    public function executeUpdate(array $payload, int $id): int;
 
     /**
      * Delete feature
      *
-     * @param int $id
-     * @return mixed
+     * @param array $id
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $id): void;
 }

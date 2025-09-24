@@ -57,6 +57,8 @@ class AdminDepartmentMstRepository extends BaseRepository implements AdminDepart
             $query->whereDate('tad.updated_at', '<=', $toDate);
         }
 
+        $query->orderBy('admin_id');
+
         return $query->get();
     }
 

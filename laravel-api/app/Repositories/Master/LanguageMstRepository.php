@@ -2,39 +2,34 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Master\LanguageMstInterface;
 use App\Models\Master\LanguageMst;
-use Exception;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class LanguageMstRepository implements LanguageMstInterface
+class LanguageMstRepository extends BaseRepository implements LanguageMstInterface
 {
-    /**
-     * @var LanguageMst
-     */
-    protected $model;
-
-    /**
-     * LanguageMstRepository constructor.
-     *
-     * @param LanguageMst $model
-     */
     public function __construct(LanguageMst $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get all languages
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters if provided
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['abbreviation'])) {
             $query->where('abbreviation', 'like', '%' . $payload['abbreviation'] . '%');
         }
@@ -47,85 +42,64 @@ class LanguageMstRepository implements LanguageMstInterface
             $query->where('is_active', $payload['is_active']);
         }
 
-        // Apply sorting
-        $sortBy = $payload['sort_by'] ?? 'id';
-        $sortOrder = $payload['sort_order'] ?? 'asc';
-        $query->orderBy($sortBy, $sortOrder);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
 
-        // Apply pagination
-        $perPage = $payload['per_page'] ?? 10;
-        return $query->paginate($perPage);
-    }
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
 
-    /**
-     * Get language by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id)
-    {
-        return $this->model->findOrFail($id);
+
+        $query->orderBy('id');
+
+        return $query->get();
     }
 
     /**
      * Create new language
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload)
+    public function executeStore(array $payload):int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['abbreviation'] = $payload['abbreviation'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? null;
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update language
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id)
+    public function executeUpdate(array $payload):int
     {
-        $language = $this->model->findOrFail($id);
-        
-        if (!$language) {
-            throw new Exception('Language not found');
-        }
+        $data = $this->model->findById($payload['id']);
+        $data['abbreviation'] = $payload['abbreviation'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? null;
+        $data->save();
 
-        if (isset($payload['abbreviation'])) {
-            $language->abbreviation = $payload['abbreviation'];
-        }
-
-        if (isset($payload['name'])) {
-            $language->name = $payload['name'];
-        }
-
-        if (isset($payload['is_active'])) {
-            $language->is_active = $payload['is_active'];
-        }
-
-        $language->save();
-        return $language;
+        return $data->id;
     }
 
     /**
      * Delete language
      *
-     * @param int $id
-     * @return mixed
-     * @throws Exception
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id)
+    public function executeDelete(array $ids): void
     {
-        $language = $this->model->findOrFail($id);
-        
-        if (!$language) {
-            throw new Exception('Language not found');
-        }
-
-        return $language->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

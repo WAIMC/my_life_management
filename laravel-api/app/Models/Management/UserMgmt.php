@@ -5,6 +5,7 @@ namespace App\Models\Management;
 use App\Models\Master\DepartmentMst;
 use App\Models\Master\RoleMst;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserMgmt extends Model
 {
@@ -52,7 +53,7 @@ class UserMgmt extends Model
     /**
      * Get the role that owns the user.
      */
-    public function role()
+    public function role(): BelongsTo
     {
         return $this->belongsTo(RoleMst::class, 'role_id');
     }
@@ -60,7 +61,7 @@ class UserMgmt extends Model
     /**
      * Get the department that owns the user.
      */
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(DepartmentMst::class, 'department_id');
     }

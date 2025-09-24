@@ -4,13 +4,14 @@ namespace App\Models\History\Management;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Management\SocialMgmt;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SocialMgmtHist extends Model
 {
     protected $table = 'social_mgmt_hist';
-    
+
     public $timestamps = false;
-    
+
     protected $fillable = [
         'id',
         'social_mgmt_id',
@@ -25,11 +26,11 @@ class SocialMgmtHist extends Model
         'author_id',
         'created_at'
     ];
-    
+
     /**
      * Get the social that owns the history
      */
-    public function social()
+    public function social(): BelongsTo
     {
         return $this->belongsTo(SocialMgmt::class, 'social_mgmt_id');
     }

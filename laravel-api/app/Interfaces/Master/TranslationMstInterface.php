@@ -2,62 +2,39 @@
 
 namespace App\Interfaces\Master;
 
+use Illuminate\Support\Collection;
+
 interface TranslationMstInterface
 {
     /**
-     * Get translation list with conditions
-     * 
+     * Get translation list
+     *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function list(array $payload);
-    
+    public function list(array $payload): Collection;
+
     /**
-     * Get translation by ID
-     * 
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
-    
-    /**
-     * Get translations by language ID
-     * 
-     * @param int $languageId
-     * @return mixed
-     */
-    public function getByLanguageId(int $languageId);
-    
-    /**
-     * Get translations by original ID
-     * 
-     * @param int $originalId
-     * @return mixed
-     */
-    public function getByOriginalId(int $originalId);
-    
-    /**
-     * Store new translation
-     * 
+     * Store api role
+     *
      * @param array $payload
-     * @return mixed
+     * @return void
      */
-    public function store(array $payload);
-    
-    /**
-     * Update translation
-     * 
-     * @param array $payload
-     * @param int $id
-     * @return mixed
-     */
-    public function update(array $payload, int $id);
-    
+    public function executeStore(array $payload): void;
+
     /**
      * Delete translation
-     * 
-     * @param int $id
-     * @return mixed
+     *
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id);
+    public function executeDelete(array $payload): void;
+
+    /**
+     * Get translation id
+     *
+     * @param array $translationIds
+     * @return Collection
+     */
+    public function getTranslationMstId(array $translationIds): Collection;
 }

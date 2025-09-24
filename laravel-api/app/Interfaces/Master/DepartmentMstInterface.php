@@ -2,54 +2,39 @@
 
 namespace App\Interfaces\Master;
 
+use Illuminate\Support\Collection;
+
 interface DepartmentMstInterface
 {
     /**
-     * Get all departments with optional filtering
+     * Get department list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
-
-    /**
-     * Get department by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed;
-
-    /**
-     * Get department by code
-     *
-     * @param string $code
-     * @return mixed
-     */
-    public function getByCode(string $code): mixed;
+    public function list(array $payload): Collection;
 
     /**
      * Create new department
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
      * Update department
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
      * Delete department
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $ids): void;
 }

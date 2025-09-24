@@ -2,34 +2,37 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Master\DepartmentMstInterface;
 use App\Models\Master\DepartmentMst;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class DepartmentMstRepository implements DepartmentMstInterface
+class DepartmentMstRepository extends BaseRepository implements DepartmentMstInterface
 {
-    protected DepartmentMst $model;
-
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(DepartmentMst $model)
     {
-        $this->model = new DepartmentMst();
+        parent::__construct($model);
     }
 
     /**
      * Get all departments with optional filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters based on payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['code'])) {
             $query->where('code', 'like', '%' . $payload['code'] . '%');
         }
@@ -42,89 +45,61 @@ class DepartmentMstRepository implements DepartmentMstInterface
             $query->where('status', $payload['status']);
         }
 
-        // Date range filter
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        return $query->orderBy('id')->paginate(
-            $payload['per_page'] ?? 15
-        );
-    }
-
-    /**
-     * Get department by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->findOrFail($id);
-    }
-
-    /**
-     * Get department by code
-     *
-     * @param string $code
-     * @return mixed
-     */
-    public function getByCode(string $code): mixed
-    {
-        $department = $this->model->where('code', $code)->first();
-
-        if (!$department) {
-            throw new ModelNotFoundException('Department with code ' . $code . ' not found');
-        }
-
-        return $department;
+        return $query->orderBy('id')->get();
     }
 
     /**
      * Create new department
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['code'] = $payload['code'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
      * Update department
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $record = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['code'] = $payload['code'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data->save();
 
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->model->getFillable())) {
-                $record->{$key} = $value;
-            }
-        }
-
-        $record->save();
-        return $record;
+        return $data->id;
     }
 
     /**
      * Delete department
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $ids): void
     {
-        $record = $this->model->findOrFail($id);
-        return $record->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

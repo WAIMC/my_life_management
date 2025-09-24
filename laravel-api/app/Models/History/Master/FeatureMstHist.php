@@ -2,8 +2,6 @@
 
 namespace App\Models\History\Master;
 
-use App\Enums\ActionType;
-use App\Enums\FeatureStatus;
 use App\Models\Master\FeatureMst;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -47,25 +45,5 @@ class FeatureMstHist extends Model
     public function feature(): BelongsTo
     {
         return $this->belongsTo(FeatureMst::class, 'feature_mst_id');
-    }
-
-    /**
-     * Get the status text representation
-     *
-     * @return string
-     */
-    public function getStatusTextAttribute(): string
-    {
-        return FeatureStatus::getDescription($this->status);
-    }
-
-    /**
-     * Get the action text representation
-     *
-     * @return string
-     */
-    public function getActionTextAttribute(): string
-    {
-        return ActionType::getDescription($this->action);
     }
 }

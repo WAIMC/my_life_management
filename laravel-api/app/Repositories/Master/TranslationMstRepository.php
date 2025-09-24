@@ -2,167 +2,93 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Models\Master\TranslationMst;
 use App\Interfaces\Master\TranslationMstInterface;
+use App\Repositories\BaseRepository;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 
-class TranslationMstRepository implements TranslationMstInterface
+class TranslationMstRepository extends BaseRepository implements TranslationMstInterface
 {
-    protected $model;
-    
-    /**
-     * Constructor
-     */
-    public function __construct()
+    public function __construct(TranslationMst $model)
     {
-        $this->model = new TranslationMst();
+        parent::__construct($model);
     }
-    
+
     /**
      * Get translation list with conditions
-     * 
+     *
      * @param array $payload
      * @return Collection
      */
-    public function list(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->select('*');
-        
+
         if (isset($payload['language_id'])) {
             $query->where('language_id', $payload['language_id']);
         }
-        
+
         if (isset($payload['original_id'])) {
             $query->where('original_id', $payload['original_id']);
         }
-        
-        if (isset($payload['value'])) {
-            $query->where('value', 'like', '%' . $payload['value'] . '%');
+
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('tad.updated_at', '>=', $fromDate);
         }
-        
-        if (isset($payload['with_language']) && $payload['with_language']) {
-            $query->with('language');
+
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('tad.updated_at', '<=', $toDate);
         }
-        
-        if (isset($payload['with_original']) && $payload['with_original']) {
-            $query->with('originalTranslator');
-        }
-        
-        return $query->orderBy('id')->get();
+
+        $query->orderBy('language_id')->orderBy('original_id');
+
+        return $query->get();
     }
-    
-    /**
-     * Get translation by ID
-     * 
-     * @param int $id
-     * @return TranslationMst|null
-     */
-    public function getById(int $id)
-    {
-        return $this->model->with(['language', 'originalTranslator'])->find($id);
-    }
-    
-    /**
-     * Get translations by language ID
-     * 
-     * @param int $languageId
-     * @return Collection
-     */
-    public function getByLanguageId(int $languageId)
-    {
-        return $this->model->where('language_id', $languageId)
-            ->with('originalTranslator')
-            ->orderBy('id')
-            ->get();
-    }
-    
-    /**
-     * Get translations by original ID
-     * 
-     * @param int $originalId
-     * @return Collection
-     */
-    public function getByOriginalId(int $originalId)
-    {
-        return $this->model->where('original_id', $originalId)
-            ->with('language')
-            ->orderBy('id')
-            ->get();
-    }
-    
+
     /**
      * Store new translation
-     * 
+     *
      * @param array $payload
-     * @return TranslationMst
+     * @return void
      */
-    public function store(array $payload)
+    public function executeStore(array $payload): void
     {
-        $translation = new TranslationMst();
-        
-        if (isset($payload['language_id'])) {
-            $translation->language_id = $payload['language_id'];
-        }
-        
-        if (isset($payload['original_id'])) {
-            $translation->original_id = $payload['original_id'];
-        }
-        
-        if (isset($payload['value'])) {
-            $translation->value = $payload['value'];
-        }
-        
-        $translation->save();
-        
-        return $translation;
+        // Handle bulk insert
+        $this->model->create($payload);
     }
-    
-    /**
-     * Update translation
-     * 
-     * @param array $payload
-     * @param int $id
-     * @return TranslationMst|null
-     */
-    public function update(array $payload, int $id)
-    {
-        $translation = $this->model->find($id);
-        
-        if (!$translation) {
-            return null;
-        }
-        
-        if (isset($payload['language_id'])) {
-            $translation->language_id = $payload['language_id'];
-        }
-        
-        if (isset($payload['original_id'])) {
-            $translation->original_id = $payload['original_id'];
-        }
-        
-        if (isset($payload['value'])) {
-            $translation->value = $payload['value'];
-        }
-        
-        $translation->save();
-        
-        return $translation;
-    }
-    
+
     /**
      * Delete translation
-     * 
-     * @param int $id
-     * @return bool
+     *
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id)
+    public function executeDelete(array $payload): void
     {
-        $translation = $this->model->find($id);
-        
-        if (!$translation) {
-            return false;
-        }
-        
-        return $translation->delete();
+        $values = collect($payload)->map(function ($item) {
+            return '(' . (int)$item['language_id'] . ', ' . (int)$item['original_id'] . ')';
+        })->all();
+
+        // Handle bulk delete
+        $this->model
+            ->whereRaw("(language_id, original_id) IN (" . implode(", ", $values) . ")")
+            ->delete();
+    }
+
+    /**
+     * Get translation id
+     *
+     * @param array $translationIds
+     * @return Collection
+     */
+    public function getTranslationMstId(array $translationIds): Collection
+    {
+        return $this->model
+            ->whereRaw("(language_id, original_id) IN (" . implode(", ", $translationIds) . ")")
+            ->pluck('language_id', 'original_id');
     }
 }

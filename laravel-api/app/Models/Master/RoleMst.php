@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\RoleMstHist;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

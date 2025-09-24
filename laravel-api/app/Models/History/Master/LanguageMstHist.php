@@ -2,8 +2,10 @@
 
 namespace App\Models\History\Master;
 
+use App\Models\Master\AdminMst;
 use App\Models\Master\LanguageMst;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LanguageMstHist extends Model
 {
@@ -40,7 +42,7 @@ class LanguageMstHist extends Model
     /**
      * Get the language that owns the history.
      */
-    public function language()
+    public function language(): BelongsTo
     {
         return $this->belongsTo(LanguageMst::class, 'language_mst_id');
     }
@@ -48,8 +50,8 @@ class LanguageMstHist extends Model
     /**
      * Get the admin that created the history.
      */
-    public function author()
+    public function author(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Master\AdminMst', 'author_id');
+        return $this->belongsTo(AdminMst::class, 'author_id');
     }
 }

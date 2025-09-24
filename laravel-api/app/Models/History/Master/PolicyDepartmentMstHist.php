@@ -5,6 +5,7 @@ namespace App\Models\History\Master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Master\PolicyDepartmentMst;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PolicyDepartmentMstHist extends Model
 {
@@ -41,9 +42,9 @@ class PolicyDepartmentMstHist extends Model
     /**
      * Get the policy department record associated with the history.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
-    public function policyDepartment()
+    public function policyDepartment(): BelongsTo
     {
         return $this->belongsTo(PolicyDepartmentMst::class, 'policy_department_mst_id');
     }

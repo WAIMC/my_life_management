@@ -44,6 +44,10 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
                 'updated_at',
             ]);
 
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['email'])) {
             $query->where('email', $payload['email']);
         }
@@ -97,6 +101,8 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
             $query->whereDate('updated_at', '<=', $toDate);
         }
+
+        $query->orderBy('id');
 
         return $query->get();
     }
@@ -153,7 +159,7 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
     }
 
     /**
-     * Delete RoleMst
+     * Delete admin
      *
      * @param array $ids
      * @return void

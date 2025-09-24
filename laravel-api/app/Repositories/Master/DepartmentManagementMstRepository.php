@@ -2,30 +2,30 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Master\DepartmentManagementMstInterface;
 use App\Models\Master\DepartmentManagementMst;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class DepartmentManagementMstRepository implements DepartmentManagementMstInterface
+class DepartmentManagementMstRepository extends BaseRepository implements DepartmentManagementMstInterface
 {
-    protected DepartmentManagementMst $model;
-
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(DepartmentManagementMst $model)
     {
-        $this->model = new DepartmentManagementMst();
+        parent::__construct($model);
     }
 
     /**
      * Get all department management relations with optional filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
@@ -56,75 +56,62 @@ class DepartmentManagementMstRepository implements DepartmentManagementMstInterf
             $query->with('policyDepartment');
         }
 
-        return $query->orderBy('department_id')
-            ->orderBy('policy_department_id')
-            ->paginate($payload['per_page'] ?? 15);
-    }
-
-    /**
-     * Get department management relation by IDs
-     *
-     * @param int $departmentId
-     * @param int $policyDepartmentId
-     * @return mixed
-     */
-    public function getById(int $departmentId, int $policyDepartmentId): mixed
-    {
-        $record = $this->model->query()
-            ->where('department_id', $departmentId)
-            ->where('policy_department_id', $policyDepartmentId)
-            ->first();
-
-        if (!$record) {
-            throw new ModelNotFoundException('Department management relation not found');
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        return $record;
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
+
+        $query->orderBy('department_id')
+            ->orderBy('policy_department_id');
+
+        return $query->get();
     }
 
     /**
      * Create new department management relation
      *
      * @param array $payload
-     * @return mixed
+     * @return void
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): void
     {
-        return $this->model->create($payload);
+        $this->model->create($payload);
     }
 
     /**
      * Delete department management relation
      *
-     * @param int $departmentId
-     * @param int $policyDepartmentId
-     * @return mixed
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $departmentId, int $policyDepartmentId): mixed
+    public function executeDelete(array $payload): void
     {
-        $record = $this->getById($departmentId, $policyDepartmentId);
-        return $record->delete();
+        $values = collect($payload)->map(function ($item) {
+            // Make sure the data is an integer and escaped
+            return '(' . (int)$item['department_id'] . ', ' . (int)$item['policy_department_id'] . ')';
+        })->all();
+
+        // Handle bulk delete
+        $this->model
+            ->whereRaw("(department_id, policy_department_id) IN (" . implode(", ", $values) . ")")
+            ->delete();
     }
 
     /**
-     * Get department management relations by department ID
+     * Get admin departments id
      *
-     * @param int $departmentId
-     * @return mixed
+     * @param array $departmentMgmtIds
+     * @return Collection
      */
-    public function getByDepartmentId(int $departmentId): mixed
+    public function getDepartmentMgmtMstId(array $departmentMgmtIds): Collection
     {
-        return $this->model->where('department_id', $departmentId)->get();
-    }
-
-    /**
-     * Get department management relations by policy department ID
-     *
-     * @param int $policyDepartmentId
-     * @return mixed
-     */
-    public function getByPolicyDepartmentId(int $policyDepartmentId): mixed
-    {
-        return $this->model->where('policy_department_id', $policyDepartmentId)->get();
+        return $this->model
+            ->whereRaw("(department_id, policy_department_id) IN (" . implode(", ", $departmentMgmtIds) . ")")
+            ->pluck('department_id', 'policy_department_id');
     }
 }

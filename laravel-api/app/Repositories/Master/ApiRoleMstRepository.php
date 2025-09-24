@@ -31,15 +31,15 @@ class ApiRoleMstRepository extends BaseRepository implements ApiRoleMstInterface
             ->select([
                 'tar.api_id     AS api_id',
                 DB::raw("
-          CASE
-            WHEN ta.type = 0 THEN 'GET'
-            WHEN ta.type = 1 THEN 'POST'
-            WHEN ta.type = 2 THEN 'PUT'
-            WHEN ta.type = 3 THEN 'PATCH'
-            WHEN ta.type = 4 THEN 'DELETE'
-            ELSE null
-          END           AS type_name
-        "),
+                  CASE
+                    WHEN ta.type = 0 THEN 'GET'
+                    WHEN ta.type = 1 THEN 'POST'
+                    WHEN ta.type = 2 THEN 'PUT'
+                    WHEN ta.type = 3 THEN 'PATCH'
+                    WHEN ta.type = 4 THEN 'DELETE'
+                    ELSE null
+                  END           AS type_name
+                "),
                 'ta.type        AS type',
                 'ta.name        AS name',
                 'ta.path        AS path',
@@ -68,6 +68,8 @@ class ApiRoleMstRepository extends BaseRepository implements ApiRoleMstInterface
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
             $query->whereDate('tar.updated_at', '<=', $toDate);
         }
+
+        $query->orderBy('tar.api_id');
 
         return $query->get();
     }

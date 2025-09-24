@@ -2,8 +2,6 @@
 
 namespace App\Models\History\Master;
 
-use App\Enums\ActionType;
-use App\Enums\DepartmentStatus;
 use App\Models\Master\DepartmentMst;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,25 +44,5 @@ class DepartmentMstHist extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(DepartmentMst::class, 'department_mst_id');
-    }
-
-    /**
-     * Get the status text representation
-     *
-     * @return string
-     */
-    public function getStatusTextAttribute(): string
-    {
-        return DepartmentStatus::getLabel($this->status);
-    }
-
-    /**
-     * Get the action text representation
-     *
-     * @return string
-     */
-    public function getActionTextAttribute(): string
-    {
-        return ActionType::getLabel($this->action);
     }
 }

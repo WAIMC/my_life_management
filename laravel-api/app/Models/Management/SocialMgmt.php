@@ -2,8 +2,10 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\SocialMgmtHist;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SocialMgmt extends Model
 {
@@ -45,7 +47,7 @@ class SocialMgmt extends Model
     /**
      * Get the social history records associated with the social.
      */
-    public function histories()
+    public function histories(): HasMany
     {
         return $this->hasMany(SocialMgmtHist::class, 'social_mgmt_id');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Enums\IsActive;
 use App\Interfaces\Master\ApiMstInterface;
 use App\Models\Master\ApiMst;
@@ -80,6 +81,7 @@ class ApiMstRepository extends BaseRepository implements ApiMstInterface
         }
 
         $query->where('tf.status', IsActive::TRUE);
+        $query->orderBy('ta.id');
 
         return $query->get();
     }
@@ -98,7 +100,6 @@ class ApiMstRepository extends BaseRepository implements ApiMstInterface
         $data['path'] = $payload['path'] ?? null;
         $data['is_active'] = $payload['is_active'] ?? null;
         $data['feature_id'] = $payload['feature_id'] ?? null;
-
         $this->model->create($data);
 
         return $this->model->id;

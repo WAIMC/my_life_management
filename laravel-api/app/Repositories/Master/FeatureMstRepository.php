@@ -2,33 +2,37 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Master\FeatureMstInterface;
 use App\Models\Master\FeatureMst;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class FeatureMstRepository implements FeatureMstInterface
+class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
 {
-    protected FeatureMst $model;
-
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(FeatureMst $model)
     {
-        $this->model = new FeatureMst();
+        parent::__construct($model);
     }
 
     /**
      * Get all features with optional filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters based on payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
         }
@@ -45,40 +49,37 @@ class FeatureMstRepository implements FeatureMstInterface
             $query->where('status', $payload['status']);
         }
 
-        // Date range filter
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('tad.updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('tad.updated_at', '<=', $toDate);
         }
 
-        return $query->orderBy('id')->paginate(
-            $payload['per_page'] ?? 15
-        );
+        $query->orderBy('id');
+
+        return $query->get();
     }
 
     /**
-     * Get feature by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->findOrFail($id);
-    }
-
-    /**
-     * Create new feature
+     * Store feature
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['name'] = $payload['name'] ?? null;
+        $data['group_name'] = $payload['group_name'] ?? null;
+        $data['description'] = $payload['description'] ?? null;
+        $data['last_name'] = $payload['status'] ?? null;
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
@@ -86,31 +87,28 @@ class FeatureMstRepository implements FeatureMstInterface
      *
      * @param array $payload
      * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload, int $id): int
     {
-        $record = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['name'] = $payload['name'] ?? null;
+        $data['group_name'] = $payload['group_name'] ?? null;
+        $data['description'] = $payload['description'] ?? null;
+        $data['last_name'] = $payload['status'] ?? null;
+        $data->save();
 
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->model->getFillable())) {
-                $record->{$key} = $value;
-            }
-        }
-
-        $record->save();
-        return $record;
+        return $data->id;
     }
 
     /**
      * Delete feature
      *
-     * @param int $id
-     * @return mixed
+     * @param array $id
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $id): void
     {
-        $record = $this->model->findOrFail($id);
-        return $record->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

@@ -11,7 +11,6 @@ return new class extends Migration {
             $table->increments('id')->comment('Translation ID');
             $table->unsignedInteger('language_id')->comment('Language id');
             $table->unsignedInteger('original_id')->comment('Original translator id');
-            $table->string('value', 255)->comment('Translation value');
             $table->timestamp('created_at')->nullable()->comment('Created time');
             $table->timestamp('updated_at')->nullable()->comment('Updated time');
 

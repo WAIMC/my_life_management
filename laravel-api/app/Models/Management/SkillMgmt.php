@@ -52,18 +52,4 @@ class SkillMgmt extends Model
     {
         return $this->hasMany(SkillMgmt::class, 'parent_id');
     }
-
-    /**
-     * Get status text
-     *
-     * @return string
-     */
-    public function getStatusText(): string
-    {
-        return match ($this->status) {
-            SkillStatus::ACTIVE => 'Active',
-            SkillStatus::PENDING => 'Pending',
-            default => 'Inactive',
-        };
-    }
 }

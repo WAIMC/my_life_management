@@ -4,6 +4,7 @@ namespace App\Models\History\Master;
 
 use App\Models\Master\AdminMst;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AdminMstHist extends Model
 {
@@ -51,9 +52,9 @@ class AdminMstHist extends Model
     /**
      * Get the admin that this history belongs to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
-    public function adminMst()
+    public function adminMst(): BelongsTo
     {
         return $this->belongsTo(AdminMst::class, 'admin_mst_id');
     }
@@ -61,9 +62,9 @@ class AdminMstHist extends Model
     /**
      * Get the author admin that created this history
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
-    public function author()
+    public function author(): BelongsTo
     {
         return $this->belongsTo(AdminMst::class, 'author_id');
     }

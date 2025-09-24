@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\FeatureMstHist;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -51,7 +52,7 @@ class FeatureMst extends Model
      *
      * @return HasMany
      */
-    public function history()
+    public function history(): HasMany
     {
         return $this->hasMany(FeatureMstHist::class, 'feature_mst_id');
     }

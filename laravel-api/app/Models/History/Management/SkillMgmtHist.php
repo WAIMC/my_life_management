@@ -54,33 +54,4 @@ class SkillMgmtHist extends Model
     {
         return $this->belongsTo(SkillMgmt::class, 'skill_mgmt_id');
     }
-
-    /**
-     * Get status text
-     *
-     * @return string
-     */
-    public function getStatusText(): string
-    {
-        return match ($this->status) {
-            SkillStatus::ACTIVE => 'Active',
-            SkillStatus::PENDING => 'Pending',
-            default => 'Inactive',
-        };
-    }
-
-    /**
-     * Get action text
-     *
-     * @return string
-     */
-    public function getActionText(): string
-    {
-        return match ($this->action) {
-            ActionType::CREATE => 'Create',
-            ActionType::UPDATE => 'Update',
-            ActionType::DELETE => 'Delete',
-            default => '',
-        };
-    }
 }

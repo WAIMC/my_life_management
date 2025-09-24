@@ -2,6 +2,7 @@
 
 namespace App\Models\History\Master;
 
+use App\Models\Master\AdminMst;
 use App\Models\Master\RoleMst;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -50,6 +51,6 @@ class RoleMstHist extends Model
      */
     public function author(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Master\AdminMst::class, 'author_id');
+        return $this->belongsTo(AdminMst::class, 'author_id');
     }
 }

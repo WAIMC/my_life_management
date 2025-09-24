@@ -6,6 +6,7 @@ use App\Models\Master\LanguageMst;
 use App\Models\Master\OriginalTranslatorMst;
 use App\Models\Master\TranslationMst;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TranslationMstHist extends Model
 {
@@ -42,7 +43,7 @@ class TranslationMstHist extends Model
     /**
      * Get the translation that owns the history record
      */
-    public function translation()
+    public function translation(): BelongsTo
     {
         return $this->belongsTo(TranslationMst::class, 'translation_mst_id');
     }
@@ -50,7 +51,7 @@ class TranslationMstHist extends Model
     /**
      * Get the language that owns the history record
      */
-    public function language()
+    public function language(): BelongsTo
     {
         return $this->belongsTo(LanguageMst::class, 'language_id');
     }
@@ -58,7 +59,7 @@ class TranslationMstHist extends Model
     /**
      * Get the original translator that owns the history record
      */
-    public function originalTranslator()
+    public function originalTranslator(): BelongsTo
     {
         return $this->belongsTo(OriginalTranslatorMst::class, 'original_id');
     }

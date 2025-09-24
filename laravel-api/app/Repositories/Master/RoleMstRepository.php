@@ -2,33 +2,34 @@
 
 namespace App\Repositories\Master;
 
+use App\Constants\CommonVal;
 use App\Interfaces\Master\RoleMstInterface;
 use App\Models\Master\RoleMst;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class RoleMstRepository implements RoleMstInterface
+class RoleMstRepository extends BaseRepository implements RoleMstInterface
 {
-    protected RoleMst $model;
-
-    /**
-     * Constructor
-     */
-    public function __construct()
+    public function __construct(RoleMst $model)
     {
-        $this->model = new RoleMst();
+        parent::__construct($model);
     }
 
     /**
      * Get all roles with optional filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters based on payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
         }
@@ -41,72 +42,61 @@ class RoleMstRepository implements RoleMstInterface
             $query->where('is_active', $payload['is_active']);
         }
 
-        // Date range filter
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        return $query->orderBy('id')->paginate(
-            $payload['per_page'] ?? 15
-        );
-    }
-
-    /**
-     * Get role by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->findOrFail($id);
+        return $query->orderBy('id')->get();
     }
 
     /**
      * Create new role
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['name'] = $payload['name'];
+        $data['permission'] = $payload['permission'];
+        $data['is_active'] = $payload['is_active'];
+        $this->model->create($data);
+
+        return $data->id;
     }
 
     /**
      * Update role
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $record = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['name'] = $payload['name'];
+        $data['permission'] = $payload['permission'];
+        $data['is_active'] = $payload['is_active'];
+        $data->save();
 
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->model->getFillable())) {
-                $record->{$key} = $value;
-            }
-        }
-
-        $record->save();
-        return $record;
+        return $data->id;
     }
 
     /**
      * Delete role
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function executeDelete(array $ids): void
     {
-        $record = $this->model->findOrFail($id);
-        return $record->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

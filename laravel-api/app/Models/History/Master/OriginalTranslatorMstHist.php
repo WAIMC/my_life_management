@@ -5,6 +5,7 @@ namespace App\Models\History\Master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Master\OriginalTranslatorMst;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OriginalTranslatorMstHist extends Model
 {
@@ -42,9 +43,9 @@ class OriginalTranslatorMstHist extends Model
     /**
      * Get the original translator record associated with the history.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
-    public function originalTranslator()
+    public function originalTranslator(): BelongsTo
     {
         return $this->belongsTo(OriginalTranslatorMst::class, 'original_translator_mst_id');
     }

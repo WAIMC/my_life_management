@@ -2,63 +2,39 @@
 
 namespace App\Interfaces\Master;
 
+use Illuminate\Support\Collection;
+
 interface PolicyDepartmentMstInterface
 {
     /**
-     * Get all policy departments with optional filtering
+     * Get policy department list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
-
-    /**
-     * Get policy department by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed;
-
-    /**
-     * Get policy departments by table name
-     *
-     * @param string $tableName
-     * @return mixed
-     */
-    public function getByTableName(string $tableName): mixed;
-
-    /**
-     * Get policy department by table name and row ID
-     *
-     * @param string $tableName
-     * @param int $rowId
-     * @return mixed
-     */
-    public function getByTableNameAndRowId(string $tableName, int $rowId): mixed;
+    public function list(array $payload): Collection;
 
     /**
      * Create new policy department
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
      * Update policy department
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
      * Delete policy department
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $ids): void;
 }

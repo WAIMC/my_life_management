@@ -2,8 +2,8 @@
 
 namespace App\Models\Management;
 
-use App\Models\Management\CategoryMgmt;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductMgmt extends Model
 {
@@ -33,7 +33,7 @@ class ProductMgmt extends Model
     /**
      * Get the category that owns the product.
      */
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(CategoryMgmt::class, 'category_id');
     }

@@ -60,6 +60,8 @@ class AdminRoleMstRepository extends BaseRepository implements AdminRoleMstInter
             $query->whereDate('tar.updated_at', '<=', $toDate);
         }
 
+        $query->orderBy('admin_id');
+
         return $query->get();
     }
 
