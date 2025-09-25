@@ -5,104 +5,64 @@ namespace App\Services\History\Management;
 use App\Http\Resources\History\Management\SkillMgmtHistResource;
 use App\Interfaces\History\Management\SkillMgmtHistInterface;
 use App\Interfaces\Management\SkillMgmtInterface;
-use App\Traits\ApiResponse;
-use Exception;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class SkillMgmtHistService
 {
-    use ApiResponse;
-
-    protected SkillMgmtHistInterface $skillMgmtHistRepository;
-    protected SkillMgmtInterface $skillMgmtRepository;
-
     /**
      * SkillMgmtHistService constructor
      *
-     * @param SkillMgmtHistInterface $skillMgmtHistRepository
-     * @param SkillMgmtInterface $skillMgmtRepository
+     * @param SkillMgmtHistInterface $skillMgmtHist
+     * @param SkillMgmtInterface $skillMgmt
      */
     public function __construct(
-        SkillMgmtHistInterface $skillMgmtHistRepository,
-        SkillMgmtInterface $skillMgmtRepository
-    ) {
-        $this->skillMgmtHistRepository = $skillMgmtHistRepository;
-        $this->skillMgmtRepository = $skillMgmtRepository;
-    }
+        protected SkillMgmtHistInterface $skillMgmtHist,
+        protected SkillMgmtInterface $skillMgmt
+    ) {}
 
     /**
-     * Get all skill history records with filtering and pagination
+     * Handle find admin list
      *
      * @param array $payload
-     * @return JsonResponse|AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload = []): JsonResponse|AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $skillHistories = $this->skillMgmtHistRepository->getAll($payload);
-        return SkillMgmtHistResource::collection($skillHistories);
+        $list = $this->skillMgmtHist->list($payload);
+
+        return SkillMgmtHistResource::collection($list);
     }
 
     /**
-     * Find skill history by ID
-     *
-     * @param int $id
-     * @return JsonResponse|SkillMgmtHistResource
-     * @throws Exception
-     */
-    public function findById(int $id): JsonResponse|SkillMgmtHistResource
-    {
-        try {
-            $skillHistory = $this->skillMgmtHistRepository->findById($id);
-            return new SkillMgmtHistResource($skillHistory);
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), 404);
-        }
-    }
-
-    /**
-     * Find skill history records by skill ID
-     *
-     * @param int $skillId
-     * @return JsonResponse|AnonymousResourceCollection
-     */
-    public function findBySkillId(int $skillId): JsonResponse|AnonymousResourceCollection
-    {
-        try {
-            // Verify skill exists
-            $this->skillMgmtRepository->findById($skillId);
-            
-            $skillHistories = $this->skillMgmtHistRepository->findBySkillId($skillId);
-            return SkillMgmtHistResource::collection($skillHistories);
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), 404);
-        }
-    }
-
-    /**
-     * Create a new skill history record
+     * Handle store admin
      *
      * @param array $payload
-     * @return JsonResponse|SkillMgmtHistResource
+     * @return int
      */
-    public function create(array $payload): JsonResponse|SkillMgmtHistResource
+    public function store(array $payload): int
     {
-        try {
-            DB::beginTransaction();
+        return $this->skillMgmtHist->executeStore($payload);
+    }
 
-            // Verify skill exists if skill_mgmt_id is provided
-            if (isset($payload['skill_mgmt_id'])) {
-                $this->skillMgmtRepository->findById($payload['skill_mgmt_id']);
-            }
+    /**
+     * Handle update skill history
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function update(array $payload): int
+    {
+        return $this->skillMgmtHist->executeUpdate($payload);
+    }
 
-            $skillHistory = $this->skillMgmtHistRepository->create($payload);
-
-            DB::commit();
-            return new SkillMgmtHistResource($skillHistory);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse($e->getMessage(), 400);
-        }
+    /**
+     * Delete skill history
+     *
+     * @param array $payload
+     * @return void
+     */
+    public function delete(array $payload): void
+    {
+        $this->skillMgmtHist->executeDelete($payload['ids']);
     }
 }

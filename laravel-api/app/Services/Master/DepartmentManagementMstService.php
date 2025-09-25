@@ -2,159 +2,131 @@
 
 namespace App\Services\Master;
 
+use App\Constants\CommonVal;
+use App\Constants\Messages;
 use App\Interfaces\Master\DepartmentManagementMstInterface;
 use App\Interfaces\Master\DepartmentMstInterface;
 use App\Interfaces\Master\PolicyDepartmentMstInterface;
 use App\Http\Resources\Master\DepartmentManagementMstResource;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Resources\Json\JsonResource;
+use LogicException;
 
 class DepartmentManagementMstService
 {
-    protected DepartmentManagementMstInterface $departmentManagementMstRepository;
-    protected DepartmentMstInterface $departmentMstRepository;
-    protected PolicyDepartmentMstInterface $policyDepartmentMstRepository;
-
     /**
      * Constructor
      *
-     * @param DepartmentManagementMstInterface $departmentManagementMstRepository
-     * @param DepartmentMstInterface $departmentMstRepository
-     * @param PolicyDepartmentMstInterface $policyDepartmentMstRepository
+     * @param DepartmentManagementMstInterface $departmentManagementMst
+     * @param DepartmentMstInterface $departmentMst
+     * @param PolicyDepartmentMstInterface $policyDepartmentMst
      */
     public function __construct(
-        DepartmentManagementMstInterface $departmentManagementMstRepository,
-        DepartmentMstInterface           $departmentMstRepository,
-        PolicyDepartmentMstInterface     $policyDepartmentMstRepository
+        protected DepartmentManagementMstInterface $departmentManagementMst,
+        protected DepartmentMstInterface           $departmentMst,
+        protected PolicyDepartmentMstInterface     $policyDepartmentMst
     )
-    {
-        $this->departmentManagementMstRepository = $departmentManagementMstRepository;
-        $this->departmentMstRepository = $departmentMstRepository;
-        $this->policyDepartmentMstRepository = $policyDepartmentMstRepository;
-    }
+    {}
 
     /**
      * Get all department management relations with optional filtering
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $records = $this->departmentManagementMstRepository->getAll($payload);
-        return DepartmentManagementMstResource::collection($records);
-    }
+        $list = $this->departmentManagementMst->list($payload);
 
-    /**
-     * Get department management relation by IDs
-     *
-     * @param int $departmentId
-     * @param int $policyDepartmentId
-     * @return DepartmentManagementMstResource
-     */
-    public function getById(int $departmentId, int $policyDepartmentId): DepartmentManagementMstResource
-    {
-        try {
-            $record = $this->departmentManagementMstRepository->getById($departmentId, $policyDepartmentId);
-            return new DepartmentManagementMstResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Department management relation not found: ' . $departmentId . '-' . $policyDepartmentId);
-            throw $e;
-        }
+        return DepartmentManagementMstResource::collection($list);
     }
 
     /**
      * Create new department management relation
      *
      * @param array $payload
-     * @return DepartmentManagementMstResource
-     * @throws Exception
-     */
-    public function create(array $payload): DepartmentManagementMstResource
-    {
-        // Validate department_id exists
-        try {
-            $this->departmentMstRepository->getById($payload['department_id']);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Referenced department not found: ' . $payload['department_id']);
-            throw new Exception('Referenced department does not exist');
-        }
-
-        // Validate policy_department_id exists
-        try {
-            $this->policyDepartmentMstRepository->getById($payload['policy_department_id']);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Referenced policy department not found: ' . $payload['policy_department_id']);
-            throw new Exception('Referenced policy department does not exist');
-        }
-
-        // Check if the relation already exists
-        try {
-            $this->departmentManagementMstRepository->getById($payload['department_id'], $payload['policy_department_id']);
-            throw new Exception('Department management relation already exists');
-        } catch (ModelNotFoundException $e) {
-            // The relation doesn't exist, so we can create it
-            $record = $this->departmentManagementMstRepository->create($payload);
-            return new DepartmentManagementMstResource($record);
-        }
-    }
-
-    /**
-     * Delete department management relation
-     *
-     * @param int $departmentId
-     * @param int $policyDepartmentId
      * @return bool
      */
-    public function delete(int $departmentId, int $policyDepartmentId): bool
+    public function update(array $payload): bool
     {
-        try {
-            return $this->departmentManagementMstRepository->delete($departmentId, $policyDepartmentId);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Department management relation not found for deletion: ' . $departmentId . '-' . $policyDepartmentId);
-            throw $e;
+        // Delete department management
+        if ($payload['delete']) {
+            self::checkExistsDepartmentManagement($payload['delete']);
+            $this->departmentManagementMst->executeDelete($payload['delete']);
+        }
+
+        // Insert department management
+        if ($payload['insert']) {
+            self::checkNotExistsDepartmentManagement($payload['insert']);
+            $this->departmentManagementMst->executeStore($payload['insert']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Check exist department management
+     *
+     * @param array $payload
+     * @return void
+     */
+    private function checkExistsDepartmentManagement(array $payload): void
+    {
+        $values = collect($payload)->map(function ($item) {
+            return '(' . (int)$item['department_id'] . ', ' . (int)$item['policy_department_id'] . ')';
+        })->all();
+
+        $adminDepartmentId = $this->departmentManagementMst->getDepartmentMgmtMstId($values);
+
+        // Compare $values and $adminDepartmentId, get the differences
+        $differences = array_udiff($values, $adminDepartmentId, function ($a, $b) {
+            return strcmp((string)$a, (string)$b);
+        });
+
+        // Join the differences into a string
+        $diffString = implode(', ', $differences);
+
+        // Throw exception if there are differences
+        if (!empty($differences)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0017,
+                    [
+                        'attributes' => __('messages.department_management_id') . ': ' . $diffString,
+                        'tableName' => __('messages.department_management_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
         }
     }
 
     /**
-     * Get department management relations by department ID
+     * Check not exist department management
      *
-     * @param int $departmentId
-     * @return AnonymousResourceCollection
+     * @param array $payload
+     * @return void
      */
-    public function getByDepartmentId(int $departmentId): AnonymousResourceCollection
+    private function checkNotExistsDepartmentManagement(array $payload): void
     {
-        try {
-            // First verify the department exists
-            $this->departmentMstRepository->getById($departmentId);
+        $values = collect($payload)->map(function ($item) {
+            return '(' . (int)$item['department_id'] . ', ' . (int)$item['policy_department_id'] . ')';
+        })->all();
 
-            $records = $this->departmentManagementMstRepository->getByDepartmentId($departmentId);
-            return DepartmentManagementMstResource::collection($records);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Department not found: ' . $departmentId);
-            throw $e;
-        }
-    }
+        $adminDepartmentId = $this->departmentManagementMst->getDepartmentMgmtMstId($values)->toArray();
+        $diffString = implode(', ', $adminDepartmentId);
 
-    /**
-     * Get department management relations by policy department ID
-     *
-     * @param int $policyDepartmentId
-     * @return AnonymousResourceCollection
-     */
-    public function getByPolicyDepartmentId(int $policyDepartmentId): AnonymousResourceCollection
-    {
-        try {
-            // First verify the policy department exists
-            $this->policyDepartmentMstRepository->getById($policyDepartmentId);
-
-            $records = $this->departmentManagementMstRepository->getByPolicyDepartmentId($policyDepartmentId);
-            return DepartmentManagementMstResource::collection($records);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Policy department not found: ' . $policyDepartmentId);
-            throw $e;
+        // Throw exception if there are exist
+        if (!empty($adminDepartmentId)) {
+            throw new LogicException(
+                Messages::getMessage(
+                    Messages::E0020,
+                    [
+                        'attributes' => __('messages.department_management_id') . ': ' . $diffString,
+                        'tableName' => __('messages.department_management_mst')
+                    ]
+                ),
+                CommonVal::HTTP_UNPROCESSABLE_CONTENT
+            );
         }
     }
 }

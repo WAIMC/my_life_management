@@ -12,7 +12,7 @@ use App\Http\Resources\Master\AdminRoleResource;
 class AdminRoleMstService
 {
     public function __construct(
-        private AdminRoleMstInterface $adminRole
+        protected AdminRoleMstInterface $adminRole
     )
     {
     }

@@ -26,7 +26,8 @@ class RoleMst extends Model
     protected $fillable = [
         'name',
         'permission',
-        'is_active'
+        'is_active',
+        'is_delete',
     ];
 
     /**

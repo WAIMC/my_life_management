@@ -21,6 +21,7 @@ class PolicyDepartmentMst extends Model
     protected $fillable = [
         'table_name',
         'row_id',
+        'is_delete',
     ];
 
     /**

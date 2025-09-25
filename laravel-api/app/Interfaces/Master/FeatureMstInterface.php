@@ -26,10 +26,9 @@ interface FeatureMstInterface
      * Update feature
      *
      * @param array $payload
-     * @param int $id
      * @return int
      */
-    public function executeUpdate(array $payload, int $id): int;
+    public function executeUpdate(array $payload): int;
 
     /**
      * Delete feature

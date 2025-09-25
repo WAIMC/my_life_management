@@ -2,37 +2,39 @@
 
 namespace App\Interfaces\History\Management;
 
+use Illuminate\Support\Collection;
+
 interface BannerMgmtHistInterface
 {
     /**
-     * Get all banner history records
+     * Get banner management history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Find banner history by ID
+     * Create new banner management history (batch)
      *
-     * @param int $id
-     * @return mixed
+     * @param array $payloads
+     * @return void
      */
-    public function findById(int $id): mixed;
+    public function executeStore(array $payloads): void;
 
     /**
-     * Find banner history by banner ID
+     * Update banner management history (batch)
      *
-     * @param int $bannerId
-     * @return mixed
+     * @param array $payloads
+     * @return void
      */
-    public function findByBannerId(int $bannerId): mixed;
+    public function executeUpdate(array $payloads): void;
 
     /**
-     * Create new banner history record
+     * Delete banner management history (batch)
      *
-     * @param array $payload
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function create(array $payload): mixed;
+    public function executeDelete(array $ids): void;
 }

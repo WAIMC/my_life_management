@@ -23,6 +23,7 @@ class LanguageMst extends Model
         'abbreviation',
         'name',
         'is_active',
+        'is_delete',
         'created_at',
         'updated_at',
     ];

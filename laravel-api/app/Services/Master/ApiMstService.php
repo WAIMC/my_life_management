@@ -2,24 +2,14 @@
 
 namespace App\Services\Master;
 
-use App\Constants\Messages;
-use App\Constants\CommonVal;
 use App\Interfaces\Master\ApiMstInterface;
 use Illuminate\Http\Resources\Json\JsonResource;
-use InvalidArgumentException;
-use App\Services\CommonService;
 use App\Http\Resources\Master\ApiResource;
-use App\Repositories\Master\ApiMstRepository;
-use Illuminate\Validation\ValidationException;
-use App\Http\Requests\Master\Api\ApiMstListRequest;
-use App\Http\Requests\Master\Api\ApiMstStoreRequest;
-use App\Http\Requests\Master\Api\ApiMstUpdateRequest;
-use App\Models\Master\ApiMst;
 
 class ApiMstService
 {
     public function __construct(
-        private ApiMstInterface $api
+        protected ApiMstInterface $api
     )
     {
     }
@@ -63,7 +53,7 @@ class ApiMstService
      * Delete api
      *
      * @param array $payload
-     * @return Void
+     * @return void
      */
     public function delete(array $payload): void
     {

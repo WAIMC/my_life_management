@@ -20,6 +20,7 @@ class BannerMgmt extends Model
         'image',
         'position',
         'status',
+        'is_delete',
         'created_at',
         'updated_at'
     ];

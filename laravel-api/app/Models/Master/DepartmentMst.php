@@ -21,7 +21,8 @@ class DepartmentMst extends Model
     protected $fillable = [
         'code',
         'name',
-        'status'
+        'status',
+        'is_delete',
     ];
 
     /**

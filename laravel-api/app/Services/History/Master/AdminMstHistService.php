@@ -5,124 +5,64 @@ namespace App\Services\History\Master;
 use App\Interfaces\History\Master\AdminMstHistInterface;
 use App\Interfaces\Master\AdminMstInterface;
 use App\Http\Resources\History\Master\AdminMstHistResource;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class AdminMstHistService
 {
-    protected AdminMstHistInterface $adminMstHistRepository;
-    protected AdminMstInterface $adminMstRepository;
-
     /**
      * Constructor
      *
-     * @param AdminMstHistInterface $adminMstHistRepository
-     * @param AdminMstInterface $adminMstRepository
+     * @param AdminMstHistInterface $adminMstHist
+     * @param AdminMstInterface $adminMst
      */
     public function __construct(
-        AdminMstHistInterface $adminMstHistRepository,
-        AdminMstInterface     $adminMstRepository
-    )
-    {
-        $this->adminMstHistRepository = $adminMstHistRepository;
-        $this->adminMstRepository = $adminMstRepository;
-    }
+        protected AdminMstHistInterface $adminMstHist,
+        protected AdminMstInterface     $adminMst
+    ) {}
 
     /**
-     * Get all admin history records
+     * Handle find admin list
      *
      * @param array $payload
-     * @return mixed
+     * @return JsonResource
      */
-    public function getAll(array $payload): mixed
+    public function list(array $payload): JsonResource
     {
-        $records = $this->adminMstHistRepository->getAll($payload);
-        return AdminMstHistResource::collection($records);
+        $list = $this->adminMstHist->list($payload);
+
+        return AdminMstHistResource::collection($list);
     }
 
     /**
-     * Get admin history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed
-    {
-        try {
-            $record = $this->adminMstHistRepository->getById($id);
-            return new AdminMstHistResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Admin history record not found: ' . $id);
-            throw $e;
-        }
-    }
-
-    /**
-     * Create new admin history record
+     * Handle store admin
      *
      * @param array $payload
-     * @return mixed
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function store(array $payload): int
     {
-        // Validate admin_mst_id exists
-        if (isset($payload['admin_mst_id'])) {
-            try {
-                $this->adminMstRepository->getById($payload['admin_mst_id']);
-            } catch (ModelNotFoundException $e) {
-                Log::error('Referenced admin_mst not found: ' . $payload['admin_mst_id']);
-                throw new Exception('Referenced admin does not exist');
-            }
-        }
-
-        $record = $this->adminMstHistRepository->create($payload);
-        return new AdminMstHistResource($record);
+        return $this->adminMstHist->executeStore($payload);
     }
 
     /**
-     * Update admin history record
+     * Handle update account
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function update(array $payload): int
     {
-        try {
-            // Validate admin_mst_id exists if it's being updated
-            if (isset($payload['admin_mst_id'])) {
-                try {
-                    $this->adminMstRepository->getById($payload['admin_mst_id']);
-                } catch (ModelNotFoundException $e) {
-                    Log::error('Referenced admin_mst not found: ' . $payload['admin_mst_id']);
-                    throw new Exception('Referenced admin does not exist');
-                }
-            }
-
-            $record = $this->adminMstHistRepository->update($payload, $id);
-            return new AdminMstHistResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Admin history record not found for update: ' . $id);
-            throw $e;
-        }
+        return $this->adminMstHist->executeUpdate($payload);
     }
 
     /**
-     * Delete admin history record
+     * Delete account
      *
-     * @param int $id
-     * @return bool
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): bool
+    public function delete(array $payload): void
     {
-        try {
-            return $this->adminMstHistRepository->delete($id);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Admin history record not found for deletion: ' . $id);
-            throw $e;
-        }
+        $this->adminMstHist->executeDelete($payload['ids']);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Interfaces\Management;
 
 use Illuminate\Support\Collection;
+use App\Models\Management\BannerMgmt;
 
 interface BannerMgmtInterface
 {
@@ -18,17 +19,17 @@ interface BannerMgmtInterface
      * Create new banner
      *
      * @param array $payload
-     * @return int
+     * @return BannerMgmt
      */
-    public function executeStore(array $payload): int;
+    public function executeStore(array $payload): BannerMgmt;
 
     /**
      * Update banner
      *
      * @param array $payload
-     * @return int
+     * @return BannerMgmt
      */
-    public function executeUpdate(array $payload): int;
+    public function executeUpdate(array $payload): BannerMgmt;
 
     /**
      * Delete banner

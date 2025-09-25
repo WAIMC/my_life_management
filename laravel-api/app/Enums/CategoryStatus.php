@@ -1,10 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-class CategoryStatus
+enum CategoryStatus: int
 {
-    public const INACTIVE = 0;
-    public const ACTIVE = 1;
-    public const ARCHIVED = 2;
+    /**
+     * inactive
+     *
+     * @var int
+     */
+    case INACTIVE = 0;
+
+    /**
+     * inactive
+     *
+     * @var int
+     */
+    case ACTIVE = 1;
+
+    /**
+     * inactive
+     *
+     * @var int
+     */
+    case ARCHIVED = 2;
+
+    public static function getLabel(self|int $value): string
+    {
+        if (is_int($value)) {
+            $value = self::tryFrom($value);
+        }
+
+        return match ($value) {
+            self::INACTIVE => 'inactive',
+            self::ACTIVE => 'active',
+            self::ARCHIVED => 'archived',
+            default => '',
+        };
+    }
+
+    public function label(): string
+    {
+        return self::getLabel($this);
+    }
 }

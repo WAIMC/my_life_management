@@ -4,118 +4,61 @@ namespace App\Services\History\Master;
 
 use App\Http\Resources\History\Master\LanguageMstHistResource;
 use App\Interfaces\History\Master\LanguageMstHistInterface;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class LanguageMstHistService
 {
     /**
-     * @var LanguageMstHistInterface
-     */
-    protected LanguageMstHistInterface $languageMstHistRepository;
-
-    /**
      * LanguageMstHistService constructor.
      *
-     * @param LanguageMstHistInterface $languageMstHistRepository
+     * @param LanguageMstHistInterface $languageMstHist
      */
-    public function __construct(LanguageMstHistInterface $languageMstHistRepository)
-    {
-        $this->languageMstHistRepository = $languageMstHistRepository;
-    }
+    public function __construct(protected LanguageMstHistInterface $languageMstHist)
+    {}
 
     /**
-     * Get list of language history
+     * Handle find language list
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getList(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $result = $this->languageMstHistRepository->getList($payload);
-        return LanguageMstHistResource::collection($result);
+        $list = $this->languageMstHist->list($payload);
+
+        return LanguageMstHistResource::collection($list);
     }
 
     /**
-     * Get language history by ID
-     *
-     * @param int $id
-     * @return LanguageMstHistResource
-     */
-    public function getById(int $id): LanguageMstHistResource
-    {
-        $languageHist = $this->languageMstHistRepository->getById($id);
-        return new LanguageMstHistResource($languageHist);
-    }
-
-    /**
-     * Create language history
+     * Handle store language history
      *
      * @param array $payload
-     * @return LanguageMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function store(array $payload): LanguageMstHistResource
+    public function store(array $payload): int
     {
-        try {
-            DB::beginTransaction();
-
-            $languageHist = $this->languageMstHistRepository->create($payload);
-
-            DB::commit();
-
-            return new LanguageMstHistResource($languageHist);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->languageMstHist->executeStore($payload);
     }
 
     /**
-     * Update language history
+     * Handle update language history
      *
      * @param array $payload
-     * @param int $id
-     * @return LanguageMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id): LanguageMstHistResource
+    public function update(array $payload): int
     {
-        try {
-            DB::beginTransaction();
-
-            $languageHist = $this->languageMstHistRepository->update($payload, $id);
-
-            DB::commit();
-
-            return new LanguageMstHistResource($languageHist);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->languageMstHist->executeUpdate($payload);
     }
 
     /**
      * Delete language history
      *
-     * @param int $id
-     * @return mixed
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function delete(array $payload): void
     {
-        try {
-            DB::beginTransaction();
-
-            $result = $this->languageMstHistRepository->delete($id);
-
-            DB::commit();
-
-            return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        $this->languageMstHist->executeDelete($payload['ids']);
     }
 }

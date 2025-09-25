@@ -2,7 +2,12 @@
 
 namespace App\Http\Requests\History\Management\Banner;
 
+use App\Models\Management\BannerMgmt;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Constants\CommonVal;
+use App\Enums\ActionType;
+use App\Enums\StatusEnum;
 
 class StoreBannerMgmtHistRequest extends FormRequest
 {
@@ -24,16 +29,16 @@ class StoreBannerMgmtHistRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'banner_mgmt_id' => 'required|integer|exists:banner_mgmt,id',
-            'title' => 'nullable|string|max:50',
-            'slug' => 'nullable|string|max:50',
-            'description' => 'nullable|string|max:255',
-            'link' => 'nullable|string|max:100',
-            'image' => 'nullable|string|max:100',
-            'position' => 'nullable|string|max:50',
-            'status' => 'nullable|integer',
-            'action' => 'required|integer|in:1,2,3',
-            'author_id' => 'required|integer|exists:admin_mst,id',
+            'banner_mgmt_id' => ['required', 'integer', Rule::exists(BannerMgmt::class, 'id')],
+            'title' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR],
+            'slug' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR],
+            'description' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR],
+            'link' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR],
+            'image' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR],
+            'position' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR],
+            'status' => ['nullable', 'integer', Rule::enum(StatusEnum::class)],
+            'action' => ['required', 'integer', Rule::enum(ActionType::class)],
+            'author_id' => ['required', 'integer', 'exists:admin_mst,id'],
         ];
     }
 

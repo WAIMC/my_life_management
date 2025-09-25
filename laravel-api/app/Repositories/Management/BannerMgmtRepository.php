@@ -3,6 +3,7 @@
 namespace App\Repositories\Management;
 
 use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Models\Management\BannerMgmt;
 use App\Repositories\BaseRepository;
@@ -62,9 +63,9 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
      * Create new banner
      *
      * @param array $payload
-     * @return int
+     * @return BannerMgmt
      */
-    public function executeStore(array $payload): int
+    public function executeStore(array $payload): BannerMgmt
     {
         $data = [];
         $data['title'] = $payload['title'];
@@ -76,16 +77,16 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
         $data['status'] = $payload['status'] ?? '';
         $this->model->create($data);
 
-        return $this->model->id;
+        return $this->model;
     }
 
     /**
      * Update banner by ID
      *
      * @param array $payload
-     * @return int
+     * @return BannerMgmt
      */
-    public function executeUpdate(array $payload): int
+    public function executeUpdate(array $payload): BannerMgmt
     {
         $data = $this->model->findById($payload['id']);
         $data['title'] = $payload['title'];
@@ -97,7 +98,7 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
         $data['status'] = $payload['status'];
         $data->save();
 
-        return $data->id;
+        return $data;
     }
 
     /**
@@ -108,6 +109,6 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
 }

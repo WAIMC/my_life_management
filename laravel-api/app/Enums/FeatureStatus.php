@@ -1,13 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-class FeatureStatus
+enum FeatureStatus: int
 {
-    const INACTIVE = 0;
-    const ACTIVE = 1;
-    const DRAFT = 2;
-    const ARCHIVED = 3;
+    /**
+     * Inactive
+     *
+     * @var int
+     */
+    case INACTIVE = 0;
+
+    /**
+     * Active
+     *
+     * @var int
+     */
+    case ACTIVE = 1;
+
+    /**
+     * Draft
+     *
+     * @var int
+     */
+    case DRAFT = 2;
+
+    /**
+     * Archived
+     *
+     * @var int
+     */
+    case ARCHIVED = 3;
 
     /**
      * Get all status options as array

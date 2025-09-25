@@ -16,7 +16,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 class AdminMstService
 {
     public function __construct(
-        private AdminMstInterface $admin
+        protected AdminMstInterface $admin
     )
     {
     }
@@ -35,7 +35,7 @@ class AdminMstService
     }
 
     /**
-     * Handle store account admin
+     * Handle store admin
      *
      * @param array $payload
      * @return int
@@ -46,7 +46,7 @@ class AdminMstService
     }
 
     /**
-     * Handle update account
+     * Handle update admin
      *
      * @param array $payload
      * @return int
@@ -57,7 +57,7 @@ class AdminMstService
     }
 
     /**
-     * Delete account
+     * Delete admin
      *
      * @param array $payload
      * @return void
@@ -68,7 +68,7 @@ class AdminMstService
     }
 
     /**
-     * Handle login account
+     * Handle login admin
      *
      * @param array $payload
      * @return array

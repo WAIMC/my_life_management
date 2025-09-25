@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->boolean('is_display')->default(false)->comment('Display skill');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Rank order');
             $table->unsignedInteger('skill_id')->comment('Skill ID');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->unsignedTinyInteger('status')->default(0)->comment('Category status');
             $table->boolean('is_display')->default(false)->comment('Display category');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Category order');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
 
             // Self-referencing foreign key

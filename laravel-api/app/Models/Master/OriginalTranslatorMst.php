@@ -25,6 +25,7 @@ class OriginalTranslatorMst extends Model
         'table',
         'column',
         'field_id',
+        'is_delete',
         'created_at',
         'updated_at'
     ];

@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('link', 100)->comment('Slider path image');
             $table->string('image', 100)->comment('Slider image name');
             $table->unsignedTinyInteger('status')->default(0)->comment('Slider image');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

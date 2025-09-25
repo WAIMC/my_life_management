@@ -86,10 +86,9 @@ class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
      * Update feature
      *
      * @param array $payload
-     * @param int $id
      * @return int
      */
-    public function executeUpdate(array $payload, int $id): int
+    public function executeUpdate(array $payload): int
     {
         $data = $this->model->findById($payload['id']);
         $data['name'] = $payload['name'] ?? null;

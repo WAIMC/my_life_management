@@ -7,19 +7,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use LogicException;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Services\CommonService;
-use App\Services\SingletonService;
 use App\Http\Resources\Master\ApiRoleResource;
-use App\Repositories\Master\ApiRoleMstRepository;
-use Illuminate\Validation\ValidationException;
-use App\Http\Requests\Master\ApiRole\ApiRoleMstListRequest;
-use App\Http\Requests\Master\ApiRole\ApiRoleMstUpdateRequest;
-use App\Repositories\Master\RoleMstRepository;
 
 class ApiRoleMstService
 {
     public function __construct(
-        private ApiRoleMstInterface $apiRole,
+        protected ApiRoleMstInterface $apiRole,
     )
     {
     }
@@ -45,9 +38,6 @@ class ApiRoleMstService
      */
     public function update(array $payload): bool
     {
-        // TODO: Check current request role edit another role
-        // Tip : create parent role and child role
-
         // Don't allow editing of personal role without role admin
         if ($this->apiRole->isMyRole($payload)) {
             throw new LogicException(Messages::E0018, CommonVal::HTTP_UNPROCESSABLE_CONTENT);

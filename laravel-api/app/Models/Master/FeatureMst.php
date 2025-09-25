@@ -27,7 +27,8 @@ class FeatureMst extends Model
         'name',
         'group_name',
         'description',
-        'status'
+        'status',
+        'is_delete',
     ];
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->increments('id');
             $table->string('key', 30)->comment('Setting link key');
             $table->string('value', 100)->comment('Setting link value');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

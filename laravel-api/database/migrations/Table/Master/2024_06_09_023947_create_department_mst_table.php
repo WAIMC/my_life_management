@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('code', 50)->comment('Department code');
             $table->string('name', 50)->comment('Department name');
             $table->unsignedTinyInteger('status')->default(0)->comment('Department status');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

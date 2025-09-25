@@ -4,160 +4,61 @@ namespace App\Services\Master;
 
 use App\Interfaces\Master\PolicyDepartmentMstInterface;
 use App\Http\Resources\Master\PolicyDepartmentMstResource;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class PolicyDepartmentMstService
 {
-    protected PolicyDepartmentMstInterface $policyDepartmentMstRepository;
-
     /**
      * Constructor
      *
-     * @param PolicyDepartmentMstInterface $policyDepartmentMstRepository
+     * @param PolicyDepartmentMstInterface $policyDepartmentMst
      */
-    public function __construct(PolicyDepartmentMstInterface $policyDepartmentMstRepository)
-    {
-        $this->policyDepartmentMstRepository = $policyDepartmentMstRepository;
-    }
+    public function __construct(protected PolicyDepartmentMstInterface $policyDepartmentMst)
+    {}
 
     /**
      * Get all policy departments with optional filtering
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $records = $this->policyDepartmentMstRepository->getAll($payload);
-        return PolicyDepartmentMstResource::collection($records);
-    }
+        $list = $this->policyDepartmentMst->list($payload);
 
-    /**
-     * Get policy department by ID
-     *
-     * @param int $id
-     * @return PolicyDepartmentMstResource
-     */
-    public function getById(int $id): PolicyDepartmentMstResource
-    {
-        try {
-            $record = $this->policyDepartmentMstRepository->getById($id);
-            return new PolicyDepartmentMstResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Policy department not found: ' . $id);
-            throw $e;
-        }
-    }
-
-    /**
-     * Get policy departments by table name
-     *
-     * @param string $tableName
-     * @return AnonymousResourceCollection
-     */
-    public function getByTableName(string $tableName): AnonymousResourceCollection
-    {
-        $records = $this->policyDepartmentMstRepository->getByTableName($tableName);
-        return PolicyDepartmentMstResource::collection($records);
-    }
-
-    /**
-     * Get policy department by table name and row ID
-     *
-     * @param string $tableName
-     * @param int $rowId
-     * @return PolicyDepartmentMstResource
-     */
-    public function getByTableNameAndRowId(string $tableName, int $rowId): PolicyDepartmentMstResource
-    {
-        try {
-            $record = $this->policyDepartmentMstRepository->getByTableNameAndRowId($tableName, $rowId);
-            return new PolicyDepartmentMstResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Policy department not found for table ' . $tableName . ' and row ' . $rowId);
-            throw $e;
-        }
+        return PolicyDepartmentMstResource::collection($list);
     }
 
     /**
      * Create new policy department
      *
      * @param array $payload
-     * @return PolicyDepartmentMstResource
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): PolicyDepartmentMstResource
+    public function store(array $payload): int
     {
-        // Check if a policy with the same table_name and row_id already exists
-        try {
-            $this->policyDepartmentMstRepository->getByTableNameAndRowId($payload['table_name'], $payload['row_id']);
-            throw new Exception('Policy department for table ' . $payload['table_name'] . ' and row ' . $payload['row_id'] . ' already exists');
-        } catch (ModelNotFoundException $e) {
-            // This is what we want - record doesn't exist yet
-            $record = $this->policyDepartmentMstRepository->create($payload);
-            return new PolicyDepartmentMstResource($record);
-        }
+        return $this->policyDepartmentMst->executeStore($payload);
     }
 
     /**
      * Update policy department
      *
      * @param array $payload
-     * @param int $id
-     * @return PolicyDepartmentMstResource
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id): PolicyDepartmentMstResource
+    public function update(array $payload): int
     {
-        try {
-            // Check if updating table_name and row_id would create a duplicate
-            if (isset($payload['table_name']) && isset($payload['row_id'])) {
-                try {
-                    $existingRecord = $this->policyDepartmentMstRepository->getByTableNameAndRowId(
-                        $payload['table_name'],
-                        $payload['row_id']
-                    );
-
-                    if ($existingRecord->id != $id) {
-                        throw new Exception('Another policy department for table ' . $payload['table_name'] . ' and row ' . $payload['row_id'] . ' already exists');
-                    }
-                } catch (ModelNotFoundException $e) {
-                    // This is fine - no duplicate exists
-                }
-            }
-
-            $record = $this->policyDepartmentMstRepository->update($payload, $id);
-            return new PolicyDepartmentMstResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Policy department not found for update: ' . $id);
-            throw $e;
-        }
+        return $this->policyDepartmentMst->executeUpdate($payload);
     }
 
     /**
      * Delete policy department
      *
-     * @param int $id
-     * @return bool
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): bool
+    public function delete(array $payload): void
     {
-        try {
-            // Check if the policy department is used in any department management relation
-            $policyDepartment = $this->policyDepartmentMstRepository->getById($id);
-
-            if ($policyDepartment->departmentManagements()->count() > 0) {
-                throw new Exception('Cannot delete policy department that is used in department management relations');
-            }
-
-            return $this->policyDepartmentMstRepository->delete($id);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Policy department not found for deletion: ' . $id);
-            throw $e;
-        }
+        $this->policyDepartmentMst->executeDelete($payload['ids']);
     }
 }

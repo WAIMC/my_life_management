@@ -21,7 +21,14 @@ class ApiMst extends Model
      *
      * @var array
      */
-    protected $fillable = ['type', 'name', 'path', 'is_active', 'feature_id'];
+    protected $fillable = [
+        'type',
+        'name',
+        'path',
+        'is_active',
+        'feature_id',
+        'is_delete',
+    ];
 
     /**
      * Indicates if the model should be timestamped.

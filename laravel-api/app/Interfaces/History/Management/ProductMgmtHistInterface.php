@@ -2,46 +2,39 @@
 
 namespace App\Interfaces\History\Management;
 
+use Illuminate\Support\Collection;
+
 interface ProductMgmtHistInterface
 {
     /**
-     * Get all product history records with optional filtering
+     * Get product master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Get product history record by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id): mixed;
-
-    /**
-     * Create a new product history record
+     * Create new product master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update an existing product history record
+     * Update product master history
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete a product history record
+     * Delete product master history
      *
-     * @param int $id
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): mixed;
+    public function executeDelete(array $ids): void;
 }

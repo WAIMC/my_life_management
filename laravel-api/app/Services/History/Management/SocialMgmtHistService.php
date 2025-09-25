@@ -4,114 +4,60 @@ namespace App\Services\History\Management;
 
 use App\Interfaces\History\Management\SocialMgmtHistInterface;
 use App\Http\Resources\History\Management\SocialMgmtHistResource;
-use App\Exceptions\NotFoundException;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class SocialMgmtHistService
 {
-    protected $socialMgmtHistRepository;
-    
     /**
      * Constructor
      * 
-     * @param SocialMgmtHistInterface $socialMgmtHistRepository
+     * @param SocialMgmtHistInterface $socialMgmtHist
      */
-    public function __construct(SocialMgmtHistInterface $socialMgmtHistRepository)
-    {
-        $this->socialMgmtHistRepository = $socialMgmtHistRepository;
-    }
-    
+    public function __construct(protected SocialMgmtHistInterface $socialMgmtHist) {}
+
     /**
-     * Get social history list
-     * 
+     * Handle find admin list
+     *
      * @param array $payload
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function list(array $payload)
+    public function list(array $payload): JsonResource
     {
-        $socialHistList = $this->socialMgmtHistRepository->list($payload);
-        
-        return SocialMgmtHistResource::collection($socialHistList);
+        $list = $this->socialMgmtHist->list($payload);
+
+        return SocialMgmtHistResource::collection($list);
     }
-    
+
     /**
-     * Get social history by ID
-     * 
-     * @param int $id
-     * @return SocialMgmtHistResource
-     * @throws NotFoundException
-     */
-    public function getById(int $id)
-    {
-        $socialHist = $this->socialMgmtHistRepository->getById($id);
-        
-        if (!$socialHist) {
-            throw new NotFoundException('Social history not found');
-        }
-        
-        return new SocialMgmtHistResource($socialHist);
-    }
-    
-    /**
-     * Get social history by social mgmt ID
-     * 
-     * @param int $socialMgmtId
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
-    public function getBySocialMgmtId(int $socialMgmtId)
-    {
-        $socialHistList = $this->socialMgmtHistRepository->getBySocialMgmtId($socialMgmtId);
-        
-        return SocialMgmtHistResource::collection($socialHistList);
-    }
-    
-    /**
-     * Store new social history
-     * 
+     * Handle store admin
+     *
      * @param array $payload
-     * @return SocialMgmtHistResource
+     * @return int
      */
-    public function store(array $payload)
+    public function store(array $payload): int
     {
-        $socialHist = $this->socialMgmtHistRepository->store($payload);
-        
-        return new SocialMgmtHistResource($socialHist);
+        return $this->socialMgmtHist->executeStore($payload);
     }
-    
+
     /**
-     * Update social history
-     * 
+     * Handle update account
+     *
      * @param array $payload
-     * @param int $id
-     * @return SocialMgmtHistResource
-     * @throws NotFoundException
+     * @return int
      */
-    public function update(array $payload, int $id)
+    public function update(array $payload): int
     {
-        $socialHist = $this->socialMgmtHistRepository->update($payload, $id);
-        
-        if (!$socialHist) {
-            throw new NotFoundException('Social history not found');
-        }
-        
-        return new SocialMgmtHistResource($socialHist);
+        return $this->socialMgmtHist->executeUpdate($payload);
     }
-    
+
     /**
-     * Delete social history
-     * 
-     * @param int $id
-     * @return bool
-     * @throws NotFoundException
+     * Delete account
+     *
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id)
+    public function delete(array $payload): void
     {
-        $deleted = $this->socialMgmtHistRepository->delete($id);
-        
-        if (!$deleted) {
-            throw new NotFoundException('Social history not found');
-        }
-        
-        return true;
+        $this->socialMgmtHist->executeDelete($payload['ids']);
     }
 }

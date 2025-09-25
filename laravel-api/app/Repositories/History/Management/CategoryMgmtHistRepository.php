@@ -2,33 +2,34 @@
 
 namespace App\Repositories\History\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Management\CategoryMgmtHistInterface;
 use App\Models\History\Management\CategoryMgmtHist;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class CategoryMgmtHistRepository implements CategoryMgmtHistInterface
+class CategoryMgmtHistRepository extends BaseRepository implements CategoryMgmtHistInterface
 {
-    protected CategoryMgmtHist $model;
-
-    /**
-     * CategoryMgmtHistRepository constructor
-     */
-    public function __construct()
+    public function __construct(CategoryMgmtHist $model)
     {
-        $this->model = new CategoryMgmtHist();
+        parent::__construct($model);
     }
 
     /**
      * Get all category history records with filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters from payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['category_mgmt_id'])) {
             $query->where('category_mgmt_id', $payload['category_mgmt_id']);
         }
@@ -42,104 +43,76 @@ class CategoryMgmtHistRepository implements CategoryMgmtHistInterface
         }
 
         if (isset($payload['from_date'])) {
-            $query->where('created_at', '>=', $payload['from_date']);
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
-            $query->where('created_at', '<=', $payload['to_date']);
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Apply sorting
-        $sortBy = $payload['sort_by'] ?? 'created_at';
-        $sortOrder = $payload['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
+        $query->orderBy('id', 'desc');
 
-        // Apply pagination
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
-    }
-
-    /**
-     * Find category history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed
-    {
-        return $this->model->find($id);
-    }
-
-    /**
-     * Find category history by category ID
-     *
-     * @param int $categoryId
-     * @return mixed
-     */
-    public function findByCategoryId(int $categoryId): mixed
-    {
-        return $this->model->where('category_mgmt_id', $categoryId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        return $query->get();
     }
 
     /**
      * Create new category history record
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        $categoryHistory = new $this->model;
+        $data = [];
+        $data['category_mgmt_id'] = $payload['category_mgmt_id'];
+        $data['parent_id'] = $payload['parent_id'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
 
-        if (isset($payload['category_mgmt_id'])) {
-            $categoryHistory->category_mgmt_id = $payload['category_mgmt_id'];
-        }
+        return $this->model->id;
+    }
 
-        if (isset($payload['parent_id'])) {
-            $categoryHistory->parent_id = $payload['parent_id'];
-        }
+    /**
+     * Update category history record
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function executeUpdate(array $payload): int
+    {
+        $data = $this->model->findById($payload['id']);
+        $data['category_mgmt_id'] = $payload['category_mgmt_id'];
+        $data['parent_id'] = $payload['parent_id'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
 
-        if (isset($payload['name'])) {
-            $categoryHistory->name = $payload['name'];
-        }
+        return $data->id;
+    }
 
-        if (isset($payload['slug'])) {
-            $categoryHistory->slug = $payload['slug'];
-        }
-
-        if (isset($payload['description'])) {
-            $categoryHistory->description = $payload['description'];
-        }
-
-        if (isset($payload['status'])) {
-            $categoryHistory->status = $payload['status'];
-        }
-
-        if (isset($payload['is_display'])) {
-            $categoryHistory->is_display = $payload['is_display'];
-        }
-
-        if (isset($payload['rank_order'])) {
-            $categoryHistory->rank_order = $payload['rank_order'];
-        }
-
-        if (isset($payload['action'])) {
-            $categoryHistory->action = $payload['action'];
-        }
-
-        if (isset($payload['author_id'])) {
-            $categoryHistory->author_id = $payload['author_id'];
-        }
-
-        if (isset($payload['created_at'])) {
-            $categoryHistory->created_at = $payload['created_at'];
-        } else {
-            $categoryHistory->created_at = now()->format('Y-m-d H:i:s');
-        }
-
-        $categoryHistory->save();
-        return $categoryHistory;
+    /**
+     * Delete category history record
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void
+    {
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

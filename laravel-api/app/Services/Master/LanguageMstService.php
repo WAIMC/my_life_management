@@ -4,155 +4,61 @@ namespace App\Services\Master;
 
 use App\Interfaces\Master\LanguageMstInterface;
 use App\Http\Resources\Master\LanguageMstResource;
-use Exception;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class LanguageMstService
 {
     /**
-     * @var LanguageMstInterface
-     */
-    protected $languageMstRepository;
-
-    /**
      * LanguageMstService constructor.
      *
-     * @param LanguageMstInterface $languageMstRepository
+     * @param LanguageMstInterface $languageMst
      */
-    public function __construct(LanguageMstInterface $languageMstRepository)
-    {
-        $this->languageMstRepository = $languageMstRepository;
-    }
+    public function __construct(protected LanguageMstInterface $languageMst)
+    {}
 
     /**
      * Get all languages
      *
      * @param array $payload
-     * @return array
+     * @return JsonResource
      */
-    public function getAll(array $payload): array
+    public function list(array $payload): JsonResource
     {
-        try {
-            $languages = $this->languageMstRepository->getAll($payload);
-            return [
-                'success' => true,
-                'data' => LanguageMstResource::collection($languages),
-                'pagination' => [
-                    'total' => $languages->total(),
-                    'per_page' => $languages->perPage(),
-                    'current_page' => $languages->currentPage(),
-                    'last_page' => $languages->lastPage(),
-                ],
-                'message' => 'Languages retrieved successfully',
-            ];
-        } catch (Exception $e) {
-            Log::error('Error retrieving languages: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Failed to retrieve languages',
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
+        $list = $this->languageMst->list($payload);
 
-    /**
-     * Get language by ID
-     *
-     * @param int $id
-     * @return array
-     */
-    public function getById(int $id): array
-    {
-        try {
-            $language = $this->languageMstRepository->getById($id);
-            return [
-                'success' => true,
-                'data' => new LanguageMstResource($language),
-                'message' => 'Language retrieved successfully',
-            ];
-        } catch (Exception $e) {
-            Log::error('Error retrieving language: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Failed to retrieve language',
-                'error' => $e->getMessage(),
-            ];
-        }
+        return LanguageMstResource::collection($list);
     }
 
     /**
      * Create new language
      *
      * @param array $payload
-     * @return array
+     * @return int
      */
-    public function create(array $payload): array
+    public function store(array $payload): int
     {
-        try {
-            $language = $this->languageMstRepository->create($payload);
-            return [
-                'success' => true,
-                'data' => new LanguageMstResource($language),
-                'message' => 'Language created successfully',
-            ];
-        } catch (Exception $e) {
-            Log::error('Error creating language: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Failed to create language',
-                'error' => $e->getMessage(),
-            ];
-        }
+        return $this->languageMst->executeStore($payload);
     }
 
     /**
      * Update language
      *
      * @param array $payload
-     * @param int $id
-     * @return array
+     * @return int
      */
-    public function update(array $payload, int $id): array
+    public function update(array $payload): int
     {
-        try {
-            $language = $this->languageMstRepository->update($payload, $id);
-            return [
-                'success' => true,
-                'data' => new LanguageMstResource($language),
-                'message' => 'Language updated successfully',
-            ];
-        } catch (Exception $e) {
-            Log::error('Error updating language: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Failed to update language',
-                'error' => $e->getMessage(),
-            ];
-        }
+        return $this->languageMst->executeUpdate($payload);
     }
 
     /**
      * Delete language
      *
-     * @param int $id
-     * @return array
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): array
+    public function delete(array $payload): void
     {
-        try {
-            $this->languageMstRepository->delete($id);
-            return [
-                'success' => true,
-                'message' => 'Language deleted successfully',
-            ];
-        } catch (Exception $e) {
-            Log::error('Error deleting language: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Failed to delete language',
-                'error' => $e->getMessage(),
-            ];
-        }
+        $this->languageMst->executeDelete($payload['ids']);
     }
 }

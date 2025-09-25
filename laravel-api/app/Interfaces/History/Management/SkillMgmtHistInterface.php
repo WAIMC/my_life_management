@@ -2,37 +2,39 @@
 
 namespace App\Interfaces\History\Management;
 
+use Illuminate\Support\Collection;
+
 interface SkillMgmtHistInterface
 {
     /**
-     * Get all skill history records
+     * Get skill master history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload = []): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Find skill history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed;
-
-    /**
-     * Find skill history records by skill ID
-     *
-     * @param int $skillId
-     * @return mixed
-     */
-    public function findBySkillId(int $skillId): mixed;
-
-    /**
-     * Create a new skill history record
+     * Create new skill master history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
+
+    /**
+     * Update skill master history
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function executeUpdate(array $payload): int;
+
+    /**
+     * Delete skill master history
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void;
 }

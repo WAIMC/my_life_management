@@ -25,6 +25,7 @@ return new class extends Migration {
             $table->boolean('is_active')->default(false)->comment('User active');
             $table->string('avatar', 30)->nullable()->comment('User avatar name');
             $table->timestamp('email_verified_at')->nullable()->comment('Verified email time');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->rememberToken();
             $table->timestamps();
         });

@@ -4,120 +4,61 @@ namespace App\Services\History\Master;
 
 use App\Interfaces\History\Master\OriginalTranslatorMstHistInterface;
 use App\Http\Resources\History\Master\OriginalTranslatorMstHistResource;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class OriginalTranslatorMstHistService
 {
     /**
-     * @var OriginalTranslatorMstHistInterface
-     */
-    protected OriginalTranslatorMstHistInterface $originalTranslatorMstHistRepository;
-
-    /**
      * OriginalTranslatorMstHistService constructor.
      *
-     * @param OriginalTranslatorMstHistInterface $originalTranslatorMstHistRepository
+     * @param OriginalTranslatorMstHistInterface $originalTranslatorMstHist
      */
-    public function __construct(OriginalTranslatorMstHistInterface $originalTranslatorMstHistRepository)
-    {
-        $this->originalTranslatorMstHistRepository = $originalTranslatorMstHistRepository;
-    }
+    public function __construct(protected OriginalTranslatorMstHistInterface $originalTranslatorMstHist)
+    {}
 
     /**
-     * Get all history records.
+     * Handle find admin list
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $records = $this->originalTranslatorMstHistRepository->getAll($payload);
-        return OriginalTranslatorMstHistResource::collection($records);
+        $list = $this->originalTranslatorMstHist->list($payload);
+
+        return OriginalTranslatorMstHistResource::collection($list);
     }
 
     /**
-     * Get history record by ID.
-     *
-     * @param int $id
-     * @return OriginalTranslatorMstHistResource
-     */
-    public function getById(int $id): OriginalTranslatorMstHistResource
-    {
-        try {
-            $record = $this->originalTranslatorMstHistRepository->getById($id);
-            return new OriginalTranslatorMstHistResource($record);
-        } catch (ModelNotFoundException $e) {
-            throw new ModelNotFoundException('History record not found');
-        }
-    }
-
-    /**
-     * Create new history record.
+     * Handle store original translator history
      *
      * @param array $payload
-     * @return OriginalTranslatorMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): OriginalTranslatorMstHistResource
+    public function store(array $payload): int
     {
-        DB::beginTransaction();
-        try {
-            $record = $this->originalTranslatorMstHistRepository->create($payload);
-            DB::commit();
-            return new OriginalTranslatorMstHistResource($record);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->originalTranslatorMstHist->executeStore($payload);
     }
 
     /**
-     * Update history record.
+     * Handle update original translator history
      *
      * @param array $payload
-     * @param int $id
-     * @return OriginalTranslatorMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id): OriginalTranslatorMstHistResource
+    public function update(array $payload): int
     {
-        DB::beginTransaction();
-        try {
-            $record = $this->originalTranslatorMstHistRepository->update($payload, $id);
-            DB::commit();
-            return new OriginalTranslatorMstHistResource($record);
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
-            throw new ModelNotFoundException('History record not found');
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->originalTranslatorMstHist->executeUpdate($payload);
     }
 
     /**
-     * Delete history record.
+     * Delete original translator history
      *
-     * @param int $id
-     * @return bool
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): bool
+    public function delete(array $payload): void
     {
-        DB::beginTransaction();
-        try {
-            $result = $this->originalTranslatorMstHistRepository->delete($id);
-            DB::commit();
-            return $result;
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
-            throw new ModelNotFoundException('History record not found');
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        $this->originalTranslatorMstHist->executeDelete($payload['ids']);
     }
 }

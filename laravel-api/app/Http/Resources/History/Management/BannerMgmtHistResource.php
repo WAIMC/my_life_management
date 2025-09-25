@@ -3,7 +3,7 @@
 namespace App\Http\Resources\History\Management;
 
 use App\Enums\ActionType;
-use App\Enums\BannerStatus;
+use App\Enums\StatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -49,9 +49,9 @@ class BannerMgmtHistResource extends JsonResource
         }
 
         return match ($this->status) {
-            BannerStatus::DRAFT => 'Draft',
-            BannerStatus::PUBLISHED => 'Published',
-            BannerStatus::ARCHIVED => 'Archived',
+            StatusEnum::DRAFT => 'Draft',
+            StatusEnum::PUBLISHED => 'Published',
+            StatusEnum::ARCHIVED => 'Archived',
             default => 'Unknown',
         };
     }

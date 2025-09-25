@@ -2,54 +2,39 @@
 
 namespace App\Interfaces\History\Management;
 
+use Illuminate\Support\Collection;
+
 interface SocialMgmtHistInterface
 {
     /**
-     * Get social history list with conditions
-     * 
+     * Get social history list
+     *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function list(array $payload);
-    
+    public function list(array $payload): Collection;
+
     /**
-     * Get social history by ID
-     * 
-     * @param int $id
-     * @return mixed
-     */
-    public function getById(int $id);
-    
-    /**
-     * Get social history by social mgmt ID
-     * 
-     * @param int $socialMgmtId
-     * @return mixed
-     */
-    public function getBySocialMgmtId(int $socialMgmtId);
-    
-    /**
-     * Store new social history
-     * 
+     * Create new social history
+     *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function store(array $payload);
-    
+    public function executeStore(array $payload): int;
+
     /**
      * Update social history
-     * 
+     *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id);
-    
+    public function executeUpdate(array $payload): int;
+
     /**
      * Delete social history
-     * 
-     * @param int $id
-     * @return mixed
+     *
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id);
+    public function executeDelete(array $ids): void;
 }

@@ -4,105 +4,60 @@ namespace App\Services\Master;
 
 use App\Interfaces\Master\FeatureMstInterface;
 use App\Http\Resources\Master\FeatureMstResource;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class FeatureMstService
 {
-    protected FeatureMstInterface $featureMstRepository;
-
     /**
      * Constructor
      *
-     * @param FeatureMstInterface $featureMstRepository
+     * @param FeatureMstInterface $featureMst
      */
-    public function __construct(FeatureMstInterface $featureMstRepository)
-    {
-        $this->featureMstRepository = $featureMstRepository;
-    }
+    public function __construct(protected FeatureMstInterface $featureMst) {}
 
     /**
      * Get all features with optional filtering
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $records = $this->featureMstRepository->getAll($payload);
-        return FeatureMstResource::collection($records);
-    }
+        $list = $this->featureMst->list($payload);
 
-    /**
-     * Get feature by ID
-     *
-     * @param int $id
-     * @return FeatureMstResource
-     */
-    public function getById(int $id): FeatureMstResource
-    {
-        try {
-            $record = $this->featureMstRepository->getById($id);
-            return new FeatureMstResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Feature not found: ' . $id);
-            throw $e;
-        }
+        return FeatureMstResource::collection($list);
     }
 
     /**
      * Create new feature
      *
      * @param array $payload
-     * @return FeatureMstResource
+     * @return int
      */
-    public function create(array $payload): FeatureMstResource
+    public function store(array $payload): int
     {
-        $record = $this->featureMstRepository->create($payload);
-        return new FeatureMstResource($record);
+        return $this->featureMst->executeStore($payload);
     }
 
     /**
      * Update feature
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function update(array $payload): int
     {
-        try {
-            $record = $this->featureMstRepository->update($payload, $id);
-            return new FeatureMstResource($record);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Feature not found for update: ' . $id);
-            throw $e;
-        }
+        return $this->featureMst->executeUpdate($payload);
     }
 
     /**
      * Delete feature
      *
-     * @param int $id
-     * @return bool
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): bool
+    public function delete(array $payload): void
     {
-        try {
-            // Check if the feature is used by any API
-            $feature = $this->featureMstRepository->getById($id);
-
-            if ($feature->apiMst()->count() > 0) {
-                throw new Exception('Cannot delete feature that is used by APIs');
-            }
-
-            return $this->featureMstRepository->delete($id);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Feature not found for deletion: ' . $id);
-            throw $e;
-        }
+        $this->featureMst->executeDelete($payload['ids']);
     }
 }

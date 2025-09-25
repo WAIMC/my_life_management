@@ -32,7 +32,8 @@ class CategoryMgmt extends Model
         'description',
         'status',
         'is_display',
-        'rank_order'
+        'rank_order',
+        'is_delete',
     ];
 
     /**

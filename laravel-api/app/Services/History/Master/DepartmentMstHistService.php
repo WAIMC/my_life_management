@@ -5,154 +5,64 @@ namespace App\Services\History\Master;
 use App\Http\Resources\History\Master\DepartmentMstHistResource;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
 use App\Interfaces\Master\DepartmentMstInterface;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class DepartmentMstHistService
 {
     /**
-     * @var DepartmentMstHistInterface
-     */
-    protected DepartmentMstHistInterface $departmentMstHistRepository;
-
-    /**
-     * @var DepartmentMstInterface
-     */
-    protected DepartmentMstInterface $departmentMstRepository;
-
-    /**
      * DepartmentMstHistService constructor.
      *
-     * @param DepartmentMstHistInterface $departmentMstHistRepository
-     * @param DepartmentMstInterface $departmentMstRepository
+     * @param DepartmentMstHistInterface $departmentMstHist
+     * @param DepartmentMstInterface $departmentMst
      */
     public function __construct(
-        DepartmentMstHistInterface $departmentMstHistRepository,
-        DepartmentMstInterface $departmentMstRepository
-    ) {
-        $this->departmentMstHistRepository = $departmentMstHistRepository;
-        $this->departmentMstRepository = $departmentMstRepository;
-    }
+        protected DepartmentMstHistInterface $departmentMstHist,
+        protected DepartmentMstInterface $departmentMst
+    ) {}
 
     /**
-     * Get all department history records
+     * Handle find department list
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $result = $this->departmentMstHistRepository->getAll($payload);
-        return DepartmentMstHistResource::collection($result);
+        $list = $this->departmentMstHist->list($payload);
+
+        return DepartmentMstHistResource::collection($list);
     }
 
     /**
-     * Get department history record by ID
-     *
-     * @param int $id
-     * @return DepartmentMstHistResource
-     */
-    public function getById(int $id): DepartmentMstHistResource
-    {
-        $departmentMstHist = $this->departmentMstHistRepository->getById($id);
-
-        if (!$departmentMstHist) {
-            throw new NotFoundHttpException('Department history record not found');
-        }
-
-        return new DepartmentMstHistResource($departmentMstHist);
-    }
-
-    /**
-     * Get history records by department ID
-     *
-     * @param int $departmentMstId
-     * @param array $payload
-     * @return AnonymousResourceCollection
-     * @throws NotFoundHttpException
-     */
-    public function getByDepartmentId(int $departmentMstId, array $payload): AnonymousResourceCollection
-    {
-        $department = $this->departmentMstRepository->getById($departmentMstId);
-
-        if (!$department) {
-            throw new NotFoundHttpException('Department not found');
-        }
-
-        $result = $this->departmentMstHistRepository->getByDepartmentId($departmentMstId, $payload);
-        return DepartmentMstHistResource::collection($result);
-    }
-
-    /**
-     * Create new department history record
+     * Handle store department
      *
      * @param array $payload
-     * @return DepartmentMstHistResource
-     * @throws NotFoundHttpException
+     * @return int
      */
-    public function create(array $payload): DepartmentMstHistResource
+    public function store(array $payload): int
     {
-        if (isset($payload['department_mst_id'])) {
-            $department = $this->departmentMstRepository->getById($payload['department_mst_id']);
-
-            if (!$department) {
-                throw new NotFoundHttpException('Department not found');
-            }
-        }
-
-        // Set author_id to current authenticated user if not provided
-        if (!isset($payload['author_id']) && Auth::check()) {
-            $payload['author_id'] = Auth::id();
-        }
-
-        $departmentMstHist = $this->departmentMstHistRepository->create($payload);
-        return new DepartmentMstHistResource($departmentMstHist);
+        return $this->departmentMstHist->executeStore($payload);
     }
 
     /**
-     * Update department history record
+     * Handle update department
      *
      * @param array $payload
-     * @param int $id
-     * @return DepartmentMstHistResource
-     * @throws NotFoundHttpException
+     * @return int
      */
-    public function update(array $payload, int $id): DepartmentMstHistResource
+    public function update(array $payload): int
     {
-        $departmentMstHist = $this->departmentMstHistRepository->getById($id);
-
-        if (!$departmentMstHist) {
-            throw new NotFoundHttpException('Department history record not found');
-        }
-
-        if (isset($payload['department_mst_id'])) {
-            $department = $this->departmentMstRepository->getById($payload['department_mst_id']);
-
-            if (!$department) {
-                throw new NotFoundHttpException('Department not found');
-            }
-        }
-
-        $updatedDepartmentMstHist = $this->departmentMstHistRepository->update($payload, $id);
-        return new DepartmentMstHistResource($updatedDepartmentMstHist);
+        return $this->departmentMstHist->executeUpdate($payload);
     }
 
     /**
-     * Delete department history record
+     * Delete department
      *
-     * @param int $id
-     * @return bool
-     * @throws NotFoundHttpException
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): bool
+    public function delete(array $payload): void
     {
-        $departmentMstHist = $this->departmentMstHistRepository->getById($id);
-
-        if (!$departmentMstHist) {
-            throw new NotFoundHttpException('Department history record not found');
-        }
-
-        return $this->departmentMstHistRepository->delete($id);
+        $this->departmentMstHist->executeDelete($payload['ids']);
     }
 }

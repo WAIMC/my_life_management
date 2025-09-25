@@ -2,134 +2,131 @@
 
 namespace App\Repositories\History\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Management\UserMgmtHistInterface;
 use App\Models\History\Management\UserMgmtHist;
+use App\Repositories\BaseRepository;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
-class UserMgmtHistRepository implements UserMgmtHistInterface
+class UserMgmtHistRepository extends BaseRepository implements UserMgmtHistInterface
 {
-    /**
-     * @var UserMgmtHist
-     */
-    protected $model;
-
-    /**
-     * UserMgmtHistRepository constructor.
-     *
-     * @param UserMgmtHist $model
-     */
     public function __construct(UserMgmtHist $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     /**
      * Get all user history records with optional filtering and pagination
      *
      * @param array $payload
-     * @return Collection|LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload = [])
+    public function list(array $payload): Collection
     {
-        $query = $this->model->with(['user', 'role', 'department', 'author']);
+        $query = $this->model->query();
 
-        // Filter by user_mgmt_id if provided
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['user_mgmt_id'])) {
             $query->where('user_mgmt_id', $payload['user_mgmt_id']);
         }
 
-        // Filter by action if provided
         if (isset($payload['action'])) {
             $query->where('action', $payload['action']);
         }
 
-        // Filter by author_id if provided
         if (isset($payload['author_id'])) {
             $query->where('author_id', $payload['author_id']);
         }
 
-        // Filter by date range if provided
-        if (isset($payload['date_from'])) {
-            $query->where('created_at', '>=', $payload['date_from']);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
-        if (isset($payload['date_to'])) {
-            $query->where('created_at', '<=', $payload['date_to']);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Sort by
-        $sortBy = isset($payload['sort_by']) ? $payload['sort_by'] : 'created_at';
-        $sortDirection = isset($payload['sort_direction']) ? $payload['sort_direction'] : 'desc';
-        $query->orderBy($sortBy, $sortDirection);
-
-        // Return paginated results if per_page is set
-        if (isset($payload['per_page'])) {
-            return $query->paginate($payload['per_page']);
-        }
+        $query->orderBy('id', 'desc');
 
         return $query->get();
     }
 
     /**
-     * Get user history record by ID
+     * Create new user history record
      *
-     * @param int $id
-     * @return UserMgmtHist|null
+     * @param array $payload
+     * @return int
      */
-    public function getById(int $id)
+    public function executeStore(array $payload): int
     {
-        return $this->model->with(['user', 'role', 'department', 'author'])->find($id);
+        $data = [];
+        $data['user_mgmt_id'] = $payload['user_mgmt_id'];
+        $data['email'] = $payload['email'];
+        $data['user_name'] = $payload['user_name'];
+        $data['password'] = $payload['password'];
+        $data['first_name'] = $payload['first_name'];
+        $data['last_name'] = $payload['last_name'];
+        $data['address'] = $payload['address'];
+        $data['phone_number'] = $payload['phone_number'];
+        $data['birth'] = $payload['birth'];
+        $data['gender'] = $payload['gender'];
+        $data['status'] = $payload['status'];
+        $data['is_active'] = $payload['is_active'];
+        $data['avatar'] = $payload['avatar'];
+        $data['email_verified_at'] = $payload['email_verified_at'];
+        $data['remember_token'] = $payload['remember_token'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
-     * Get user history records by user management ID
+     * Update user history record
      *
-     * @param int $userMgmtId
      * @param array $payload
-     * @return Collection|LengthAwarePaginator
+     * @return int
      */
-    public function getByUserMgmtId(int $userMgmtId, array $payload = [])
+    public function executeUpdate(array $payload): int
     {
-        $query = $this->model->with(['user', 'role', 'department', 'author'])
-            ->where('user_mgmt_id', $userMgmtId);
+        $data = $this->model->findById($payload['id']);
+        $data['admin_mst_id'] = $payload['admin_mst_id'];
+        $data['email'] = $payload['email'];
+        $data['user_name'] = $payload['user_name'];
+        $data['password'] = $payload['password'];
+        $data['first_name'] = $payload['first_name'];
+        $data['last_name'] = $payload['last_name'];
+        $data['address'] = $payload['address'];
+        $data['phone_number'] = $payload['phone_number'];
+        $data['birth'] = $payload['birth'];
+        $data['gender'] = $payload['gender'];
+        $data['status'] = $payload['status'];
+        $data['is_active'] = $payload['is_active'];
+        $data['avatar'] = $payload['avatar'];
+        $data['email_verified_at'] = $payload['email_verified_at'];
+        $data['remember_token'] = $payload['remember_token'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
 
-        // Filter by action if provided
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        // Sort by
-        $sortBy = isset($payload['sort_by']) ? $payload['sort_by'] : 'created_at';
-        $sortDirection = isset($payload['sort_direction']) ? $payload['sort_direction'] : 'desc';
-        $query->orderBy($sortBy, $sortDirection);
-
-        // Return paginated results if per_page is set
-        if (isset($payload['per_page'])) {
-            return $query->paginate($payload['per_page']);
-        }
-
-        return $query->get();
+        return $data->id;
     }
 
     /**
-     * Create a new user history record
+     * Delete user history record
      *
-     * @param array $payload
-     * @return UserMgmtHist
+     * @param array $ids
+     * @return void
      */
-    public function create(array $payload)
+    public function executeDelete(array $ids): void
     {
-        $userMgmtHist = new UserMgmtHist();
-
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $userMgmtHist->getFillable())) {
-                $userMgmtHist->{$key} = $value;
-            }
-        }
-
-        $userMgmtHist->save();
-
-        return $userMgmtHist;
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

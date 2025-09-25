@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('table', 64)->comment('Table name');
             $table->string('column', 64)->comment('Column name');
             $table->unsignedInteger('field_id')->comment('Field id');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

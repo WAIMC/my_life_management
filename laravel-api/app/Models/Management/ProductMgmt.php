@@ -28,6 +28,7 @@ class ProductMgmt extends Model
         'status',
         'is_display',
         'rank_order',
+        'is_delete',
     ];
 
     /**

@@ -4,42 +4,28 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum TypeOfMethod: int
+enum StatusEnum: int
 {
     /**
-     * GET
+     * draft
      *
      * @var int
      */
-    case GET = 0;
+    case DRAFT = 0;
 
     /**
-     * POST
+     * published
      *
      * @var int
      */
-    case POST = 1;
+    case PUBLISHED = 1;
 
     /**
-     * PUT
+     * archived
      *
      * @var int
      */
-    case PUT = 2;
-
-    /**
-     * PATCH
-     *
-     * @var int
-     */
-    case PATCH = 3;
-
-    /**
-     * DELETE
-     *
-     * @var int
-     */
-    case DELETE = 4;
+    case ARCHIVED = 2;
 
     public static function getLabel(self|int $value): string
     {
@@ -48,11 +34,9 @@ enum TypeOfMethod: int
         }
 
         return match ($value) {
-            self::GET => 'GET',
-            self::POST => 'POST',
-            self::PUT => 'PUT',
-            self::PATCH => 'PATCH',
-            self::DELETE => 'DELETE',
+            self::DRAFT => 'draft',
+            self::PUBLISHED => 'published',
+            self::ARCHIVED => 'archived',
             default => '',
         };
     }

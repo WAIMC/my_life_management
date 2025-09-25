@@ -4,120 +4,60 @@ namespace App\Services\History\Master;
 
 use App\Interfaces\History\Master\PolicyDepartmentMstHistInterface;
 use App\Http\Resources\History\Master\PolicyDepartmentMstHistResource;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class PolicyDepartmentMstHistService
 {
     /**
-     * @var PolicyDepartmentMstHistInterface
-     */
-    protected PolicyDepartmentMstHistInterface $policyDepartmentMstHistRepository;
-
-    /**
-     * PolicyDepartmentMstHistService constructor.
+     * Constructor.
      *
-     * @param PolicyDepartmentMstHistInterface $policyDepartmentMstHistRepository
+     * @param PolicyDepartmentMstHistInterface $policyDepartmentMstHist
      */
-    public function __construct(PolicyDepartmentMstHistInterface $policyDepartmentMstHistRepository)
-    {
-        $this->policyDepartmentMstHistRepository = $policyDepartmentMstHistRepository;
-    }
+    public function __construct(protected PolicyDepartmentMstHistInterface $policyDepartmentMstHist) {}
 
     /**
-     * Get all history records.
+     * Handle find policy department history list
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $records = $this->policyDepartmentMstHistRepository->getAll($payload);
-        return PolicyDepartmentMstHistResource::collection($records);
+        $list = $this->policyDepartmentMstHist->list($payload);
+
+        return PolicyDepartmentMstHistResource::collection($list);
     }
 
     /**
-     * Get history record by ID.
-     *
-     * @param int $id
-     * @return PolicyDepartmentMstHistResource
-     */
-    public function getById(int $id): PolicyDepartmentMstHistResource
-    {
-        try {
-            $record = $this->policyDepartmentMstHistRepository->getById($id);
-            return new PolicyDepartmentMstHistResource($record);
-        } catch (ModelNotFoundException $e) {
-            throw new ModelNotFoundException('History record not found');
-        }
-    }
-
-    /**
-     * Create new history record.
+     * Handle store policy department history
      *
      * @param array $payload
-     * @return PolicyDepartmentMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): PolicyDepartmentMstHistResource
+    public function store(array $payload): int
     {
-        DB::beginTransaction();
-        try {
-            $record = $this->policyDepartmentMstHistRepository->create($payload);
-            DB::commit();
-            return new PolicyDepartmentMstHistResource($record);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->policyDepartmentMstHist->executeStore($payload);
     }
 
     /**
-     * Update history record.
+     * Handle update policy department history
      *
      * @param array $payload
-     * @param int $id
-     * @return PolicyDepartmentMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id): PolicyDepartmentMstHistResource
+    public function update(array $payload): int
     {
-        DB::beginTransaction();
-        try {
-            $record = $this->policyDepartmentMstHistRepository->update($payload, $id);
-            DB::commit();
-            return new PolicyDepartmentMstHistResource($record);
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
-            throw new ModelNotFoundException('History record not found');
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->policyDepartmentMstHist->executeUpdate($payload);
     }
 
     /**
-     * Delete history record.
+     * Delete policy department history
      *
-     * @param int $id
-     * @return bool
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): bool
+    public function delete(array $payload): void
     {
-        DB::beginTransaction();
-        try {
-            $result = $this->policyDepartmentMstHistRepository->delete($id);
-            DB::commit();
-            return $result;
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
-            throw new ModelNotFoundException('History record not found');
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        $this->policyDepartmentMstHist->executeDelete($payload['ids']);
     }
 }

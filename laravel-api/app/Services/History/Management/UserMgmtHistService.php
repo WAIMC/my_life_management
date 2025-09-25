@@ -5,113 +5,67 @@ namespace App\Services\History\Management;
 use App\Interfaces\History\Management\UserMgmtHistInterface;
 use App\Interfaces\Management\UserMgmtInterface;
 use App\Interfaces\Master\AdminMstInterface;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\History\Management\UserMgmtHistResource;
 
 class UserMgmtHistService
 {
     /**
-     * @var UserMgmtHistInterface
-     */
-    protected $userMgmtHistRepository;
-
-    /**
-     * @var UserMgmtInterface
-     */
-    protected $userMgmtRepository;
-
-    /**
-     * @var AdminMstInterface
-     */
-    protected $adminMstRepository;
-
-    /**
-     * UserMgmtHistService constructor.
+     * Constructor.
      *
-     * @param UserMgmtHistInterface $userMgmtHistRepository
-     * @param UserMgmtInterface $userMgmtRepository
-     * @param AdminMstInterface $adminMstRepository
+     * @param UserMgmtHistInterface $userMgmtHist
+     * @param UserMgmtInterface $userMgmt
+     * @param AdminMstInterface $adminMst
      */
     public function __construct(
-        UserMgmtHistInterface $userMgmtHistRepository,
-        UserMgmtInterface $userMgmtRepository,
-        AdminMstInterface $adminMstRepository
-    ) {
-        $this->userMgmtHistRepository = $userMgmtHistRepository;
-        $this->userMgmtRepository = $userMgmtRepository;
-        $this->adminMstRepository = $adminMstRepository;
-    }
+        protected UserMgmtHistInterface $userMgmtHist,
+        protected UserMgmtInterface $userMgmt,
+        protected AdminMstInterface $adminMst
+    ) {}
 
     /**
-     * Get all user history records
+     * Handle find user list
      *
      * @param array $payload
-     * @return mixed
+     * @return JsonResource
      */
-    public function getAllUserMgmtHist(array $payload = [])
+    public function list(array $payload): JsonResource
     {
-        return $this->userMgmtHistRepository->getAll($payload);
+        $list = $this->userMgmtHist->list($payload);
+
+        return UserMgmtHistResource::collection($list);
     }
 
     /**
-     * Get user history record by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function getUserMgmtHistById(int $id)
-    {
-        $userMgmtHist = $this->userMgmtHistRepository->getById($id);
-        
-        if (!$userMgmtHist) {
-            throw new \Exception('User history record not found');
-        }
-
-        return $userMgmtHist;
-    }
-
-    /**
-     * Get user history records by user management ID
-     *
-     * @param int $userMgmtId
-     * @param array $payload
-     * @return mixed
-     */
-    public function getUserMgmtHistByUserMgmtId(int $userMgmtId, array $payload = [])
-    {
-        $user = $this->userMgmtRepository->getById($userMgmtId);
-
-        if (!$user) {
-            throw new \Exception('User not found');
-        }
-
-        return $this->userMgmtHistRepository->getByUserMgmtId($userMgmtId, $payload);
-    }
-
-    /**
-     * Create a new user history record
+     * Handle store user
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function createUserMgmtHist(array $payload)
+    public function store(array $payload): int
     {
-        // Check if user exists
-        $user = $this->userMgmtRepository->getById($payload['user_mgmt_id']);
-        if (!$user) {
-            throw new \Exception('User not found');
-        }
+        return $this->userMgmtHist->executeStore($payload);
+    }
 
-        // Get the current authenticated admin ID or use the provided author_id
-        if (!isset($payload['author_id'])) {
-            $payload['author_id'] = Auth::guard('admin')->id();
-        } else {
-            // Check if author exists
-            $admin = $this->adminMstRepository->getById($payload['author_id']);
-            if (!$admin) {
-                throw new \Exception('Author admin not found');
-            }
-        }
+    /**
+     * Handle update user
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function update(array $payload): int
+    {
+        return $this->userMgmtHist->executeUpdate($payload);
+    }
 
-        return $this->userMgmtHistRepository->create($payload);
+    /**
+     * Delete user
+     *
+     * @param array $payload
+     * @return void
+     */
+    public function delete(array $payload): void
+    {
+        $this->userMgmtHist->executeDelete($payload['ids']);
     }
 }

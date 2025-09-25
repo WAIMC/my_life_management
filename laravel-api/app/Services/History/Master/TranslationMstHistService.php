@@ -7,168 +7,68 @@ use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Interfaces\Master\LanguageMstInterface;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use App\Interfaces\Master\TranslationMstInterface;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class TranslationMstHistService
 {
     /**
-     * @var TranslationMstHistInterface
-     */
-    protected $translationMstHistRepository;
-
-    /**
-     * @var TranslationMstInterface
-     */
-    protected $translationMstRepository;
-
-    /**
-     * @var LanguageMstInterface
-     */
-    protected $languageMstRepository;
-
-    /**
-     * @var OriginalTranslatorMstInterface
-     */
-    protected $originalTranslatorMstRepository;
-
-    /**
-     * TranslationMstHistService constructor.
+     * Constructor.
      *
-     * @param TranslationMstHistInterface $translationMstHistRepository
-     * @param TranslationMstInterface $translationMstRepository
-     * @param LanguageMstInterface $languageMstRepository
-     * @param OriginalTranslatorMstInterface $originalTranslatorMstRepository
+     * @param TranslationMstHistInterface $translationMstHist
+     * @param TranslationMstInterface $translationMst
+     * @param LanguageMstInterface $languageMst
+     * @param OriginalTranslatorMstInterface $originalTranslatorMst
      */
     public function __construct(
-        TranslationMstHistInterface $translationMstHistRepository,
-        TranslationMstInterface $translationMstRepository,
-        LanguageMstInterface $languageMstRepository,
-        OriginalTranslatorMstInterface $originalTranslatorMstRepository
-    ) {
-        $this->translationMstHistRepository = $translationMstHistRepository;
-        $this->translationMstRepository = $translationMstRepository;
-        $this->languageMstRepository = $languageMstRepository;
-        $this->originalTranslatorMstRepository = $originalTranslatorMstRepository;
-    }
+        protected TranslationMstHistInterface $translationMstHist,
+        protected TranslationMstInterface $translationMst,
+        protected LanguageMstInterface $languageMst,
+        protected OriginalTranslatorMstInterface $originalTranslatorMst
+    ) {}
 
     /**
-     * Get list of translation history
+     * Handle find translation list
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getList(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $data = $this->translationMstHistRepository->getList($payload);
-        return TranslationMstHistResource::collection($data);
+        $list = $this->translationMst->list($payload);
+
+        return TranslationMstHistResource::collection($list);
     }
 
     /**
-     * Get translation history by ID
-     *
-     * @param int $id
-     * @return TranslationMstHistResource
-     * @throws Exception
-     */
-    public function getById(int $id): TranslationMstHistResource
-    {
-        $data = $this->translationMstHistRepository->getById($id);
-        if (!$data) {
-            throw new Exception("Translation history not found");
-        }
-        return new TranslationMstHistResource($data);
-    }
-
-    /**
-     * Create translation history
+     * Handle store translation history
      *
      * @param array $payload
-     * @return TranslationMstHistResource
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): TranslationMstHistResource
+    public function store(array $payload): int
     {
-        // Validate translation exists
-        $translation = $this->translationMstRepository->getById($payload['translation_mst_id']);
-        if (!$translation) {
-            throw new Exception("Translation not found");
-        }
-
-        // Validate language exists if provided
-        if (isset($payload['language_id']) && $payload['language_id']) {
-            $language = $this->languageMstRepository->getById($payload['language_id']);
-            if (!$language) {
-                throw new Exception("Language not found");
-            }
-        }
-
-        // Validate original translator exists if provided
-        if (isset($payload['original_id']) && $payload['original_id']) {
-            $originalTranslator = $this->originalTranslatorMstRepository->getById($payload['original_id']);
-            if (!$originalTranslator) {
-                throw new Exception("Original translator not found");
-            }
-        }
-
-        $data = $this->translationMstHistRepository->create($payload);
-        return new TranslationMstHistResource($data);
+        return $this->translationMstHist->executeStore($payload);
     }
 
     /**
-     * Get translation history by translation ID
+     * Handle update translation history
      *
-     * @param int $translationId
-     * @return AnonymousResourceCollection
-     * @throws Exception
+     * @param array $payload
+     * @return int
      */
-    public function getByTranslationId(int $translationId): AnonymousResourceCollection
+    public function update(array $payload): int
     {
-        // Validate translation exists
-        $translation = $this->translationMstRepository->getById($translationId);
-        if (!$translation) {
-            throw new Exception("Translation not found");
-        }
-
-        $data = $this->translationMstHistRepository->getByTranslationId($translationId);
-        return TranslationMstHistResource::collection($data);
+        return $this->translationMstHist->executeUpdate($payload);
     }
 
     /**
-     * Get translation history by language ID
+     * Delete translation history
      *
-     * @param int $languageId
-     * @return AnonymousResourceCollection
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function getByLanguageId(int $languageId): AnonymousResourceCollection
+    public function delete(array $payload): void
     {
-        // Validate language exists
-        $language = $this->languageMstRepository->getById($languageId);
-        if (!$language) {
-            throw new Exception("Language not found");
-        }
-
-        $data = $this->translationMstHistRepository->getByLanguageId($languageId);
-        return TranslationMstHistResource::collection($data);
-    }
-
-    /**
-     * Get translation history by original ID
-     *
-     * @param int $originalId
-     * @return AnonymousResourceCollection
-     * @throws Exception
-     */
-    public function getByOriginalId(int $originalId): AnonymousResourceCollection
-    {
-        // Validate original translator exists
-        $originalTranslator = $this->originalTranslatorMstRepository->getById($originalId);
-        if (!$originalTranslator) {
-            throw new Exception("Original translator not found");
-        }
-
-        $data = $this->translationMstHistRepository->getByOriginalId($originalId);
-        return TranslationMstHistResource::collection($data);
+        $this->translationMstHist->executeDelete($payload['ids']);
     }
 }

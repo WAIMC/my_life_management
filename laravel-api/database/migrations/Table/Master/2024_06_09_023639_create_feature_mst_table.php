@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('group_name', 50)->comment('Feature group name');
             $table->string('description', 100)->comment('Feature description');
             $table->tinyInteger('status')->default(0)->comment('Feature status');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

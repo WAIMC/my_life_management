@@ -5,71 +5,61 @@ namespace App\Http\Controllers\History\Management;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\History\Management\Banner\BannerMgmtHistListRequest;
 use App\Http\Requests\History\Management\Banner\StoreBannerMgmtHistRequest;
-use App\Http\Resources\History\Management\BannerMgmtHistResource;
 use App\Services\History\Management\BannerMgmtHistService;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class BannerMgmtHistController extends Controller
 {
-    protected BannerMgmtHistService $bannerMgmtHistService;
-
     /**
      * BannerMgmtHistController constructor
      *
      * @param BannerMgmtHistService $bannerMgmtHistService
      */
-    public function __construct(BannerMgmtHistService $bannerMgmtHistService)
-    {
-        $this->bannerMgmtHistService = $bannerMgmtHistService;
-    }
+    public function __construct(protected BannerMgmtHistService $bannerMgmtHistService)
+    {}
 
     /**
      * Get a listing of banner histories
      *
      * @param BannerMgmtHistListRequest $request
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function index(BannerMgmtHistListRequest $request): AnonymousResourceCollection
+    public function index(BannerMgmtHistListRequest $request): JsonResource
     {
-        return $this->bannerMgmtHistService->getAll($request->validated());
+        return $this->bannerMgmtHistService->list($request->all());
     }
 
     /**
-     * Get banner history by ID
-     *
-     * @param int $id
-     * @return BannerMgmtHistResource
-     * @throws Exception
-     */
-    public function show(int $id): BannerMgmtHistResource
-    {
-        return $this->bannerMgmtHistService->findById($id);
-    }
-
-    /**
-     * Get banner history by banner ID
-     *
-     * @param int $bannerId
-     * @return AnonymousResourceCollection
-     */
-    public function getByBannerId(int $bannerId): AnonymousResourceCollection
-    {
-        return $this->bannerMgmtHistService->findByBannerId($bannerId);
-    }
-
-    /**
-     * Create a new banner history record
+     * Create new banner history records (batch)
      *
      * @param StoreBannerMgmtHistRequest $request
-     * @return BannerMgmtHistResource
-     * @throws Exception
+     * @return bool
      */
-    public function store(StoreBannerMgmtHistRequest $request): BannerMgmtHistResource
+    public function store(StoreBannerMgmtHistRequest $request): bool
     {
-        $data = $request->validated();
-        $data['created_at'] = now()->format('Y-m-d H:i:s');
+        return $this->bannerMgmtHistService->store($request->all());
+    }
 
-        return $this->bannerMgmtHistService->create($data);
+    /**
+     * Update banner history records (batch)
+     *
+     * @param StoreBannerMgmtHistRequest $request
+     * @return bool
+     */
+    public function update(StoreBannerMgmtHistRequest $request): bool
+    {
+        return $this->bannerMgmtHistService->update($request->all());
+    }
+
+    /**
+     * Delete banner history records (batch)
+     *
+     * @param StoreBannerMgmtHistRequest $request
+     * @return int
+     */
+    public function destroy(StoreBannerMgmtHistRequest $request): int
+    {
+        // Expecting $request->all()['ids'] to be an array of ids
+        return $this->bannerMgmtHistService->delete($request->all());
     }
 }

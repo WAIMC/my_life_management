@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum SocialStatus: int
+enum IsDelete: int
 {
-    /**
-     * Inactive
+/**
+     * false
+     *
+     * @var int
      */
-    case INACTIVE = 0;
-    
+    case FALSE = 0;
+
     /**
-     * Active
+     * true
+     *
+     * @var int
      */
-    case ACTIVE = 1;
-    
-    /**
-     * Pending
-     */
-    case PENDING = 2;
+    case TRUE = 1;
 
     public static function getLabel(self|int $value): string
     {
@@ -28,9 +27,8 @@ enum SocialStatus: int
         }
 
         return match ($value) {
-            self::INACTIVE => 'Inactive',
-            self::ACTIVE => 'Active',
-            self::PENDING => 'Pending',
+            self::FALSE => 'false',
+            self::TRUE => 'true',
             default => '',
         };
     }

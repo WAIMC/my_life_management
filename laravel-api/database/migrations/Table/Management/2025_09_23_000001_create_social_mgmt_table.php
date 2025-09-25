@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->integer('status')->comment('Social status');
             $table->boolean('is_display')->comment('Social is display');
             $table->integer('rank_order')->comment('Social rank order');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

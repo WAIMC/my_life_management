@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('name', 30)->unique()->comment('Role name');
             $table->string('permission', 50)->comment('Role description');
             $table->boolean('is_active')->default(false)->comment('Role active');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

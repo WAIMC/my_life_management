@@ -4,125 +4,61 @@ namespace App\Services\Master;
 
 use App\Http\Resources\Master\OriginalTranslatorMstResource;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class OriginalTranslatorMstService
 {
     /**
-     * @var OriginalTranslatorMstInterface
-     */
-    protected OriginalTranslatorMstInterface $originalTranslatorMstRepository;
-
-    /**
      * OriginalTranslatorMstService constructor.
      *
-     * @param OriginalTranslatorMstInterface $originalTranslatorMstRepository
+     * @param OriginalTranslatorMstInterface $originalTranslatorMst
      */
-    public function __construct(OriginalTranslatorMstInterface $originalTranslatorMstRepository)
-    {
-        $this->originalTranslatorMstRepository = $originalTranslatorMstRepository;
-    }
+    public function __construct(protected OriginalTranslatorMstInterface $originalTranslatorMst)
+    {}
 
     /**
      * Get list of original translators
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getList(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $result = $this->originalTranslatorMstRepository->getList($payload);
-        return OriginalTranslatorMstResource::collection($result);
-    }
+        $list = $this->originalTranslatorMst->list($payload);
 
-    /**
-     * Get original translator by ID
-     *
-     * @param int $id
-     * @return OriginalTranslatorMstResource
-     */
-    public function getById(int $id): OriginalTranslatorMstResource
-    {
-        $originalTranslator = $this->originalTranslatorMstRepository->getById($id);
-        return new OriginalTranslatorMstResource($originalTranslator);
+        return OriginalTranslatorMstResource::collection($list);
     }
 
     /**
      * Create original translator
      *
      * @param array $payload
-     * @return OriginalTranslatorMstResource
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): OriginalTranslatorMstResource
+    public function store(array $payload): int
     {
-        try {
-            DB::beginTransaction();
-
-            $originalTranslator = $this->originalTranslatorMstRepository->create($payload);
-
-            DB::commit();
-
-            return new OriginalTranslatorMstResource($originalTranslator);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->originalTranslatorMst->executeStore($payload);
     }
 
     /**
      * Update original translator
      *
      * @param array $payload
-     * @param int $id
-     * @return OriginalTranslatorMstResource
-     * @throws Exception
+     * @return int
      */
-    public function update(array $payload, int $id): OriginalTranslatorMstResource
+    public function update(array $payload): int
     {
-        try {
-            DB::beginTransaction();
-
-            $originalTranslator = $this->originalTranslatorMstRepository->update($payload, $id);
-
-            DB::commit();
-
-            return new OriginalTranslatorMstResource($originalTranslator);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->originalTranslatorMst->executeUpdate($payload);
     }
 
     /**
      * Delete original translator
      *
-     * @param int $id
-     * @return mixed
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function delete(int $id): mixed
+    public function delete(array $payload): void
     {
-        try {
-            // Check if translator is being used in translations
-            $originalTranslator = $this->originalTranslatorMstRepository->getById($id);
-
-            if ($originalTranslator->translations()->count() > 0) {
-                throw new Exception("Cannot delete original translator that has associated translations.");
-            }
-
-            DB::beginTransaction();
-
-            $result = $this->originalTranslatorMstRepository->delete($id);
-
-            DB::commit();
-
-            return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        $this->originalTranslatorMst->executeDelete($payload['ids']);
     }
 }

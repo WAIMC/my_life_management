@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->increments('id')->comment('Policy department ID');
             $table->string('table_name', 20)->comment('Table name');
             $table->integer('row_id')->comment('Row id');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

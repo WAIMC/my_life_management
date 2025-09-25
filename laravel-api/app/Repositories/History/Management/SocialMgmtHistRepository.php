@@ -2,204 +2,125 @@
 
 namespace App\Repositories\History\Management;
 
+use App\Constants\CommonVal;
 use App\Models\History\Management\SocialMgmtHist;
 use App\Interfaces\History\Management\SocialMgmtHistInterface;
+use App\Repositories\BaseRepository;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 
-class SocialMgmtHistRepository implements SocialMgmtHistInterface
+class SocialMgmtHistRepository extends BaseRepository implements SocialMgmtHistInterface
 {
-    protected $model;
-    
-    /**
-     * Constructor
-     */
-    public function __construct()
+    public function __construct(SocialMgmtHist $model)
     {
-        $this->model = new SocialMgmtHist();
+        parent::__construct($model);
     }
-    
+
     /**
      * Get social history list with conditions
-     * 
+     *
      * @param array $payload
      * @return Collection
      */
-    public function list(array $payload)
+    public function list(array $payload): Collection
     {
         $query = $this->model->select('*')->orderBy('id');
-        
+
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['social_mgmt_id'])) {
             $query->where('social_mgmt_id', $payload['social_mgmt_id']);
         }
-        
+
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
         }
-        
+
         if (isset($payload['status'])) {
             $query->where('status', $payload['status']);
         }
-        
+
         if (isset($payload['action'])) {
             $query->where('action', $payload['action']);
         }
-        
+
         if (isset($payload['author_id'])) {
             $query->where('author_id', $payload['author_id']);
         }
-        
+
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
+
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
+
+        $query->orderBy('id', 'desc');
+
         return $query->get();
     }
-    
-    /**
-     * Get social history by ID
-     * 
-     * @param int $id
-     * @return SocialMgmtHist|null
-     */
-    public function getById(int $id)
-    {
-        return $this->model->find($id);
-    }
-    
-    /**
-     * Get social history by social mgmt ID
-     * 
-     * @param int $socialMgmtId
-     * @return Collection
-     */
-    public function getBySocialMgmtId(int $socialMgmtId)
-    {
-        return $this->model->where('social_mgmt_id', $socialMgmtId)
-            ->orderBy('id', 'desc')
-            ->get();
-    }
-    
+
     /**
      * Store new social history
-     * 
+     *
      * @param array $payload
-     * @return SocialMgmtHist
+     * @return int
      */
-    public function store(array $payload)
+    public function executeStore(array $payload): int
     {
-        $socialHist = new SocialMgmtHist();
-        
-        if (isset($payload['social_mgmt_id'])) {
-            $socialHist->social_mgmt_id = $payload['social_mgmt_id'];
-        }
-        
-        if (isset($payload['name'])) {
-            $socialHist->name = $payload['name'];
-        }
-        
-        if (isset($payload['slug'])) {
-            $socialHist->slug = $payload['slug'];
-        }
-        
-        if (isset($payload['link'])) {
-            $socialHist->link = $payload['link'];
-        }
-        
-        if (isset($payload['image'])) {
-            $socialHist->image = $payload['image'];
-        }
-        
-        if (isset($payload['status'])) {
-            $socialHist->status = $payload['status'];
-        }
-        
-        if (isset($payload['is_display'])) {
-            $socialHist->is_display = $payload['is_display'];
-        }
-        
-        if (isset($payload['rank_order'])) {
-            $socialHist->rank_order = $payload['rank_order'];
-        }
-        
-        $socialHist->action = $payload['action'];
-        $socialHist->author_id = $payload['author_id'];
-        $socialHist->created_at = now();
-        
-        $socialHist->save();
-        
-        return $socialHist;
+        $data = [];
+        $data['social_mgmt_id'] = $payload['social_mgmt_id'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['link'] = $payload['link'];
+        $data['image'] = $payload['image'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
-    
+
     /**
-     * Update social history
-     * 
+     * Update social history record
+     *
      * @param array $payload
-     * @param int $id
-     * @return SocialMgmtHist|null
+     * @return int
      */
-    public function update(array $payload, int $id)
+    public function executeUpdate(array $payload): int
     {
-        $socialHist = $this->model->find($id);
-        
-        if (!$socialHist) {
-            return null;
-        }
-        
-        if (isset($payload['social_mgmt_id'])) {
-            $socialHist->social_mgmt_id = $payload['social_mgmt_id'];
-        }
-        
-        if (isset($payload['name'])) {
-            $socialHist->name = $payload['name'];
-        }
-        
-        if (isset($payload['slug'])) {
-            $socialHist->slug = $payload['slug'];
-        }
-        
-        if (isset($payload['link'])) {
-            $socialHist->link = $payload['link'];
-        }
-        
-        if (isset($payload['image'])) {
-            $socialHist->image = $payload['image'];
-        }
-        
-        if (isset($payload['status'])) {
-            $socialHist->status = $payload['status'];
-        }
-        
-        if (isset($payload['is_display'])) {
-            $socialHist->is_display = $payload['is_display'];
-        }
-        
-        if (isset($payload['rank_order'])) {
-            $socialHist->rank_order = $payload['rank_order'];
-        }
-        
-        if (isset($payload['action'])) {
-            $socialHist->action = $payload['action'];
-        }
-        
-        if (isset($payload['author_id'])) {
-            $socialHist->author_id = $payload['author_id'];
-        }
-        
-        $socialHist->save();
-        
-        return $socialHist;
+        $data = $this->model->findById($payload['id']);
+        $data['social_mgmt_id'] = $payload['social_mgmt_id'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['link'] = $payload['link'];
+        $data['image'] = $payload['image'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
+
+        return $data->id;
     }
-    
+
     /**
-     * Delete social history
-     * 
-     * @param int $id
-     * @return bool
+     * Delete social history record
+     *
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id)
+    public function executeDelete(array $ids): void
     {
-        $socialHist = $this->model->find($id);
-        
-        if (!$socialHist) {
-            return false;
-        }
-        
-        return $socialHist->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

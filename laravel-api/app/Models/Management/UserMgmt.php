@@ -37,6 +37,7 @@ class UserMgmt extends Model
         'status',
         'is_active',
         'avatar',
+        'is_delete',
         'email_verified_at',
         'remember_token',
         'created_at',

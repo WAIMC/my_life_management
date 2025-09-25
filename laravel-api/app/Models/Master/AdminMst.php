@@ -29,6 +29,7 @@ class AdminMst extends Authenticatable
         'status',
         'is_active',
         'avatar',
+        'is_delete',
     ];
 
     /**

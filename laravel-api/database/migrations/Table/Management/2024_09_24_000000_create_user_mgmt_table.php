@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('avatar', 30)->nullable()->comment('User avatar');
             $table->string('email_verified_at')->nullable()->comment('User email verified at');
             $table->string('remember_token', 100)->nullable()->comment('Remember token');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->string('created_at')->nullable()->comment('User created at');
             $table->string('updated_at')->nullable()->comment('User updated status');
 

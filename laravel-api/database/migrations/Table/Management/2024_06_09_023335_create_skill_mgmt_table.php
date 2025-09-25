@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->unsignedTinyInteger('status')->default(0)->comment('Skill status');
             $table->boolean('is_display')->default(false)->comment('Display skill');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Skill order');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

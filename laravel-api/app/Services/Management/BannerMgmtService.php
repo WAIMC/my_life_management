@@ -5,58 +5,32 @@ namespace App\Services\Management;
 use App\Enums\ActionType;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Http\Resources\Management\BannerMgmtResource;
-use App\Repositories\History\Management\BannerMgmtHistRepository;
+use App\Interfaces\History\Management\BannerMgmtHistInterface;
 use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 
 class BannerMgmtService
 {
-    protected BannerMgmtInterface $bannerMgmtRepository;
-    protected BannerMgmtHistRepository $bannerMgmtHistRepository;
-
     /**
      * BannerMgmtService constructor
-     *
-     * @param BannerMgmtInterface $bannerMgmtRepository
-     * @param BannerMgmtHistRepository $bannerMgmtHistRepository
      */
     public function __construct(
-        BannerMgmtInterface $bannerMgmtRepository,
-        BannerMgmtHistRepository $bannerMgmtHistRepository
-    ) {
-        $this->bannerMgmtRepository = $bannerMgmtRepository;
-        $this->bannerMgmtHistRepository = $bannerMgmtHistRepository;
-    }
+        protected BannerMgmtInterface $bannerMgmt,
+        protected BannerMgmtHistInterface $bannerMgmtHist
+    ) {}
 
     /**
-     * Get all banners with filtering and pagination
+     * Get banner list
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $banners = $this->bannerMgmtRepository->getAll($payload);
-        return BannerMgmtResource::collection($banners);
-    }
+        $list = $this->bannerMgmt->list($payload);
 
-    /**
-     * Get banner by ID
-     *
-     * @param int $id
-     * @return BannerMgmtResource
-     * @throws Exception
-     */
-    public function findById(int $id): BannerMgmtResource
-    {
-        $banner = $this->bannerMgmtRepository->findById($id);
-
-        if (!$banner) {
-            throw new Exception("Banner not found", 404);
-        }
-
-        return new BannerMgmtResource($banner);
+        return BannerMgmtResource::collection($list);
     }
 
     /**
@@ -71,7 +45,7 @@ class BannerMgmtService
         try {
             DB::beginTransaction();
 
-            $banner = $this->bannerMgmtRepository->create($payload);
+            $banner = $this->bannerMgmt->create($payload);
 
             // Create history record
             if (isset($payload['author_id'])) {
@@ -89,7 +63,7 @@ class BannerMgmtService
                     'created_at' => now()->format('Y-m-d H:i:s')
                 ];
 
-                $this->bannerMgmtHistRepository->create($historyData);
+                $this->bannerMgmtHist->create($historyData);
             }
 
             DB::commit();
@@ -113,13 +87,13 @@ class BannerMgmtService
         try {
             DB::beginTransaction();
 
-            $banner = $this->bannerMgmtRepository->findById($id);
+            $banner = $this->bannerMgmt->findById($id);
 
             if (!$banner) {
                 throw new Exception("Banner not found", 404);
             }
 
-            $updatedBanner = $this->bannerMgmtRepository->update($id, $payload);
+            $updatedBanner = $this->bannerMgmt->update($id, $payload);
 
             // Create history record
             if (isset($payload['author_id'])) {
@@ -137,7 +111,7 @@ class BannerMgmtService
                     'created_at' => now()->format('Y-m-d H:i:s')
                 ];
 
-                $this->bannerMgmtHistRepository->create($historyData);
+                $this->bannerMgmtHist->create($historyData);
             }
 
             DB::commit();
@@ -161,7 +135,7 @@ class BannerMgmtService
         try {
             DB::beginTransaction();
 
-            $banner = $this->bannerMgmtRepository->findById($id);
+            $banner = $this->bannerMgmt->findById($id);
 
             if (!$banner) {
                 throw new Exception("Banner not found", 404);
@@ -178,7 +152,7 @@ class BannerMgmtService
                 'status' => $banner->status,
             ];
 
-            $this->bannerMgmtRepository->delete($id);
+            $this->bannerMgmt->delete($id);
 
             // Create history record
             if (isset($payload['author_id'])) {
@@ -189,7 +163,7 @@ class BannerMgmtService
                     'created_at' => now()->format('Y-m-d H:i:s')
                 ]);
 
-                $this->bannerMgmtHistRepository->create($historyData);
+                $this->bannerMgmtHist->create($historyData);
             }
 
             DB::commit();

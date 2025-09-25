@@ -2,37 +2,39 @@
 
 namespace App\Interfaces\History\Management;
 
+use Illuminate\Support\Collection;
+
 interface CategoryMgmtHistInterface
 {
     /**
-     * Get all category history records
+     * Get category management history list
      *
      * @param array $payload
-     * @return mixed
+     * @return Collection
      */
-    public function getAll(array $payload): mixed;
+    public function list(array $payload): Collection;
 
     /**
-     * Find category history by ID
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function findById(int $id): mixed;
-
-    /**
-     * Find category history by category ID
-     *
-     * @param int $categoryId
-     * @return mixed
-     */
-    public function findByCategoryId(int $categoryId): mixed;
-
-    /**
-     * Create new category history record
+     * Create new category management history
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed;
+    public function executeStore(array $payload): int;
+
+    /**
+     * Update category management history
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function executeUpdate(array $payload): int;
+
+    /**
+     * Delete category management history
+     *
+     * @param array $ids
+     * @return void
+     */
+    public function executeDelete(array $ids): void;
 }

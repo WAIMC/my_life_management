@@ -1,12 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-class ActionType
+enum ActionType: int
 {
-    public const CREATE = 1;
-    public const UPDATE = 2;
-    public const DELETE = 3;
+    /**
+     * Create
+     *
+     * @var int
+     */
+    case CREATE = 1;
+
+    /**
+     * Update
+     *
+     * @var int
+     */
+    case UPDATE = 2;
+
+    /**
+     * Delete
+     *
+     * @var int
+     */
+    case DELETE = 3;
+
 
     public static function getLabel(self|int $value): string
     {

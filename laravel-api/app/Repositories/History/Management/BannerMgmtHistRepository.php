@@ -2,33 +2,37 @@
 
 namespace App\Repositories\History\Management;
 
+use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Management\BannerMgmtHistInterface;
 use App\Models\History\Management\BannerMgmtHist;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Mavinoo\Batch\Batch;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 
-class BannerMgmtHistRepository implements BannerMgmtHistInterface
+class BannerMgmtHistRepository extends BaseRepository implements BannerMgmtHistInterface
 {
-    protected BannerMgmtHist $model;
-
-    /**
-     * BannerMgmtHistRepository constructor
-     */
-    public function __construct()
+    public function __construct(BannerMgmtHist $model)
     {
-        $this->model = new BannerMgmtHist();
+        parent::__construct($model);
     }
 
     /**
      * Get all banner history records with filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters from payload
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['banner_mgmt_id'])) {
             $query->where('banner_mgmt_id', $payload['banner_mgmt_id']);
         }
@@ -42,104 +46,91 @@ class BannerMgmtHistRepository implements BannerMgmtHistInterface
         }
 
         if (isset($payload['from_date'])) {
-            $query->where('created_at', '>=', $payload['from_date']);
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
-            $query->where('created_at', '<=', $payload['to_date']);
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        // Apply sorting
-        $sortBy = $payload['sort_by'] ?? 'created_at';
-        $sortOrder = $payload['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
+        $query->orderBy('id', 'desc');
 
-        // Apply pagination
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        return $query->get();
     }
 
     /**
-     * Find banner history by ID
+     * Create new banner history records (batch)
      *
-     * @param int $id
-     * @return mixed
+     * @param array $payloads
+     * @return void
      */
-    public function findById(int $id): mixed
+    public function executeStore(array $payloads): void
     {
-        return $this->model->find($id);
+        $data = [];
+        foreach ($payloads as $payload) {
+            $data[] = [
+                'banner_mgmt_id' => $payload['banner_mgmt_id'],
+                'title' => $payload['title'],
+                'slug' => $payload['slug'],
+                'description' => $payload['description'],
+                'link' => $payload['link'],
+                'image' => $payload['image'],
+                'position' => $payload['position'],
+                'status' => $payload['status'],
+                'action' => $payload['action'],
+                'author_id' => $payload['author_id'],
+            ];
+        }
+
+        $this->model->create($data);
     }
 
     /**
-     * Find banner history by banner ID
+     * Update banner history records (batch)
      *
-     * @param int $bannerId
-     * @return mixed
+     * @param array $payloads
+     * @return void
      */
-    public function findByBannerId(int $bannerId): mixed
+    public function executeUpdate(array $payloads): void
     {
-        return $this->model->where('banner_mgmt_id', $bannerId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $payloadIds = array_column($payloads, 'id');
+        $existIds = $this->model->whereIn('id', $payloadIds)->pluck('id')->toArray();
+        $diff = array_diff($payloadIds, $existIds);
+        if (!empty($diff)) {
+            throw new ModelNotFoundException(
+                'Some records not found for update. Missing IDs: ' . implode(',', $diff)
+            );
+        }
+
+        foreach ($payloads as $key => $payload) {
+            $payloads[$key] = [
+                'banner_mgmt_id' => $payload['banner_mgmt_id'],
+                'title' => $payload['title'],
+                'slug' => $payload['slug'],
+                'description' => $payload['description'],
+                'link' => $payload['link'],
+                'image' => $payload['image'],
+                'position' => $payload['position'],
+                'status' => $payload['status'],
+                'action' => $payload['action'],
+                'author_id' => $payload['author_id'],
+            ];
+        }
+
+        $batch = app(Batch::class);
+        $batch->update(new $this->model, $payloads, 'id');
     }
 
     /**
-     * Create new banner history record
+     * Delete banner history records (batch)
      *
-     * @param array $payload
-     * @return mixed
+     * @param array $ids
+     * @return void
      */
-    public function create(array $payload): mixed
+    public function executeDelete(array $ids): void
     {
-        $bannerHistory = new $this->model;
-
-        if (isset($payload['banner_mgmt_id'])) {
-            $bannerHistory->banner_mgmt_id = $payload['banner_mgmt_id'];
-        }
-
-        if (isset($payload['title'])) {
-            $bannerHistory->title = $payload['title'];
-        }
-
-        if (isset($payload['slug'])) {
-            $bannerHistory->slug = $payload['slug'];
-        }
-
-        if (isset($payload['description'])) {
-            $bannerHistory->description = $payload['description'];
-        }
-
-        if (isset($payload['link'])) {
-            $bannerHistory->link = $payload['link'];
-        }
-
-        if (isset($payload['image'])) {
-            $bannerHistory->image = $payload['image'];
-        }
-
-        if (isset($payload['position'])) {
-            $bannerHistory->position = $payload['position'];
-        }
-
-        if (isset($payload['status'])) {
-            $bannerHistory->status = $payload['status'];
-        }
-
-        if (isset($payload['action'])) {
-            $bannerHistory->action = $payload['action'];
-        }
-
-        if (isset($payload['author_id'])) {
-            $bannerHistory->author_id = $payload['author_id'];
-        }
-
-        if (isset($payload['created_at'])) {
-            $bannerHistory->created_at = $payload['created_at'];
-        } else {
-            $bannerHistory->created_at = now()->format('Y-m-d H:i:s');
-        }
-
-        $bannerHistory->save();
-        return $bannerHistory;
+        $this->model->whereIn('id', $ids)->update('is_deleted', IsDelete::TRUE->value); // Soft delete by setting is_deleted flag
     }
 }

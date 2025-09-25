@@ -37,12 +37,4 @@ enum IsActive: int
     {
         return self::getLabel($this);
     }
-
-    public static function toArray(): array
-    {
-        return array_reduce(self::cases(), function ($carry, $case) {
-            $carry[$case->value] = self::getLabel($case);
-            return $carry;
-        }, []);
-    }
 }

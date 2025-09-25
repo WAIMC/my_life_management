@@ -2,39 +2,34 @@
 
 namespace App\Repositories\History\Management;
 
+use App\Constants\CommonVal;
 use App\Interfaces\History\Management\ProductMgmtHistInterface;
 use App\Models\History\Management\ProductMgmtHist;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Repositories\BaseRepository;
+use DateTime;
+use Illuminate\Support\Collection;
 
-class ProductMgmtHistRepository implements ProductMgmtHistInterface
+class ProductMgmtHistRepository extends BaseRepository implements ProductMgmtHistInterface
 {
-    /**
-     * @var ProductMgmtHist
-     */
-    protected ProductMgmtHist $model;
-
-    /**
-     * ProductMgmtHistRepository constructor.
-     *
-     * @param ProductMgmtHist $productHist
-     */
-    public function __construct(ProductMgmtHist $productHist)
+    public function __construct(ProductMgmtHist $model)
     {
-        $this->model = $productHist;
+        parent::__construct($model);
     }
 
     /**
      * Get all product history records with optional filtering
      *
      * @param array $payload
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getAll(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query();
 
-        // Apply filters if provided
+        if (isset($payload['id'])) {
+            $query->whereIn('id', $payload['id']);
+        }
+
         if (isset($payload['product_mgmt_id'])) {
             $query->where('product_mgmt_id', $payload['product_mgmt_id']);
         }
@@ -51,88 +46,91 @@ class ProductMgmtHistRepository implements ProductMgmtHistInterface
             $query->where('author_id', $payload['author_id']);
         }
 
-        if (isset($payload['search'])) {
-            $search = $payload['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
+        if (isset($payload['name'])) {
+            $query->where('name', 'like', "%{$payload['name']}%");
         }
 
-        if (isset($payload['date_from'])) {
-            $query->where('created_at', '>=', $payload['date_from']);
+        if (isset($payload['code'])) {
+            $query->where('code', 'like', "%{$payload['code']}%");
         }
 
-        if (isset($payload['date_to'])) {
-            $query->where('created_at', '<=', $payload['date_to']);
+        if (isset($payload['description'])) {
+            $query->where('description', 'like', "%{$payload['description']}%");
         }
 
-        // Order by
-        $sortBy = $payload['sort_by'] ?? 'created_at';
-        $sortOrder = $payload['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
+        if (isset($payload['from_date'])) {
+            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
+            $query->whereDate('updated_at', '>=', $fromDate);
+        }
 
-        // Paginate results
-        $perPage = $payload['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        if (isset($payload['to_date'])) {
+            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
+            $query->whereDate('updated_at', '<=', $toDate);
+        }
+
+        $query->orderBy('id', 'desc');
+
+        return $query->get();
     }
 
     /**
-     * Get product history record by ID
-     *
-     * @param int $id
-     * @return mixed
-     * @throws ModelNotFoundException
-     */
-    public function getById(int $id): mixed
-    {
-        return $this->model->with(['product', 'category'])->findOrFail($id);
-    }
-
-    /**
-     * Create a new product history record
+     * Create new product history record
      *
      * @param array $payload
-     * @return mixed
+     * @return int
      */
-    public function create(array $payload): mixed
+    public function executeStore(array $payload): int
     {
-        return $this->model->create($payload);
+        $data = [];
+        $data['product_mgmt_id'] = $payload['product_mgmt_id'];
+        $data['category_id'] = $payload['category_id'];
+        $data['code'] = $payload['code'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $this->model->create($data);
+
+        return $this->model->id;
     }
 
     /**
-     * Update an existing product history record
+     * Update product history record
      *
      * @param array $payload
-     * @param int $id
-     * @return mixed
-     * @throws ModelNotFoundException
+     * @return int
      */
-    public function update(array $payload, int $id): mixed
+    public function executeUpdate(array $payload): int
     {
-        $productHist = $this->model->findOrFail($id);
+        $data = $this->model->findById($payload['id']);
+        $data['product_mgmt_id'] = $payload['product_mgmt_id'];
+        $data['category_id'] = $payload['category_id'];
+        $data['code'] = $payload['code'];
+        $data['name'] = $payload['name'];
+        $data['slug'] = $payload['slug'];
+        $data['description'] = $payload['description'];
+        $data['status'] = $payload['status'];
+        $data['is_display'] = $payload['is_display'];
+        $data['rank_order'] = $payload['rank_order'];
+        $data['action'] = $payload['action'];
+        $data['author_id'] = $payload['author_id'];
+        $data->save();
 
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->model->getFillable())) {
-                $productHist->{$key} = $value;
-            }
-        }
-
-        $productHist->save();
-        return $productHist;
+        return $data->id;
     }
 
     /**
-     * Delete a product history record
+     * Delete product history record
      *
-     * @param int $id
-     * @return bool
-     * @throws ModelNotFoundException
+     * @param array $ids
+     * @return void
      */
-    public function delete(int $id): bool
+    public function executeDelete(array $ids): void
     {
-        $productHist = $this->model->findOrFail($id);
-        return $productHist->delete();
+        $this->model->whereIn('id', $ids)->delete();
     }
 }

@@ -1,28 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-class DepartmentStatus
+enum DepartmentStatus: int
 {
-    const INACTIVE = 0;
-    const ACTIVE = 1;
-    const DRAFT = 2;
-    const ARCHIVED = 3;
+    /**
+     * inactive
+     *
+     * @var int
+     */
+    case INACTIVE = 0;
 
     /**
-     * Get all status options as array
+     * Active
      *
-     * @return array
+     * @var int
      */
-    public static function getAll(): array
-    {
-        return [
-            self::INACTIVE => 'Inactive',
-            self::ACTIVE => 'Active',
-            self::DRAFT => 'Draft',
-            self::ARCHIVED => 'Archived'
-        ];
-    }
+    case ACTIVE = 1;
+
+    /**
+     * Draft
+     *
+     * @var int
+     */
+    case DRAFT = 2;
+
+    /**
+     * Archived
+     *
+     * @var int
+     */
+    case ARCHIVED = 3;
 
     public static function getLabel(self|int $value): string
     {

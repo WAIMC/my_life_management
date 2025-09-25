@@ -3,104 +3,62 @@
 namespace App\Services\History\Master;
 
 use App\Interfaces\History\Master\RoleMstHistInterface;
-use Exception;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\History\Master\RoleMstHistResource;
 
 class RoleMstHistService
 {
     /**
-     * @var RoleMstHistInterface
-     */
-    protected RoleMstHistInterface $roleHistoryRepository;
-
-    /**
-     * RoleMstHistService constructor.
+     * Constructor.
      *
      * @param RoleMstHistInterface $roleHistoryRepository
      */
-    public function __construct(RoleMstHistInterface $roleHistoryRepository)
+    public function __construct(protected RoleMstHistInterface $roleHistoryRepository)
+    {}
+
+    /**
+     * Handle find admin list
+     *
+     * @param array $payload
+     * @return JsonResource
+     */
+    public function list(array $payload): JsonResource
     {
-        $this->roleHistoryRepository = $roleHistoryRepository;
+        $list = $this->roleHistoryRepository->list($payload);
+
+        return RoleMstHistResource::collection($list);
     }
 
     /**
-     * Get all role histories with pagination
+     * Handle store role history
      *
-     * @param array $params
-     * @return LengthAwarePaginator
+     * @param array $payload
+     * @return int
      */
-    public function getAllRoleHistories(array $params = []): LengthAwarePaginator
+    public function store(array $payload): int
     {
-        return $this->roleHistoryRepository->getAll($params);
+        return $this->roleHistoryRepository->executeStore($payload);
     }
 
     /**
-     * Get role history by ID
+     * Handle update role history
      *
-     * @param int $id
-     * @return object|null
+     * @param array $payload
+     * @return int
      */
-    public function getRoleHistoryById(int $id): ?object
+    public function update(array $payload): int
     {
-        return $this->roleHistoryRepository->findById($id);
+        return $this->roleHistoryRepository->executeUpdate($payload);
     }
 
     /**
-     * Create new role history
+     * Delete role history
      *
-     * @param array $data
-     * @return object
-     * @throws Exception
+     * @param array $payload
+     * @return void
      */
-    public function createRoleHistory(array $data): object
+    public function delete(array $payload): void
     {
-        try {
-            DB::beginTransaction();
-
-            $roleHistory = $this->roleHistoryRepository->create($data);
-
-            DB::commit();
-            return $roleHistory;
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating role history: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Get history by role ID
-     *
-     * @param int $roleId
-     * @return Collection
-     */
-    public function getRoleHistoriesByRoleId(int $roleId): Collection
-    {
-        return $this->roleHistoryRepository->getByRoleId($roleId);
-    }
-
-    /**
-     * Get history by author ID
-     *
-     * @param int $authorId
-     * @return Collection
-     */
-    public function getRoleHistoriesByAuthorId(int $authorId): Collection
-    {
-        return $this->roleHistoryRepository->getByAuthorId($authorId);
-    }
-
-    /**
-     * Get history by action type
-     *
-     * @param int $action
-     * @return Collection
-     */
-    public function getRoleHistoriesByAction(int $action): Collection
-    {
-        return $this->roleHistoryRepository->getByAction($action);
+        $this->roleHistoryRepository->executeDelete($payload['ids']);
     }
 }

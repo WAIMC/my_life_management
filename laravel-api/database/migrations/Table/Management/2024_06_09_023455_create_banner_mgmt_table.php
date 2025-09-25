@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('image', 100)->comment('Banner image name');
             $table->string('position', 50)->comment('Banner display position');
             $table->unsignedTinyInteger('status')->default(0)->comment('Banner status');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });
     }

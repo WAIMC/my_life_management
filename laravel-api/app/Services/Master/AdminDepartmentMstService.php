@@ -12,7 +12,7 @@ use LogicException;
 class AdminDepartmentMstService
 {
     public function __construct(
-        private AdminDepartmentMstInterface $adminDepartment
+        protected AdminDepartmentMstInterface $adminDepartment
     )
     {
     }

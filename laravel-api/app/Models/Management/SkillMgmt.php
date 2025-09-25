@@ -30,7 +30,8 @@ class SkillMgmt extends Model
         'slug',
         'status',
         'is_display',
-        'rank_order'
+        'rank_order',
+        'is_delete',
     ];
 
     /**

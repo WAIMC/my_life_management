@@ -28,8 +28,6 @@ class UserMgmtHist extends Model
      */
     protected $fillable = [
         'user_mgmt_id',
-        'role_id',
-        'department_id',
         'email',
         'user_name',
         'password',

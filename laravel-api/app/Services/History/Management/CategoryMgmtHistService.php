@@ -4,90 +4,61 @@ namespace App\Services\History\Management;
 
 use App\Interfaces\History\Management\CategoryMgmtHistInterface;
 use App\Http\Resources\History\Management\CategoryMgmtHistResource;
-use Exception;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class CategoryMgmtHistService
 {
-    protected CategoryMgmtHistInterface $categoryMgmtHistRepository;
-
     /**
      * CategoryMgmtHistService constructor
      *
-     * @param CategoryMgmtHistInterface $categoryMgmtHistRepository
+     * @param CategoryMgmtHistInterface $categoryMgmtHist
      */
-    public function __construct(CategoryMgmtHistInterface $categoryMgmtHistRepository)
-    {
-        $this->categoryMgmtHistRepository = $categoryMgmtHistRepository;
-    }
+    public function __construct(protected CategoryMgmtHistInterface $categoryMgmtHist)
+    {}
 
     /**
      * Get all category history records with filtering
      *
      * @param array $payload
-     * @return AnonymousResourceCollection
+     * @return JsonResource
      */
-    public function getAll(array $payload): AnonymousResourceCollection
+    public function list(array $payload): JsonResource
     {
-        $categoryHistories = $this->categoryMgmtHistRepository->getAll($payload);
+        $categoryHistories = $this->categoryMgmtHist->list($payload);
+
         return CategoryMgmtHistResource::collection($categoryHistories);
     }
 
     /**
-     * Get category history by ID
-     *
-     * @param int $id
-     * @return CategoryMgmtHistResource
-     * @throws Exception
-     */
-    public function findById(int $id): CategoryMgmtHistResource
-    {
-        $categoryHistory = $this->categoryMgmtHistRepository->findById($id);
-
-        if (!$categoryHistory) {
-            throw new Exception("Category history record not found", 404);
-        }
-
-        return new CategoryMgmtHistResource($categoryHistory);
-    }
-
-    /**
-     * Get category history by category ID
-     *
-     * @param int $categoryId
-     * @return AnonymousResourceCollection
-     */
-    public function findByCategoryId(int $categoryId): AnonymousResourceCollection
-    {
-        $categoryHistories = $this->categoryMgmtHistRepository->findByCategoryId($categoryId);
-        return CategoryMgmtHistResource::collection($categoryHistories);
-    }
-
-    /**
-     * Create new category history record
+     * Handle store category history
      *
      * @param array $payload
-     * @return CategoryMgmtHistResource
-     * @throws Exception
+     * @return int
      */
-    public function create(array $payload): CategoryMgmtHistResource
+    public function store(array $payload): int
     {
-        try {
-            DB::beginTransaction();
+        return $this->categoryMgmtHist->executeStore($payload);
+    }
 
-            // Validate category exists
-            if (!DB::table('category_mgmt')->where('id', $payload['category_mgmt_id'])->exists()) {
-                throw new Exception("Category not found", 404);
-            }
+    /**
+     * Handle update category history
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function update(array $payload): int
+    {
+        return $this->categoryMgmtHist->executeUpdate($payload);
+    }
 
-            $categoryHistory = $this->categoryMgmtHistRepository->create($payload);
-
-            DB::commit();
-            return new CategoryMgmtHistResource($categoryHistory);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+    /**
+     * Delete category history
+     *
+     * @param array $payload
+     * @return void
+     */
+    public function delete(array $payload): void
+    {
+        $this->categoryMgmtHist->executeDelete($payload['ids']);
     }
 }

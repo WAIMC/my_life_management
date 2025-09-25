@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('abbreviation', 10)->comment('Language abbreviation code');
             $table->string('name', 30)->comment('Language name');
             $table->boolean('is_active')->default(true)->comment('Flag to indicate if language is active');
+            $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->string('created_at')->nullable();
             $table->string('updated_at')->nullable();
         });
