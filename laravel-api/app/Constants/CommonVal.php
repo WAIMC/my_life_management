@@ -65,12 +65,14 @@ class CommonVal
 
     public const MIN_INTEGER = 0;
     public const MAX_INTEGER = 2147483647;
+    public const MAX_BIG_INTEGER = 9223372036854775807;
     public const MIN_DATE = '1900-01-01';
     public const MAX_DATE = '2100-12-31';
     public const MIN_VARCHAR = 0;
     public const MAX_VARCHAR = 255;
     public const MAX_EMAIL = 254;
     public const MAX_PHONE_NUMBER = 12;
+    public const MAX_TEXT = 65535;
 
     /**
      * AdminMst
