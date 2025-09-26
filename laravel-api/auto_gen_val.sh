@@ -13,7 +13,7 @@ get_folder() {
     if [[ "$table" == *"_mst_hist" ]]; then
         echo "History/Master"
     elif [[ "$table" == *"_mgmt_hist" ]]; then
-        echo "Management/Master"
+        echo "History/Management"
     elif [[ "$table" == *"_mst" ]]; then
         echo "Master"
     elif [[ "$table" == *"_mgmt" ]]; then
@@ -31,7 +31,7 @@ for table in $tables; do
         suffix_type="mst_hist"
         prefix="${table%_mst_hist}"
     elif [[ "$table" == *"_mgmt_hist" ]]; then
-        folder="Management/Master"
+        folder="History/Management"
         suffix_type="mgmt_hist"
         prefix="${table%_mgmt_hist}"
     elif [[ "$table" == *"_mst" ]]; then
