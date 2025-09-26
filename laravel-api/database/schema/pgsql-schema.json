@@ -7,10 +7,10 @@
     "admin_department_mst": {
       "type": "object",
       "properties": {
-        "admin_id": {
+        "admin_mst_id": {
           "type": "integer"
         },
-        "department_id": {
+        "department_mst_id": {
           "type": "integer"
         },
         "created_at": {
@@ -23,8 +23,8 @@
         }
       },
       "required": [
-        "admin_id",
-        "department_id"
+        "admin_mst_id",
+        "department_mst_id"
       ]
     },
     "admin_mst": {
@@ -225,10 +225,10 @@
     "admin_role_mst": {
       "type": "object",
       "properties": {
-        "admin_id": {
+        "admin_mst_id": {
           "type": "integer"
         },
-        "role_id": {
+        "role_mst_id": {
           "type": "integer"
         },
         "created_at": {
@@ -241,8 +241,8 @@
         }
       },
       "required": [
-        "admin_id",
-        "role_id"
+        "admin_mst_id",
+        "role_mst_id"
       ]
     },
     "api_mst": {
@@ -271,7 +271,7 @@
           "description": "Api status",
           "default": false
         },
-        "feature_id": {
+        "feature_mst_id": {
           "type": "integer",
           "description": "Feature ID"
         },
@@ -290,16 +290,16 @@
         "name",
         "path",
         "is_active",
-        "feature_id"
+        "feature_mst_id"
       ]
     },
     "api_role_mst": {
       "type": "object",
       "properties": {
-        "api_id": {
+        "api_mst_id": {
           "type": "integer"
         },
-        "role_id": {
+        "role_mst_id": {
           "type": "integer"
         },
         "created_at": {
@@ -312,8 +312,8 @@
         }
       },
       "required": [
-        "api_id",
-        "role_id"
+        "api_mst_id",
+        "role_mst_id"
       ]
     },
     "feature_mst": {
@@ -399,10 +399,10 @@
     "department_management_mst": {
       "type": "object",
       "properties": {
-        "department_id": {
+        "department_mst_id": {
           "type": "integer"
         },
-        "policy_department_id": {
+        "policy_department_mst_id": {
           "type": "integer"
         },
         "created_at": {
@@ -415,8 +415,8 @@
         }
       },
       "required": [
-        "department_id",
-        "policy_department_id"
+        "department_mst_id",
+        "policy_department_mst_id"
       ]
     },
     "department_mst": {
@@ -514,7 +514,7 @@
           "type": "integer",
           "description": "Api status"
         },
-        "feature_id": {
+        "feature_mst_id": {
           "type": "integer",
           "description": "Feature id"
         },
@@ -535,7 +535,7 @@
       "required": [
         "id",
         "api_mst_id",
-        "feature_id",
+        "feature_mst_id",
         "action",
         "author_id",
         "created_at"
@@ -668,47 +668,6 @@
         "created_at"
       ]
     },
-    "cache": {
-      "type": "object",
-      "properties": {
-        "key": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "value": {
-          "type": "string"
-        },
-        "expiration": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "key",
-        "value",
-        "expiration"
-      ]
-    },
-    "cache_locks": {
-      "type": "object",
-      "properties": {
-        "key": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "owner": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "expiration": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "key",
-        "owner",
-        "expiration"
-      ]
-    },
     "category_mgmt": {
       "type": "object",
       "properties": {
@@ -835,10 +794,10 @@
     "category_skill_mgmt": {
       "type": "object",
       "properties": {
-        "category_id": {
+        "category_mgmt_id": {
           "type": "integer"
         },
-        "skill_id": {
+        "skill_mgmt_id": {
           "type": "integer"
         },
         "created_at": {
@@ -851,8 +810,8 @@
         }
       },
       "required": [
-        "category_id",
-        "skill_id"
+        "category_mgmt_id",
+        "skill_mgmt_id"
       ]
     },
     "department_mst_hist": {
@@ -899,43 +858,6 @@
         "action",
         "author_id",
         "created_at"
-      ]
-    },
-    "failed_jobs": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "uuid": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "connection": {
-          "type": "string"
-        },
-        "queue": {
-          "type": "string"
-        },
-        "payload": {
-          "type": "string"
-        },
-        "exception": {
-          "type": "string"
-        },
-        "failed_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "uuid",
-        "connection",
-        "queue",
-        "payload",
-        "exception",
-        "failed_at"
       ]
     },
     "feature_mst_hist": {
@@ -986,87 +908,6 @@
         "feature_mst_id",
         "action",
         "author_id",
-        "created_at"
-      ]
-    },
-    "job_batches": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "name": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "total_jobs": {
-          "type": "integer"
-        },
-        "pending_jobs": {
-          "type": "integer"
-        },
-        "failed_jobs": {
-          "type": "integer"
-        },
-        "failed_job_ids": {
-          "type": "string"
-        },
-        "options": {
-          "type": "string"
-        },
-        "cancelled_at": {
-          "type": "integer"
-        },
-        "created_at": {
-          "type": "integer"
-        },
-        "finished_at": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "total_jobs",
-        "pending_jobs",
-        "failed_jobs",
-        "failed_job_ids",
-        "created_at"
-      ]
-    },
-    "jobs": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "queue": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "payload": {
-          "type": "string"
-        },
-        "attempts": {
-          "type": "integer"
-        },
-        "reserved_at": {
-          "type": "integer"
-        },
-        "available_at": {
-          "type": "integer"
-        },
-        "created_at": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "id",
-        "queue",
-        "payload",
-        "attempts",
-        "available_at",
         "created_at"
       ]
     },
@@ -1153,26 +994,6 @@
         "created_at"
       ]
     },
-    "migrations": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "migration": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "batch": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "id",
-        "migration",
-        "batch"
-      ]
-    },
     "original_translator_mst": {
       "type": "object",
       "properties": {
@@ -1255,76 +1076,6 @@
         "created_at"
       ]
     },
-    "password_resets": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "token": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "email",
-        "token"
-      ]
-    },
-    "personal_access_tokens": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "tokenable_type": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "tokenable_id": {
-          "type": "integer"
-        },
-        "name": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "token": {
-          "type": "string",
-          "maxLength": 64
-        },
-        "abilities": {
-          "type": "string"
-        },
-        "last_used_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "expires_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "tokenable_type",
-        "tokenable_id",
-        "name",
-        "token"
-      ]
-    },
     "policy_department_mst_hist": {
       "type": "object",
       "properties": {
@@ -1372,7 +1123,7 @@
         "id": {
           "type": "integer"
         },
-        "category_id": {
+        "category_mgmt_id": {
           "type": "integer",
           "description": "Product category"
         },
@@ -1422,7 +1173,7 @@
       },
       "required": [
         "id",
-        "category_id",
+        "category_mgmt_id",
         "code",
         "name",
         "slug",
@@ -1442,7 +1193,7 @@
           "type": "integer",
           "description": "Product id"
         },
-        "category_id": {
+        "category_mgmt_id": {
           "type": "integer",
           "description": "Product category"
         },
@@ -1495,304 +1246,6 @@
       "required": [
         "id",
         "product_mgmt_id",
-        "action",
-        "author_id",
-        "created_at"
-      ]
-    },
-    "project_mgmt": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "category_id": {
-          "type": "integer",
-          "description": "Project category"
-        },
-        "code": {
-          "type": "string",
-          "maxLength": 50,
-          "description": "Project code"
-        },
-        "name": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Project name"
-        },
-        "slug": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Project slug"
-        },
-        "description": {
-          "type": "string",
-          "maxLength": 255,
-          "description": "Project description"
-        },
-        "customer": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Project customer"
-        },
-        "status": {
-          "type": "integer",
-          "description": "Project status",
-          "default": 0
-        },
-        "is_display": {
-          "type": "boolean",
-          "description": "Display project",
-          "default": false
-        },
-        "rank_order": {
-          "type": "integer",
-          "description": "Project order",
-          "default": 0
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "category_id",
-        "code",
-        "name",
-        "slug",
-        "description",
-        "customer",
-        "status",
-        "is_display",
-        "rank_order"
-      ]
-    },
-    "project_mgmt_hist": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "project_mgmt_id": {
-          "type": "integer",
-          "description": "Project id"
-        },
-        "category_id": {
-          "type": "integer",
-          "description": "Project category"
-        },
-        "code": {
-          "type": "string",
-          "maxLength": 50,
-          "description": "Project code"
-        },
-        "name": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Project name"
-        },
-        "slug": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Project slug"
-        },
-        "description": {
-          "type": "string",
-          "maxLength": 255,
-          "description": "Project description"
-        },
-        "customer": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Project customer"
-        },
-        "status": {
-          "type": "integer",
-          "description": "Project status"
-        },
-        "is_display": {
-          "type": "boolean",
-          "description": "Display project"
-        },
-        "rank_order": {
-          "type": "integer",
-          "description": "Project order"
-        },
-        "action": {
-          "type": "integer",
-          "description": "Project action"
-        },
-        "author_id": {
-          "type": "integer",
-          "description": "Author id"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Created time"
-        }
-      },
-      "required": [
-        "id",
-        "project_mgmt_id",
-        "action",
-        "author_id",
-        "created_at"
-      ]
-    },
-    "request_detail": {
-      "type": "object",
-      "properties": {
-        "request_id": {
-          "type": "integer"
-        },
-        "key": {
-          "type": "string",
-          "maxLength": 255
-        },
-        "value": {
-          "type": "string"
-        },
-        "status": {
-          "type": "integer",
-          "description": "Request status"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "request_id",
-        "key",
-        "value",
-        "status"
-      ]
-    },
-    "request_mgmt": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "user_id": {
-          "type": "integer",
-          "description": "User id"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Request title"
-        },
-        "slug": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Request slug"
-        },
-        "description": {
-          "type": "string",
-          "maxLength": 255,
-          "description": "Request description"
-        },
-        "content": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Request image name"
-        },
-        "status": {
-          "type": "integer",
-          "description": "Request status"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "user_id",
-        "title",
-        "slug",
-        "description",
-        "content",
-        "image",
-        "status"
-      ]
-    },
-    "request_mgmt_hist": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "request_mgmt_id": {
-          "type": "integer",
-          "description": "Request id"
-        },
-        "user_id": {
-          "type": "integer",
-          "description": "User id"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Request title"
-        },
-        "slug": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Request slug"
-        },
-        "description": {
-          "type": "string",
-          "maxLength": 255,
-          "description": "Request description"
-        },
-        "content": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "Request image name"
-        },
-        "status": {
-          "type": "integer",
-          "description": "Request status"
-        },
-        "action": {
-          "type": "integer",
-          "description": "Request action"
-        },
-        "author_id": {
-          "type": "integer",
-          "description": "Author id"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Created time"
-        }
-      },
-      "required": [
-        "id",
-        "request_mgmt_id",
         "action",
         "author_id",
         "created_at"
@@ -2214,11 +1667,11 @@
         "id": {
           "type": "integer"
         },
-        "language_id": {
+        "language_mst_id": {
           "type": "integer",
           "description": "Language id"
         },
-        "original_id": {
+        "original_translator_mst_id": {
           "type": "integer",
           "description": "Original id"
         },
@@ -2238,8 +1691,8 @@
       },
       "required": [
         "id",
-        "language_id",
-        "original_id",
+        "language_mst_id",
+        "original_translator_mst_id",
         "value"
       ]
     },
@@ -2253,11 +1706,11 @@
           "type": "integer",
           "description": "Translation id"
         },
-        "language_id": {
+        "language_mst_id": {
           "type": "integer",
           "description": "Language id"
         },
-        "original_id": {
+        "original_translator_mst_id": {
           "type": "integer",
           "description": "Original id"
         },
@@ -2283,218 +1736,6 @@
       "required": [
         "id",
         "translation_mst_id",
-        "action",
-        "author_id",
-        "created_at"
-      ]
-    },
-    "user_mgmt": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "role_id": {
-          "type": "integer",
-          "description": "User role"
-        },
-        "department_id": {
-          "type": "integer",
-          "description": "User department"
-        },
-        "email": {
-          "type": "string",
-          "maxLength": 30,
-          "description": "User email"
-        },
-        "user_name": {
-          "type": "string",
-          "maxLength": 50,
-          "description": "User name"
-        },
-        "password": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "User password"
-        },
-        "first_name": {
-          "type": "string",
-          "maxLength": 20,
-          "description": "User first name"
-        },
-        "last_name": {
-          "type": "string",
-          "maxLength": 20,
-          "description": "User last name"
-        },
-        "address": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "User address"
-        },
-        "phone_number": {
-          "type": "string",
-          "maxLength": 20,
-          "description": "User phone number"
-        },
-        "birth": {
-          "type": "string",
-          "format": "date-time",
-          "description": "User birth"
-        },
-        "gender": {
-          "type": "integer",
-          "description": "User gender",
-          "default": 0
-        },
-        "status": {
-          "type": "integer",
-          "description": "User status",
-          "default": 0
-        },
-        "is_active": {
-          "type": "boolean",
-          "description": "User active",
-          "default": false
-        },
-        "avatar": {
-          "type": "string",
-          "maxLength": 30,
-          "description": "User avatar name"
-        },
-        "email_verified_at": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Verified email time"
-        },
-        "remember_token": {
-          "type": "string",
-          "maxLength": 100
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "role_id",
-        "department_id",
-        "email",
-        "user_name",
-        "password",
-        "first_name",
-        "last_name",
-        "gender",
-        "status",
-        "is_active"
-      ]
-    },
-    "user_mgmt_hist": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "user_mgmt_id": {
-          "type": "integer",
-          "description": "User id"
-        },
-        "role_id": {
-          "type": "integer",
-          "description": "User role"
-        },
-        "department_id": {
-          "type": "integer",
-          "description": "User department"
-        },
-        "email": {
-          "type": "string",
-          "maxLength": 30,
-          "description": "User email"
-        },
-        "user_name": {
-          "type": "string",
-          "maxLength": 50,
-          "description": "User name"
-        },
-        "password": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "User password"
-        },
-        "first_name": {
-          "type": "string",
-          "maxLength": 20,
-          "description": "User first name"
-        },
-        "last_name": {
-          "type": "string",
-          "maxLength": 20,
-          "description": "User last name"
-        },
-        "address": {
-          "type": "string",
-          "maxLength": 100,
-          "description": "User address"
-        },
-        "phone_number": {
-          "type": "string",
-          "maxLength": 20,
-          "description": "User phone number"
-        },
-        "birth": {
-          "type": "string",
-          "format": "date-time",
-          "description": "User birth"
-        },
-        "gender": {
-          "type": "integer",
-          "description": "User gender"
-        },
-        "status": {
-          "type": "integer",
-          "description": "User status"
-        },
-        "is_active": {
-          "type": "boolean",
-          "description": "User active"
-        },
-        "avatar": {
-          "type": "string",
-          "maxLength": 30,
-          "description": "User avatar name"
-        },
-        "email_verified_at": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Verified email time"
-        },
-        "remember_token": {
-          "type": "string",
-          "maxLength": 100
-        },
-        "action": {
-          "type": "integer",
-          "description": "Action"
-        },
-        "author_id": {
-          "type": "integer",
-          "description": "Author id"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Created time"
-        }
-      },
-      "required": [
-        "id",
-        "user_mgmt_id",
         "action",
         "author_id",
         "created_at"
