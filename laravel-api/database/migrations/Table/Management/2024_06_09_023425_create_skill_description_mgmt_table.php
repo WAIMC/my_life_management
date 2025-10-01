@@ -19,9 +19,15 @@ return new class extends Migration {
             $table->unsignedTinyInteger('status')->default(0)->comment('Skill status');
             $table->boolean('is_display')->default(false)->comment('Display skill');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Rank order');
-            $table->unsignedInteger('skill_id')->comment('Skill ID');
+            $table->unsignedInteger('skill_mgmt_id')->comment('Skill ID');
             $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
+
+            // Self-referencing foreign key
+            $table->foreign('parent_id')->references('id')->on('skill_description_mgmt');
+
+            // Foreign key constraints
+            $table->foreign('skill_mgmt_id')->references('id')->on('skill_mgmt');
         });
     }
 

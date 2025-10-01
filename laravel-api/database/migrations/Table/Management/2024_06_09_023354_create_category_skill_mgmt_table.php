@@ -8,13 +8,18 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('category_skill_mgmt', function (Blueprint $table) {
-            $table->unsignedInteger('category_id')->comment('Category ID');
-            $table->unsignedInteger('skill_id')->comment('Skill ID');
-            $table->primary(['category_id', 'skill_id']);
-            $table->timestamps();
+            // Composite primary key
+            $table->unsignedInteger('category_mgmt_id')->comment('Category ID');
+            $table->unsignedInteger('skill_mgmt_id')->comment('Skill ID');
 
-            // $table->foreign('category_id')->references('id')->on('category_mgmt')->onDelete('cascade');
-            // $table->foreign('skill_id')->references('id')->on('skill_mgmt')->onDelete('cascade');
+            // Composite primary key
+            $table->primary(['category_mgmt_id', 'skill_mgmt_id']);
+
+            // Foreign key constraints
+            $table->foreign('category_mgmt_id')->references('id')->on('category_mgmt');
+            $table->foreign('skill_mgmt_id')->references('id')->on('skill_mgmt');
+
+            $table->timestamps();
         });
     }
 

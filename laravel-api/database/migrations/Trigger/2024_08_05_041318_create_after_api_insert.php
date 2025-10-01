@@ -14,7 +14,7 @@ return new class extends Migration {
           CREATE OR REPLACE FUNCTION insert_into_api_role_from_api() RETURNS TRIGGER AS $$
             BEGIN
               -- Insert a new record into api_role_mst table
-              INSERT INTO api_role_mst (api_id, role_id, created_at, updated_at)
+              INSERT INTO api_role_mst (api_mst_id, role_mst_id, created_at, updated_at)
               SELECT NEW.id, id, now(), now() FROM role_mst WHERE name = 'root';
               RETURN NEW;
             END;

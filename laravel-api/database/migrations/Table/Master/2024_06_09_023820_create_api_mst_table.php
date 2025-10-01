@@ -13,9 +13,12 @@ return new class extends Migration {
             $table->string('name', 50)->comment('Api name');
             $table->string('path', 100)->comment('Api path');
             $table->boolean('is_active')->default(false)->comment('Api status');
-            $table->unsignedInteger('feature_id')->comment('Feature ID');
+            $table->unsignedInteger('feature_mst_id')->comment('Feature ID');
             $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
+
+            // Foreign key constraint
+            $table->foreign('feature_mst_id')->references('id')->on('feature_mst');
         });
     }
 

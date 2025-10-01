@@ -14,7 +14,7 @@ return new class extends Migration {
           CREATE OR REPLACE FUNCTION insert_into_department_management() RETURNS TRIGGER AS $$
             BEGIN
               -- Insert a new record into department_management_mst table
-              INSERT INTO department_management_mst (department_id, policy_department_id, created_at, updated_at)
+              INSERT INTO department_management_mst (department_mst_id, policy_department_mst_id, created_at, updated_at)
               SELECT id, NEW.id, now(), now() FROM department_mst WHERE name = 'root';
               RETURN NEW;
             END;

@@ -24,8 +24,8 @@ return new class extends Migration {
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
 
-            //$table->foreign('banner_mgmt_id')->references('id')->on('banner_mgmt');
-            //$table->foreign('author_id')->references('id')->on('admin_mst');
+            // Foreign key constraints
+            $table->foreign('banner_mgmt_id')->references('id')->on('banner_mgmt');
         });
     }
 

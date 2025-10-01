@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->timestamps();
 
             // Self-referencing foreign key
-            //$table->foreign('parent_id')->references('id')->on('category_mgmt')->onDelete('cascade');
+            $table->foreign('parent_id')->references('id')->on('category_mgmt');
         });
     }
 

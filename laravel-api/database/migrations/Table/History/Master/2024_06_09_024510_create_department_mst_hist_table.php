@@ -19,6 +19,8 @@ return new class extends Migration {
             $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
+
+            $table->foreign('department_mst_id')->references('id')->on('department_mst');
         });
     }
 

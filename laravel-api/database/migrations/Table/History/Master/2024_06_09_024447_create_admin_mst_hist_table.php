@@ -31,7 +31,7 @@ return new class extends Migration {
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
 
-            // $table->foreign('admin_mst_id')->references('id')->on('admin_mst');
+            $table->foreign('admin_mst_id')->references('id')->on('admin_mst');
         });
     }
 

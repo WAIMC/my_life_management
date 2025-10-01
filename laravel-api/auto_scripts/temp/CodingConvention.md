@@ -178,7 +178,7 @@ database/
 - **Column:**
   - **Định danh:** `snake_case`, số ít, không viết tắt, tiếng Anh.
   - **Khóa chính:** `id`, kiểu `bigIncrements` hoặc `ulid`.
-  - **Khóa ngoại:** `{table}_id` (Vd: `category_id`).
+  - **Khóa ngoại:** `{table}_id` (Vd: `category_mgmt_id`).
   - **Boolean:** Tiền tố `is_` hoặc `has_` (Vd: `is_active`).
   - **Timestamps:** `created_at`, `updated_at` kiểu `timestamp`.
 

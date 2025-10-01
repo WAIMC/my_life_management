@@ -11,13 +11,18 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('department_management_mst', function (Blueprint $table) {
-            $table->unsignedInteger('department_id')->comment('Department ID');
-            $table->unsignedInteger('policy_department_id')->comment('Policy Department ID');
-            $table->primary(['department_id', 'policy_department_id']);
-            $table->timestamps();
+            // Foreign key references to department_mst and policy_department_mst tables
+            $table->unsignedInteger('department_mst_id')->comment('Department ID');
+            $table->unsignedInteger('policy_department_mst_id')->comment('Policy Department ID');
 
-            // $table->foreign('department_id')->references('id')->on('department_mst');
-            // $table->foreign('policy_department_id')->references('id')->on('policy_department_mst');
+            // Composite primary key
+            $table->primary(['department_mst_id', 'policy_department_mst_id']);
+
+            // Foreign key constraints
+            $table->foreign('department_mst_id')->references('id')->on('department_mst');
+            $table->foreign('policy_department_mst_id')->references('id')->on('policy_department_mst');
+
+            $table->timestamps();
         });
     }
 

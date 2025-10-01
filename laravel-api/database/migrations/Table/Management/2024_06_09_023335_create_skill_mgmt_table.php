@@ -17,6 +17,9 @@ return new class extends Migration {
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Skill order');
             $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
+
+            // Self-referencing foreign key
+            $table->foreign('parent_id')->references('id')->on('skill_mgmt');
         });
     }
 

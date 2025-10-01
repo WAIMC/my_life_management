@@ -21,6 +21,9 @@ return new class extends Migration {
             $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
+
+            // Foreign key constraints
+            $table->foreign('slider_mgmt_id')->references('id')->on('slider_mgmt');
         });
     }
 

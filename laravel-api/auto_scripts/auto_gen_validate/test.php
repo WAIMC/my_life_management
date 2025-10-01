@@ -202,6 +202,18 @@ dùng '\n' không xuống dòng mới khi run file .sh
 ],`
 
 
+- khi run shell script sẽ ghi đè lên các file đã tồn tại
+- logic kiểm tra là table trung gian: không có column "id" và có >= 2 column dạng *_id
+- Nếu là table trung gian thì có 2 file validate, list và update (insert, delete)
+Nội dung file validate
+- sắp xếp thự tự các column như định nghĩa của table object
+- delete thì kiểm tra tồn tại của id trong bảng. **Nếu là table liên kêt với table khác thì cần kiểm tra
+không còn liên kết với table khác mới được xóa**
+- store và update thì kiểm tra tồn tại của các *_id trong bảng tương ứng. ngoại trừ các id
+đặc biệt như author_id, row_id, parent_id, failed_job_ids, field_id, tokenable_id
+- Nếu là table thông thường thì có 4 file validate, delete, list, store,
+
+
 -------------------------------------------------------------
 prompt generate code shell script:
 bạn là senior back-end file đính kèm pgsql-schema.json là schema db dữ

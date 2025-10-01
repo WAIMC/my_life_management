@@ -11,9 +11,17 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('translation_language_mst', function (Blueprint $table) {
-            $table->unsignedInteger('translation_id')->comment('Translation ID');
-            $table->unsignedInteger('language_id')->comment('Language ID');
-            $table->primary(['translation_id', 'language_id']);
+            // Foreign key references to translation_mst and language_mst tables
+            $table->unsignedInteger('translation_mst_id')->comment('Translation ID');
+            $table->unsignedInteger('language_mst_id')->comment('Language ID');
+
+            // Composite primary key
+            $table->primary(['translation_mst_id', 'language_mst_id']);
+
+            // Foreign key constraints
+            $table->foreign('translation_mst_id')->references('id')->on('translation_mst');
+            $table->foreign('language_mst_id')->references('id')->on('language_mst');
+
             $table->timestamps();
         });
     }

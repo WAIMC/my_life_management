@@ -20,9 +20,7 @@ return new class extends Migration {
             $table->integer('author_id')->comment('Author id');
             $table->string('created_at');
 
-            //$table->foreign('translation_mst_id')->references('id')->on('translation_mst');
-            //$table->foreign('language_id')->references('id')->on('language_mst');
-            //$table->foreign('original_id')->references('id')->on('original_translator_mst');
+            $table->foreign('translation_mst_id')->references('id')->on('translation_mst');
         });
     }
 

@@ -20,6 +20,9 @@ return new class extends Migration {
             $table->integer('action')->comment('action');
             $table->integer('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
+
+            // Foreign key constraints
+            $table->foreign('social_mgmt_id')->references('id')->on('social_mgmt');
         });
     }
 

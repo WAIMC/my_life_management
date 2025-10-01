@@ -17,13 +17,13 @@ return new class extends Migration {
             $table->string('name', 50)->nullable()->comment('name');
             $table->string('path', 100)->nullable()->comment('path');
             $table->unsignedTinyInteger('is_active')->nullable()->comment('status');
-            $table->unsignedInteger('feature_id')->comment('FeatureMst id');
+            $table->unsignedInteger('feature_mst_id')->comment('FeatureMst id');
             $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
 
-            // $table->foreign('api_mst_id')->references('id')->on('api_mst');
-            // $table->foreign('feature_id')->references('id')->on('feature_mst');
+            $table->foreign('api_mst_id')->references('id')->on('api_mst');
+            $table->foreign('feature_mst_id')->references('id')->on('feature_mst');
         });
     }
 

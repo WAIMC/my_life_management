@@ -11,9 +11,17 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('admin_role_mst', function (Blueprint $table) {
-            $table->unsignedInteger('admin_id')->comment('Admin ID');
-            $table->unsignedInteger('role_id')->comment('Role ID');
-            $table->primary(['admin_id', 'role_id']);
+            // Forein key references to admin_mst and role_mst tables
+            $table->unsignedInteger('admin_mst_id')->comment('Admin ID');
+            $table->unsignedInteger('role_mst_id')->comment('Role ID');
+
+            // Composite primary key
+            $table->primary(['admin_mst_id', 'role_mst_id']);
+
+            // Foreign key constraints
+            $table->foreign('admin_mst_id')->references('id')->on('admin_mst');
+            $table->foreign('role_mst_id')->references('id')->on('role_mst');
+
             $table->timestamps();
         });
     }

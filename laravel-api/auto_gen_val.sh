@@ -49,18 +49,31 @@ for table in $tables; do
     name=$(camel_case "$table")
     name_scope=$(camel_case "$prefix")
 
-    columns=$(jq -r '.properties."'"$table"'".properties | keys[]' "$JSON_FILE")
+    # Lấy danh sách cột từ JSON schema và lưu trữ theo đúng thứ tự
+    columns=()
+    while IFS= read -r col; do
+        columns+=("$col")
+    done < <(jq -r '.properties."'"$table"'".properties | to_entries[] | .key' "$JSON_FILE")
+    
     required=$(jq -r '.properties."'"$table"'".required[] // empty' "$JSON_FILE" | tr '\n' ' ')
 
+    # Kiểm tra xem bảng có trường id hay không
+    has_id_field=0
+    if echo "$columns" | grep -q "^id$"; then
+        has_id_field=1
+    fi
+
+    # Đếm số cột dạng *_id
     id_count=0
-    for col in $columns; do
-        if [[ $col == *"_id" ]]; then
+    for col in "${columns[@]}"; do
+        if [[ $col == *"_id" && $col != "id" ]]; then
             ((id_count++))
         fi
     done
 
+    # Bảng trung gian là bảng không có trường id và có từ 2 cột *_id trở lên
     is_intermediate=0
-    if [[ "$suffix_type" == "mst" || "$suffix_type" == "mgmt" ]] && [[ $id_count -eq 2 ]]; then
+    if [[ $has_id_field -eq 0 && $id_count -ge 2 ]]; then
         is_intermediate=1
     fi
 
@@ -81,6 +94,51 @@ for table in $tables; do
         model_path="${folder//\//\\}\\${name}"
 
         if [[ "$ftype" == "Delete" ]]; then
+            # Thêm kiểm tra cho foreign keys trong delete
+            foreign_key_rules=""
+            foreign_key_attrs=""
+            
+            # Kiểm tra xem bảng có là table trung gian không
+            if [[ $is_intermediate -eq 0 ]]; then
+                # Lọc các cột *_id để kiểm tra FK
+                for col in "${columns[@]}"; do
+                    if [[ "$col" == *"_id" && "$col" != "id" ]]; then
+                        prefix="${col%_id}"
+                        ref_table=""
+                        
+                        # Tìm bảng tham chiếu
+                        if jq -e '.properties."'"${prefix}_mst"'"' >/dev/null 2>&1 "$JSON_FILE"; then
+                            ref_table="${prefix}_mst"
+                            ref_folder="Master"
+                        elif jq -e '.properties."'"${prefix}_mgmt"'"' >/dev/null 2>&1 "$JSON_FILE"; then
+                            ref_table="${prefix}_mgmt"
+                            ref_folder="Management"
+                        fi
+                        
+                        if [[ -n "$ref_table" ]]; then
+                            ref_model=$(camel_case "$ref_table")
+                            foreign_key_rules+="            'delete.$col' => [
+                'required',
+                'integer',
+                'min:' . CommonVal::MIN_INTEGER,
+                'max:' . CommonVal::MAX_INTEGER,
+                Rule::exists(${ref_model}::class, 'id')
+            ],
+"
+                            foreign_key_attrs+="            'delete.$col' => __('message.$col'),
+"
+                        fi
+                    fi
+                done
+            fi
+            
+            # Chỉ thêm delete array nếu có foreign keys
+            delete_section=""
+            if [[ -n "$foreign_key_rules" ]]; then
+                delete_section="            'delete' => ['required', 'array'],
+$foreign_key_rules"
+            fi
+            
             cat << EOF > "$filepath"
 <?php
 
@@ -109,6 +167,7 @@ class ${ftype}${name}Request extends FormRequest
                 'max:' . CommonVal::MAX_INTEGER,
                 Rule::exists(${name}::class, 'id')
             ],
+$delete_section
         ];
     }
 
@@ -117,6 +176,7 @@ class ${ftype}${name}Request extends FormRequest
         return [
             'ids' => __('message.${table}_id'),
             'ids.*' => __('message.${table}_id'),
+$foreign_key_attrs
         ];
     }
 }
@@ -133,8 +193,25 @@ use Illuminate\\Validation\\Rule;"
 
         rules=""
         attributes=""
+        
+        # Lưu trữ các column *_id của bảng trung gian
+        id_columns=()
+        if [[ $is_intermediate -eq 1 ]]; then
+            for col in "${columns[@]}"; do
+                if [[ "$col" == *"_id" && "$col" != "id" ]]; then
+                    id_columns+=("$col")
+                fi
+            done
+        fi
+        
+        # Khởi tạo các biến cho bảng trung gian
+        rules_insert=""
+        attributes_insert=""
+        rules_delete=""
+        attributes_delete=""
 
-        for col in $columns; do
+        # Xử lý từng cột theo đúng thứ tự đã lưu
+        for col in "${columns[@]}"; do
             if [[ "$col" == "created_at" || "$col" == "updated_at" ]]; then
                 continue
             fi
@@ -186,7 +263,9 @@ use Illuminate\\Validation\\Rule;"
 
                 validates+=("'numeric'" "'min:' . CommonVal::MIN_INTEGER" "'max:' . CommonVal::MAX_INTEGER")
 
-                if [[ $add_exists -eq 1 ]]; then
+                # Store và Update kiểm tra tồn tại của các *_id trong bảng tương ứng
+                # ngoại trừ các id đặc biệt đã định nghĩa trong excluded_ids
+                if [[ $add_exists -eq 1 && ("$ftype" == "Store" || "$ftype" == "Update") ]]; then
                     prefix="${col%_id}"
                     ref_table=""
                     if jq -e '.properties."'"${prefix}_mst"'"' >/dev/null 2>&1 "$JSON_FILE"; then
@@ -222,14 +301,132 @@ use Illuminate\\Validation\\Rule;"
 
             if [[ ${#validates[@]} -gt 0 ]]; then
                 joined_validates=$(IFS=', '; echo "${validates[*]}")
-                rules+="            '$col' => [$req, $joined_validates],
+                
+                # Xử lý cho bảng trung gian và update request
+                if [[ $is_intermediate -eq 1 && "$ftype" == "Update" ]]; then
+                    # Thêm rules cho insert
+                    rules_insert+="                '$col' => [$req, $joined_validates],
 "
-                attributes+="            '$col' => __('message.$col'),
+                    attributes_insert+="                '$col' => __('message.$col'),
 "
+                    
+                    # Thêm rules cho delete
+                    rules_delete+="                '$col' => [$req, $joined_validates],
+"
+                    attributes_delete+="                '$col' => __('message.$col'),
+"
+                else
+                    rules+="            '$col' => [$req, $joined_validates],
+"
+                    attributes+="            '$col' => __('message.$col'),
+"
+                fi
             fi
         done
 
-        if [[ "$ftype" == "List" ]]; then
+        # Xử lý logic cho bảng trung gian trong request Update
+        if [[ $is_intermediate -eq 1 && "$ftype" == "Update" ]]; then
+            # Thêm rules insert và delete
+            rules="            'insert' => ['array', 'nullable'],
+            'delete' => ['array', 'nullable'],
+            'insert.*' => ['required', 'array'],
+            'delete.*' => ['required', 'array'],
+"
+            attributes="            'insert' => __('message.insert'),
+            'delete' => __('message.delete'),
+            'insert.*' => __('message.items'),
+            'delete.*' => __('message.items'),
+"
+            
+            # Thêm rules cho từng column trong insert
+            for col in "${columns[@]}"; do
+                if [[ "$col" != "created_at" && "$col" != "updated_at" ]]; then
+                    typ=$(jq -r '.properties."'"$table"'".properties."'"$col"'".type // "null"' "$JSON_FILE")
+                    fmt=$(jq -r '.properties."'"$table"'".properties."'"$col"'".format // "null"' "$JSON_FILE")
+                    maxl=$(jq -r '.properties."'"$table"'".properties."'"$col"'".maxLength // "null"' "$JSON_FILE")
+                    
+                    col_rules=""
+                    
+                    # Xác định rule dựa vào kiểu dữ liệu
+                    if [[ "$col" == *"_id" ]]; then
+                        col_rules="'required', 'numeric', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER"
+                        
+                        # Tìm bảng tham chiếu và thêm rule exists
+                        prefix="${col%_id}"
+                        ref_table=""
+                        if jq -e '.properties."'"${prefix}_mst"'"' >/dev/null 2>&1 "$JSON_FILE"; then
+                            ref_table="${prefix}_mst"
+                            ref_folder="Master"
+                        elif jq -e '.properties."'"${prefix}_mgmt"'"' >/dev/null 2>&1 "$JSON_FILE"; then
+                            ref_table="${prefix}_mgmt"
+                            ref_folder="Management"
+                        fi
+                        
+                        if [[ -n "$ref_table" ]]; then
+                            ref_model=$(camel_case "$ref_table")
+                            col_rules+=", Rule::exists(${ref_model}::class, 'id')"
+                            uses+="
+use App\\Models\\${ref_folder//\//\\}\\$ref_model;"
+                        fi
+                    elif [[ "$fmt" == "date-time" ]]; then
+                        col_rules="'required', 'date_format:' . CommonVal::DATE_FORMAT, 'after_or_equal:' . CommonVal::MIN_DATE, 'before_or_equal:' . CommonVal::MAX_DATE"
+                    elif [[ "$typ" == "integer" ]]; then
+                        col_rules="'required', 'numeric', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER"
+                    elif [[ "$typ" == "string" ]]; then
+                        if [[ "$maxl" != "null" ]]; then
+                            col_rules="'required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:$maxl'"
+                        else
+                            col_rules="'required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR"
+                        fi
+                    elif [[ "$typ" == "boolean" ]]; then
+                        col_rules="'required', 'boolean'"
+                    else
+                        col_rules="'nullable'"
+                    fi
+                    
+                    if [[ -n "$col_rules" ]]; then
+                        rules+="            'insert.*.$col' => [$col_rules],
+            'delete.*.$col' => [$col_rules],
+"
+                        attributes+="            'insert.*.$col' => __('message.$col'),
+            'delete.*.$col' => __('message.$col'),
+"
+                    fi
+                fi
+            done
+            
+            # Thêm rule kiểm tra combination của các khóa chính (các cột *_id)
+            if [[ ${#id_columns[@]} -ge 2 ]]; then
+                # Tạo rule kiểm tra tồn tại cụm primary key
+                rules+="            'insert.*.combination' => ['required', function (\$attribute, \$value, \$fail) {
+                \$parts = explode('.', \$attribute);
+                \$index = \$parts[1];
+"
+                
+                # Tạo câu lệnh kiểm tra sự tồn tại
+                rules+="                \$exists = ${name}::where("
+                first=1
+                for id_col in "${id_columns[@]}"; do
+                    if [[ $first -eq 1 ]]; then
+                        rules+="'$id_col', \$this->input(\"insert.{\$index}.$id_col\")"
+                        first=0
+                    else
+                        rules+=")
+                    ->where('$id_col', \$this->input(\"insert.{\$index}.$id_col\")"
+                    fi
+                done
+                rules+=")->exists();
+                
+                if (\$exists) {
+                    \$fail('Bản ghi với các khóa này đã tồn tại.');
+                }
+            }],
+"
+                uses+="
+use App\\Models\\$model_path;"
+            fi
+            
+        elif [[ "$ftype" == "List" ]]; then
             rules+="            'from_date' => [
                 'nullable',
                 'date_format:' . CommonVal::DATE_FORMAT,

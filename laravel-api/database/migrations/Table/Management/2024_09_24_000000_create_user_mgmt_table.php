@@ -30,9 +30,6 @@ return new class extends Migration
             $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->string('created_at')->nullable()->comment('User created at');
             $table->string('updated_at')->nullable()->comment('User updated status');
-
-            //$table->foreign('role_id')->references('id')->on('role_mst');
-            //$table->foreign('department_id')->references('id')->on('department_mst');
         });
     }
 

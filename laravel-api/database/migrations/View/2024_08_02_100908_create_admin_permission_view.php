@@ -12,8 +12,8 @@ return new class extends Migration {
         DB::statement("
           CREATE VIEW admin_permission_view AS
             SELECT
-              am.id         AS admin_id,
-              rm.id         AS role_id,
+              am.id         AS admin_mst_id,
+              rm.id         AS role_mst_id,
               rm.name       AS role_name,
               CASE
                   WHEN am2.type = 0 THEN 'GET'
@@ -29,11 +29,11 @@ return new class extends Migration {
               fm.group_name AS feature_group
             FROM
               admin_mst am                                              -- Account
-              INNER JOIN admin_role_mst arm ON arm.admin_id = am.id 	  -- AdminMst role
-              INNER JOIN role_mst rm ON rm.id = arm.role_id             -- RoleMst
-              INNER JOIN api_role_mst arm2 ON arm2.role_id = rm.id		    -- ApiMst feature
-              INNER JOIN api_mst am2 ON am2.id = arm2.api_id 			      -- ApiMst id
-              INNER JOIN feature_mst fm ON fm.id = am2.feature_id 		  -- FeatureMst
+              INNER JOIN admin_role_mst arm ON arm.admin_mst_id = am.id 	  -- AdminMst role
+              INNER JOIN role_mst rm ON rm.id = arm.role_mst_id             -- RoleMst
+              INNER JOIN api_role_mst arm2 ON arm2.role_mst_id = rm.id		    -- ApiMst feature
+              INNER JOIN api_mst am2 ON am2.id = arm2.api_mst_id 			      -- ApiMst id
+              INNER JOIN feature_mst fm ON fm.id = am2.feature_mst_id 		  -- FeatureMst
             WHERE
               am.status = 1
               AND am.is_active = TRUE

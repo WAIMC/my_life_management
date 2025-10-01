@@ -11,9 +11,17 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('admin_department_mst', function (Blueprint $table) {
-            $table->unsignedInteger('admin_id')->comment('Admin ID');
-            $table->unsignedInteger('department_id')->comment('Department ID');
-            $table->primary(['admin_id', 'department_id']);
+            // Foreign key references to admin_mst and department_mst tables
+            $table->unsignedInteger('admin_mst_id')->comment('Admin ID');
+            $table->unsignedInteger('department_mst_id')->comment('Department ID');
+
+            // Composite primary key
+            $table->primary(['admin_mst_id', 'department_mst_id']);
+
+            // Foreign key constraints
+            $table->foreign('admin_mst_id')->references('id')->on('admin_mst');
+            $table->foreign('department_mst_id')->references('id')->on('department_mst');
+
             $table->timestamps();
         });
     }

@@ -21,8 +21,8 @@ return new class extends Migration {
             $table->unsignedInteger('author_id')->comment('Author id');
             $table->timestamp('created_at')->comment('Created time');
 
-            //$table->foreign('category_mgmt_id')->references('id')->on('category_mgmt');
-            //$table->foreign('author_id')->references('id')->on('admin_mst');
+            // Foreign key constraints
+            $table->foreign('category_mgmt_id')->references('id')->on('category_mgmt');
         });
     }
 
