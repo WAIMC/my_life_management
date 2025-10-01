@@ -20,6 +20,10 @@ RUN apk add --no-cache \
     && pecl install redis-5.3.7 \
     && docker-php-ext-enable redis pdo_pgsql
 
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install simple-ddl-parser
+
 # Cài đặt Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
