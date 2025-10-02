@@ -24,34 +24,7 @@ Constraints & Requirements: <Các yêu cầu cụ thể khác, ví dụ: xử l�
 + Đính kèm codingConvention và metadata vào context
 + Chọn agent
 + paste propmt + enter
-*********************
 parse schema + convention → Generate prompt → Feed vào agent -> enter prompt
-
-- Resource
-    - Coding convention
-    - meta data json schema
-    - agent (của github copilot)
-
-Dựa vào coding convention và đọc nội dung file /database/schema/pgsql-schema.json từ dòng
-0 -> 458 hãy generate promt cho mỗi object (table) trong meta data json schema:
-    + Xác đinh scope
-    + Dựa vào quy định forein key trong coding convention để xác định forein key của table đang được trỏ đến table nào, nếu có
-    + Tạo các prompt cho từng object (table)
-    + Luôn tạo line mới và Fill nội dung vào file projects/my_life_management/laravel-api/temp/promt-common.md. Không replace nội dung cũ
-    vd mẫu prompt: 
-        Generate a complete CRUD API module from the following migration file content:
-        - Scope: master
-        - Table: api_mst
-        - Column 
-            id serial4 NOT NULL,
-            "type" int2 DEFAULT '0'::smallint NOT NULL,
-            "name" varchar(50) NOT NULL,
-            "path" varchar(100) NOT NULL,
-            is_active bool DEFAULT false NOT NULL,
-            feature_id int4 NOT NULL,
-            created_at timestamp(0) NULL,
-            updated_at timestamp(0) NULL,
-
 
 *************************************************************************************************************************************
 GIAI ĐOẠN
@@ -258,3 +231,10 @@ và sử dụng vd: 'birth' => [
             ],
 
 Viết bash Thực hiện loop dữ liệu file tôi đính kèm, mỗi table đều sẽ thực hiện tạo file validate như yêu cầu trên. cung cấp cho tôi các loại const để tôi định nghĩa trong const và khi validate sẽ dùng các const này
+
+**************************************************************
+- Bộ 3: ERD schema, DDL, json schema
+    + ERD và DDL có thể sử dụng đồng thời ở dbeaver
+    + Convert DDL -> json schema (để apply các tính năng mapping trong code):
+        cài đặt package python simple-ddl-parser để convert, coding file, đọc nội dung file DDL, convert qua json schema
+**************************************************************

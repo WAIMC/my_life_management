@@ -1,55 +1,7 @@
 [
     {
-        "name": "statement_timeout",
-        "value": "0"
-    },
-    {
-        "name": "lock_timeout",
-        "value": "0"
-    },
-    {
-        "name": "idle_in_transaction_session_timeout",
-        "value": "0"
-    },
-    {
-        "name": "transaction_timeout",
-        "value": "0"
-    },
-    {
-        "name": "client_encoding",
-        "value": "'UTF8'"
-    },
-    {
-        "name": "standard_conforming_strings",
-        "value": "on"
-    },
-    {
-        "name": "check_function_bodies",
-        "value": "false"
-    },
-    {
-        "name": "xmloption",
-        "value": "content"
-    },
-    {
-        "name": "client_min_messages",
-        "value": "warning"
-    },
-    {
-        "name": "row_security",
-        "value": "off"
-    },
-    {
-        "name": "default_tablespace",
-        "value": "''"
-    },
-    {
-        "name": "default_table_access_method",
-        "value": "heap"
-    },
-    {
         "table_name": "admin_department_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
@@ -95,43 +47,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "admin_department_mst_pkey",
-                    "columns": [
-                        "admin_mst_id",
-                        "department_mst_id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "admin_mst_id",
-                    "constraint_name": "admin_department_mst_admin_mst_id_foreign",
-                    "references": {
-                        "table": "admin_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "department_mst_id",
-                    "constraint_name": "admin_department_mst_department_mst_id_foreign",
-                    "references": {
-                        "table": "department_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -139,19 +55,17 @@
     },
     {
         "table_name": "admin_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.admin_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -159,7 +73,7 @@
                 "type": "character varying",
                 "size": 30,
                 "references": null,
-                "unique": true,
+                "unique": false,
                 "nullable": false,
                 "default": null,
                 "check": null
@@ -169,7 +83,7 @@
                 "type": "character varying",
                 "size": 50,
                 "references": null,
-                "unique": true,
+                "unique": false,
                 "nullable": false,
                 "default": null,
                 "check": null
@@ -329,40 +243,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "uniques": [
-                {
-                    "constraint_name": "admin_mst_email_unique",
-                    "columns": [
-                        "email"
-                    ]
-                },
-                {
-                    "constraint_name": "admin_mst_user_name_unique",
-                    "columns": [
-                        "user_name"
-                    ]
-                }
-            ],
-            "primary_keys": [
-                {
-                    "constraint_name": "admin_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -370,19 +251,17 @@
     },
     {
         "table_name": "admin_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.admin_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -569,68 +448,15 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "admin_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "admin_mst_id",
-                    "constraint_name": "admin_mst_hist_admin_mst_id_foreign",
-                    "references": {
-                        "table": "admin_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
     },
     {
-        "schema": "public",
-        "sequence_name": "admin_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "admin_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
         "table_name": "admin_role_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
@@ -676,43 +502,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "admin_role_mst_pkey",
-                    "columns": [
-                        "admin_mst_id",
-                        "role_mst_id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "admin_mst_id",
-                    "constraint_name": "admin_role_mst_admin_mst_id_foreign",
-                    "references": {
-                        "table": "admin_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "role_mst_id",
-                    "constraint_name": "admin_role_mst_role_mst_id_foreign",
-                    "references": {
-                        "table": "role_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -720,19 +510,17 @@
     },
     {
         "table_name": "api_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.api_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -818,40 +606,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "api_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "feature_mst_id",
-                    "constraint_name": "api_mst_feature_mst_id_foreign",
-                    "references": {
-                        "table": "feature_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -859,7 +614,7 @@
     },
     {
         "table_name": "api_role_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
@@ -905,43 +660,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "api_role_mst_pkey",
-                    "columns": [
-                        "api_mst_id",
-                        "role_mst_id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "api_mst_id",
-                    "constraint_name": "api_role_mst_api_mst_id_foreign",
-                    "references": {
-                        "table": "api_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "role_mst_id",
-                    "constraint_name": "api_role_mst_role_mst_id_foreign",
-                    "references": {
-                        "table": "role_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -949,19 +668,17 @@
     },
     {
         "table_name": "feature_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.feature_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -1037,8 +754,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "role_mst",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -1048,43 +775,12 @@
                 "default": null,
                 "check": null
             },
-            "primary_keys": [
-                {
-                    "constraint_name": "feature_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "table_name": "role_mst",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.role_mst_id_seq',::regclass)",
-                "check": null
-            },
             {
                 "name": "name",
                 "type": "character varying",
                 "size": 30,
                 "references": null,
-                "unique": true,
+                "unique": false,
                 "nullable": false,
                 "default": null,
                 "check": null
@@ -1142,34 +838,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "uniques": [
-                {
-                    "constraint_name": "role_mst_name_unique",
-                    "columns": [
-                        "name"
-                    ]
-                }
-            ],
-            "primary_keys": [
-                {
-                    "constraint_name": "role_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -1177,7 +846,7 @@
     },
     {
         "table_name": "department_management_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
@@ -1223,43 +892,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "department_management_mst_pkey",
-                    "columns": [
-                        "department_mst_id",
-                        "policy_department_mst_id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "department_mst_id",
-                    "constraint_name": "department_management_mst_department_mst_id_foreign",
-                    "references": {
-                        "table": "department_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "policy_department_mst_id",
-                    "constraint_name": "department_management_mst_policy_department_mst_id_foreign",
-                    "references": {
-                        "table": "policy_department_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -1267,19 +900,17 @@
     },
     {
         "table_name": "department_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.department_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -1345,26 +976,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "department_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -1372,19 +984,17 @@
     },
     {
         "table_name": "policy_department_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.policy_department_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -1440,26 +1050,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "policy_department_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -1467,19 +1058,17 @@
     },
     {
         "table_name": "api_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.api_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -1574,8 +1163,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "banner_mgmt",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -1583,83 +1182,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "api_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "api_mst_id",
-                    "constraint_name": "api_mst_hist_api_mst_id_foreign",
-                    "references": {
-                        "table": "api_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "feature_mst_id",
-                    "constraint_name": "api_mst_hist_feature_mst_id_foreign",
-                    "references": {
-                        "table": "feature_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "api_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "api_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "banner_mgmt",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.banner_mgmt_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -1713,7 +1235,7 @@
                 "check": null
             },
             {
-                "name": "\"position\"",
+                "name": "position",
                 "type": "character varying",
                 "size": 50,
                 "references": null,
@@ -1765,26 +1287,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "banner_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -1792,19 +1295,17 @@
     },
     {
         "table_name": "banner_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.banner_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -1868,7 +1369,7 @@
                 "check": null
             },
             {
-                "name": "\"position\"",
+                "name": "position",
                 "type": "character varying",
                 "size": 50,
                 "references": null,
@@ -1919,143 +1420,6 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "banner_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "banner_mgmt_id",
-                    "constraint_name": "banner_mgmt_hist_banner_mgmt_id_foreign",
-                    "references": {
-                        "table": "banner_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "banner_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "banner_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "cache",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "key",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "value",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "expiration",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            }
-        ],
-        "alter": {},
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "table_name": "cache_locks",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "key",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "owner",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "expiration",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            }
-        ],
         "alter": {},
         "checks": [],
         "index": [],
@@ -2064,19 +1428,17 @@
     },
     {
         "table_name": "category_mgmt",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.category_mgmt_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -2182,40 +1544,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "category_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "parent_id",
-                    "constraint_name": "category_mgmt_parent_id_foreign",
-                    "references": {
-                        "table": "category_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -2223,19 +1552,17 @@
     },
     {
         "table_name": "category_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.category_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -2350,68 +1677,15 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "category_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "category_mgmt_id",
-                    "constraint_name": "category_mgmt_hist_category_mgmt_id_foreign",
-                    "references": {
-                        "table": "category_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
     },
     {
-        "schema": "public",
-        "sequence_name": "category_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "category_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
         "table_name": "category_skill_mgmt",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
@@ -2457,43 +1731,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "category_skill_mgmt_pkey",
-                    "columns": [
-                        "category_mgmt_id",
-                        "skill_mgmt_id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "category_mgmt_id",
-                    "constraint_name": "category_skill_mgmt_category_mgmt_id_foreign",
-                    "references": {
-                        "table": "category_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "skill_mgmt_id",
-                    "constraint_name": "category_skill_mgmt_skill_mgmt_id_foreign",
-                    "references": {
-                        "table": "skill_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -2501,19 +1739,17 @@
     },
     {
         "table_name": "department_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.department_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -2588,8 +1824,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "feature_mst_hist",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -2597,192 +1843,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "department_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "department_mst_id",
-                    "constraint_name": "department_mst_hist_department_mst_id_foreign",
-                    "references": {
-                        "table": "department_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "department_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "department_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "failed_jobs",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.failed_jobs_id_seq',::regclass)",
-                "check": null
-            },
-            {
-                "name": "uuid",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": true,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "connection",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "queue",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "payload",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "exception",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "failed_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": "CURRENT_TIMESTAMP",
-                "check": null,
-                "with_time_zone": false
-            }
-        ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "bigint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "failed_jobs_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "uniques": [
-                {
-                    "constraint_name": "failed_jobs_uuid_unique",
-                    "columns": [
-                        "uuid"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "failed_jobs_id_seq",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "feature_mst_hist",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.feature_mst_hist_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -2867,313 +1927,25 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "feature_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "feature_mst_id",
-                    "constraint_name": "feature_mst_hist_feature_mst_id_foreign",
-                    "references": {
-                        "table": "feature_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "feature_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "feature_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "job_batches",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "name",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "total_jobs",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "pending_jobs",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "failed_jobs",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "failed_job_ids",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "options",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "cancelled_at",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "created_at",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "finished_at",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            }
-        ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "job_batches_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "table_name": "jobs",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.jobs_id_seq',::regclass)",
-                "check": null
-            },
-            {
-                "name": "queue",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "payload",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "attempts",
-                "type": "smallint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "reserved_at",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "available_at",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "created_at",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            }
-        ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "bigint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "jobs_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "jobs_id_seq",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
     },
     {
         "table_name": "language_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.language_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -3237,26 +2009,7 @@
                 "check": null
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "language_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -3264,19 +2017,17 @@
     },
     {
         "table_name": "language_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.language_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -3351,153 +2102,25 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "language_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "language_mst_id",
-                    "constraint_name": "language_mst_hist_language_mst_id_foreign",
-                    "references": {
-                        "table": "language_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "language_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "language_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "migrations",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.migrations_id_seq',::regclass)",
-                "check": null
-            },
-            {
-                "name": "migration",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "batch",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            }
-        ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "migrations_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "migrations_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
     },
     {
         "table_name": "original_translator_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.original_translator_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -3563,26 +2186,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "original_translator_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -3590,19 +2194,17 @@
     },
     {
         "table_name": "original_translator_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.original_translator_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -3677,112 +2279,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "original_translator_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "original_translator_mst_id",
-                    "constraint_name": "original_translator_mst_hist_original_translator_mst_id_foreign",
-                    "references": {
-                        "table": "original_translator_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "original_translator_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "original_translator_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "password_reset_tokens",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "email",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "token",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "created_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            }
-        ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "password_reset_tokens_pkey",
-                    "columns": [
-                        "email"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -3790,19 +2287,17 @@
     },
     {
         "table_name": "policy_department_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.policy_department_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -3867,8 +2362,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "role_mst_hist",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -3876,71 +2381,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "policy_department_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "policy_department_mst_id",
-                    "constraint_name": "policy_department_mst_hist_policy_department_mst_id_foreign",
-                    "references": {
-                        "table": "policy_department_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "policy_department_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "policy_department_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "role_mst_hist",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.role_mst_hist_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -4015,141 +2455,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "role_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "role_mst_id",
-                    "constraint_name": "role_mst_hist_role_mst_id_foreign",
-                    "references": {
-                        "table": "role_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "role_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "role_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "sessions",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "user_id",
-                "type": "bigint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "ip_address",
-                "type": "character varying",
-                "size": 45,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "user_agent",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "payload",
-                "type": "text",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "last_activity",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            }
-        ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "sessions_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -4157,19 +2463,17 @@
     },
     {
         "table_name": "setting_link_mgmt",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.setting_link_mgmt_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -4225,26 +2529,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "setting_link_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -4252,19 +2537,17 @@
     },
     {
         "table_name": "setting_link_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.setting_link_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -4329,8 +2612,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "skill_description_mgmt",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -4338,71 +2631,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "setting_link_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "setting_link_id",
-                    "constraint_name": "setting_link_mgmt_hist_setting_link_id_foreign",
-                    "references": {
-                        "table": "setting_link_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "setting_link_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "setting_link_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "skill_description_mgmt",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.skill_description_mgmt_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -4518,52 +2746,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "skill_description_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "parent_id",
-                    "constraint_name": "skill_description_mgmt_parent_id_foreign",
-                    "references": {
-                        "table": "skill_description_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "skill_mgmt_id",
-                    "constraint_name": "skill_description_mgmt_skill_mgmt_id_foreign",
-                    "references": {
-                        "table": "skill_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -4571,19 +2754,17 @@
     },
     {
         "table_name": "skill_description_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.skill_description_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -4708,8 +2889,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "skill_mgmt",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -4717,71 +2908,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "skill_description_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "skill_description_mgmt_id",
-                    "constraint_name": "skill_description_mgmt_hist_skill_description_mgmt_id_foreign",
-                    "references": {
-                        "table": "skill_description_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "skill_description_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "skill_description_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "skill_mgmt",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.skill_mgmt_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -4877,40 +3003,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "skill_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "parent_id",
-                    "constraint_name": "skill_mgmt_parent_id_foreign",
-                    "references": {
-                        "table": "skill_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -4918,19 +3011,17 @@
     },
     {
         "table_name": "skill_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.skill_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -5035,8 +3126,18 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "slider_mgmt",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -5044,71 +3145,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "skill_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "skill_mgmt_id",
-                    "constraint_name": "skill_mgmt_hist_skill_mgmt_id_foreign",
-                    "references": {
-                        "table": "skill_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "skill_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "skill_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "slider_mgmt",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.slider_mgmt_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -5194,26 +3230,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "slider_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -5221,19 +3238,17 @@
     },
     {
         "table_name": "slider_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.slider_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -5328,80 +3343,25 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "slider_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "slider_mgmt_id",
-                    "constraint_name": "slider_mgmt_hist_slider_mgmt_id_foreign",
-                    "references": {
-                        "table": "slider_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
     },
     {
-        "schema": "public",
-        "sequence_name": "slider_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "slider_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
         "table_name": "social_mgmt",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "bigint",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.social_mgmt_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -5507,26 +3467,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "bigint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "social_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -5534,19 +3475,17 @@
     },
     {
         "table_name": "social_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.social_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -5661,67 +3600,15 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "social_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "social_mgmt_id",
-                    "constraint_name": "social_mgmt_hist_social_mgmt_id_foreign",
-                    "references": {
-                        "table": "social_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
     },
     {
-        "schema": "public",
-        "sequence_name": "social_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "social_mgmt_id_seq",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
         "table_name": "translation_language_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
@@ -5767,43 +3654,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "primary_keys": [
-                {
-                    "constraint_name": "translation_language_mst_pkey",
-                    "columns": [
-                        "translation_mst_id",
-                        "language_mst_id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "language_mst_id",
-                    "constraint_name": "translation_language_mst_language_mst_id_foreign",
-                    "references": {
-                        "table": "language_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                },
-                {
-                    "name": "translation_mst_id",
-                    "constraint_name": "translation_language_mst_translation_mst_id_foreign",
-                    "references": {
-                        "table": "translation_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -5811,19 +3662,17 @@
     },
     {
         "table_name": "translation_mst",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.translation_mst_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -5879,26 +3728,7 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "translation_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -5906,19 +3736,17 @@
     },
     {
         "table_name": "translation_mst_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.translation_mst_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -5992,8 +3820,18 @@
                 "check": null
             }
         ],
-        "alter": {
-            "modified_columns": {
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "tablespace": null
+    },
+    {
+        "table_name": "user_mgmt",
+        "schema": null,
+        "primary_key": [],
+        "columns": [
+            {
                 "name": "id",
                 "type": "integer",
                 "size": null,
@@ -6001,71 +3839,6 @@
                 "unique": false,
                 "nullable": false,
                 "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "translation_mst_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "translation_mst_id",
-                    "constraint_name": "translation_mst_hist_translation_mst_id_foreign",
-                    "references": {
-                        "table": "translation_mst",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "translation_mst_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "translation_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "user_mgmt",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.user_mgmt_id_seq',::regclass)",
                 "check": null
             },
             {
@@ -6239,26 +4012,7 @@
                 "check": null
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "user_mgmt_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
@@ -6266,19 +4020,17 @@
     },
     {
         "table_name": "user_mgmt_hist",
-        "schema": "public",
+        "schema": null,
         "primary_key": [],
         "columns": [
             {
                 "name": "id",
-                "type": "SET",
+                "type": "integer",
                 "size": null,
-                "values": "SET",
                 "references": null,
                 "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.user_mgmt_hist_id_seq',::regclass)",
+                "nullable": false,
+                "default": null,
                 "check": null
             },
             {
@@ -6465,437 +4217,10 @@
                 "with_time_zone": false
             }
         ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "primary_keys": [
-                {
-                    "constraint_name": "user_mgmt_hist_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ],
-            "columns": [
-                {
-                    "name": "user_mgmt_id",
-                    "constraint_name": "user_mgmt_hist_user_mgmt_id_foreign",
-                    "references": {
-                        "table": "user_mgmt",
-                        "schema": "public",
-                        "on_delete": null,
-                        "on_update": null,
-                        "deferrable_initially": null,
-                        "column": "id"
-                    }
-                }
-            ]
-        },
+        "alter": {},
         "checks": [],
         "index": [],
         "partitioned_by": [],
         "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "user_mgmt_hist_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "schema": "public",
-        "sequence_name": "user_mgmt_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "user_mst",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.user_mst_id_seq',::regclass)",
-                "check": null
-            },
-            {
-                "name": "email",
-                "type": "character varying",
-                "size": 30,
-                "references": null,
-                "unique": true,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "user_name",
-                "type": "character varying",
-                "size": 50,
-                "references": null,
-                "unique": true,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "password",
-                "type": "character varying",
-                "size": 100,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "first_name",
-                "type": "character varying",
-                "size": 20,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "last_name",
-                "type": "character varying",
-                "size": 20,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "address",
-                "type": "character varying",
-                "size": 50,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "phone_number",
-                "type": "character varying",
-                "size": 20,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "birth",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            },
-            {
-                "name": "gender",
-                "type": "smallint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": "'0'::smallint",
-                "check": null
-            },
-            {
-                "name": "status",
-                "type": "smallint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": "'0'::smallint",
-                "check": null
-            },
-            {
-                "name": "is_active",
-                "type": "boolean",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": "false",
-                "check": null
-            },
-            {
-                "name": "avatar",
-                "type": "character varying",
-                "size": 30,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "email_verified_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            },
-            {
-                "name": "is_delete",
-                "type": "boolean",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": "false",
-                "check": null
-            },
-            {
-                "name": "remember_token",
-                "type": "character varying",
-                "size": 100,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "created_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            },
-            {
-                "name": "updated_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            }
-        ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "integer",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "uniques": [
-                {
-                    "constraint_name": "user_mst_email_unique",
-                    "columns": [
-                        "email"
-                    ]
-                },
-                {
-                    "constraint_name": "user_mst_user_name_unique",
-                    "columns": [
-                        "user_name"
-                    ]
-                }
-            ],
-            "primary_keys": [
-                {
-                    "constraint_name": "user_mst_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "user_mst_id_seq",
-        "AS": "integer",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
-    },
-    {
-        "table_name": "users",
-        "schema": "public",
-        "primary_key": [],
-        "columns": [
-            {
-                "name": "id",
-                "type": "SET",
-                "size": null,
-                "values": "SET",
-                "references": null,
-                "unique": false,
-                "primary_key": false,
-                "nullable": true,
-                "default": "nextval('public.users_id_seq',::regclass)",
-                "check": null
-            },
-            {
-                "name": "name",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "email",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": true,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "email_verified_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            },
-            {
-                "name": "password",
-                "type": "character varying",
-                "size": 255,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "remember_token",
-                "type": "character varying",
-                "size": 100,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null
-            },
-            {
-                "name": "created_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            },
-            {
-                "name": "updated_at",
-                "type": "timestamp",
-                "size": 0,
-                "references": null,
-                "unique": false,
-                "nullable": true,
-                "default": null,
-                "check": null,
-                "with_time_zone": false
-            }
-        ],
-        "alter": {
-            "modified_columns": {
-                "name": "id",
-                "type": "bigint",
-                "size": null,
-                "references": null,
-                "unique": false,
-                "nullable": false,
-                "default": null,
-                "check": null
-            },
-            "uniques": [
-                {
-                    "constraint_name": "users_email_unique",
-                    "columns": [
-                        "email"
-                    ]
-                }
-            ],
-            "primary_keys": [
-                {
-                    "constraint_name": "users_pkey",
-                    "columns": [
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "checks": [],
-        "index": [],
-        "partitioned_by": [],
-        "tablespace": null
-    },
-    {
-        "schema": "public",
-        "sequence_name": "users_id_seq",
-        "start_with": 1,
-        "increment_by": 1,
-        "minvalue": false,
-        "maxvalue": false,
-        "cache": 1
     }
 ]
