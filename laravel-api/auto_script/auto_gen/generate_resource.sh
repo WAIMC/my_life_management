@@ -28,10 +28,10 @@ TABLES=$(jq -r '.[].table_name' "$JSON_FILE")
 for TABLE in $TABLES; do
     # Determine subpath and directory based on suffix
     if [[ $TABLE == *_mst_hist ]]; then
-        SUBPATH="History\\\\Master"
+        SUBPATH="History\\Master"
         DIR="$ROOT_PATH/app/Http/Resources/History/Master"
     elif [[ $TABLE == *_mgmt_hist ]]; then
-        SUBPATH="History\\\\Management"
+        SUBPATH="History\\Management"
         DIR="$ROOT_PATH/app/Http/Resources/History/Management"
     elif [[ $TABLE == *_mgmt ]]; then
         SUBPATH="Management"
@@ -86,8 +86,10 @@ for TABLE in $TABLES; do
             continue
         fi
 
-        # Get field type from schema
-        TYPE=$(jq -r ".[] | select(.table_name == \"$TABLE\") | .columns[] | select(.name == \"$FIELD\") | .type // \"string\"" "$JSON_FILE")
+        # Get field type from schema - handle field names with special characters
+        # Escape the field name for jq
+        ESCAPED_FIELD=$(printf '%s' "$FIELD" | sed 's/"/\\"/g')
+        TYPE=$(jq -r ".[] | select(.table_name == \"$TABLE\") | .columns[] | select(.name == \"$ESCAPED_FIELD\") | .type // \"string\"" "$JSON_FILE" 2>/dev/null || echo "string")
 
         # Determine cast/format
         CAST="(string)"

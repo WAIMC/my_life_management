@@ -28,10 +28,10 @@ TABLES=$(jq -r '.[].table_name' "$JSON_FILE")
 for TABLE in $TABLES; do
     # Determine subpath and directory based on suffix
     if [[ $TABLE == *_mst_hist ]]; then
-        SUBPATH="History\\\\Master"
+        SUBPATH="History\\Master"
         BASE_DIR="$ROOT_PATH/app/Http/Requests/History/Master"
     elif [[ $TABLE == *_mgmt_hist ]]; then
-        SUBPATH="History\\\\Management"
+        SUBPATH="History\\Management"
         BASE_DIR="$ROOT_PATH/app/Http/Requests/History/Management"
     elif [[ $TABLE == *_mgmt ]]; then
         SUBPATH="Management"
@@ -174,12 +174,15 @@ for TABLE in $TABLES; do
                 ;;
         esac
 
-        # If foreign key and (store or update), add Rule::exists
-        if [[ $field =~ _((mst|mgmt|mst_hist|mgmt_hist))_id$ ]] && [[ $req_type == "store" || $req_type == "update" ]]; then
+        # If foreign key and (store or update), add Rule::exists - but only for non-junction tables
+        if [[ $field =~ _((mst|mgmt|mst_hist|mgmt_hist))_id$ ]] && [[ $req_type == "store" || $req_type == "update" ]] && [[ $IS_JUNCTION == 0 ]]; then
             local suffix=$(echo "$field" | sed -E 's/.*_((mst|mgmt|mst_hist|mgmt_hist))_id$/\1/')
             local foreign_table=$(echo "$field" | sed 's/_id$//')
             local FOREIGN_CLASS=$(echo "$foreign_table" | awk -F_ '{for(i=1;i<=NF;i++) printf "%s", toupper(substr($i,1,1)) tolower(substr($i,2)); }')
-            rules=("'required'" "'integer'" "'min:' . CommonVal::MIN_INTEGER" "'max:' . CommonVal::MAX_INTEGER" "Rule::exists($FOREIGN_CLASS::class, 'id')")
+            rules=("'required'," "'integer'," "'min:' . CommonVal::MIN_INTEGER," "'max:' . CommonVal::MAX_INTEGER," "Rule::exists($FOREIGN_CLASS::class, 'id'),")
+        elif [[ $field =~ _((mst|mgmt|mst_hist|mgmt_hist))_id$ ]] && [[ $req_type == "store" || $req_type == "update" ]] && [[ $IS_JUNCTION == 1 ]]; then
+            # For junction tables, just add basic validation without model references
+            rules=("'required'," "'integer'," "'min:' . CommonVal::MIN_INTEGER," "'max:' . CommonVal::MAX_INTEGER,")
         fi
 
         echo "${rules[*]}"
@@ -203,15 +206,17 @@ for TABLE in $TABLES; do
                 ENUM_USES+=("use App\\\\Enums\\\\IsDelete;")
                 ;;
         esac
-        if [[ $FIELD =~ _((mst|mgmt|mst_hist|mgmt_hist))_id$ ]] ; then
+        
+        # Only add foreign model imports for non-junction tables
+        if [[ $IS_JUNCTION == 0 && $FIELD =~ _((mst|mgmt|mst_hist|mgmt_hist))_id$ ]] ; then
             suffix=$(echo "$FIELD" | sed -E 's/.*_((mst|mgmt|mst_hist|mgmt_hist))_id$/\1/')
             foreign_table=$(echo "$FIELD" | sed 's/_id$//')
             FOREIGN_CLASS=$(echo "$foreign_table" | awk -F_ '{for(i=1;i<=NF;i++) printf "%s", toupper(substr($i,1,1)) tolower(substr($i,2)); }')
             MODEL_SUBPATH=""
             if [[ $suffix == "mst_hist" ]]; then
-                MODEL_SUBPATH="History\\\\Master"
+                MODEL_SUBPATH="History\\Master"
             elif [[ $suffix == "mgmt_hist" ]]; then
-                MODEL_SUBPATH="History\\\\Management"
+                MODEL_SUBPATH="History\\Management"
             elif [[ $suffix == "mgmt" ]]; then
                 MODEL_SUBPATH="Management"
             elif [[ $suffix == "mst" ]]; then
@@ -248,14 +253,17 @@ for TABLE in $TABLES; do
         FULL_CLASS="${REQ_TYPE}${CLASS_NAME}Request"
         FILE="$TABLE_DIR/${FULL_CLASS}.php"
 
-        # Add own model use for delete and update if not junction
+        # Add own model use for non-junction tables only
         OWN_MODEL_USE=""
-        if [[ ($REQ_TYPE == "Delete" || $REQ_TYPE == "Update") && $IS_JUNCTION == 0 ]]; then
+        if [[ $IS_JUNCTION == 0 ]]; then
             OWN_MODEL_USE="use App\\Models\\$SUBPATH\\$CLASS_NAME;"
         fi
 
         # Prepare use statements
-        USE_STATEMENTS="use Illuminate\\Foundation\\Http\\FormRequest;\nuse App\\Constants\\CommonVal;\nuse Illuminate\\Validation\\Rule;"
+        USE_STATEMENTS="use Illuminate\\\\Foundation\\\\Http\\\\FormRequest;
+use App\\\\Constants\\\\CommonVal;
+use Illuminate\\\\Validation\\\\Rule;
+use Illuminate\\\\Validation\\\\Rules\\\\Enum;"
         
         # Add own model use if needed
         if [[ -n "$OWN_MODEL_USE" ]]; then
@@ -298,13 +306,22 @@ class $FULL_CLASS extends FormRequest
 EOF
 
         if [[ $REQ_TYPE == "Delete" ]]; then
-            cat <<EOF >> "$FILE"
+            if [[ $IS_JUNCTION == 0 ]]; then
+                cat <<EOF >> "$FILE"
             'ids' => ['required', 'array'],
             'ids.*' => ['required', 'integer', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_PHONE_NUMBER, Rule::exists($CLASS_NAME::class, 'id')],
 EOF
+            else
+                cat <<EOF >> "$FILE"
+            'ids' => ['required', 'array'],
+            'ids.*' => ['required', 'integer', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_PHONE_NUMBER],
+EOF
+            fi
         elif [[ $REQ_TYPE == "List" ]]; then
             for FIELD in $FIELDS; do
-                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* || $FIELD == "email_verified_at" ]]; then
+                # Skip special fields for List requests: id, timestamps, tokens, email verification, email, password
+                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* || 
+                      $FIELD == "email_verified_at" || $FIELD == "email" || $FIELD == "password" ]]; then
                     continue
                 fi
                 RULES=$(get_rules "$FIELD" "list" 0)
@@ -344,7 +361,11 @@ EOF
             for FIELD in $FIELDS; do
                 if [[ $FIELD == "id" ]]; then
                     if [[ $REQ_TYPE == "Update" ]]; then
-                        echo "            'id' => ['required', 'integer', 'min:1', Rule::exists($CLASS_NAME::class, 'id')]," >> "$FILE"
+                        if [[ $IS_JUNCTION == 0 ]]; then
+                            echo "            'id' => ['required', 'integer', 'min:1', Rule::exists($CLASS_NAME::class, 'id')]," >> "$FILE"
+                        else
+                            echo "            'id' => ['required', 'integer', 'min:1']," >> "$FILE"
+                        fi
                     fi
                     continue
                 fi
@@ -376,7 +397,9 @@ EOF
             echo "            'ids.*' => __('messages.ids')," >> "$FILE"
         else
             for FIELD in $FIELDS; do
-                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* || $FIELD == "email_verified_at" ]]; then
+                # Skip special fields for attributes: id, timestamps, tokens, email verification, email, password
+                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* || 
+                      $FIELD == "email_verified_at" || ($REQ_TYPE == "List" && ($FIELD == "email" || $FIELD == "password")) ]]; then
                     continue
                 fi
                 echo "            '$FIELD' => __('messages.$FIELD')," >> "$FILE"

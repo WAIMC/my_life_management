@@ -79,16 +79,18 @@ for TABLE in $TABLES; do
     FILE="$DIR/$CLASS_NAME.php"
     
     # Generate use statements for requests based on whether it's a junction table
-    USE_STATEMENTS="use App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME\\List${CLASS_NAME%Controller}Request;"
+    # Extract the base name without "Controller"
+    BASE_NAME=${CLASS_NAME%Controller}
+    USE_STATEMENTS="use App\\Http\\Requests\\$SUBPATH\\$BASE_NAME\\List${BASE_NAME}Request;"
 
     if [[ $IS_JUNCTION == 0 ]]; then
         USE_STATEMENTS="$USE_STATEMENTS
-use App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME\\Store${CLASS_NAME%Controller}Request;
-use App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME\\Update${CLASS_NAME%Controller}Request;
-use App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME\\Delete${CLASS_NAME%Controller}Request;"
+use App\\Http\\Requests\\$SUBPATH\\$BASE_NAME\\Store${BASE_NAME}Request;
+use App\\Http\\Requests\\$SUBPATH\\$BASE_NAME\\Update${BASE_NAME}Request;
+use App\\Http\\Requests\\$SUBPATH\\$BASE_NAME\\Delete${BASE_NAME}Request;"
     else
         USE_STATEMENTS="$USE_STATEMENTS
-use App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME\\Update${CLASS_NAME%Controller}Request;"
+use App\\Http\\Requests\\$SUBPATH\\$BASE_NAME\\Update${BASE_NAME}Request;"
     fi
     
     # Write the file header with heredoc
@@ -115,12 +117,12 @@ EOF
     # list method
     cat <<EOF >> "$FILE"
     /**
-     * ${CLASS_NAME%Controller} list
+     * $BASE_NAME list
      *
-     * @param List${CLASS_NAME%Controller}Request \$request
+     * @param List${BASE_NAME}Request \$request
      * @return JsonResource
      */
-    public function list(List${CLASS_NAME%Controller}Request \$request): JsonResource
+    public function list(List${BASE_NAME}Request \$request): JsonResource
     {
         return \$this->$VAR_NAME->list(\$request->all());
     }
@@ -133,10 +135,10 @@ EOF
     /**
      * Store ${TABLE//_/ }
      *
-     * @param Store${CLASS_NAME%Controller}Request \$request
+     * @param Store${BASE_NAME}Request \$request
      * @return int
      */
-    public function store(Store${CLASS_NAME%Controller}Request \$request): int
+    public function store(Store${BASE_NAME}Request \$request): int
     {
         return \$this->$VAR_NAME->store(\$request->all());
     }
@@ -144,11 +146,11 @@ EOF
     /**
      * Update ${TABLE//_/ }
      *
-     * @param Update${CLASS_NAME%Controller}Request \$request
+     * @param Update${BASE_NAME}Request \$request
      * @param string \$id
      * @return int
      */
-    public function update(Update${CLASS_NAME%Controller}Request \$request, string \$id): int
+    public function update(Update${BASE_NAME}Request \$request, string \$id): int
     {
         \$payload = \$request->all();
         \$payload['id'] = \$id;
@@ -159,10 +161,10 @@ EOF
     /**
      * Delete ${TABLE//_/ }
      *
-     * @param Delete${CLASS_NAME%Controller}Request \$request
+     * @param Delete${BASE_NAME}Request \$request
      * @return void
      */
-    public function delete(Delete${CLASS_NAME%Controller}Request \$request): void
+    public function delete(Delete${BASE_NAME}Request \$request): void
     {
         \$this->$VAR_NAME->delete(\$request->all());
     }
@@ -173,10 +175,10 @@ EOF
     /**
      * Update ${TABLE//_/ }
      *
-     * @param Update${CLASS_NAME%Controller}Request \$request
+     * @param Update${BASE_NAME}Request \$request
      * @return bool
      */
-    public function update(Update${CLASS_NAME%Controller}Request \$request): bool
+    public function update(Update${BASE_NAME}Request \$request): bool
     {
         return \$this->$VAR_NAME->update(\$request->all());
     }

@@ -80,9 +80,9 @@ for TABLE in $TABLES; do
             SHORT="$FIELD"
             SHORT_NAMES+=("$SHORT")
         done
-        # Build the map string: '(' . (int)$item['short1'] . ', ' . (int)$item['short2'] . ')' etc.
+        # Build the map string with proper array syntax for PHP
         ITEM_CASTS=$(for SHORT in "${SHORT_NAMES[@]}"; do echo "(int)\$item['$SHORT']"; done | paste -sd ', ' -)
-        ITEM_CASTS="($ITEM_CASTS)"
+        ITEM_CASTS="[$ITEM_CASTS]"
     fi
 
     # For junction specifics
@@ -124,10 +124,10 @@ for TABLE in $TABLES; do
             HIST_TABLE=$(echo "$TABLE" | sed 's/$/_hist/')
             HIST_INTERFACE_CLASS=$(echo "$HIST_TABLE" | awk -F_ '{for(i=1;i<=NF;i++) printf "%s", toupper(substr($i,1,1)) tolower(substr($i,2)); } END{print "Interface"}')
             VAR_NAME_HIST=$(echo "$HIST_TABLE" | awk -F_ '{for(i=1;i<=NF;i++) { if(i==1) printf "%s", tolower(substr($i,1,1)) tolower(substr($i,2)); else printf "%s", toupper(substr($i,1,1)) tolower(substr($i,2)); } }')
-            SUBPATH_HIST="History\\\\$SUBPATH"
+            SUBPATH_HIST="History\\$SUBPATH"
             HIST_ID_FIELD="${TABLE}_id"
-            EXTRA_USES="use App\\\\Interfaces\\\\$SUBPATH_HIST\\\\$HIST_INTERFACE_CLASS;
-use App\\\\Enums\\\\ActionType;"
+            EXTRA_USES="use App\\Interfaces\\$SUBPATH_HIST\\$HIST_INTERFACE_CLASS;
+use App\\Enums\\ActionType;"
             CONSTRUCTOR_PARAMS="$CONSTRUCTOR_PARAMS, protected $HIST_INTERFACE_CLASS \$${VAR_NAME_HIST}"
         fi
         cat <<EOF > "$FILE"
@@ -164,6 +164,7 @@ EOF
         # Store function
         if [[ $HAS_HISTORY == 1 ]]; then
             cat <<EOF >> "$FILE"
+
     /**
      * Store $TABLE_SPACES
      *
@@ -189,6 +190,7 @@ EOF
 EOF
         else
             cat <<EOF >> "$FILE"
+
     /**
      * Store $TABLE_SPACES
      *
@@ -204,6 +206,7 @@ EOF
         # Update function
         if [[ $HAS_HISTORY == 1 ]]; then
             cat <<EOF >> "$FILE"
+
     /**
      * Update $TABLE_SPACES
      *
@@ -230,6 +233,7 @@ EOF
 EOF
         else
             cat <<EOF >> "$FILE"
+
     /**
      * Update $TABLE_SPACES
      *
@@ -245,6 +249,7 @@ EOF
         # Delete function
         if [[ $HAS_HISTORY == 1 ]]; then
             cat <<EOF >> "$FILE"
+
     /**
      * Delete $TABLE_SPACES
      *
@@ -278,6 +283,7 @@ EOF
 EOF
         else
             cat <<EOF >> "$FILE"
+
     /**
      * Delete $TABLE_SPACES
      *
@@ -335,6 +341,7 @@ class $CLASS_NAME
      * @return bool
      */
     public function update(array \$payload): bool
+    {
 EOF
 
         # Conditionally add isMyRole check if needed
@@ -374,10 +381,10 @@ EOF
     {
         \$values = collect(\$payload)->map(function (\$item) {
             // Make sure the data is an integer and escaped
-            return '$ITEM_CASTS';
+            return $ITEM_CASTS;
         })->all();
 
-        \$${VAR_ID} = \$this->$VAR_NAME->$GET_SANS_ID(\$values);
+        \$${VAR_ID} = \$this->$VAR_NAME->$GET_WITH_ID(\$values);
 
         // Compare \$values and \$${VAR_ID}, get the differences
         \$differences = array_udiff(\$values, \$${VAR_ID}, function (\$a, \$b) {
@@ -412,7 +419,7 @@ EOF
     {
         \$values = collect(\$payload)->map(function (\$item) {
             // Make sure the data is an integer and escaped
-            return '$ITEM_CASTS';
+            return $ITEM_CASTS;
         })->all();
 
         \$${VAR_ID} = \$this->$VAR_NAME->$GET_WITH_ID(\$values)->toArray();
