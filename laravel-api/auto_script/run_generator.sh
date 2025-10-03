@@ -6,8 +6,10 @@
 # Get the absolute path to the project root
 PROJECT_ROOT="$1"
 if [ -z "$PROJECT_ROOT" ]; then
-    echo "Error: PROJECT_ROOT not provided"
-    exit 1
+    # If PROJECT_ROOT is not provided, determine it automatically
+    SCRIPT_DIR=$(dirname "$0")
+    PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+    echo "PROJECT_ROOT not provided, using: $PROJECT_ROOT"
 fi
 
 # Output debug information
