@@ -95,4 +95,8 @@ $SHELL_CMD "$SCRIPTS_DIR/generate_controller.sh"
 echo "Running Route Generator..."
 $SHELL_CMD "$SCRIPTS_DIR/generate_route.sh"
 
+# Run Repository Bindings generator
+echo "Running Repository Bindings Generator..."
+$SHELL_CMD "$SCRIPTS_DIR/generate_repository_binding.sh"
+
 echo "All generation scripts completed"
