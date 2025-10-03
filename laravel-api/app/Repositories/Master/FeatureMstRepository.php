@@ -1,37 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\FeatureMstInterface;
 use App\Models\Master\FeatureMst;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
 {
-    /**
-     * Constructor
-     */
     public function __construct(FeatureMst $model)
     {
         parent::__construct($model);
     }
 
     /**
-     * Get all features with optional filtering
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'name',
+                'group_name',
+                'description',
+                'status',
+                'updated_at',
+            ]);
 
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
@@ -51,12 +56,12 @@ class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
 
         if (isset($payload['from_date'])) {
             $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('tad.updated_at', '>=', $fromDate);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('tad.updated_at', '<=', $toDate);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
         $query->orderBy('id');
@@ -65,49 +70,52 @@ class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
     }
 
     /**
-     * Store feature
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
         $data['name'] = $payload['name'] ?? null;
         $data['group_name'] = $payload['group_name'] ?? null;
         $data['description'] = $payload['description'] ?? null;
-        $data['last_name'] = $payload['status'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data['is_delete'] = $payload['is_delete'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update feature
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['name'] = $payload['name'] ?? null;
-        $data['group_name'] = $payload['group_name'] ?? null;
-        $data['description'] = $payload['description'] ?? null;
-        $data['last_name'] = $payload['status'] ?? null;
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['name'] = $payload['name'] ?? null;
+        $record['group_name'] = $payload['group_name'] ?? null;
+        $record['description'] = $payload['description'] ?? null;
+        $record['status'] = $payload['status'] ?? null;
+        $record['is_delete'] = $payload['is_delete'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete feature
+     * Delete record
      *
-     * @param array $id
+     * @param array $ids
      * @return void
      */
-    public function executeDelete(array $id): void
+    public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

@@ -1,12 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
 use App\Models\History\Master\DepartmentMstHist;
 use App\Repositories\BaseRepository;
-use Illuminate\Database\Eloquent\Collection;
+use DateTime;
+use App\Constants\CommonVal;
+use Illuminate\Support\Collection;
+
 
 class DepartmentMstHistRepository extends BaseRepository implements DepartmentMstHistInterface
 {
@@ -16,29 +21,26 @@ class DepartmentMstHistRepository extends BaseRepository implements DepartmentMs
     }
 
     /**
-     * Get all department history records
+     * Get list
      *
      * @param array $payload
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'department_mst_id',
+                'code',
+                'name',
+                'status',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['department_mst_id'])) {
             $query->where('department_mst_id', $payload['department_mst_id']);
-        }
-
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
         }
 
         if (isset($payload['code'])) {
@@ -47,6 +49,14 @@ class DepartmentMstHistRepository extends BaseRepository implements DepartmentMs
 
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
+        }
+
+        if (isset($payload['status'])) {
+            $query->where('status', $payload['status']);
+        }
+
+        if (isset($payload['action'])) {
+            $query->where('action', $payload['action']);
         }
 
         if (isset($payload['author_id'])) {
@@ -63,61 +73,60 @@ class DepartmentMstHistRepository extends BaseRepository implements DepartmentMs
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create new department history record
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['id'] = $payload['id'];
-        $data['department_mst_id'] = $payload['department_mst_id'];
-        $data['code'] = $payload['code'];
-        $data['name'] = $payload['name'];
-        $data['status'] = $payload['status'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $data['department_mst_id'] = $payload['department_mst_id'] ?? null;
+        $data['code'] = $payload['code'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
+        $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update department history record
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['id'] = $payload['id'];
-        $data['department_mst_id'] = $payload['department_mst_id'];
-        $data['code'] = $payload['code'];
-        $data['name'] = $payload['name'];
-        $data['status'] = $payload['status'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['department_mst_id'] = $payload['department_mst_id'] ?? null;
+        $record['code'] = $payload['code'] ?? null;
+        $record['name'] = $payload['name'] ?? null;
+        $record['status'] = $payload['status'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete department history record
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface UserMgmtInterface
+interface UserMgmtInterface extends BaseInterface
 {
     /**
-     * Get User list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface UserMgmtInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new User
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface UserMgmtInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update User
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface UserMgmtInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete User
+     * Delete record
      *
      * @param array $ids
      * @return void

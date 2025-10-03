@@ -2,17 +2,18 @@
 
 namespace App\Models\Management;
 
-use App\Models\History\Management\BannerMgmtHist;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BannerMgmt extends Model
 {
     protected $table = 'banner_mgmt';
-    public $timestamps = false;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
     protected $fillable = [
-        'id',
         'title',
         'slug',
         'description',
@@ -21,15 +22,24 @@ class BannerMgmt extends Model
         'position',
         'status',
         'is_delete',
-        'created_at',
-        'updated_at'
     ];
 
     /**
-     * Get the history records for this banner
+     * The attributes that should be cast.
+     *
+     * @var array
      */
-    public function history(): HasMany
-    {
-        return $this->hasMany(BannerMgmtHist::class, 'banner_mgmt_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'title' => 'string',
+        'slug' => 'string',
+        'description' => 'string',
+        'link' => 'string',
+        'image' => 'string',
+        'position' => 'string',
+        'status' => 'integer',
+        'is_delete' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

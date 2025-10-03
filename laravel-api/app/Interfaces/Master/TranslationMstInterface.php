@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface TranslationMstInterface
+interface TranslationMstInterface extends BaseInterface
 {
     /**
-     * Get translation list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,26 +18,26 @@ interface TranslationMstInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store api role
+     * Store record
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeStore(array $payload): void;
+    public function executeStore(array $payload): int;
 
     /**
-     * Delete translation
+     * Update record
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeDelete(array $payload): void;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Get translation id
+     * Delete record
      *
-     * @param array $translationIds
-     * @return Collection
+     * @param array $ids
+     * @return void
      */
-    public function getTranslationMstId(array $translationIds): Collection;
+    public function executeDelete(array $ids): void;
 }

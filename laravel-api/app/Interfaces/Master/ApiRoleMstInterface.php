@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 interface ApiRoleMstInterface extends BaseInterface
 {
     /**
-     * Get api role list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -18,7 +18,7 @@ interface ApiRoleMstInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store api role
+     * Store record
      *
      * @param array $payload
      * @return void
@@ -26,7 +26,7 @@ interface ApiRoleMstInterface extends BaseInterface
     public function executeStore(array $payload): void;
 
     /**
-     * Delete api role
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -34,18 +34,10 @@ interface ApiRoleMstInterface extends BaseInterface
     public function executeDelete(array $payload): void;
 
     /**
-     * Check is my role
+     * Get ids
      *
-     * @param array $payload
-     * @return bool
-     */
-    public function isMyRole(array $payload): bool;
-
-    /**
-     * Get api role id
-     *
-     * @param array $apiRoleIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getApiRoleId(array $apiRoleIds): Collection;
+    public function getApiRoleMstId(array $tuples): Collection;
 }

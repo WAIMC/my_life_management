@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Models\History\Master\TranslationMstHist;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class TranslationMstHistRepository extends BaseRepository implements TranslationMstHistInterface
 {
@@ -17,18 +21,23 @@ class TranslationMstHistRepository extends BaseRepository implements Translation
     }
 
     /**
-     * Get list of translation history
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->where('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'translation_mst_id',
+                'language_id',
+                'original_id',
+                'value',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['translation_mst_id'])) {
             $query->where('translation_mst_id', $payload['translation_mst_id']);
@@ -64,59 +73,60 @@ class TranslationMstHistRepository extends BaseRepository implements Translation
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create translation history
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['translation_mst_id'] = $payload['translation_mst_id'];
-        $data['language_id'] = $payload['language_id'];
-        $data['original_id'] = $payload['original_id'];
-        $data['value'] = $payload['value'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
+        $data['translation_mst_id'] = $payload['translation_mst_id'] ?? null;
+        $data['language_id'] = $payload['language_id'] ?? null;
+        $data['original_id'] = $payload['original_id'] ?? null;
+        $data['value'] = $payload['value'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update translation history record
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['translation_mst_id'] = $payload['translation_mst_id'];
-        $data['language_id'] = $payload['language_id'];
-        $data['original_id'] = $payload['original_id'];
-        $data['value'] = $payload['value'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['translation_mst_id'] = $payload['translation_mst_id'] ?? null;
+        $record['language_id'] = $payload['language_id'] ?? null;
+        $record['original_id'] = $payload['original_id'] ?? null;
+        $record['value'] = $payload['value'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete translation history record
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

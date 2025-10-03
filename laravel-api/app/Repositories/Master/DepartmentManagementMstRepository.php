@@ -1,59 +1,46 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\DepartmentManagementMstInterface;
 use App\Models\Master\DepartmentManagementMst;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class DepartmentManagementMstRepository extends BaseRepository implements DepartmentManagementMstInterface
 {
-    /**
-     * Constructor
-     */
     public function __construct(DepartmentManagementMst $model)
     {
         parent::__construct($model);
     }
 
     /**
-     * Get all department management relations with optional filtering
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
+        $query = $this->model->query()
+            ->select([
+                'department_mst_id',
+                'policy_department_mst_id',
+                'updated_at',
+            ]);
 
-        // Apply filters based on payload
-        if (isset($payload['department_id'])) {
-            $query->where('department_id', $payload['department_id']);
+        if (isset($payload['department_mst_id'])) {
+            $query->where('department_mst_id', $payload['department_mst_id']);
         }
 
-        if (isset($payload['policy_department_id'])) {
-            $query->where('policy_department_id', $payload['policy_department_id']);
-        }
-
-        // Date range filter
-        if (isset($payload['created_from'])) {
-            $query->where('created_at', '>=', $payload['created_from']);
-        }
-
-        if (isset($payload['created_to'])) {
-            $query->where('created_at', '<=', $payload['created_to']);
-        }
-
-        // Include related models if requested
-        if (isset($payload['with_department']) && $payload['with_department']) {
-            $query->with('department');
-        }
-
-        if (isset($payload['with_policy_department']) && $payload['with_policy_department']) {
-            $query->with('policyDepartment');
+        if (isset($payload['policy_department_mst_id'])) {
+            $query->where('policy_department_mst_id', $payload['policy_department_mst_id']);
         }
 
         if (isset($payload['from_date'])) {
@@ -66,14 +53,13 @@ class DepartmentManagementMstRepository extends BaseRepository implements Depart
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('department_id')
-            ->orderBy('policy_department_id');
+        $query->orderBy('department_mst_id');
 
         return $query->get();
     }
 
     /**
-     * Create new department management relation
+     * Create new record
      *
      * @param array $payload
      * @return void
@@ -84,7 +70,7 @@ class DepartmentManagementMstRepository extends BaseRepository implements Depart
     }
 
     /**
-     * Delete department management relation
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -92,26 +78,28 @@ class DepartmentManagementMstRepository extends BaseRepository implements Depart
     public function executeDelete(array $payload): void
     {
         $values = collect($payload)->map(function ($item) {
-            // Make sure the data is an integer and escaped
-            return '(' . (int)$item['department_id'] . ', ' . (int)$item['policy_department_id'] . ')';
+            return '(' . (int)$item['department_mst_id'] . ', ' . (int)$item['policy_department_mst_id'] . ')';
         })->all();
 
-        // Handle bulk delete
         $this->model
-            ->whereRaw("(department_id, policy_department_id) IN (" . implode(", ", $values) . ")")
+            ->whereRaw("(department_mst_id, policy_department_mst_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
 
     /**
-     * Get admin departments id
+     * Get ids
      *
-     * @param array $departmentMgmtIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getDepartmentMgmtMstId(array $departmentMgmtIds): Collection
+    public function getDepartmentManagementMstId(array $tuples): Collection
     {
+        $values = collect($tuples)->map(function ($item) {
+            return '(' . (int)$item['department_mst_id'] . ', ' . (int)$item['policy_department_mst_id'] . ')';
+        })->all();
+
         return $this->model
-            ->whereRaw("(department_id, policy_department_id) IN (" . implode(", ", $departmentMgmtIds) . ")")
-            ->pluck('department_id', 'policy_department_id');
+            ->whereRaw("(department_mst_id, policy_department_mst_id) IN (" . implode(", ", $values) . ")")
+            ->pluck('department_mst_id', 'policy_department_mst_id');
     }
 }

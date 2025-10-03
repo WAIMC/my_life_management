@@ -2,27 +2,16 @@
 
 namespace App\Models\Management;
 
-use App\Enums\SkillStatus;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SkillMgmt extends Model
 {
-    use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'skill_mgmt';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
     protected $fillable = [
         'parent_id',
@@ -35,22 +24,20 @@ class SkillMgmt extends Model
     ];
 
     /**
-     * Get the parent skill
+     * The attributes that should be cast.
      *
-     * @return BelongsTo
+     * @var array
      */
-    public function parent(): BelongsTo
-    {
-        return $this->belongsTo(SkillMgmt::class, 'parent_id');
-    }
-
-    /**
-     * Get the child skills
-     *
-     * @return HasMany
-     */
-    public function children(): HasMany
-    {
-        return $this->hasMany(SkillMgmt::class, 'parent_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'parent_id' => 'integer',
+        'name' => 'string',
+        'slug' => 'string',
+        'status' => 'integer',
+        'is_display' => 'boolean',
+        'rank_order' => 'integer',
+        'is_delete' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

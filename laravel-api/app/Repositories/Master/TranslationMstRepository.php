@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Constants\CommonVal;
-use App\Models\Master\TranslationMst;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\TranslationMstInterface;
+use App\Models\Master\TranslationMst;
 use App\Repositories\BaseRepository;
 use DateTime;
-use Illuminate\Database\Eloquent\Collection;
+use App\Constants\CommonVal;
+use Illuminate\Support\Collection;
+
 
 class TranslationMstRepository extends BaseRepository implements TranslationMstInterface
 {
@@ -17,14 +21,21 @@ class TranslationMstRepository extends BaseRepository implements TranslationMstI
     }
 
     /**
-     * Get translation list with conditions
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->select('*');
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'language_id',
+                'original_id',
+                'value',
+                'updated_at',
+            ]);
 
         if (isset($payload['language_id'])) {
             $query->where('language_id', $payload['language_id']);
@@ -34,61 +45,68 @@ class TranslationMstRepository extends BaseRepository implements TranslationMstI
             $query->where('original_id', $payload['original_id']);
         }
 
+        if (isset($payload['value'])) {
+            $query->where('value', 'like', '%' . $payload['value'] . '%');
+        }
+
         if (isset($payload['from_date'])) {
             $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('tad.updated_at', '>=', $fromDate);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('tad.updated_at', '<=', $toDate);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('language_id')->orderBy('original_id');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Store new translation
+     * Create new record
      *
      * @param array $payload
-     * @return void
+     * @return int
      */
-    public function executeStore(array $payload): void
+    public function executeStore(array $payload): int
     {
-        // Handle bulk insert
-        $this->model->create($payload);
+        $data['language_id'] = $payload['language_id'] ?? null;
+        $data['original_id'] = $payload['original_id'] ?? null;
+        $data['value'] = $payload['value'] ?? null;
+        $this->model->create($data);
+
+        return $this->model->id;
+    }
+
+
+    /**
+     * Update record
+     *
+     * @param array $payload
+     * @return int
+     */
+    public function executeUpdate(array $payload): int
+    {
+        $record = $this->model->find($payload['id']);
+        $record['language_id'] = $payload['language_id'] ?? null;
+        $record['original_id'] = $payload['original_id'] ?? null;
+        $record['value'] = $payload['value'] ?? null;
+        $record->save();
+
+        return $record->id;
     }
 
     /**
-     * Delete translation
+     * Delete record
      *
-     * @param array $payload
+     * @param array $ids
      * @return void
      */
-    public function executeDelete(array $payload): void
+    public function executeDelete(array $ids): void
     {
-        $values = collect($payload)->map(function ($item) {
-            return '(' . (int)$item['language_id'] . ', ' . (int)$item['original_id'] . ')';
-        })->all();
-
-        // Handle bulk delete
-        $this->model
-            ->whereRaw("(language_id, original_id) IN (" . implode(", ", $values) . ")")
-            ->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
 
-    /**
-     * Get translation id
-     *
-     * @param array $translationIds
-     * @return Collection
-     */
-    public function getTranslationMstId(array $translationIds): Collection
-    {
-        return $this->model
-            ->whereRaw("(language_id, original_id) IN (" . implode(", ", $translationIds) . ")")
-            ->pluck('language_id', 'original_id');
-    }
 }

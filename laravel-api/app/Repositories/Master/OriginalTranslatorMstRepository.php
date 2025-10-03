@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use App\Models\Master\OriginalTranslatorMst;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class OriginalTranslatorMstRepository extends BaseRepository implements OriginalTranslatorMstInterface
 {
@@ -17,25 +21,28 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
     }
 
     /**
-     * Get list of original translators
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
+        $query = $this->model->query()
+            ->select([
+                'id',
+                '"table"',
+                '"column"',
+                'field_id',
+                'updated_at',
+            ]);
 
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
+        if (isset($payload['"table"'])) {
+            $query->where('"table"', 'like', '%' . $payload['"table"'] . '%');
         }
 
-        if (isset($payload['table'])) {
-            $query->where('table', 'like', '%' . $payload['table'] . '%');
-        }
-
-        if (isset($payload['column'])) {
-            $query->where('column', 'like', '%' . $payload['column'] . '%');
+        if (isset($payload['"column"'])) {
+            $query->where('"column"', 'like', '%' . $payload['"column"'] . '%');
         }
 
         if (isset($payload['field_id'])) {
@@ -52,53 +59,56 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create original translator
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['table'] = $payload['table'];
-        $data['column'] = $payload['column'];
-        $data['field_id'] = $payload['field_id'];
+        $data['"table"'] = $payload['"table"'] ?? null;
+        $data['"column"'] = $payload['"column"'] ?? null;
+        $data['field_id'] = $payload['field_id'] ?? null;
+        $data['is_delete'] = $payload['is_delete'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update original translator
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['table'] = $payload['table'];
-        $data['column'] = $payload['column'];
-        $data['field_id'] = $payload['field_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['"table"'] = $payload['"table"'] ?? null;
+        $record['"column"'] = $payload['"column"'] ?? null;
+        $record['field_id'] = $payload['field_id'] ?? null;
+        $record['is_delete'] = $payload['is_delete'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete original translator
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Enums\IsActive;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\AdminRoleMstInterface;
+use App\Models\Master\AdminRoleMst;
 use App\Repositories\BaseRepository;
 use DateTime;
 use App\Constants\CommonVal;
-use App\Models\Master\AdminRoleMst;
 use Illuminate\Support\Collection;
+
 
 class AdminRoleMstRepository extends BaseRepository implements AdminRoleMstInterface
 {
@@ -18,55 +21,45 @@ class AdminRoleMstRepository extends BaseRepository implements AdminRoleMstInter
     }
 
     /**
-     * Get admin role list
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query()->from('t_admin_role AS tar')
-            ->join('t_admin AS ta', 'ta.id', '=', 'tar.admin_id')
-            ->join('t_role AS tr', 'tr.id', '=', 'tar.role_id')
+        $query = $this->model->query()
             ->select([
-                'tar.admin_id   AS admin_id',
-                'ta.email       AS email',
-                'ta.first_name  AS first_name',
-                'ta.last_name   AS last_name',
-                'ta.status      AS status',
-                'tar.role_id    AS role_id',
-                'tr.name        AS role_name',
-                'tr.permission  AS role_permission',
-                'tar.updated_at AS updated_at'
-            ])
-            ->where('ta.is_active', IsActive::TRUE)
-            ->where('tr.is_active', IsActive::TRUE);
+                'admin_mst_id',
+                'role_mst_id',
+                'updated_at',
+            ]);
 
-        if (isset($payload['admin_id'])) {
-            $query->where('tar.admin_id', $payload['admin_id']);
+        if (isset($payload['admin_mst_id'])) {
+            $query->where('admin_mst_id', $payload['admin_mst_id']);
         }
 
-        if (isset($payload['role_id'])) {
-            $query->where('tar.role_id', $payload['role_id']);
+        if (isset($payload['role_mst_id'])) {
+            $query->where('role_mst_id', $payload['role_mst_id']);
         }
 
         if (isset($payload['from_date'])) {
             $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('tar.updated_at', '>=', $fromDate);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('tar.updated_at', '<=', $toDate);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('admin_id');
+        $query->orderBy('admin_mst_id');
 
         return $query->get();
     }
 
     /**
-     * Store admin role
+     * Create new record
      *
      * @param array $payload
      * @return void
@@ -77,7 +70,7 @@ class AdminRoleMstRepository extends BaseRepository implements AdminRoleMstInter
     }
 
     /**
-     * Delete admin role
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -85,27 +78,28 @@ class AdminRoleMstRepository extends BaseRepository implements AdminRoleMstInter
     public function executeDelete(array $payload): void
     {
         $values = collect($payload)->map(function ($item) {
-            // Make sure the data is an integer and escaped
-            return '(' . (int)$item['admin_id'] . ', ' . (int)$item['role_id'] . ')';
+            return '(' . (int)$item['admin_mst_id'] . ', ' . (int)$item['role_mst_id'] . ')';
         })->all();
 
-        // Handle bulk delete
         $this->model
-            ->whereRaw("(admin_id, role_id) IN (" . implode(", ", $values) . ")")
+            ->whereRaw("(admin_mst_id, role_mst_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
 
-
     /**
-     * Get admin role id
+     * Get ids
      *
-     * @param array $adminIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getAdminRoleId(array $adminIds): Collection
+    public function getAdminRoleMstId(array $tuples): Collection
     {
+        $values = collect($tuples)->map(function ($item) {
+            return '(' . (int)$item['admin_mst_id'] . ', ' . (int)$item['role_mst_id'] . ')';
+        })->all();
+
         return $this->model
-            ->whereRaw("(admin_id, role_id) IN (" . implode(", ", $adminIds) . ")")
-            ->pluck('admin_id', 'role_id');
+            ->whereRaw("(admin_mst_id, role_mst_id) IN (" . implode(", ", $values) . ")")
+            ->pluck('admin_mst_id', 'role_mst_id');
     }
 }

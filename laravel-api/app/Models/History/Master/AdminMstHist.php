@@ -2,26 +2,18 @@
 
 namespace App\Models\History\Master;
 
-use App\Models\Master\AdminMst;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AdminMstHist extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'admin_mst_hist';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
     protected $fillable = [
-        'id',
         'admin_mst_id',
         'email',
         'user_name',
@@ -39,33 +31,32 @@ class AdminMstHist extends Model
         'remember_token',
         'action',
         'author_id',
-        'created_at'
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = false;
-
-    /**
-     * Get the admin that this history belongs to
-     *
-     * @return BelongsTo
-     */
-    public function adminMst(): BelongsTo
-    {
-        return $this->belongsTo(AdminMst::class, 'admin_mst_id');
-    }
-
-    /**
-     * Get the author admin that created this history
-     *
-     * @return BelongsTo
-     */
-    public function author(): BelongsTo
-    {
-        return $this->belongsTo(AdminMst::class, 'author_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'admin_mst_id' => 'integer',
+        'email' => 'string',
+        'user_name' => 'string',
+        'password' => 'string',
+        'first_name' => 'string',
+        'last_name' => 'string',
+        'address' => 'string',
+        'phone_number' => 'string',
+        'birth' => 'datetime',
+        'gender' => 'integer',
+        'status' => 'integer',
+        'is_active' => 'boolean',
+        'avatar' => 'string',
+        'email_verified_at' => 'datetime',
+        'remember_token' => 'string',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

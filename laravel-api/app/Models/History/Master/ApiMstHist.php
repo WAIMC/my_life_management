@@ -2,52 +2,43 @@
 
 namespace App\Models\History\Master;
 
-use App\Models\Master\AdminMst;
-use App\Models\Master\ApiMst;
-use App\Models\Master\FeatureMst;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ApiMstHist extends Model
 {
     protected $table = 'api_mst_hist';
 
-    public $timestamps = false;
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
     protected $fillable = [
-        'id',
         'api_mst_id',
         'type',
         'name',
         'path',
         'is_active',
-        'feature_id',
+        'feature_mst_id',
         'action',
         'author_id',
-        'created_at'
     ];
 
     /**
-     * Get the API master that this history record belongs to
+     * The attributes that should be cast.
+     *
+     * @var array
      */
-    public function apiMst(): BelongsTo
-    {
-        return $this->belongsTo(ApiMst::class, 'api_mst_id');
-    }
-
-    /**
-     * Get the feature that this API is associated with
-     */
-    public function feature(): BelongsTo
-    {
-        return $this->belongsTo(FeatureMst::class, 'feature_id');
-    }
-
-    /**
-     * Get the author who made this change
-     */
-    public function author(): BelongsTo
-    {
-        return $this->belongsTo(AdminMst::class, 'author_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'api_mst_id' => 'integer',
+        'type' => 'integer',
+        'name' => 'string',
+        'path' => 'string',
+        'is_active' => 'integer',
+        'feature_mst_id' => 'integer',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

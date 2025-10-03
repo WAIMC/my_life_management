@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\RoleMstInterface;
 use App\Models\Master\RoleMst;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class RoleMstRepository extends BaseRepository implements RoleMstInterface
 {
@@ -17,18 +21,21 @@ class RoleMstRepository extends BaseRepository implements RoleMstInterface
     }
 
     /**
-     * Get all roles with optional filtering
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'name',
+                'permission',
+                'is_active',
+                'updated_at',
+            ]);
 
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
@@ -38,7 +45,7 @@ class RoleMstRepository extends BaseRepository implements RoleMstInterface
             $query->where('permission', 'like', '%' . $payload['permission'] . '%');
         }
 
-        if (isset($payload['is_active']) && is_bool($payload['is_active'])) {
+        if (isset($payload['is_active'])) {
             $query->where('is_active', $payload['is_active']);
         }
 
@@ -52,51 +59,56 @@ class RoleMstRepository extends BaseRepository implements RoleMstInterface
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        return $query->orderBy('id')->get();
+        $query->orderBy('id');
+
+        return $query->get();
     }
 
     /**
-     * Create new role
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['name'] = $payload['name'];
-        $data['permission'] = $payload['permission'];
-        $data['is_active'] = $payload['is_active'];
+        $data['name'] = $payload['name'] ?? null;
+        $data['permission'] = $payload['permission'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? null;
+        $data['is_delete'] = $payload['is_delete'] ?? null;
         $this->model->create($data);
 
-        return $data->id;
+        return $this->model->id;
     }
 
+
     /**
-     * Update role
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['name'] = $payload['name'];
-        $data['permission'] = $payload['permission'];
-        $data['is_active'] = $payload['is_active'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['name'] = $payload['name'] ?? null;
+        $record['permission'] = $payload['permission'] ?? null;
+        $record['is_active'] = $payload['is_active'] ?? null;
+        $record['is_delete'] = $payload['is_delete'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete role
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

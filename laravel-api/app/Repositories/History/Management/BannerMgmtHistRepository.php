@@ -1,16 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Management;
 
-use App\Constants\CommonVal;
 use App\Enums\IsDelete;
 use App\Interfaces\History\Management\BannerMgmtHistInterface;
 use App\Models\History\Management\BannerMgmtHist;
 use App\Repositories\BaseRepository;
 use DateTime;
-use Mavinoo\Batch\Batch;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class BannerMgmtHistRepository extends BaseRepository implements BannerMgmtHistInterface
 {
@@ -20,21 +21,58 @@ class BannerMgmtHistRepository extends BaseRepository implements BannerMgmtHistI
     }
 
     /**
-     * Get all banner history records with filtering
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'banner_mgmt_id',
+                'title',
+                'slug',
+                'description',
+                'link',
+                'image',
+                'position',
+                'status',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['banner_mgmt_id'])) {
             $query->where('banner_mgmt_id', $payload['banner_mgmt_id']);
+        }
+
+        if (isset($payload['title'])) {
+            $query->where('title', 'like', '%' . $payload['title'] . '%');
+        }
+
+        if (isset($payload['slug'])) {
+            $query->where('slug', 'like', '%' . $payload['slug'] . '%');
+        }
+
+        if (isset($payload['description'])) {
+            $query->where('description', 'like', '%' . $payload['description'] . '%');
+        }
+
+        if (isset($payload['link'])) {
+            $query->where('link', $payload['link']);
+        }
+
+        if (isset($payload['image'])) {
+            $query->where('image', $payload['image']);
+        }
+
+        if (isset($payload['position'])) {
+            $query->where('position', 'like', '%' . $payload['position'] . '%');
+        }
+
+        if (isset($payload['status'])) {
+            $query->where('status', $payload['status']);
         }
 
         if (isset($payload['action'])) {
@@ -55,82 +93,68 @@ class BannerMgmtHistRepository extends BaseRepository implements BannerMgmtHistI
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create new banner history records (batch)
+     * Create new record
      *
-     * @param array $payloads
-     * @return void
+     * @param array $payload
+     * @return int
      */
-    public function executeStore(array $payloads): void
+    public function executeStore(array $payload): int
     {
-        $data = [];
-        foreach ($payloads as $payload) {
-            $data[] = [
-                'banner_mgmt_id' => $payload['banner_mgmt_id'],
-                'title' => $payload['title'],
-                'slug' => $payload['slug'],
-                'description' => $payload['description'],
-                'link' => $payload['link'],
-                'image' => $payload['image'],
-                'position' => $payload['position'],
-                'status' => $payload['status'],
-                'action' => $payload['action'],
-                'author_id' => $payload['author_id'],
-            ];
-        }
-
+        $data['banner_mgmt_id'] = $payload['banner_mgmt_id'] ?? null;
+        $data['title'] = $payload['title'] ?? null;
+        $data['slug'] = $payload['slug'] ?? null;
+        $data['description'] = $payload['description'] ?? null;
+        $data['link'] = $payload['link'] ?? null;
+        $data['image'] = $payload['image'] ?? null;
+        $data['position'] = $payload['position'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
         $this->model->create($data);
+
+        return $this->model->id;
     }
 
+
     /**
-     * Update banner history records (batch)
+     * Update record
      *
-     * @param array $payloads
-     * @return void
+     * @param array $payload
+     * @return int
      */
-    public function executeUpdate(array $payloads): void
+    public function executeUpdate(array $payload): int
     {
-        $payloadIds = array_column($payloads, 'id');
-        $existIds = $this->model->whereIn('id', $payloadIds)->pluck('id')->toArray();
-        $diff = array_diff($payloadIds, $existIds);
-        if (!empty($diff)) {
-            throw new ModelNotFoundException(
-                'Some records not found for update. Missing IDs: ' . implode(',', $diff)
-            );
-        }
+        $record = $this->model->find($payload['id']);
+        $record['banner_mgmt_id'] = $payload['banner_mgmt_id'] ?? null;
+        $record['title'] = $payload['title'] ?? null;
+        $record['slug'] = $payload['slug'] ?? null;
+        $record['description'] = $payload['description'] ?? null;
+        $record['link'] = $payload['link'] ?? null;
+        $record['image'] = $payload['image'] ?? null;
+        $record['position'] = $payload['position'] ?? null;
+        $record['status'] = $payload['status'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        foreach ($payloads as $key => $payload) {
-            $payloads[$key] = [
-                'banner_mgmt_id' => $payload['banner_mgmt_id'],
-                'title' => $payload['title'],
-                'slug' => $payload['slug'],
-                'description' => $payload['description'],
-                'link' => $payload['link'],
-                'image' => $payload['image'],
-                'position' => $payload['position'],
-                'status' => $payload['status'],
-                'action' => $payload['action'],
-                'author_id' => $payload['author_id'],
-            ];
-        }
-
-        $batch = app(Batch::class);
-        $batch->update(new $this->model, $payloads, 'id');
+        return $record->id;
     }
 
     /**
-     * Delete banner history records (batch)
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update('is_deleted', IsDelete::TRUE->value); // Soft delete by setting is_deleted flag
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

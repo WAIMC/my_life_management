@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 interface AdminMstInterface extends BaseInterface
 {
     /**
-     * Get account list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -18,7 +18,7 @@ interface AdminMstInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new admin account
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -26,7 +26,7 @@ interface AdminMstInterface extends BaseInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update admin
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -34,7 +34,7 @@ interface AdminMstInterface extends BaseInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete admin
+     * Delete record
      *
      * @param array $ids
      * @return void

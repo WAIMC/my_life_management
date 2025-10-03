@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Http\Requests\Management\SliderMgmt;
+
+use Illuminate\Foundation\Http\FormRequest;
+use App\Constants\CommonVal;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
+use App\Models\Management\SliderMgmt;
+use App\Enums\IsDelete;
+use App\Enums\StatusEnum;
+
+class StoreSliderMgmtRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
+            'slug' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
+            'link' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
+            'image' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
+            'status' => ['required', new Enum(StatusEnum::class),],
+            'is_delete' => ['required', new Enum(IsDelete::class),],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'title' => __('messages.title'),
+            'slug' => __('messages.slug'),
+            'link' => __('messages.link'),
+            'image' => __('messages.image'),
+            'status' => __('messages.status'),
+            'is_delete' => __('messages.is_delete'),
+        ];
+    }
+}

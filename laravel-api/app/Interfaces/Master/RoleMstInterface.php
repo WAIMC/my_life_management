@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface RoleMstInterface
+interface RoleMstInterface extends BaseInterface
 {
     /**
-     * Get role list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface RoleMstInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new role
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface RoleMstInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update role
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface RoleMstInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete role
+     * Delete record
      *
      * @param array $ids
      * @return void

@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Master\ApiMstHistInterface;
 use App\Models\History\Master\ApiMstHist;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class ApiMstHistRepository extends BaseRepository implements ApiMstHistInterface
 {
@@ -17,21 +21,48 @@ class ApiMstHistRepository extends BaseRepository implements ApiMstHistInterface
     }
 
     /**
-     * Get all api history records
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'api_mst_id',
+                'type',
+                'name',
+                'path',
+                'is_active',
+                'feature_mst_id',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['api_mst_id'])) {
             $query->where('api_mst_id', $payload['api_mst_id']);
+        }
+
+        if (isset($payload['type'])) {
+            $query->where('type', $payload['type']);
+        }
+
+        if (isset($payload['name'])) {
+            $query->where('name', 'like', '%' . $payload['name'] . '%');
+        }
+
+        if (isset($payload['path'])) {
+            $query->where('path', 'like', '%' . $payload['path'] . '%');
+        }
+
+        if (isset($payload['is_active'])) {
+            $query->where('is_active', $payload['is_active']);
+        }
+
+        if (isset($payload['feature_mst_id'])) {
+            $query->where('feature_mst_id', $payload['feature_mst_id']);
         }
 
         if (isset($payload['action'])) {
@@ -40,10 +71,6 @@ class ApiMstHistRepository extends BaseRepository implements ApiMstHistInterface
 
         if (isset($payload['author_id'])) {
             $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['feature_id'])) {
-            $query->where('feature_id', $payload['feature_id']);
         }
 
         if (isset($payload['from_date'])) {
@@ -56,64 +83,64 @@ class ApiMstHistRepository extends BaseRepository implements ApiMstHistInterface
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
-
     /**
-     * Create new api history record
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['api_mst_id'] = $payload['api_mst_id'];
-        $data['type'] = $payload['type'];
-        $data['name'] = $payload['name'];
-        $data['path'] = $payload['path'];
-        $data['is_active'] = $payload['is_active'];
-        $data['feature_id'] = $payload['feature_id'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
+        $data['api_mst_id'] = $payload['api_mst_id'] ?? null;
+        $data['type'] = $payload['type'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['path'] = $payload['path'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? null;
+        $data['feature_mst_id'] = $payload['feature_mst_id'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update api history record
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['api_mst_id'] = $payload['api_mst_id'];
-        $data['type'] = $payload['type'];
-        $data['name'] = $payload['name'];
-        $data['path'] = $payload['path'];
-        $data['is_active'] = $payload['is_active'];
-        $data['feature_id'] = $payload['feature_id'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['api_mst_id'] = $payload['api_mst_id'] ?? null;
+        $record['type'] = $payload['type'] ?? null;
+        $record['name'] = $payload['name'] ?? null;
+        $record['path'] = $payload['path'] ?? null;
+        $record['is_active'] = $payload['is_active'] ?? null;
+        $record['feature_mst_id'] = $payload['feature_mst_id'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete api history record
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

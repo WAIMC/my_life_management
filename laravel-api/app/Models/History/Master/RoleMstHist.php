@@ -2,31 +2,16 @@
 
 namespace App\Models\History\Master;
 
-use App\Models\Master\AdminMst;
-use App\Models\Master\RoleMst;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RoleMstHist extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'role_mst_hist';
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
     protected $fillable = [
         'role_mst_id',
@@ -35,22 +20,21 @@ class RoleMstHist extends Model
         'is_active',
         'action',
         'author_id',
-        'created_at',
     ];
 
     /**
-     * Get the role that this history belongs to
+     * The attributes that should be cast.
+     *
+     * @var array
      */
-    public function role(): BelongsTo
-    {
-        return $this->belongsTo(RoleMst::class, 'role_mst_id');
-    }
-
-    /**
-     * Get the author who made this change
-     */
-    public function author(): BelongsTo
-    {
-        return $this->belongsTo(AdminMst::class, 'author_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'role_mst_id' => 'integer',
+        'name' => 'string',
+        'permission' => 'string',
+        'is_active' => 'boolean',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface SocialMgmtInterface
+interface SocialMgmtInterface extends BaseInterface
 {
     /**
-     * Get social list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface SocialMgmtInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new social
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface SocialMgmtInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update social
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface SocialMgmtInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete social
+     * Delete record
      *
      * @param array $ids
      * @return void

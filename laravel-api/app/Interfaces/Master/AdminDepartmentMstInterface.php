@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 interface AdminDepartmentMstInterface extends BaseInterface
 {
     /**
-     * Get admin department list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -18,7 +18,7 @@ interface AdminDepartmentMstInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store admin department
+     * Store record
      *
      * @param array $payload
      * @return void
@@ -26,7 +26,7 @@ interface AdminDepartmentMstInterface extends BaseInterface
     public function executeStore(array $payload): void;
 
     /**
-     * Delete admin department
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -34,10 +34,10 @@ interface AdminDepartmentMstInterface extends BaseInterface
     public function executeDelete(array $payload): void;
 
     /**
-     * Get admin department id
+     * Get ids
      *
-     * @param array $adminIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getAdminDepartmentId(array $adminIds): Collection;
+    public function getAdminDepartmentMstId(array $tuples): Collection;
 }

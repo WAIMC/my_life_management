@@ -3,35 +3,30 @@
 namespace App\Models\Management;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CategorySkillMgmt extends Model
 {
     protected $table = 'category_skill_mgmt';
-    public $timestamps = false;
-    protected $primaryKey = null;
-    public $incrementing = false;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
     protected $fillable = [
-        'category_id',
-        'skill_id',
-        'created_at',
-        'updated_at'
+        'category_mgmt_id',
+        'skill_mgmt_id',
     ];
 
     /**
-     * Get the category that owns this relationship
+     * The attributes that should be cast.
+     *
+     * @var array
      */
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(CategoryMgmt::class, 'category_id');
-    }
-
-    /**
-     * Get the skill that owns this relationship
-     */
-    public function skill(): BelongsTo
-    {
-        return $this->belongsTo(SkillMgmt::class, 'skill_id');
-    }
+    protected $casts = [
+        'category_mgmt_id' => 'integer',
+        'skill_mgmt_id' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

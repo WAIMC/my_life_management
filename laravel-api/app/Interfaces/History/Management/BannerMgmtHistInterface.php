@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface BannerMgmtHistInterface
+interface BannerMgmtHistInterface extends BaseInterface
 {
     /**
-     * Get banner management history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,23 +18,23 @@ interface BannerMgmtHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new banner management history (batch)
+     * Store record
      *
-     * @param array $payloads
-     * @return void
+     * @param array $payload
+     * @return int
      */
-    public function executeStore(array $payloads): void;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update banner management history (batch)
+     * Update record
      *
-     * @param array $payloads
-     * @return void
+     * @param array $payload
+     * @return int
      */
-    public function executeUpdate(array $payloads): void;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete banner management history (batch)
+     * Delete record
      *
      * @param array $ids
      * @return void

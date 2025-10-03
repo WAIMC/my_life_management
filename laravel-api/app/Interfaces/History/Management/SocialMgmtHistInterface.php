@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface SocialMgmtHistInterface
+interface SocialMgmtHistInterface extends BaseInterface
 {
     /**
-     * Get social history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface SocialMgmtHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new social history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface SocialMgmtHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update social history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface SocialMgmtHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete social history
+     * Delete record
      *
      * @param array $ids
      * @return void

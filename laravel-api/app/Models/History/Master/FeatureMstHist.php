@@ -2,15 +2,10 @@
 
 namespace App\Models\History\Master;
 
-use App\Models\Master\FeatureMst;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FeatureMstHist extends Model
 {
-    use HasFactory;
-
     protected $table = 'feature_mst_hist';
 
     /**
@@ -19,7 +14,6 @@ class FeatureMstHist extends Model
      * @var string[]
      */
     protected $fillable = [
-        'id',
         'feature_mst_id',
         'name',
         'group_name',
@@ -27,23 +21,22 @@ class FeatureMstHist extends Model
         'status',
         'action',
         'author_id',
-        'created_at'
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = false;
-
-    /**
-     * Get the feature that this history record belongs to
-     *
-     * @return BelongsTo
-     */
-    public function feature(): BelongsTo
-    {
-        return $this->belongsTo(FeatureMst::class, 'feature_mst_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'feature_mst_id' => 'integer',
+        'name' => 'string',
+        'group_name' => 'string',
+        'description' => 'string',
+        'status' => 'integer',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

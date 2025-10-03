@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface SkillMgmtHistInterface
+interface SkillMgmtHistInterface extends BaseInterface
 {
     /**
-     * Get skill master history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface SkillMgmtHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new skill master history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface SkillMgmtHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update skill master history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface SkillMgmtHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete skill master history
+     * Delete record
      *
      * @param array $ids
      * @return void

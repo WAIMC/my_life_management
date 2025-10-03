@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 interface AdminRoleMstInterface extends BaseInterface
 {
     /**
-     * Get admin role list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -18,7 +18,7 @@ interface AdminRoleMstInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store admin role
+     * Store record
      *
      * @param array $payload
      * @return void
@@ -26,7 +26,7 @@ interface AdminRoleMstInterface extends BaseInterface
     public function executeStore(array $payload): void;
 
     /**
-     * Delete admin role
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -34,10 +34,10 @@ interface AdminRoleMstInterface extends BaseInterface
     public function executeDelete(array $payload): void;
 
     /**
-     * Get admin role id
+     * Get ids
      *
-     * @param array $adminIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getAdminRoleId(array $adminIds): Collection;
+    public function getAdminRoleMstId(array $tuples): Collection;
 }

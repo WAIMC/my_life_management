@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface FeatureMstInterface
+interface FeatureMstInterface extends BaseInterface
 {
     /**
-     * Get all features with optional filtering
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface FeatureMstInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new feature
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface FeatureMstInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update feature
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,10 +34,10 @@ interface FeatureMstInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete feature
+     * Delete record
      *
-     * @param array $id
+     * @param array $ids
      * @return void
      */
-    public function executeDelete(array $id): void;
+    public function executeDelete(array $ids): void;
 }

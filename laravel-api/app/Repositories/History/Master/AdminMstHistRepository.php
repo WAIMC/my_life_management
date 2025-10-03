@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Master\AdminMstHistInterface;
 use App\Models\History\Master\AdminMstHist;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 
 class AdminMstHistRepository extends BaseRepository implements AdminMstHistInterface
 {
@@ -17,25 +21,38 @@ class AdminMstHistRepository extends BaseRepository implements AdminMstHistInter
     }
 
     /**
-     * Get all admin history records
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'admin_mst_id',
+                'email',
+                'user_name',
+                'first_name',
+                'last_name',
+                'address',
+                'phone_number',
+                'birth',
+                'gender',
+                'status',
+                'is_active',
+                'avatar',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['admin_mst_id'])) {
             $query->where('admin_mst_id', $payload['admin_mst_id']);
         }
 
         if (isset($payload['email'])) {
-            $query->where('email', 'like', '%' . $payload['email'] . '%');
+            $query->where('email', $payload['email']);
         }
 
         if (isset($payload['user_name'])) {
@@ -48,6 +65,34 @@ class AdminMstHistRepository extends BaseRepository implements AdminMstHistInter
 
         if (isset($payload['last_name'])) {
             $query->where('last_name', 'like', '%' . $payload['last_name'] . '%');
+        }
+
+        if (isset($payload['address'])) {
+            $query->where('address', 'like', '%' . $payload['address'] . '%');
+        }
+
+        if (isset($payload['phone_number'])) {
+            $query->where('phone_number', $payload['phone_number']);
+        }
+
+        if (isset($payload['birth'])) {
+            $query->where('birth', $payload['birth']);
+        }
+
+        if (isset($payload['gender'])) {
+            $query->where('gender', $payload['gender']);
+        }
+
+        if (isset($payload['status'])) {
+            $query->where('status', $payload['status']);
+        }
+
+        if (isset($payload['is_active'])) {
+            $query->where('is_active', $payload['is_active']);
+        }
+
+        if (isset($payload['avatar'])) {
+            $query->where('avatar', $payload['avatar']);
         }
 
         if (isset($payload['action'])) {
@@ -68,79 +113,82 @@ class AdminMstHistRepository extends BaseRepository implements AdminMstHistInter
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create new admin history record
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['admin_mst_id'] = $payload['admin_mst_id'];
-        $data['email'] = $payload['email'];
-        $data['user_name'] = $payload['user_name'];
-        $data['password'] = $payload['password'];
-        $data['first_name'] = $payload['first_name'];
-        $data['last_name'] = $payload['last_name'];
-        $data['address'] = $payload['address'];
-        $data['phone_number'] = $payload['phone_number'];
-        $data['birth'] = $payload['birth'];
-        $data['gender'] = $payload['gender'];
-        $data['status'] = $payload['status'];
-        $data['avatar'] = $payload['avatar'];
-        $data['email_verified_at'] = $payload['email_verified_at'];
-        $data['remember_token'] = $payload['remember_token'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
+        $data['admin_mst_id'] = $payload['admin_mst_id'] ?? null;
+        $data['email'] = $payload['email'] ?? null;
+        $data['user_name'] = $payload['username'] ?? null;
+        $data['password'] = $payload['password'] ? Hash::make($payload['password']) : null;
+        $data['first_name'] = $payload['first_name'] ?? null;
+        $data['last_name'] = $payload['last_name'] ?? null;
+        $data['address'] = $payload['address'] ?? null;
+        $data['phone_number'] = $payload['phone_number'] ?? null;
+        $data['birth'] = $payload['birth'] ?? null;
+        $data['gender'] = $payload['gender'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data['is_active'] = $payload['is_active'] ?? null;
+        $data['avatar'] = $payload['avatar'] ?? null;
+        $data['email_verified_at'] = $payload['email_verified_at'] ?? null;
+        $data['remember_token'] = $payload['remember_token'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update admin history record
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['admin_mst_id'] = $payload['admin_mst_id'];
-        $data['email'] = $payload['email'];
-        $data['user_name'] = $payload['user_name'];
-        $data['password'] = $payload['password'];
-        $data['first_name'] = $payload['first_name'];
-        $data['last_name'] = $payload['last_name'];
-        $data['address'] = $payload['address'];
-        $data['phone_number'] = $payload['phone_number'];
-        $data['birth'] = $payload['birth'];
-        $data['gender'] = $payload['gender'];
-        $data['status'] = $payload['status'];
-        $data['avatar'] = $payload['avatar'];
-        $data['email_verified_at'] = $payload['email_verified_at'];
-        $data['remember_token'] = $payload['remember_token'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['admin_mst_id'] = $payload['admin_mst_id'] ?? null;
+        $record['email'] = $payload['email'] ?? null;
+        $record['user_name'] = $payload['username'] ?? null;
+        $record['password'] = $payload['password'] ? Hash::make($payload['password']) : null;
+        $record['first_name'] = $payload['first_name'] ?? null;
+        $record['last_name'] = $payload['last_name'] ?? null;
+        $record['address'] = $payload['address'] ?? null;
+        $record['phone_number'] = $payload['phone_number'] ?? null;
+        $record['birth'] = $payload['birth'] ?? null;
+        $record['gender'] = $payload['gender'] ?? null;
+        $record['status'] = $payload['status'] ?? null;
+        $record['is_active'] = $payload['is_active'] ?? null;
+        $record['avatar'] = $payload['avatar'] ?? null;
+        $record['email_verified_at'] = $payload['email_verified_at'] ?? null;
+        $record['remember_token'] = $payload['remember_token'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete admin history record
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

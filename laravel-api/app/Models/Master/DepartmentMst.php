@@ -2,15 +2,10 @@
 
 namespace App\Models\Master;
 
-use App\Models\History\Master\DepartmentMstHist;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DepartmentMst extends Model
 {
-    use HasFactory;
-
     protected $table = 'department_mst';
 
     /**
@@ -26,39 +21,17 @@ class DepartmentMst extends Model
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = true;
-
-    /**
-     * Get the admin department assignments for this department
-     *
-     * @return HasMany
-     */
-    public function adminDepartments(): HasMany
-    {
-        return $this->hasMany(AdminDepartmentMst::class, 'department_id');
-    }
-
-    /**
-     * Get the department management relations for this department
-     *
-     * @return HasMany
-     */
-    public function departmentManagements(): HasMany
-    {
-        return $this->hasMany(DepartmentManagementMst::class, 'department_id');
-    }
-
-    /**
-     * Get the history records for this department
-     *
-     * @return HasMany
-     */
-    public function history(): HasMany
-    {
-        return $this->hasMany(DepartmentMstHist::class, 'department_mst_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'code' => 'string',
+        'name' => 'string',
+        'status' => 'integer',
+        'is_delete' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

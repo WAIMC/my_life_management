@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Management;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Management\SkillMgmtInterface;
 use App\Models\Management\SkillMgmt;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
+
 
 class SkillMgmtRepository extends BaseRepository implements SkillMgmtInterface
 {
@@ -18,21 +21,35 @@ class SkillMgmtRepository extends BaseRepository implements SkillMgmtInterface
     }
 
     /**
-     * Get all skills with pagination and filtering
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'parent_id',
+                'name',
+                'slug',
+                'status',
+                'is_display',
+                'rank_order',
+                'updated_at',
+            ]);
 
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
+        if (isset($payload['parent_id'])) {
+            $query->where('parent_id', $payload['parent_id']);
         }
 
         if (isset($payload['name'])) {
             $query->where('name', 'like', '%' . $payload['name'] . '%');
+        }
+
+        if (isset($payload['slug'])) {
+            $query->where('slug', 'like', '%' . $payload['slug'] . '%');
         }
 
         if (isset($payload['status'])) {
@@ -43,8 +60,8 @@ class SkillMgmtRepository extends BaseRepository implements SkillMgmtInterface
             $query->where('is_display', $payload['is_display']);
         }
 
-        if (isset($payload['parent_id'])) {
-            $query->where('parent_id', $payload['parent_id']);
+        if (isset($payload['rank_order'])) {
+            $query->where('rank_order', $payload['rank_order']);
         }
 
         if (isset($payload['from_date'])) {
@@ -57,59 +74,62 @@ class SkillMgmtRepository extends BaseRepository implements SkillMgmtInterface
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create new skill
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['parent_id'] = $payload['parent_id'];
-        $data['name'] = $payload['name'];
-        $data['slug'] = $payload['slug'] ? Str::slug($payload['slug']) : Str::slug($payload['name']);
-        $data['status'] = $payload['status'];
-        $data['is_display'] = $payload['is_display'];
-        $data['rank_order'] = $payload['rank_order'];
+        $data['parent_id'] = $payload['parent_id'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['slug'] = $payload['slug'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data['is_display'] = $payload['is_display'] ?? null;
+        $data['rank_order'] = $payload['rank_order'] ?? null;
+        $data['is_delete'] = $payload['is_delete'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update skill by ID
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['parent_id'] = $payload['parent_id'];
-        $data['name'] = $payload['name'];
-        $data['slug'] = $payload['slug'] ? Str::slug($payload['slug']) : Str::slug($payload['name']);
-        $data['status'] = $payload['status'];
-        $data['is_display'] = $payload['is_display'];
-        $data['rank_order'] = $payload['rank_order'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['parent_id'] = $payload['parent_id'] ?? null;
+        $record['name'] = $payload['name'] ?? null;
+        $record['slug'] = $payload['slug'] ?? null;
+        $record['status'] = $payload['status'] ?? null;
+        $record['is_display'] = $payload['is_display'] ?? null;
+        $record['rank_order'] = $payload['rank_order'] ?? null;
+        $record['is_delete'] = $payload['is_delete'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete skill by ID
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

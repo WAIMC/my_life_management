@@ -1,34 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Master\FeatureMstHistInterface;
-use App\Models\History\Master\AdminMstHist;
+use App\Models\History\Master\FeatureMstHist;
 use App\Repositories\BaseRepository;
 use DateTime;
-use Illuminate\Database\Eloquent\Collection;
+use App\Constants\CommonVal;
+use Illuminate\Support\Collection;
+
 
 class FeatureMstHistRepository extends BaseRepository implements FeatureMstHistInterface
 {
-    public function __construct(AdminMstHist $model)
+    public function __construct(FeatureMstHist $model)
     {
         parent::__construct($model);
     }
 
     /**
-     * Get all feature history records
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'feature_mst_id',
+                'name',
+                'group_name',
+                'description',
+                'status',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['feature_mst_id'])) {
             $query->where('feature_mst_id', $payload['feature_mst_id']);
@@ -68,61 +78,62 @@ class FeatureMstHistRepository extends BaseRepository implements FeatureMstHistI
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create new feature history record
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['feature_mst_id'] = $payload['feature_mst_id'];
-        $data['name'] = $payload['name'];
-        $data['group_name'] = $payload['group_name'];
-        $data['description'] = $payload['description'];
-        $data['status'] = $payload['status'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
+        $data['feature_mst_id'] = $payload['feature_mst_id'] ?? null;
+        $data['name'] = $payload['name'] ?? null;
+        $data['group_name'] = $payload['group_name'] ?? null;
+        $data['description'] = $payload['description'] ?? null;
+        $data['status'] = $payload['status'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update feature history record
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['feature_mst_id'] = $payload['feature_mst_id'];
-        $data['name'] = $payload['name'];
-        $data['group_name'] = $payload['group_name'];
-        $data['description'] = $payload['description'];
-        $data['status'] = $payload['status'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['feature_mst_id'] = $payload['feature_mst_id'] ?? null;
+        $record['name'] = $payload['name'] ?? null;
+        $record['group_name'] = $payload['group_name'] ?? null;
+        $record['description'] = $payload['description'] ?? null;
+        $record['status'] = $payload['status'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete feature history record
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

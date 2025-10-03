@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
-use App\Models\Management\BannerMgmt;
 
-interface BannerMgmtInterface
+interface BannerMgmtInterface extends BaseInterface
 {
     /**
-     * Get banner list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -16,23 +18,23 @@ interface BannerMgmtInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new banner
+     * Store record
      *
      * @param array $payload
-     * @return BannerMgmt
+     * @return int
      */
-    public function executeStore(array $payload): BannerMgmt;
+    public function executeStore(array $payload): int;
 
     /**
-     * Update banner
+     * Update record
      *
      * @param array $payload
-     * @return BannerMgmt
+     * @return int
      */
-    public function executeUpdate(array $payload): BannerMgmt;
+    public function executeUpdate(array $payload): int;
 
     /**
-     * Delete banner
+     * Delete record
      *
      * @param array $ids
      * @return void

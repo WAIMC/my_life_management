@@ -2,29 +2,18 @@
 
 namespace App\Models\Management;
 
-use App\Models\Master\DepartmentMst;
-use App\Models\Master\RoleMst;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserMgmt extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'user_mgmt';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var string[]
      */
     protected $fillable = [
-        'id',
-        'role_id',
-        'department_id',
         'email',
         'user_name',
         'password',
@@ -37,33 +26,34 @@ class UserMgmt extends Model
         'status',
         'is_active',
         'avatar',
-        'is_delete',
         'email_verified_at',
         'remember_token',
-        'created_at',
-        'updated_at'
+        'is_delete',
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = false;
-
-    /**
-     * Get the role that owns the user.
-     */
-    public function role(): BelongsTo
-    {
-        return $this->belongsTo(RoleMst::class, 'role_id');
-    }
-
-    /**
-     * Get the department that owns the user.
-     */
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(DepartmentMst::class, 'department_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'email' => 'string',
+        'user_name' => 'string',
+        'password' => 'string',
+        'first_name' => 'string',
+        'last_name' => 'string',
+        'address' => 'string',
+        'phone_number' => 'string',
+        'birth' => 'string',
+        'gender' => 'integer',
+        'status' => 'integer',
+        'is_active' => 'boolean',
+        'avatar' => 'string',
+        'email_verified_at' => 'string',
+        'remember_token' => 'string',
+        'is_delete' => 'boolean',
+        'created_at' => 'string',
+        'updated_at' => 'string',
+    ];
 }

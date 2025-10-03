@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface DepartmentManagementMstInterface
+interface DepartmentManagementMstInterface extends BaseInterface
 {
     /**
-     * Get department management list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface DepartmentManagementMstInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store department management
+     * Store record
      *
      * @param array $payload
      * @return void
@@ -23,7 +26,7 @@ interface DepartmentManagementMstInterface
     public function executeStore(array $payload): void;
 
     /**
-     * Delete department management
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -31,10 +34,10 @@ interface DepartmentManagementMstInterface
     public function executeDelete(array $payload): void;
 
     /**
-     * Get department management id
+     * Get ids
      *
-     * @param array $departmentMgmtIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getDepartmentMgmtMstId(array $departmentMgmtIds): Collection;
+    public function getDepartmentManagementMstId(array $tuples): Collection;
 }

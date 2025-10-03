@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface ApiMstHistInterface
+interface ApiMstHistInterface extends BaseInterface
 {
     /**
-     * Get api master history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface ApiMstHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new api master history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface ApiMstHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update api master history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface ApiMstHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete api master history
+     * Delete record
      *
      * @param array $ids
      * @return void

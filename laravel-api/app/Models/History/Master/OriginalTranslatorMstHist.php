@@ -2,51 +2,39 @@
 
 namespace App\Models\History\Master;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Master\OriginalTranslatorMst;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OriginalTranslatorMstHist extends Model
 {
-    use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'original_translator_mst_hist';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var string[]
      */
     protected $fillable = [
         'original_translator_mst_id',
-        'table',
-        'column',
+        '"table"',
+        '"column"',
         'field_id',
         'action',
         'author_id',
-        'created_at',
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = false;
-
-    /**
-     * Get the original translator record associated with the history.
-     *
-     * @return BelongsTo
-     */
-    public function originalTranslator(): BelongsTo
-    {
-        return $this->belongsTo(OriginalTranslatorMst::class, 'original_translator_mst_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'original_translator_mst_id' => 'integer',
+        '"table"' => 'string',
+        '"column"' => 'string',
+        'field_id' => 'integer',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

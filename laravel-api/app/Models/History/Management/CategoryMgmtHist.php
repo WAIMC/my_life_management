@@ -2,18 +2,18 @@
 
 namespace App\Models\History\Management;
 
-use App\Models\Management\CategoryMgmt;
-use App\Models\Master\AdminMst;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CategoryMgmtHist extends Model
 {
     protected $table = 'category_mgmt_hist';
-    public $timestamps = false;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
     protected $fillable = [
-        'id',
         'category_mgmt_id',
         'parent_id',
         'name',
@@ -24,22 +24,25 @@ class CategoryMgmtHist extends Model
         'rank_order',
         'action',
         'author_id',
-        'created_at'
     ];
 
     /**
-     * Get the category that this history record belongs to
+     * The attributes that should be cast.
+     *
+     * @var array
      */
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(CategoryMgmt::class, 'category_mgmt_id');
-    }
-
-    /**
-     * Get the author who made this change
-     */
-    public function author(): BelongsTo
-    {
-        return $this->belongsTo(AdminMst::class, 'author_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'category_mgmt_id' => 'integer',
+        'parent_id' => 'integer',
+        'name' => 'string',
+        'slug' => 'string',
+        'description' => 'string',
+        'status' => 'integer',
+        'is_display' => 'boolean',
+        'rank_order' => 'integer',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

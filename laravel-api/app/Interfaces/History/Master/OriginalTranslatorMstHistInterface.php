@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface OriginalTranslatorMstHistInterface
+interface OriginalTranslatorMstHistInterface extends BaseInterface
 {
     /**
-     * Get original translator master history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface OriginalTranslatorMstHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new original translator master history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface OriginalTranslatorMstHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update original translator master history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface OriginalTranslatorMstHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete original translator master history
+     * Delete record
      *
      * @param array $ids
      * @return void

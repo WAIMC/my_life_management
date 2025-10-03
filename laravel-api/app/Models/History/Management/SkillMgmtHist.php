@@ -2,35 +2,16 @@
 
 namespace App\Models\History\Management;
 
-use App\Enums\ActionType;
-use App\Enums\SkillStatus;
-use App\Models\Management\SkillMgmt;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SkillMgmtHist extends Model
 {
-    use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'skill_mgmt_hist';
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
     protected $fillable = [
         'skill_mgmt_id',
@@ -42,16 +23,24 @@ class SkillMgmtHist extends Model
         'rank_order',
         'action',
         'author_id',
-        'created_at'
     ];
 
     /**
-     * Get the skill this history record belongs to
+     * The attributes that should be cast.
      *
-     * @return BelongsTo
+     * @var array
      */
-    public function skill(): BelongsTo
-    {
-        return $this->belongsTo(SkillMgmt::class, 'skill_mgmt_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'skill_mgmt_id' => 'integer',
+        'parent_id' => 'integer',
+        'name' => 'string',
+        'slug' => 'string',
+        'status' => 'integer',
+        'is_display' => 'boolean',
+        'rank_order' => 'integer',
+        'action' => 'integer',
+        'author_id' => 'integer',
+        'created_at' => 'datetime',
+    ];
 }

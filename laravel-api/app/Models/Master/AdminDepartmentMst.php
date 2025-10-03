@@ -2,34 +2,31 @@
 
 namespace App\Models\Master;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AdminDepartmentMst extends Model
 {
-    use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'admin_department_mst';
-
-    public $incrementing = false;
-    protected $primaryKey = null;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
-    protected $fillable = ['admin_id', 'department_id'];
+    protected $fillable = [
+        'admin_mst_id',
+        'department_mst_id',
+    ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = true;
+    protected $casts = [
+        'admin_mst_id' => 'integer',
+        'department_mst_id' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

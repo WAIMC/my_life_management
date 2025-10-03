@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
+use App\Enums\IsDelete;
 use App\Interfaces\Master\AdminDepartmentMstInterface;
+use App\Models\Master\AdminDepartmentMst;
 use App\Repositories\BaseRepository;
 use DateTime;
 use App\Constants\CommonVal;
-use App\Models\Master\AdminDepartmentMst;
 use Illuminate\Support\Collection;
+
 
 class AdminDepartmentMstRepository extends BaseRepository implements AdminDepartmentMstInterface
 {
@@ -17,65 +21,56 @@ class AdminDepartmentMstRepository extends BaseRepository implements AdminDepart
     }
 
     /**
-     * Get admin department list
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query()->from('t_admin_department AS tad')
-            ->join('t_admin AS ta', 'ta.id', '=', 'tad.admin_id')
-            ->join('t_department AS td', 'td.id', '=', 'tad.department_id')
+        $query = $this->model->query()
             ->select([
-                'tad.admin_id      AS admin_id',
-                'ta.email          AS email',
-                'ta.status         AS admin_status',
-                'ta.is_active      AS is_active',
-                'tad.department_id AS department_id',
-                'td.code           AS department_code',
-                'td.name           AS department_name',
-                'td.status         AS department_status',
-                'tad.updated_at    AS updated_at'
+                'admin_mst_id',
+                'department_mst_id',
+                'updated_at',
             ]);
 
-        if (isset($payload['admin_id'])) {
-            $query->where('tad.admin_id', $payload['admin_id']);
+        if (isset($payload['admin_mst_id'])) {
+            $query->where('admin_mst_id', $payload['admin_mst_id']);
         }
 
-        if (isset($payload['department_id'])) {
-            $query->where('tad.department_id', $payload['department_id']);
+        if (isset($payload['department_mst_id'])) {
+            $query->where('department_mst_id', $payload['department_mst_id']);
         }
 
         if (isset($payload['from_date'])) {
             $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('tad.updated_at', '>=', $fromDate);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('tad.updated_at', '<=', $toDate);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('admin_id');
+        $query->orderBy('admin_mst_id');
 
         return $query->get();
     }
 
     /**
-     * Store api role
+     * Create new record
      *
      * @param array $payload
      * @return void
      */
     public function executeStore(array $payload): void
     {
-        // Handle bulk insert
         $this->model->create($payload);
     }
 
     /**
-     * Delete admin department
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -83,26 +78,28 @@ class AdminDepartmentMstRepository extends BaseRepository implements AdminDepart
     public function executeDelete(array $payload): void
     {
         $values = collect($payload)->map(function ($item) {
-            // Make sure the data is an integer and escaped
-            return '(' . (int)$item['admin_id'] . ', ' . (int)$item['department_id'] . ')';
+            return '(' . (int)$item['admin_mst_id'] . ', ' . (int)$item['department_mst_id'] . ')';
         })->all();
 
-        // Handle bulk delete
         $this->model
-            ->whereRaw("(admin_id, department_id) IN (" . implode(", ", $values) . ")")
+            ->whereRaw("(admin_mst_id, department_mst_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
 
     /**
-     * Get admin departments id
+     * Get ids
      *
-     * @param array $adminIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getAdminDepartmentId(array $adminIds): Collection
+    public function getAdminDepartmentMstId(array $tuples): Collection
     {
+        $values = collect($tuples)->map(function ($item) {
+            return '(' . (int)$item['admin_mst_id'] . ', ' . (int)$item['department_mst_id'] . ')';
+        })->all();
+
         return $this->model
-            ->whereRaw("(admin_id, department_id) IN (" . implode(", ", $adminIds) . ")")
-            ->pluck('admin_id', 'department_id');
+            ->whereRaw("(admin_mst_id, department_mst_id) IN (" . implode(", ", $values) . ")")
+            ->pluck('admin_mst_id', 'department_mst_id');
     }
 }

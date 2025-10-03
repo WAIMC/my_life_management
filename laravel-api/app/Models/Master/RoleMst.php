@@ -2,26 +2,16 @@
 
 namespace App\Models\Master;
 
-use App\Models\History\Master\RoleMstHist;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RoleMst extends Model
 {
-    use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'role_mst';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
     protected $fillable = [
         'name',
@@ -31,39 +21,17 @@ class RoleMst extends Model
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = true;
-
-    /**
-     * Get the admin role assignments for this role
-     *
-     * @return HasMany
-     */
-    public function adminRoles(): HasMany
-    {
-        return $this->hasMany(AdminRoleMst::class, 'role_id');
-    }
-
-    /**
-     * Get the API role assignments for this role
-     *
-     * @return HasMany
-     */
-    public function apiRoles(): HasMany
-    {
-        return $this->hasMany(ApiRoleMst::class, 'role_id');
-    }
-
-    /**
-     * Get the history records for this role
-     *
-     * @return HasMany
-     */
-    public function history(): HasMany
-    {
-        return $this->hasMany(RoleMstHist::class, 'role_mst_id');
-    }
+    protected $casts = [
+        'id' => 'integer',
+        'name' => 'string',
+        'permission' => 'string',
+        'is_active' => 'boolean',
+        'is_delete' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

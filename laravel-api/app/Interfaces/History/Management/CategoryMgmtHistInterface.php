@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface CategoryMgmtHistInterface
+interface CategoryMgmtHistInterface extends BaseInterface
 {
     /**
-     * Get category management history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface CategoryMgmtHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new category management history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface CategoryMgmtHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update category management history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface CategoryMgmtHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete category management history
+     * Delete record
      *
      * @param array $ids
      * @return void

@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Master;
 
-use App\Constants\CommonVal;
-use App\Enums\IsActive;
+use App\Enums\IsDelete;
 use App\Interfaces\Master\ApiMstInterface;
 use App\Models\Master\ApiMst;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+
 
 class ApiMstRepository extends BaseRepository implements ApiMstInterface
 {
@@ -19,119 +21,108 @@ class ApiMstRepository extends BaseRepository implements ApiMstInterface
     }
 
     /**
-     * Get api list
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query()->from('t_api AS ta')
-            ->join('t_feature AS tf', 'tf.id', '=', 'ta.feature_id')
+        $query = $this->model->query()
             ->select([
-                'ta.id         AS id',
-                DB::raw("
-          CASE
-            WHEN ta.type = 0 THEN 'GET'
-            WHEN ta.type = 1 THEN 'POST'
-            WHEN ta.type = 2 THEN 'PUT'
-            WHEN ta.type = 3 THEN 'PATCH'
-            WHEN ta.type = 4 THEN 'DELETE'
-            ELSE null
-          END          AS type_name
-        "),
-                'ta.type       AS type',
-                'ta.name       AS name',
-                'ta.path       AS path',
-                'ta.is_active  AS is_active',
-                'ta.feature_id AS feature_id',
-                'tf.name       AS feature_name',
-                'tf.group_name AS feature_group',
-                'ta.updated_at AS updated_at'
+                'id',
+                'type',
+                'name',
+                'path',
+                'is_active',
+                'feature_mst_id',
+                'updated_at',
             ]);
 
         if (isset($payload['type'])) {
-            $query->where('ta.type', $payload['type']);
+            $query->where('type', $payload['type']);
         }
 
         if (isset($payload['name'])) {
-            $query->where('ta.name', 'like', '%' . $payload['name'] . '%');
+            $query->where('name', 'like', '%' . $payload['name'] . '%');
         }
 
         if (isset($payload['path'])) {
-            $query->where('ta.path', 'like', '%' . $payload['path'] . '%');
+            $query->where('path', 'like', '%' . $payload['path'] . '%');
         }
 
         if (isset($payload['is_active'])) {
-            $query->where('ta.is_active', $payload['is_active']);
+            $query->where('is_active', $payload['is_active']);
         }
 
-        if (isset($payload['feature_id'])) {
-            $query->where('ta.feature_id', $payload['feature_id']);
+        if (isset($payload['feature_mst_id'])) {
+            $query->where('feature_mst_id', $payload['feature_mst_id']);
         }
 
         if (isset($payload['from_date'])) {
             $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('ta.updated_at', '>=', $fromDate);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('ta.updated_at', '<=', $toDate);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->where('tf.status', IsActive::TRUE);
-        $query->orderBy('ta.id');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Store api
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
         $data['type'] = $payload['type'] ?? null;
         $data['name'] = $payload['name'] ?? null;
         $data['path'] = $payload['path'] ?? null;
         $data['is_active'] = $payload['is_active'] ?? null;
-        $data['feature_id'] = $payload['feature_id'] ?? null;
+        $data['feature_mst_id'] = $payload['feature_mst_id'] ?? null;
+        $data['is_delete'] = $payload['is_delete'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update api
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $api = $this->model->findById($payload['id']);
-        $data['type'] = $payload['type'] ?? null;
-        $data['name'] = $payload['name'] ?? null;
-        $data['path'] = $payload['path'] ?? null;
-        $data['is_active'] = $payload['is_active'] ?? null;
-        $data['feature_id'] = $payload['feature_id'] ?? null;
-        $api->save($data);
+        $record = $this->model->find($payload['id']);
+        $record['type'] = $payload['type'] ?? null;
+        $record['name'] = $payload['name'] ?? null;
+        $record['path'] = $payload['path'] ?? null;
+        $record['is_active'] = $payload['is_active'] ?? null;
+        $record['feature_mst_id'] = $payload['feature_mst_id'] ?? null;
+        $record['is_delete'] = $payload['is_delete'] ?? null;
+        $record->save();
 
-        return $api->id;
+        return $record->id;
     }
 
     /**
-     * Delete api
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

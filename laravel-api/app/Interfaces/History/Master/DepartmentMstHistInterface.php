@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface DepartmentMstHistInterface
+interface DepartmentMstHistInterface extends BaseInterface
 {
     /**
-     * Get department master history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface DepartmentMstHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new department master history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface DepartmentMstHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update department master history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface DepartmentMstHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete department master history
+     * Delete record
      *
      * @param array $ids
      * @return void

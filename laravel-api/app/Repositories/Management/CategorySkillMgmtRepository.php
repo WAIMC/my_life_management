@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Management;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
 use App\Models\Management\CategorySkillMgmt;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class CategorySkillMgmtRepository extends BaseRepository implements CategorySkillMgmtInterface
 {
@@ -17,52 +21,56 @@ class CategorySkillMgmtRepository extends BaseRepository implements CategorySkil
     }
 
     /**
-     * Get all category-skill relationships
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
+        $query = $this->model->query()
+            ->select([
+                'category_mgmt_id',
+                'skill_mgmt_id',
+                'updated_at',
+            ]);
 
-        if (isset($payload['category_id'])) {
-            $query->where('category_id', $payload['category_id']);
+        if (isset($payload['category_mgmt_id'])) {
+            $query->where('category_mgmt_id', $payload['category_mgmt_id']);
         }
 
-        if (isset($payload['skill_id'])) {
-            $query->where('skill_id', $payload['skill_id']);
+        if (isset($payload['skill_mgmt_id'])) {
+            $query->where('skill_mgmt_id', $payload['skill_mgmt_id']);
         }
 
         if (isset($payload['from_date'])) {
             $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('tad.updated_at', '>=', $fromDate);
+            $query->whereDate('updated_at', '>=', $fromDate);
         }
 
         if (isset($payload['to_date'])) {
             $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('tad.updated_at', '<=', $toDate);
+            $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('category_id')->orderBy('skill_id');
+        $query->orderBy('category_mgmt_id');
 
         return $query->get();
     }
 
     /**
-     * Store category skill
+     * Create new record
      *
      * @param array $payload
      * @return void
      */
     public function executeStore(array $payload): void
     {
-        // Handle bulk insert
         $this->model->create($payload);
     }
 
     /**
-     * Delete category skill
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -70,26 +78,28 @@ class CategorySkillMgmtRepository extends BaseRepository implements CategorySkil
     public function executeDelete(array $payload): void
     {
         $values = collect($payload)->map(function ($item) {
-            // Make sure the data is an integer and escaped
-            return '(' . (int)$item['category_id'] . ', ' . (int)$item['skill_id'] . ')';
+            return '(' . (int)$item['category_mgmt_id'] . ', ' . (int)$item['skill_mgmt_id'] . ')';
         })->all();
 
-        // Handle bulk delete
         $this->model
-            ->whereRaw("(category_id, skill_id) IN (" . implode(", ", $values) . ")")
+            ->whereRaw("(category_mgmt_id, skill_mgmt_id) IN (" . implode(", ", $values) . ")")
             ->delete();
     }
 
     /**
-     * Get admin departments id
+     * Get ids
      *
-     * @param array $categorySkillIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getCategorySkillId(array $categorySkillIds): Collection
+    public function getCategorySkillMgmtId(array $tuples): Collection
     {
+        $values = collect($tuples)->map(function ($item) {
+            return '(' . (int)$item['category_mgmt_id'] . ', ' . (int)$item['skill_mgmt_id'] . ')';
+        })->all();
+
         return $this->model
-            ->whereRaw("(category_id, skill_id) IN (" . implode(", ", $categorySkillIds) . ")")
-            ->pluck('category_id', 'skill_id');
+            ->whereRaw("(category_mgmt_id, skill_mgmt_id) IN (" . implode(", ", $values) . ")")
+            ->pluck('category_mgmt_id', 'skill_mgmt_id');
     }
 }

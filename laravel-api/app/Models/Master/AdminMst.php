@@ -2,13 +2,10 @@
 
 namespace App\Models\Master;
 
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 
-class AdminMst extends Authenticatable
+class AdminMst extends Model
 {
-    use Notifiable;
-
     protected $table = 'admin_mst';
 
     /**
@@ -19,9 +16,9 @@ class AdminMst extends Authenticatable
     protected $fillable = [
         'email',
         'user_name',
+        'password',
         'first_name',
         'last_name',
-        'password',
         'address',
         'phone_number',
         'birth',
@@ -29,16 +26,8 @@ class AdminMst extends Authenticatable
         'status',
         'is_active',
         'avatar',
+        'email_verified_at',
         'is_delete',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array
-     */
-    protected $hidden = [
-        'password',
         'remember_token',
     ];
 
@@ -48,6 +37,23 @@ class AdminMst extends Authenticatable
      * @var array
      */
     protected $casts = [
+        'id' => 'integer',
+        'email' => 'string',
+        'user_name' => 'string',
+        'password' => 'string',
+        'first_name' => 'string',
+        'last_name' => 'string',
+        'address' => 'string',
+        'phone_number' => 'string',
+        'birth' => 'datetime',
+        'gender' => 'integer',
+        'status' => 'integer',
+        'is_active' => 'boolean',
+        'avatar' => 'string',
         'email_verified_at' => 'datetime',
+        'is_delete' => 'boolean',
+        'remember_token' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 }

@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Master;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\History\Master\PolicyDepartmentMstHistInterface;
 use App\Models\History\Master\PolicyDepartmentMstHist;
 use App\Repositories\BaseRepository;
 use DateTime;
+use App\Constants\CommonVal;
 use Illuminate\Support\Collection;
+
 
 class PolicyDepartmentMstHistRepository extends BaseRepository implements PolicyDepartmentMstHistInterface
 {
@@ -17,18 +21,22 @@ class PolicyDepartmentMstHistRepository extends BaseRepository implements Policy
     }
 
     /**
-     * Get all history records.
+     * Get list
      *
      * @param array $payload
      * @return Collection
      */
     public function list(array $payload): Collection
     {
-        $query = $this->model->query();
-
-        if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
-        }
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'policy_department_mst_id',
+                'table_name',
+                'row_id',
+                'action',
+                'author_id',
+            ]);
 
         if (isset($payload['policy_department_mst_id'])) {
             $query->where('policy_department_mst_id', $payload['policy_department_mst_id']);
@@ -60,59 +68,58 @@ class PolicyDepartmentMstHistRepository extends BaseRepository implements Policy
             $query->whereDate('updated_at', '<=', $toDate);
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('id');
 
         return $query->get();
     }
 
     /**
-     * Create new history record.
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['policy_department_mst_id'] = $payload['policy_department_mst_id'];
-        $data['table_name'] = $payload['table_name'];
-        $data['row_id'] = $payload['row_id'];
-        $data['action'] = $payload['action'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
+        $data['policy_department_mst_id'] = $payload['policy_department_mst_id'] ?? null;
+        $data['table_name'] = $payload['table_name'] ?? null;
+        $data['row_id'] = $payload['row_id'] ?? null;
+        $data['action'] = $payload['action'] ?? null;
+        $data['author_id'] = $payload['author_id'] ?? null;
         $this->model->create($data);
 
         return $this->model->id;
     }
 
+
     /**
-     * Update history record.
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['policy_department_mst_id'] = $payload['policy_department_mst_id'];
-        $data['table_name'] = $payload['table_name'];
-        $data['row_id'] = $payload['row_id'];
-        $data['action'] = $payload['action'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
+        $record = $this->model->find($payload['id']);
+        $record['policy_department_mst_id'] = $payload['policy_department_mst_id'] ?? null;
+        $record['table_name'] = $payload['table_name'] ?? null;
+        $record['row_id'] = $payload['row_id'] ?? null;
+        $record['action'] = $payload['action'] ?? null;
+        $record['author_id'] = $payload['author_id'] ?? null;
+        $record->save();
 
-        return $data->id;
+        return $record->id;
     }
 
     /**
-     * Delete history record.
+     * Delete record
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
     }
+
 }

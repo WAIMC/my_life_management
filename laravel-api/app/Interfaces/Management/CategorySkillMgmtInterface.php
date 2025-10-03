@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\Management;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface CategorySkillMgmtInterface
+interface CategorySkillMgmtInterface extends BaseInterface
 {
     /**
-     * Get category skill list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface CategorySkillMgmtInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store category skill
+     * Store record
      *
      * @param array $payload
      * @return void
@@ -23,7 +26,7 @@ interface CategorySkillMgmtInterface
     public function executeStore(array $payload): void;
 
     /**
-     * Delete category skill
+     * Delete record
      *
      * @param array $payload
      * @return void
@@ -31,10 +34,10 @@ interface CategorySkillMgmtInterface
     public function executeDelete(array $payload): void;
 
     /**
-     * Get category skill id
+     * Get ids
      *
-     * @param array $categorySkillIds
+     * @param array $tuples
      * @return Collection
      */
-    public function getCategorySkillId(array $categorySkillIds): Collection;
+    public function getCategorySkillMgmtId(array $tuples): Collection;
 }

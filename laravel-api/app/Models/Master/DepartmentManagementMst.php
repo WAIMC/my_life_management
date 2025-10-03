@@ -2,14 +2,10 @@
 
 namespace App\Models\Master;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DepartmentManagementMst extends Model
 {
-    use HasFactory;
-
     protected $table = 'department_management_mst';
 
     /**
@@ -18,34 +14,19 @@ class DepartmentManagementMst extends Model
      * @var string[]
      */
     protected $fillable = [
-        'department_id',
-        'policy_department_id',
+        'department_mst_id',
+        'policy_department_mst_id',
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = true;
-
-    /**
-     * Get the department that owns this management relation
-     *
-     * @return BelongsTo
-     */
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(DepartmentMst::class, 'department_id');
-    }
-
-    /**
-     * Get the policy department that owns this management relation
-     *
-     * @return BelongsTo
-     */
-    public function policyDepartment(): BelongsTo
-    {
-        return $this->belongsTo(PolicyDepartmentMst::class, 'policy_department_id');
-    }
+    protected $casts = [
+        'department_mst_id' => 'integer',
+        'policy_department_mst_id' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }

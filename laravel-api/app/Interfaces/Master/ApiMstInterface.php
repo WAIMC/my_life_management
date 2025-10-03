@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 interface ApiMstInterface extends BaseInterface
 {
     /**
-     * Get admin role list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -18,7 +18,7 @@ interface ApiMstInterface extends BaseInterface
     public function list(array $payload): Collection;
 
     /**
-     * Store admin role
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -26,7 +26,7 @@ interface ApiMstInterface extends BaseInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update api
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -34,7 +34,7 @@ interface ApiMstInterface extends BaseInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete admin role
+     * Delete record
      *
      * @param array $ids
      * @return void

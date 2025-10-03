@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interfaces\History\Master;
 
+use App\Interfaces\BaseInterface;
 use Illuminate\Support\Collection;
 
-interface PolicyDepartmentMstHistInterface
+interface PolicyDepartmentMstHistInterface extends BaseInterface
 {
     /**
-     * Get policy department master history list
+     * Get list
      *
      * @param array $payload
      * @return Collection
@@ -15,7 +18,7 @@ interface PolicyDepartmentMstHistInterface
     public function list(array $payload): Collection;
 
     /**
-     * Create new policy department master history
+     * Store record
      *
      * @param array $payload
      * @return int
@@ -23,7 +26,7 @@ interface PolicyDepartmentMstHistInterface
     public function executeStore(array $payload): int;
 
     /**
-     * Update policy department master history
+     * Update record
      *
      * @param array $payload
      * @return int
@@ -31,7 +34,7 @@ interface PolicyDepartmentMstHistInterface
     public function executeUpdate(array $payload): int;
 
     /**
-     * Delete policy department master history
+     * Delete record
      *
      * @param array $ids
      * @return void

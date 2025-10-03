@@ -2,38 +2,40 @@
 
 namespace App\Models\Master;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ApiMst extends Model
 {
-    use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'api_mst';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var string[]
      */
     protected $fillable = [
         'type',
         'name',
         'path',
         'is_active',
-        'feature_id',
+        'feature_mst_id',
         'is_delete',
     ];
 
     /**
-     * Indicates if the model should be timestamped.
+     * The attributes that should be cast.
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = true;
+    protected $casts = [
+        'id' => 'integer',
+        'type' => 'integer',
+        'name' => 'string',
+        'path' => 'string',
+        'is_active' => 'boolean',
+        'feature_mst_id' => 'integer',
+        'is_delete' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 }
