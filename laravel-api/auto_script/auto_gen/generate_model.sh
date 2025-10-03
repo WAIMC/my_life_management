@@ -11,7 +11,7 @@ get_root_path() {
 }
 
 ROOT_PATH="$(get_root_path)"
-JSON_FILE="$ROOT_PATH/auto_scripts/dataSchema/schema.json"
+JSON_FILE="$ROOT_PATH/auto_script/dataSchema/schema.json"
 BASE_MODEL_PATH="$ROOT_PATH/app/Models"
 
 # Hàm để capitalize string (ví dụ: admin_mst -> AdminMst)

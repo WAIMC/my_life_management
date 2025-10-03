@@ -2,7 +2,7 @@
 
 # Shell script to generate PHP services based on JSON schema
 # Usage: ./generate_services.sh
-# Assumes schema.json is in the auto_scripts/dataSchema directory
+# Assumes schema.json is in the auto_script/dataSchema directory
 # Will create/overwrite files in App/Services/...
 
 get_root_path() {
@@ -14,7 +14,7 @@ get_root_path() {
   fi
 }
 ROOT_PATH=$(get_root_path)
-JSON_FILE="$ROOT_PATH/auto_scripts/dataSchema/schema.json"
+JSON_FILE="$ROOT_PATH/auto_script/dataSchema/schema.json"
 
 # Create directories if they don't exist
 mkdir -p "$ROOT_PATH/app/Services/Master"

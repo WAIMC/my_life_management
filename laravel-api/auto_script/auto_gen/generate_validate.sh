@@ -2,7 +2,7 @@
 
 # Shell script to generate PHP validation requests based on JSON schema
 # Usage: ./generate_validate.sh
-# Assumes schema.json is in auto_scripts/dataSchema/
+# Assumes schema.json is in auto_script/dataSchema/
 # Will create/overwrite files in app/Http/Requests/...
 
 get_root_path() {
@@ -14,7 +14,7 @@ get_root_path() {
   fi
 }
 ROOT_PATH=$(get_root_path)
-JSON_FILE="$ROOT_PATH/auto_scripts/dataSchema/schema.json"
+JSON_FILE="$ROOT_PATH/auto_script/dataSchema/schema.json"
 
 # Create directories if they don't exist
 mkdir -p "$ROOT_PATH/app/Http/Requests/Master"
