@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Master\RoleMst;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\Master\RoleMst;
 use App\Enums\IsActive;
 use App\Enums\IsDelete;
 
-class DeleteRoleMstRequest extends FormRequest
+class DeleteRoleMstRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

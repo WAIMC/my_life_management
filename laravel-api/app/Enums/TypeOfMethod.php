@@ -41,6 +41,18 @@ enum TypeOfMethod: int
      */
     case DELETE = 4;
 
+    public static function fromName(string $method): ?self
+    {
+        return match (strtoupper($method)) {
+            'GET' => self::GET,
+            'POST' => self::POST,
+            'PUT' => self::PUT,
+            'PATCH' => self::PATCH,
+            'DELETE' => self::DELETE,
+            default => null,
+        };
+    }
+
     public static function getLabel(self|int $value): string
     {
         if (is_int($value)) {

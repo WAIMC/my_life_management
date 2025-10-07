@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Management\BannerMgmt;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\Management\BannerMgmt;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
 
-class StoreBannerMgmtRequest extends FormRequest
+class StoreBannerMgmtRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

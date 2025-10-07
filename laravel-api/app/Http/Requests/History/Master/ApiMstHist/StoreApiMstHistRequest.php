@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\History\Master\ApiMstHist;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -11,7 +11,7 @@ use App\Enums\IsActive;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 
-class StoreApiMstHistRequest extends FormRequest
+class StoreApiMstHistRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

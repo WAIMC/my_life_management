@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Management\CategoryMgmt;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\Management\CategoryMgmt;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
 
-class StoreCategoryMgmtRequest extends FormRequest
+class StoreCategoryMgmtRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

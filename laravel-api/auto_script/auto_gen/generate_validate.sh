@@ -206,7 +206,7 @@ for TABLE in $TABLES; do
                 ENUM_USES+=("use App\\\\Enums\\\\IsDelete;")
                 ;;
         esac
-        
+
         # Only add foreign model imports for non-junction tables
         if [[ $IS_JUNCTION == 0 && $FIELD =~ _((mst|mgmt|mst_hist|mgmt_hist))_id$ ]] ; then
             suffix=$(echo "$FIELD" | sed -E 's/.*_((mst|mgmt|mst_hist|mgmt_hist))_id$/\1/')
@@ -229,7 +229,7 @@ for TABLE in $TABLES; do
     # Unique enums and models - using a safer approach
     readarray -t TEMP_ENUM_USES < <(printf '%s\n' "${ENUM_USES[@]}" | sort -u)
     ENUM_USES=("${TEMP_ENUM_USES[@]}")
-    
+
     readarray -t TEMP_MODEL_USES < <(printf '%s\n' "${MODEL_USES[@]}" | sort -u)
     MODEL_USES=("${TEMP_MODEL_USES[@]}")
 
@@ -260,16 +260,16 @@ for TABLE in $TABLES; do
         fi
 
         # Prepare use statements
-        USE_STATEMENTS="use Illuminate\\\\Foundation\\\\Http\\\\FormRequest;
+        USE_STATEMENTS="use App\\\\Http\\\\Requests\\\\BaseFormRequest;
 use App\\\\Constants\\\\CommonVal;
 use Illuminate\\\\Validation\\\\Rule;
 use Illuminate\\\\Validation\\\\Rules\\\\Enum;"
-        
+
         # Add own model use if needed
         if [[ -n "$OWN_MODEL_USE" ]]; then
             USE_STATEMENTS="$USE_STATEMENTS\n$OWN_MODEL_USE"
         fi
-        
+
         # Add enum and model use statements
         for enum_use in "${ENUM_USES[@]}"; do
             USE_STATEMENTS="$USE_STATEMENTS\n$enum_use"
@@ -277,7 +277,7 @@ use Illuminate\\\\Validation\\\\Rules\\\\Enum;"
         for model_use in "${MODEL_USES[@]}"; do
             USE_STATEMENTS="$USE_STATEMENTS\n$model_use"
         done
-        
+
         cat <<EOF > "$FILE"
 <?php
 
@@ -285,7 +285,7 @@ namespace App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME;
 
 $(echo -e "$USE_STATEMENTS")
 
-class $FULL_CLASS extends FormRequest
+class $FULL_CLASS extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -320,7 +320,7 @@ EOF
         elif [[ $REQ_TYPE == "List" ]]; then
             for FIELD in $FIELDS; do
                 # Skip special fields for List requests: id, timestamps, tokens, email verification, email, password
-                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* || 
+                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* ||
                       $FIELD == "email_verified_at" || $FIELD == "email" || $FIELD == "password" ]]; then
                     continue
                 fi
@@ -398,7 +398,7 @@ EOF
         else
             for FIELD in $FIELDS; do
                 # Skip special fields for attributes: id, timestamps, tokens, email verification, email, password
-                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* || 
+                if [[ $FIELD == "id" || $FIELD == "created_at" || $FIELD == "updated_at" || $FIELD == *"token"* ||
                       $FIELD == "email_verified_at" || ($REQ_TYPE == "List" && ($FIELD == "email" || $FIELD == "password")) ]]; then
                     continue
                 fi

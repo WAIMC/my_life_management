@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\History\Management\BannerMgmtHist;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\History\Management\BannerMgmtHist;
 use App\Enums\StatusEnum;
 use App\Models\Management\BannerMgmt;
 
-class StoreBannerMgmtHistRequest extends FormRequest
+class StoreBannerMgmtHistRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

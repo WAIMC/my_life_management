@@ -10,48 +10,77 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class DatabaseTransaction
 {
     use ApiResponse;
 
     /**
-     * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return mixed
      * @throws Throwable
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
+        $request->headers->set('Accept', 'application/json');
 
-        // Optionally:: only active for methods write
         $methodWrite = [
             TypeOfMethod::POST->label(),
             TypeOfMethod::PUT->label(),
             TypeOfMethod::PATCH->label(),
             TypeOfMethod::DELETE->label(),
         ];
-        if (!in_array($request->method(), $methodWrite)) {
-            return self::successResponse($response);
+        $isWriteOperation = in_array($request->method(), $methodWrite);
+
+        if ($isWriteOperation) {
+            DB::beginTransaction();
         }
 
-        DB::beginTransaction();
         try {
-            if (
-                method_exists($response, 'getStatusCode')
-                && $response->getStatusCode() >= CommonVal::HTTP_BAD_REQUEST
-            ) {
-                DB::rollBack();
+            $response = $next($request);
+
+            if (method_exists($response, 'getStatusCode')
+                && $response->getStatusCode() >= CommonVal::HTTP_BAD_REQUEST) {
+                if ($isWriteOperation) {
+                    DB::rollBack();
+                }
                 return $response;
-            } else {
-                DB::commit();
-                return self::successResponse($response);
             }
+
+            if ($isWriteOperation) {
+                DB::commit();
+            }
+
+            $status = $response->getStatusCode();
+
+            if ($response instanceof JsonResource) {
+                $jsonResponse = $response->response($request);
+                $data = $response->resolve($request);
+                return self::successResponse($data, $jsonResponse->getStatusCode());
+            }
+
+            if ($response instanceof JsonResponse) {
+                $data = $response->getData(true);
+                return self::successResponse($data, $status);
+            }
+
+            if (method_exists($response, 'getContent')) {
+                $content = $response->getContent();
+                $decoded = json_decode($content, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $data = $decoded;
+                } else {
+                    $data = $content;
+                }
+                return self::successResponse($data, $status);
+            }
+
+            return self::successResponse($response, $status);
+
         } catch (Throwable $e) {
-            DB::rollBack();
+            if ($isWriteOperation) {
+                DB::rollBack();
+            }
             throw $e;
         }
     }

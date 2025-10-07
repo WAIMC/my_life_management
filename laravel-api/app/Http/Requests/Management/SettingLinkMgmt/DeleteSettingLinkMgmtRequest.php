@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests\Management\SettingLinkMgmt;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\Management\SettingLinkMgmt;
 use App\Enums\IsDelete;
 
-class DeleteSettingLinkMgmtRequest extends FormRequest
+class DeleteSettingLinkMgmtRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

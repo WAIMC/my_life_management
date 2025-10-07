@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->string('avatar', 30)->nullable()->comment('Admin avatar name');
             $table->timestamp('email_verified_at')->nullable()->comment('Verified email time');
             $table->boolean('is_delete')->default(false)->comment('is deleted');
+            $table->integer('limit_access')->default(0)->comment('Limit access when login fails 5 times');
             $table->rememberToken();
             $table->timestamps();
         });

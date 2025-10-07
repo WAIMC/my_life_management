@@ -24,7 +24,7 @@ trait ApiResponse
                 'code' => $code,
                 'messages' => $messages
             ]
-        ]);
+        ], $code);
     }
 
     /**
@@ -42,11 +42,11 @@ trait ApiResponse
     /**
      * Error response
      *
-     * @param string $message
+     * @param mixed $message
      * @param int $code
      * @return JsonResponse
      */
-    public static function errorResponse(string $message, int $code): JsonResponse
+    public static function errorResponse(mixed $message, int $code): JsonResponse
     {
         return self::renderResponse(null, [true, $code, $message]);
     }

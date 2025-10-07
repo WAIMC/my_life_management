@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests\Master\TranslationMst;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\Master\TranslationMst;
 
-class StoreTranslationMstRequest extends FormRequest
+class StoreTranslationMstRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

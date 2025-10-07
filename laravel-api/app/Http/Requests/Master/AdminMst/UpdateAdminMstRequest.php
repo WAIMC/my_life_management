@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Master\AdminMst;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -12,7 +12,7 @@ use App\Enums\IsActive;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
 
-class UpdateAdminMstRequest extends FormRequest
+class UpdateAdminMstRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

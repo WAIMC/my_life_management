@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests\History\Management\SettingLinkMgmtHist;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\History\Management\SettingLinkMgmtHist;
 
-class DeleteSettingLinkMgmtHistRequest extends FormRequest
+class DeleteSettingLinkMgmtHistRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

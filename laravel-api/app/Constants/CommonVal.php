@@ -51,6 +51,7 @@ class CommonVal
     public const HTTP_CONFLICT = 409;
     public const HTTP_GONE = 410;
     public const HTTP_UNPROCESSABLE_CONTENT = 422;
+    const HTTP_TOO_MANY_REQUESTS = 429;
 
     /**
      * Http status code: Server error responses 500 - 599
@@ -73,6 +74,10 @@ class CommonVal
     public const MAX_EMAIL = 254;
     public const MAX_PHONE_NUMBER = 12;
     public const MAX_TEXT = 65535;
+
+    public const MAX_TTL = 3600 * 5;
+
+    public const ADMIN_PERMISSION_TABLE = 'admin_permission';
 
     /**
      * AdminMst

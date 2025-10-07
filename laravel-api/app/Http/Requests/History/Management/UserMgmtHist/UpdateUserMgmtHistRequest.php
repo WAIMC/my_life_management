@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\History\Management\UserMgmtHist;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -12,7 +12,7 @@ use App\Enums\IsActive;
 use App\Enums\StatusEnum;
 use App\Models\Management\UserMgmt;
 
-class UpdateUserMgmtHistRequest extends FormRequest
+class UpdateUserMgmtHistRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

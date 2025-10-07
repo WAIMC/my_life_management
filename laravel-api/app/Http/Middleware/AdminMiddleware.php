@@ -3,20 +3,17 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
-use App\Models\Master\AdminMst;
 use Illuminate\Http\Request;
 use App\Utilities\JsonWebToken;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use UnexpectedValueException;
 
 class AdminMiddleware
 {
@@ -35,32 +32,46 @@ class AdminMiddleware
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        try {
-            $payload = JsonWebToken::decode($token, env('ACCESS_TOKEN_SECRET'));
-            $credentials = $payload['body'];
-            // Check request from member type admin
-            if ($credentials['type'] !== AdminMst::TYPE) {
-                throw new \UnexpectedValueException(Messages::E0608);
-            }
+        $payload = JsonWebToken::decode($token, env('ACCESS_TOKEN_SECRET'));
+        $credentials = $payload['body'];
+        // Check request from member type admin
+        if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
+            throw new UnexpectedValueException(Messages::E0608);
+        }
 
-            // Check permission access
-            $adminPermission = DB::table('admin_permission_view')
-                ->where('admin_id', $credentials['id'])
-                ->where('path', $request->route()->uri())
-                ->where('type', $request->method())
-                ->first();
+        // Check permission access
+        $cached = Redis::get(CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}");
+        if (!$cached) {
+            throw new NotFoundHttpException(Messages::E0404, null, CommonVal::HTTP_UNAUTHORIZED);
+        }
 
-            if (!$adminPermission) {
-                throw new NotFoundHttpException(Messages::E0404);
+        $permissions = json_decode($cached, true);
+        $method = $request->getMethod();
+        $currentUri = $request->route()->uri();
+
+        // Check if the admin has permission to access this route
+        $hasPermission = false;
+        foreach ($permissions as $permission) {
+            // Compare method and uri pattern
+            if ($permission['type'] === $method) {
+                $permissionUri = ltrim($permission['path'], '/');
+
+                // Convert route parameters format from both sides to ensure consistent comparison
+                // e.g., "api/admin/user-mgmt/show/{id}" matches "api/admin/user-mgmt/show/{userId}"
+                $pattern1 = preg_replace('/\{[^\/]+\}/', '{param}', $permissionUri);
+                $pattern2 = preg_replace('/\{[^\/]+\}/', '{param}', $currentUri);
+
+                if ($pattern1 === $pattern2) {
+                    $hasPermission = true;
+                    break;
+                }
             }
-        } catch (NotFoundHttpException $e) {
-            throw new NotFoundHttpException($e->getMessage(), null, CommonVal::HTTP_UNAUTHORIZED);
-        } catch (Exception $e) {
+        }
+
+        if (!$hasPermission) {
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        // Set info for request
-        $request->attributes->set('admin_id', $adminPermission->admin_id);
         return $next($request);
     }
 }

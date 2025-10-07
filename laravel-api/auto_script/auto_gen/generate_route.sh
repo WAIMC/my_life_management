@@ -66,12 +66,17 @@ for TABLE in $TABLES; do
     # Generate routes
     echo "// Routes for $TABLE" >> "$OUTPUT_FILE"
     if [[ $IS_JUNCTION == 0 ]]; then
-        # Normal table: full CRUD
-        echo "Route::apiResource('$ROUTE_NAME', \\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class);" >> "$OUTPUT_FILE"
+        # Normal table: full CRUD with explicit action and id segments
+        # Format: {resource}/{action}/{id?}
+        echo "Route::get('$ROUTE_NAME/list', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'list']);" >> "$OUTPUT_FILE"
+        echo "Route::post('$ROUTE_NAME/store', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'store']);" >> "$OUTPUT_FILE"
+        echo "Route::put('$ROUTE_NAME/update/{id}', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'update']);" >> "$OUTPUT_FILE"
+        echo "Route::delete('$ROUTE_NAME/delete/{id}', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'delete']);" >> "$OUTPUT_FILE"
     else
         # Junction: list (GET) and update (PATCH or PUT)
-        echo "Route::get('$ROUTE_NAME', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'list']);" >> "$OUTPUT_FILE"
-        echo "Route::put('$ROUTE_NAME', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'update']);  // or put if preferred" >> "$OUTPUT_FILE"
+        # Format: {resource}/{action}
+        echo "Route::get('$ROUTE_NAME/list', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'list']);" >> "$OUTPUT_FILE"
+        echo "Route::put('$ROUTE_NAME/update', [\\App\\Http\\Controllers\\$SUBPATH\\$CONTROLLER_CLASS::class, 'update']);" >> "$OUTPUT_FILE"
     fi
     echo "" >> "$OUTPUT_FILE"
 done
