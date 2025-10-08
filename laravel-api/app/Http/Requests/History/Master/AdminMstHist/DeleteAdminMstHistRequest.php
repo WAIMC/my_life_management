@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\History\Master\AdminMstHist;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -12,7 +12,7 @@ use App\Enums\IsActive;
 use App\Enums\StatusEnum;
 use App\Models\Master\AdminMst;
 
-class DeleteAdminMstHistRequest extends BaseFormRequest
+class DeleteAdminMstHistRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

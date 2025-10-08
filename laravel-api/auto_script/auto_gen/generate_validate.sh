@@ -260,7 +260,7 @@ for TABLE in $TABLES; do
         fi
 
         # Prepare use statements
-        USE_STATEMENTS="use App\\\\Http\\\\Requests\\\\BaseFormRequest;
+        USE_STATEMENTS="use Illuminate\\\\Foundation\\\\Http\\\\FormRequest;
 use App\\\\Constants\\\\CommonVal;
 use Illuminate\\\\Validation\\\\Rule;
 use Illuminate\\\\Validation\\\\Rules\\\\Enum;"
@@ -285,7 +285,7 @@ namespace App\\Http\\Requests\\$SUBPATH\\$CLASS_NAME;
 
 $(echo -e "$USE_STATEMENTS")
 
-class $FULL_CLASS extends BaseFormRequest
+class $FULL_CLASS extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

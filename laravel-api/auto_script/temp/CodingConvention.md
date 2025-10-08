@@ -11,7 +11,7 @@
 7. [Migration](#migration)
 8. [Model](#model)
 9. [Common Response](#common-response)
-10. [Handler](#handler)
+10. [Bootstrap/app.php](#Bootstrap/app.php)
 11. [Middleware](#middleware)
 12. [Controller](#controller)
 13. [Service](#service)
@@ -45,7 +45,7 @@ Dự án được thiết kế theo kiến trúc **Layered Architecture** (Servi
 - **Model:** Đại diện cho bảng trong cơ sở dữ liệu.
 - **API Resource:** Biến đổi dữ liệu thành định dạng JSON.
 - **Middleware:** Xử lý logic trước/sau khi request đến Controller (xác thực, phân quyền, logging).
-- **Handler:** Xử lý exception hoặc sự kiện đặc biệt.
+- **Bootstrap/app.php withExceptions:** Xử lý exception hoặc sự kiện đặc biệt.
 
 ## **Cấu trúc thư mục chuẩn**
 
@@ -243,7 +243,6 @@ database/
       public function [method Name]([param Name]);
   }
   ```
-  - **Handler:** Dependence injection trực tiếp trong constructor của service
 
 - **Repository:**
   ```php
@@ -355,19 +354,14 @@ database/
   }
   ```
 
-## Handler
+## Bootstrap/app.php
 
-- **Ý nghĩa:** Xử lý các exception.
+- **Ý nghĩa withExceptions:** Xử lý các exception.
   Tổng hợp xử lý cho các loại exception khác nhau
 * **Định nghĩa**
-  - Tạo file `app/Exceptions/Handler.php` nếu chưa có
-  - Sử dụng method register() để định nghĩa các cách render ứng với từng loại exception
+  - Truy cập file `boostrap/app.php` method withExceptions
+  - Định nghĩa các cách render ứng với từng loại exception
   - Sử dụng trait ApiResponse để chuẩn hóa các respose trả về
-  ```php
-  $this->renderable(function ([ExceptionName] $e, $request) {
-      return $this->renderResponse(null, [true, $e->getCode(), $e->getMessage()]);
-  });
-  ```
 - **Ý nghĩa:** Bất kỳ xử lý lỗi nào hãy throw exception và message nếu có. Ở đây sẽ sử lý phân loại và trả về response exception sau cùng
 
 ## Middleware

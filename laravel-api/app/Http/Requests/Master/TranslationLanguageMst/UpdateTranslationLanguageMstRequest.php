@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests\Master\TranslationLanguageMst;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
-class UpdateTranslationLanguageMstRequest extends BaseFormRequest
+class UpdateTranslationLanguageMstRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\History\Master\DepartmentMstHist;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\History\Master\DepartmentMstHist;
 use App\Enums\StatusEnum;
 use App\Models\Master\DepartmentMst;
 
-class UpdateDepartmentMstHistRequest extends BaseFormRequest
+class UpdateDepartmentMstHistRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

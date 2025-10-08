@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\History\Master\OriginalTranslatorMstHist;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\History\Master\OriginalTranslatorMstHist;
 
 use App\Models\Master\OriginalTranslatorMst;
 
-class ListOriginalTranslatorMstHistRequest extends BaseFormRequest
+class ListOriginalTranslatorMstHistRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

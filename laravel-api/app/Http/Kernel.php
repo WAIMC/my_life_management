@@ -27,8 +27,6 @@ class Kernel extends HttpKernel
 
         'api' => [
             // ...existing code...
-            // Thêm middleware transaction cho API
-            \App\Http\Middleware\DatabaseTransaction::class,
         ],
     ];
 
@@ -38,7 +36,5 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
-        // ...existing code...
-        'db.transaction' => \App\Http\Middleware\DatabaseTransaction::class,
     ];
 }

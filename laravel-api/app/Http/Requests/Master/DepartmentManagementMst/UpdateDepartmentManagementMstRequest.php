@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests\Master\DepartmentManagementMst;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
-class UpdateDepartmentManagementMstRequest extends BaseFormRequest
+class UpdateDepartmentManagementMstRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

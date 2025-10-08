@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Management\SocialMgmt;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -10,7 +10,7 @@ use App\Models\Management\SocialMgmt;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
 
-class ListSocialMgmtRequest extends BaseFormRequest
+class ListSocialMgmtRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
