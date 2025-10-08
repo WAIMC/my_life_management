@@ -51,7 +51,7 @@ class CommonVal
     public const HTTP_CONFLICT = 409;
     public const HTTP_GONE = 410;
     public const HTTP_UNPROCESSABLE_CONTENT = 422;
-    const HTTP_TOO_MANY_REQUESTS = 429;
+    public const HTTP_TOO_MANY_REQUESTS = 429;
 
     /**
      * Http status code: Server error responses 500 - 599
@@ -62,7 +62,8 @@ class CommonVal
     public const HTTP_SERVICE_UNAVAILABLE = 503;
 
     public const DATE_FORMAT = 'd/m/Y';
-    public const BLACKLIST = 'blacklist';
+    public const BLACKLIST_ACCESS_TOKEN = 'blacklist_access_token';
+    public const BLACKLIST_REFRESH_TOKEN = 'blacklist_refresh_token';
 
     public const MIN_INTEGER = 0;
     public const MAX_INTEGER = 2147483647;
@@ -75,12 +76,14 @@ class CommonVal
     public const MAX_PHONE_NUMBER = 12;
     public const MAX_TEXT = 65535;
 
-    public const MAX_TTL = 3600 * 5;
+    public const MAX_ACCESS_TTL = 60 * 5; // s * m => 5 min
+    public const MAX_REFRESH_TTL = 60 * 60 * 24 * 7; // s * m * H * D => 7 day
 
     public const ADMIN_PERMISSION_TABLE = 'admin_permission';
+    public const LIMIT_ACCESS_FAIL = 5;
 
     /**
-     * AdminMst
+     * Admin master
      */
     public const ROOT = 'root';
     public const ADMIN_TYPE = 'admin';

@@ -28,6 +28,7 @@ class AdminMst extends Model
         'avatar',
         'email_verified_at',
         'is_delete',
+        'limit_access',
         'remember_token',
     ];
 
@@ -52,6 +53,7 @@ class AdminMst extends Model
         'avatar' => 'string',
         'email_verified_at' => 'datetime',
         'is_delete' => 'boolean',
+        'limit_access' => 'integer',
         'remember_token' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

@@ -6,10 +6,12 @@ use App\Models\Master\AdminMst;
 use App\Utilities\JsonWebToken;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Redis;
+use UnexpectedValueException;
 
 class CredentialService
 {
@@ -21,47 +23,86 @@ class CredentialService
      * Handle login admin
      *
      * @param array $payload
-     * @return array
+     * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function login(array $payload): array
+    public function login(array $payload): JsonResponse
     {
         $admin = AdminMst::where('user_name', $payload['user_name'])->first();
 
-        /**
-         * Check and lock account if login fail >= 5 time
-         */
-        if (!$admin || $admin->limit_access >= 5) {
+        // Check is valid credential
+        if (!$admin) {
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
-        }
-
-        if (!Hash::check($payload['password'], $admin->password)) {
-            $admin->limit_access = $payload['limit_access'] + 1;
+        } else if ($admin->limit_access >= CommonVal::LIMIT_ACCESS_FAIL) {
+            throw new AuthorizationException(Messages::E0610, CommonVal::HTTP_UNAUTHORIZED);
+        } else if (!Hash::check($payload['password'], $admin->password)) {
+            $admin->limit_access += 1;
+            $admin->save();
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
         } else {
             $admin->limit_access = 0;
+            $admin->save();
         }
 
-        $admin->save();
+        $this->getAndSetPermission($admin->id);
+        $token = $this->generateToken($admin->id);
+        $data = $this->generateCookieForToken($token['access_token'], $token['refresh_token']);
 
+        return response()->json(
+            [
+                'token_type' => 'bearer',
+                'expires_on' => time() + CommonVal::MAX_ACCESS_TTL,
+                'access_token' => $token['access_token'],
+                'refresh_token' => $token['refresh_token']
+            ])
+            ->withCookie($data['set_access_token_cookie'], $data['set_refresh_token_cookie']);
+    }
+
+    /**
+     * Get and set permission for this user
+     *
+     * @param int $adminMstId
+     * @return void
+     */
+    private function getAndSetPermission(int $adminMstId): void
+    {
         /**
          * Get and set permission for this user
          */
         $permissions = DB::table('admin_permission_view')
-            ->where('admin_mst_id', $admin->id)
+            ->where('admin_mst_id', $adminMstId)
             ->select('type', 'path')
             ->distinct()
             ->get()
             ->toArray();
 
-        Redis::set(CommonVal::ADMIN_PERMISSION_TABLE . ":{$admin->id}", json_encode($permissions));
-        Redis::expire(CommonVal::ADMIN_PERMISSION_TABLE . ":{$admin->id}", CommonVal::MAX_TTL);
+        // Group path by method
+        $groupedPermissions = collect($permissions)
+            ->groupBy(fn($item) => strtoupper($item->type))
+            ->map(fn($items) => $items->pluck('path')->unique()->values()->toArray())
+            ->toArray();
 
+        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$adminMstId}";
+        Redis::del($key);
+        foreach ($groupedPermissions as $method => $paths) {
+            Redis::hset($key, $method, json_encode($paths));
+        }
+        Redis::expire($key, CommonVal::MAX_ACCESS_TTL);
+    }
+
+    /**
+     * Generate token
+     *
+     * @param int $adminMstId
+     * @return array
+     */
+    private function generateToken(int $adminMstId): array
+    {
         /**
          * Get, set access and refresh token for this user
          */
         $payload = [
-            'id' => (string)$admin->id,
+            'id' => (string)$adminMstId,
             'type' => CommonVal::ADMIN_TYPE,
         ];
 
@@ -78,10 +119,47 @@ class CredentialService
         );
 
         return [
-            'token_type' => 'bearer',
-            'expires_on' => time() + CommonVal::MAX_TTL,
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken
+        ];
+    }
+
+    /**
+     * Generate cookie for token
+     *
+     * @param string $accessToken
+     * @param string $refreshToken
+     * @return array
+     */
+    private function generateCookieForToken(string $accessToken, string $refreshToken): array
+    {
+        $accessCookie = cookie(
+            'access_token',
+            $accessToken,
+            CommonVal::MAX_ACCESS_TTL / 60,             // 5 Minute
+            '/',            // path
+            config('session.domain'), // domain
+            app()->environment('production'), // secure
+            true,            // httpOnly
+            false,           // raw
+            'Strict'         // SameSite
+        );
+
+        $refreshCookie = cookie(
+            'refresh_token',
+            $refreshToken,
+            CommonVal::MAX_REFRESH_TTL / 60,     // 7 Day
+            '/',
+            config('session.domain'),
+            app()->environment('production'),
+            true,
+            false,
+            'Strict'
+        );
+
+        return [
+            'set_access_token_cookie' => $accessCookie,
+            'set_refresh_token_cookie' => $refreshCookie,
         ];
     }
 
@@ -89,35 +167,45 @@ class CredentialService
      * Handle refresh token
      *
      * @param string|null $refreshToken
-     * @return array
+     * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function refreshToken(string|null $refreshToken): array
+    public function refreshToken(string|null $refreshToken): JsonResponse
     {
-        $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
+        // Check existing access token
+        if (!$refreshToken) {
+            throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+        }
 
-        // Check refresh token had exited in black list
-        $key = CommonVal::BLACKLIST . ':' . CommonVal::ADMIN_TYPE . ':' . $payload['signature'];
+        $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
+        $credentials = $payload['body'];
+        // Check request from member type admin
+        if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
+            throw new UnexpectedValueException(Messages::E0608);
+        }
+
+        /**
+         * Check refresh token had exited in black list
+         */
+        $key = CommonVal::BLACKLIST_REFRESH_TOKEN . ':' . $refreshToken;
         if (Redis::hget($key, 'id')) {
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        // Generate new access token
-        $accessToken = JsonWebToken::encode(
-            JsonWebToken::JWTPayload($payload['body'], false),
-            env('ACCESS_TOKEN_SECRET')
-        );
+        Redis::hset($key, 'id', $credentials['id']);
+        Redis::expireat($key, $credentials['exp']);
 
-        // Generate new refresh token
-        $refreshToken = JsonWebToken::encode(
-            JsonWebToken::JWTPayload($payload['body'], true),
-            env('REFRESH_TOKEN_SECRET')
-        );
+        $token = $this->generateToken($credentials['id']);
+        $data = $this->generateCookieForToken($token['access_token'], $token['refresh_token']);
 
-        return [
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken
-        ];
+        return response()->json(
+            [
+                'token_type' => 'bearer',
+                'expires_on' => time() + CommonVal::MAX_ACCESS_TTL,
+                'access_token' => $token['access_token'],
+                'refresh_token' => $token['refresh_token']
+            ])
+            ->withCookie($data['set_access_token_cookie'], $data['set_refresh_token_cookie']);
     }
 
     /**
@@ -132,7 +220,7 @@ class CredentialService
         $payload = JsonWebToken::decode($refreshToken, env('REFRESH_TOKEN_SECRET'), true);
         $body = $payload['body'];
 
-        $key = CommonVal::BLACKLIST . ':' . CommonVal::ADMIN_TYPE . ':' . $payload['signature'];
+        $key = CommonVal::BLACKLIST_REFRESH_TOKEN . ':' . CommonVal::ADMIN_TYPE . ':' . $payload['signature'];
 
         if (Redis::hget($key, 'id')) { // Check already exit in blacklist
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);

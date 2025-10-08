@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->boolean('is_active')->nullable()->comment('active');
             $table->string('avatar', 30)->nullable()->comment('avatar name');
             $table->timestamp('email_verified_at')->nullable()->comment('Verified email time');
+            $table->integer('limit_access')->default(0)->comment('Limit access when login fails 5 times');
             $table->string('remember_token', 100)->nullable()->comment('remember token');
             $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');

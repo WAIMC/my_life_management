@@ -370,19 +370,21 @@ database/
   - Xử lý các logic chung trước hoặc sau khi request đến Controller (xác thực, phân quyền, logging, CORS, quản lý transaction...).
 
 * **Quy ước**
-  - Tạo một middleware mới, ví dụ: `DatabaseMiddleware`. Middleware này sẽ tự động bắt đầu transaction trước khi request được xử lý ở controller. Nếu có bất kỳ exception nào xảy ra trong quá trình xử lý, transaction sẽ tự động rollback; nếu xử lý thành công, transaction sẽ được commit.
+  - Tạo một middleware mới, ví dụ: `TransactionMiddleware`. Middleware này sẽ tự động bắt đầu transaction trước khi request được xử lý ở controller. Nếu có bất kỳ exception nào xảy ra trong quá trình xử lý, transaction sẽ tự động rollback; nếu xử lý thành công, transaction sẽ được commit.
+  - Tạo một middleware, GenerateResponseMiddleware. Dùng để kết xuất response thành công có cùng 1 format
+  - Tạo middleware, AdminMiddleware dùng để check user hiện tại có được access vào route request hiện tại không
   - Mỗi Middleware chỉ nên thực hiện một nhiệm vụ duy nhất.
   - Đăng ký middleware này trong `app/Http/Kernel.php` và gán cho các route phù hợp, thường là các route sử dụng method POST, PUT, DELETE.
 
 * **Ví dụ tạo middleware:**
   ```bash
-  php artisan make:middleware DatabaseMiddleware
+  php artisan make:middleware TransactionMiddleware
   ```
 
 * **Đăng ký middleware control DB transaction:**
   - Thêm vào `$routeMiddleware` trong `app/Http/Kernel.php`:
     ```php
-    'db.transaction' => \App\Http\Middleware\DatabaseTransaction::class,
+    'db.transaction' => \App\Http\Middleware\DatabaseTransactionMiddleware::class,
     ```
   - Sử dụng cho các route cần quản lý transaction:
     ```php
@@ -395,7 +397,7 @@ database/
      'api' => [
           // ...existing code...
           // Thêm middleware transaction cho API
-          \App\Http\Middleware\DatabaseTransaction::class,
+          \App\Http\Middleware\DatabaseTransactionMiddleware::class,
       ],
     ```
 

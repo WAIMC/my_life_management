@@ -63,6 +63,8 @@ class Messages
     const E0608 = 'Invalid type member';
     const E0609 = 'Token already exist in blacklist';
 
+    const E0610 = 'Login wrong more than ' . CommonVal::LIMIT_ACCESS_FAIL . ' times allowed';
+
     const TEST = 'demo test message2';
 
     /**

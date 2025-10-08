@@ -39,32 +39,22 @@ class AdminMiddleware
             throw new UnexpectedValueException(Messages::E0608);
         }
 
+        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}";
+        $method = strtoupper($request->method());
+        $uri = $request->route()->uri();
+
         // Check permission access
-        $cached = Redis::get(CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}");
-        if (!$cached) {
+        $pathsJson = Redis::hget($key, $method);
+        if (!$pathsJson) {
             throw new NotFoundHttpException(Messages::E0404, null, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        $permissions = json_decode($cached, true);
-        $method = $request->getMethod();
-        $currentUri = $request->route()->uri();
-
-        // Check if the admin has permission to access this route
+        $allowedPaths = json_decode($pathsJson, true);
         $hasPermission = false;
-        foreach ($permissions as $permission) {
-            // Compare method and uri pattern
-            if ($permission['type'] === $method) {
-                $permissionUri = ltrim($permission['path'], '/');
-
-                // Convert route parameters format from both sides to ensure consistent comparison
-                // e.g., "api/admin/user-mgmt/show/{id}" matches "api/admin/user-mgmt/show/{userId}"
-                $pattern1 = preg_replace('/\{[^\/]+\}/', '{param}', $permissionUri);
-                $pattern2 = preg_replace('/\{[^\/]+\}/', '{param}', $currentUri);
-
-                if ($pattern1 === $pattern2) {
-                    $hasPermission = true;
-                    break;
-                }
+        foreach ($allowedPaths as $pattern) {
+            if ($this->matchUriPattern($uri, $pattern)) {
+                $hasPermission = true;
+                break;
             }
         }
 
@@ -73,5 +63,80 @@ class AdminMiddleware
         }
 
         return $next($request);
+    }
+
+    /**
+     * Match the request URI with the pattern route in DB/Redis.
+     *
+     * Supports:
+     * - {id}, {slug} → match any 1 segment
+     * - {id?}, {slug?} → optional segment
+     * - * → wildcard (match all remaining segments)
+     *
+     * @param string $uri actual URI from request, e.g. "api/users/123"
+     * @param string $pattern Pattern from DB, e.g. "api/users/{id}"
+     * @return bool
+     */
+    private function matchUriPattern(string $uri, string $pattern): bool
+    {
+        // Standardize the removal of the terminal /
+        $uri = trim($uri, '/');
+        $pattern = trim($pattern, '/');
+
+        if ($pattern === '*') {
+            return true;
+        }
+
+        $uriParts = $uri === '' ? [] : explode('/', $uri);
+        $patternParts = $pattern === '' ? [] : explode('/', $pattern);
+
+        $uCount = count($uriParts);
+        $pCount = count($patternParts);
+
+        $i = 0;
+        $j = 0;
+
+        while ($i < $uCount && $j < $pCount) {
+            $part = $patternParts[$j];
+            $uriPart = $uriParts[$i];
+
+            // Wildcard match
+            if ($part === '*') {
+                return true;
+            }
+
+            // {id} or {slug} → accept any segment
+            if (preg_match('/^\{[^\/]+\}$/', $part)) {
+                $i++; $j++;
+                continue;
+            }
+
+            // {id?} or {slug?} → segment option
+            if (preg_match('/^\{[^\/]+\?\}$/', $part)) {
+                $i++;
+                $j++;
+                continue;
+            }
+
+            // Compare absolute
+            if ($uriPart !== $part) {
+                return false;
+            }
+
+            $i++; $j++;
+        }
+
+        // If still wildcard in pattern → OK
+        if ($j < $pCount && $patternParts[$j] === '*') {
+            return true;
+        }
+
+        // Allow pattern has param optional in last
+        while ($j < $pCount && preg_match('/^\{[^\/]+\?\}$/', $patternParts[$j])) {
+            $j++;
+        }
+
+        // Match only math 2
+        return $i === $uCount && $j === $pCount;
     }
 }

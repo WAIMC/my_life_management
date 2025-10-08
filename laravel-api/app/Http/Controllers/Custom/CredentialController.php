@@ -6,6 +6,7 @@ use App\Http\Requests\Custom\Credential\LoginRequest;
 use App\Services\Custom\CredentialService;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CredentialController extends Controller
@@ -20,10 +21,10 @@ class CredentialController extends Controller
      * Login admin account
      *
      * @param LoginRequest $request
-     * @return array
+     * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function login(LoginRequest $request): array
+    public function login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->only('user_name', 'password');
 
@@ -34,10 +35,10 @@ class CredentialController extends Controller
      * Refresh token admin account
      *
      * @param Request $request
-     * @return array
+     * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function refreshToken(Request $request): array
+    public function refreshToken(Request $request): JsonResponse
     {
         return $this->credentialService->refreshToken($request->bearerToken());
     }

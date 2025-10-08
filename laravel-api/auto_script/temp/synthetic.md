@@ -44,3 +44,6 @@ Giai đoạn 3 (Dài hạn): Tích hợp AI sâu hơn vào quy trình, không ch
     + Convert DDL -> json schema (để apply các tính năng mapping trong code):
         cài đặt package python simple-ddl-parser để convert, coding file, đọc nội dung file DDL, convert qua json schema
 **************************************************************
+
+tôi đang sử dụng laravel 11 làm api, hiện tại tôi đã có 1 middleware để generate response api. Tôi cần làm gì để setting api bảo mật, Như: http only, sercure, cookie, same-site, allow method, allow header, allow origin, type authorzation beaver, content type application json, content-length, host, connection,... hãy nghiên cứu phân tích và hướng dẫn tôi thực hiện bảo mật cho api của mình thật chuẩn và tối ưu.
+tôi muốn set thủ công tất cả các thành phần để hiểu chúng hơn và dễ tùy chỉnh

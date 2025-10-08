@@ -9,9 +9,10 @@ class JsonWebToken
 {
     public const ALGORITHM_HS256 = 'HS256';
     // public const TTL_ACCESS = 3600 * 5;   // Time to live (second)
-    public const TTL_ACCESS = CommonVal::MAX_TTL;   // Time to live (second)
-    public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second)
+    public const TTL_ACCESS = CommonVal::MAX_ACCESS_TTL;   // Time to live (second)
+//    public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second)
 
+    public const TTL_REFRESH = CommonVal::MAX_REFRESH_TTL; // Time to live (second)
     /**
      * Generate JWT header
      *
