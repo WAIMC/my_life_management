@@ -40,18 +40,24 @@ class CredentialController extends Controller
      */
     public function refreshToken(Request $request): JsonResponse
     {
-        return $this->credentialService->refreshToken($request->bearerToken());
+        $accessToken = $request->cookie('access_token');
+        $refreshToken = $request->cookie('refresh_token');
+
+        return $this->credentialService->refreshToken($accessToken, $refreshToken);
     }
 
     /**
      * Logout admin account
      *
      * @param Request $request
-     * @return array
+     * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function logout(Request $request): array
+    public function logout(Request $request): JsonResponse
     {
-        return $this->credentialService->logout($request['refresh_token']);
+        $accessToken = $request->cookie('access_token');
+        $refreshToken = $request->cookie('refresh_token');
+
+        return $this->credentialService->logout($accessToken, $refreshToken);
     }
 }

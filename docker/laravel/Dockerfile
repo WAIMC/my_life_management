@@ -16,6 +16,9 @@ RUN apk add --no-cache \
     py3-pip \
     sudo \
     jq \
+    curl-dev \
+    libxml2-dev \
+    openssl-dev \
     && docker-php-ext-install pdo_pgsql \
     && pecl install redis-5.3.7 \
     && docker-php-ext-enable redis pdo_pgsql
@@ -32,6 +35,6 @@ WORKDIR /var/www/laravel-api
 
 # Cài đặt dependencies từ mã nguồn được ánh xạ qua volume
 # Lưu ý: composer install sẽ được chạy sau khi volume được gắn
-CMD composer install --no-dev --optimize-autoloader \
+CMD composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-http \
     && chown -R www-data:www-data /var/www/laravel-api/storage /var/www/laravel-api/bootstrap/cache \
     && php-fpm

@@ -25,7 +25,7 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken();
+        $token = $request->cookie('access_token');
 
         // Check existing access token
         if (!$token) {
@@ -37,6 +37,14 @@ class AdminMiddleware
         // Check request from member type admin
         if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
             throw new UnexpectedValueException(Messages::E0608);
+        }
+
+        /**
+         * Check access token had exited in black list
+         */
+        $key = CommonVal::BLACKLIST_ACCESS_TOKEN . ':' . $token;
+        if (Redis::hget($key, 'id')) {
+            throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
         }
 
         $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}";
