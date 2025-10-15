@@ -40,10 +40,9 @@ class CredentialController extends Controller
      */
     public function refreshToken(Request $request): JsonResponse
     {
-        $accessToken = $request->cookie('access_token');
         $refreshToken = $request->cookie('refresh_token');
 
-        return $this->credentialService->refreshToken($accessToken, $refreshToken);
+        return $this->credentialService->refreshToken($refreshToken);
     }
 
     /**

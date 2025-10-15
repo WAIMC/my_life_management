@@ -147,78 +147,263 @@ Các thắc mắc của bạn đã được giải quyết ở trên. Nếu áp 
 
 Dưới đây là bộ tài liệu tổng hợp tất cả logic bạn mô tả, kết hợp với các sửa chữa/bổ sung/gợi ý từ đánh giá. Tôi cấu trúc rõ ràng để dễ lưu trữ.
 
-#### 1. **Login Process**
-- **Input**: username, password (qua body).
-- **BE Steps**:
-  1. Query DB: SELECT * FROM admin WHERE username = ?.
-     - Nếu không tồn tại: Throw error (401: Invalid credentials).
-  2. Nếu limit_access >= 5: Throw error (403: Account locked).
-  3. Verify password: So sánh hash(password input) với stored hash.
-     - Không khớp: Tăng limit_access +=1, save DB, throw error (401: Invalid credentials).
-     - Khớp: Set limit_access = 0, save DB.
-  4. Query permissions: Lấy routes user có quyền (từ DB, ví dụ table user_roles + role_permissions).
-     - Extract unique routes, group by method: {GET: [routes], POST: [routes], PUT: [routes], DELETE: [routes]}.
-     - Xóa cache cũ nếu tồn tại (key: "perm:{access_token}" – nhưng lúc này chưa có token, nên xóa per user_id nếu cần).
-     - Lưu vào Redis: SET "perm:{future_access_token}" với value JSON groups, TTL = access_token TTL (5 phút).
-  5. Generate JWT:
-     - Access token: Payload {user_id, username, exp: 5 mins, iat, jti (unique ID)}.
-     - Refresh token: Payload tương tự, exp: 7 days.
-  6. Set cookies: 
-     - Access: name="access_token", TTL=5 mins, HttpOnly=true, Secure=true, SameSite=Strict.
-     - Refresh: name="refresh_token", TTL=7 days, HttpOnly=true, Secure=true, SameSite=Strict.
-  7. Response: JSON {success: true, message: "Logged in"} (status 200).
+# 🔐 Authentication & Authorization Logic Specification
 
-#### 2. **Request Validation (Mỗi request thông thường)**
-- **Input**: Access token trong header (Authorization: Bearer <access>).
-- **BE Steps**:
-  1. Check access token tồn tại: Không -> Throw 401.
-  2. Verify JWT: Decode, check signature, exp, etc. Lỗi -> Throw 401.
-  3. Check blacklist (Redis set "blacklist:access"): Tồn tại -> Throw 401.
-  4. Get method + route từ request.
-  5. Check permission: GET Redis "perm:{access_token}", check if route in groups[method].
-     - Không tồn tại/không khớp: Throw 403 (Forbidden).
-  6. Proceed with request.
+---
 
-#### 3. **Refresh Token Process (API riêng: /refresh-token)**
-- **Trigger**: Client gọi khi nhận 401 từ request thông thường.
-- **Input**: Refresh token trong body/header.
-- **BE Steps**:
-  1. Verify access token (nếu gửi kèm, nhưng khuyến nghị không gửi): Nếu valid và không blacklisted, thêm vào blacklist để invalidate.
-  2. Verify refresh token: Decode, check exp, signature. Lỗi -> Throw 401.
-  3. Check blacklist (Redis "blacklist:refresh"): Tồn tại -> Throw 401.
-  4. Query permissions mới (từ DB), group như login.
-  5. Xóa cache perm cũ (per old access_token).
-  6. Generate new access + new refresh (rotation).
-  7. Lưu new perm cache: "perm:{new_access_token}", TTL=5 mins.
-  8. Set new cookies như login.
-  9. Response: JSON {success: true} (status 200).
+## 1. **Login Process**
 
-#### 4. **Logout Process**
-- **Input**: Access + refresh token trong header/body.
-- **BE Steps**:
-  1. Verify cả hai token như validation.
-  2. Thêm cả hai vào blacklist (Redis sets, TTL = remaining exp).
-  3. Xóa perm cache: DEL "perm:{access_token}".
-  4. Set cookies null/expired (max-age=0).
-  5. Response: JSON {success: true, message: "Logged out"} (status 200).
+### **Input**
+- `username`, `password` (qua body request).
 
-#### 5. **Revoke for Fraud (Admin action)**
-- **Steps**:
-  1. Admin query active sessions của user (nếu lưu: Redis "sessions:{user_id}" -> list tokens).
-  2. Thêm tất cả tokens vào blacklist.
-  3. Xóa tất cả perm caches liên quan (scan keys "perm:*" matching user tokens).
-  4. Optional: Lock account (set limit_access high or flag in DB).
+### **Backend Steps**
 
-#### 6. **Cache Strategy**
-- Key: "perm:{access_token}" (JSON value: permission groups).
-- TTL: = access_token exp.
-- Multi-device: Độc lập per token, không ảnh hưởng lẫn nhau.
-- Đồng bộ: Khi permission DB thay đổi, xóa all keys liên quan đến user (use Redis SCAN or secondary index).
+1. **Xác thực thông tin đăng nhập**
+   - `SELECT * FROM admin WHERE username = ?`
+   - Nếu không tồn tại → `401 Unauthorized: Invalid credentials`.
+   - Nếu `limit_access >= 5` → `403 Forbidden: Account locked`.
 
-#### 7. **Security Notes**
+2. **Kiểm tra mật khẩu**
+   - So sánh `hash(password_input)` với `password_hash` trong DB.
+   - Nếu **sai**:
+     - Tăng `limit_access += 1`, lưu lại DB.
+     - Trả lỗi `401 Unauthorized`.
+   - Nếu **đúng**:
+     - Reset `limit_access = 0`, lưu lại DB.
+
+3. **Giới hạn số lượng đăng nhập đồng thời**
+   - Đếm số lượng token đang tồn tại (từ cache và DB).
+   - Nếu > 5 → `403 Forbidden: Maximum concurrent sessions reached`.
+
+4. **Tạo JWT**
+   - **Access Token**: `{ id: user_id, type: admin, iat: now(), exp: 5 mins }`
+   - **Refresh Token**: `{ id: user_id, type: admin, iat: now(), exp: 3 days }`
+
+5. **Tải quyền truy cập (Permissions)**
+   - Query bảng `user_roles`, `role_permissions` để lấy danh sách routes user được phép truy cập.
+   - Xử lý:
+     - Loại bỏ route trùng (`unique`).
+     - Gom nhóm theo HTTP method:
+       ```json
+       {
+         "GET": ["route_1", "route_2"],
+         "POST": ["route_3"],
+         "DELETE": [...]
+       }
+       ```
+   - Xóa cache cũ của user (nếu tồn tại).
+
+6. **Lưu trữ token và permission**
+
+   #### Access Token (cache)
+   - Key: `perm:{type}:{user_id}:{access_token}`
+   - Value: `{ last_access_at, ... }`
+   - TTL: 5 phút
+   - Do nhiều token của cùng user có cùng permission → lưu thêm key:
+     - `perm:{type}:{user_id}:{permission}`
+     - Value: `{ method: [uri list] }`
+   - Mỗi khi có access token mới:
+     - Kiểm tra không tồn tại thì tạo mới `perm:{type}:{user_id}:{permission}`.
+     - Cập nhật TTL cho `perm:{type}:{user_id}` = TTL token mới nhất.
+     - Token cũ hết hạn tự động xóa.
+     - Token cuối cùng hết hạn → key parent `perm:{type}:{user_id}` cũng bị xóa.
+   - ✅ **Ưu điểm**:
+     - Nhiều token có cùng account dùng chung 1 permisson duy nhất. Tiết kiệm lưu trữ
+     - Parent key có TTL = token mới nhất, đảm bảo tự động dọn dẹp khi hết hạn, làm sạch không gian lưu trữ
+     - Các access token set TTL riêng, khi hết hạn tự dọn dẹp không ảnh hưởng token khác
+     - Gom nhóm dữ liệu → giảm query → tăng tốc truy xuất → TTL đồng bộ.
+     - Dễ thu hồi hoặc cập nhật permission.
+     - Cho phép mỗi account login nhiều nơi.
+
+   #### Refresh Token (database)
+   - Trường lưu:
+     - `token_hash`
+     - `user_id`
+     - `device_name`
+     - `ip_address`
+     - `expired_at`
+   - Hash token trước khi lưu để tránh lộ dữ liệu khi DB bị xâm nhập.
+
+7. **Set Cookie (Response Header)**
+   - Tên: `refresh_token`
+   - TTL: 3 ngày
+   - `HttpOnly=true`, `Secure=true`, `SameSite=Strict`
+   - `path='/auth/refresh'` → Cho phép tự động đính kèm cho path này.
+
+8. **Response**
+   ```json
+   {
+     "data": { "access_token": "..." },
+     "status": 200
+   }
+   ```
+
+9. **Frontend**
+   - Lưu `access_token` trong memory (RAM).
+   - Mất khi reload hoặc đóng trang → cần gọi `/auth/refresh` để lấy lại token mới.
+   - Cookie `refresh_token` được gửi tự động nếu cùng domain và đúng `path` như set-cookie trả về.
+
+---
+
+## 2. **Request Validation (Mỗi request thông thường)**
+
+### **Input**
+- Header: `Authorization: Bearer <access_token>`
+
+### **Backend Steps**
+1. Kiểm tra access token tồn tại → nếu không → `401 Unauthorized`.
+2. Giải mã JWT, kiểm tra chữ ký và `exp` → lỗi → `401 Unauthorized`.
+3. Kiểm tra token có tồn tại trong cache (`perm:{type}:{user_id}:{access_token}`) → nếu không → `401 Unauthorized`.
+4. Lấy `method` và `route` của request.
+5. Kiểm tra quyền:
+   - Lấy Redis key: `perm:{type}:{user_id}:{permission}:{method}`
+   - Nếu route không có trong danh sách → `403 Forbidden`.
+6. Cho phép tiếp tục xử lý request.
+
+---
+
+## 3. **Refresh Token Process**
+
+### **Trigger**
+Client gọi khi nhận `401 Unauthorized` từ request thông thường.
+
+### **Input**
+Refresh token (tự động đính kèm qua cookie).
+
+### **Backend Steps**
+1. Verify refresh token (decode, check signature, exp).
+2. Nếu lỗi → `401 Unauthorized`.
+3. Query permission mới (từ DB).
+4. Xóa refresh token trong DB.
+5. Sinh cặp token mới (access + refresh).
+6. Lưu cache permission mới tương ứng với access token mới (TTL=5 phút).
+7. Set cookie refresh token mới như khi login.
+8. Response JSON như login.
+
+---
+
+## 4. **Logout Process**
+
+### **Input**
+- Cookie chứa refresh token  
+- Header chứa access token
+
+### **Backend Steps**
+1. Verify cả hai token.
+2. Xóa refresh token trong DB.
+3. Xóa access token trong cache.
+4. Set cookie `refresh_token` hết hạn (`max-age=0`).
+5. Response:
+   ```json
+   { "success": true, "message": "Logged out" }
+   ```
+
+---
+
+## 5. **Revoke for Fraud (Admin Action)**
+
+- Truy vấn tất cả token đang hoạt động trong cache hoặc DB của user.
+- Xóa tất cả token liên quan → thu hồi quyền truy cập ngay lập tức.
+
+---
+
+## 6. **Cache Strategy**
+
+| Thành phần | Key format | Lưu ở đâu | TTL | Mục đích |
+|-------------|-------------|------------|------|-----------|
+| Permission | `perm:{type}:{user_id}:{access_token}` | Redis (hash) | = access_token TTL | Xác thực nhanh |
+| Access Token | `perm:{type}:{user_id}` | Redis | 5 phút | Dễ thu hồi, sync TTL |
+| Refresh Token | DB | Theo `exp` | Lưu lâu, ít truy cập |
+
+---
+
+#### **Security Notes**
 - HTTPS only.
 - Rate limit API để chống DDoS.
 - Audit logs: Log mọi login/refresh/failed attempt.
 - Test: Unit test verify, integration test flows.
 
-*************************************************************
+#### **Update permission**
+- Khi update permission, sẽ thực hiện select user id có các role vừa thay đổi permision. Tìm kiếm các user id đó trong cache permission và delete. Để user đó login or refresh token nhằm tạo
+lại permission cache mới. Những dữ liệu cần có trong cache permisson:
+---
+
+## 🔍 Phân Tích Chi Tiết Kiến Trúc Cache & Token
+
+### **Permission**
+- **Cấu trúc:** Theo cấu trúc verify permission của user để tối ưu. Ví dụ hiện tại check permission theo route, nên phân loại theo method (GET, POST, PUT, DELETE) hoặc theo group path.
+- **Lợi ích:** Khi truy vấn sẽ query theo loại, dữ liệu được gom nhóm, khiến lượng data ít hơn → tốc độ xử lý nhanh hơn.
+- **Lý do lưu cache:** 
+  - Thời lượng user truy cập ngắn, truy cập liên tục để verify mỗi request nên cần verify nhanh → cache hợp lý hơn DB.
+  - Giảm truy cập READ DB, giúp phân tán xử lý, giảm latency và tải cho DB.
+  - Permission cache theo access token phù hợp với mô hình 1 account đăng nhập nhiều thiết bị, mỗi thiết bị có thời gian truy cập/logout/refresh khác nhau.
+- **Cấu trúc dữ liệu cần có trong cache permission:**  
+  Key: `perm:{type}:{user_id}:{access_token}`  
+  Value bao gồm: method, path, user_id (dùng khi update permission để select delete).
+
+### **Access Token**
+- **Mục đích:** Nhận dạng user trong mỗi request.
+- **Đặc điểm:**
+  - Tần suất verify lớn, thời gian truy cập ngắn.
+  - Giảm thời gian hợp lệ để tăng bảo mật.
+  - Tránh truy cập READ DB mỗi lần → phân tán xử lý, tăng tốc độ.
+- **=>** Lưu trong cache là hợp lý nhất, không nên lưu trong DB.
+
+### **Refresh Token**
+- **Đặc điểm:**
+  - Thời gian lưu trữ dài.
+  - Tần suất sử dụng thấp (chỉ khi access token hết hạn).
+  - Mỗi user login thời điểm khác nhau.
+- **=>** Lưu trong DB hợp lý hơn cache (cache dùng cho dữ liệu nhỏ, truy xuất nhanh).
+
+### **Lý do lưu trữ access token và refresh token**
+- Tối ưu quản lý các user đang truy cập.
+- Dễ thu hồi token riêng lẻ hoặc toàn bộ khi phát hiện gian lận.
+- **So với blacklist:**
+  - Blacklist phình to khi nhiều user refresh/logout → ảnh hưởng hiệu năng.
+  - Blacklist cần lưu token invalid → tăng bộ nhớ.
+  - Lưu trữ access + refresh token trực tiếp sẽ hiệu quả hơn:
+    - Access token tự xóa nhanh (TTL ngắn).
+    - Refresh token duy nhất mỗi user/device, TTL dài hơn → số lượng nhỏ hơn.
+- **=>** Quản lý token hiệu quả, dễ revoke, ít phình bộ nhớ.
+
+### **Xóa token**
+- Khi refresh hoặc logout → xóa cả access & refresh token để tránh token cũ invalid vẫn sử dụng được.
+
+### **Mô hình lưu cache**
+#### 1️⃣ Gom nhóm Authen & Author
+- Dùng 1 cache lưu access token + route name (kết quả query role → route → unique → group by method).  
+**Ưu điểm:**
+  - Phù hợp hệ thống vừa & nhỏ, xử lý nhanh, QPS cao.
+  - Dữ liệu tập trung, ít query.
+  - Đánh đổi merories -> lantecy
+**Nhược điểm:**
+  - Tốn bộ nhớ cache (RAM).
+  - Dễ duplicate nếu nhiều user có role giống nhau.
+  - Cập nhật permission phức tạp → thường phải delete và tạo lại.
+  - Duplicate theo token.
+
+#### 2️⃣ Phân chia Authen & Author
+- Cache 1: access token + role.  
+- Cache 2: role + route (tạo sẵn cho tất cả role).  
+**Ưu điểm:**
+  - Tối ưu bộ nhớ, dễ cập nhật permission.  
+  - Tiết kiệm lưu trữ, giảm trùng lặp thay vì trùng lặp toàn bộ route khi 2 user có cùng role. Chỉ trùng lặp ít khi 2 role khác nhau có cơ số route giống nhau.  
+**Nhược điểm:**
+  - Tốn tài nguyên xử lý mỗi lần request do phải query nhiều cache.  
+  - Cần process nhiều bước để gom & check permission (get all route -> unique -> group by method -> check route).
+
+### **Lưu access token**
+- Nếu hệ thống chỉ cần xác minh user (tất cả user đều có toàn quyền), ko có nhu cầu thu hồi token → có thể không lưu token như hệ thống website front-end sủ dụng.
+- Nếu hệ thống phân quyền nhiều lớp → **nên lưu access token** để dễ thu hồi và quản lý bảo mật như hệ thống nội bộ công ty, tập đoàn, nhóm,...
+
+### **Giải pháp nâng cao**
+- **Distributed cache:** Redis cluster / Elasticache để phân tán bộ nhớ & scale ngang.
+- **Eviction policies:** Dùng LRU hoặc LFU, TTL ngắn để tự dọn dẹp cache cũ.
+- **Compression:** Chỉ lưu dữ liệu cần thiết.
+- **Monitoring & Auto-scaling:** Giám sát cache hit rate, memory usage, latency.
+- **Hybrid approach:** Xóa cache với user inactive lâu.
+- **Giới hạn lưu trữ:** 
+  - Giới hạn login đồng thời.
+  - Giới hạn số refresh token per user/device.
+  - Đặt dọn dẹp định kỳ, TTL ngắn cho dữ liệu tạm.

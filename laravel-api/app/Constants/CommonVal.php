@@ -77,7 +77,7 @@ class CommonVal
     public const MAX_TEXT = 65535;
 
     public const MAX_ACCESS_TTL = 60 * 5; // s * m => 5 min
-    public const MAX_REFRESH_TTL = 60 * 60 * 24 * 7; // s * m * H * D => 7 day
+    public const MAX_REFRESH_TTL = 60 * 60 * 24 * 3; // s * m * H * D => 3 day
 
     public const ADMIN_PERMISSION_TABLE = 'admin_permission';
     public const LIMIT_ACCESS_FAIL = 5;
@@ -87,4 +87,5 @@ class CommonVal
      */
     public const ROOT = 'root';
     public const ADMIN_TYPE = 'admin';
+    public const VERSION_TOKEN = 1;
 }

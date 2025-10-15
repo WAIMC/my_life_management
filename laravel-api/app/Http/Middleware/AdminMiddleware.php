@@ -42,12 +42,12 @@ class AdminMiddleware
         /**
          * Check access token had exited in black list
          */
-        $key = CommonVal::BLACKLIST_ACCESS_TOKEN . ':' . $token;
+        $key = CommonVal::BLACKLIST_ACCESS_TOKEN . ':' . $token . ':' . $credentials['version'];
         if (Redis::hget($key, 'id')) {
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}";
+        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}:" . $credentials['version'];
         $method = strtoupper($request->method());
         $uri = $request->route()->uri();
 

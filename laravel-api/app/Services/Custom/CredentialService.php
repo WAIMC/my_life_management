@@ -78,7 +78,7 @@ class CredentialService
             ->map(fn($items) => $items->pluck('path')->unique()->values()->toArray())
             ->toArray();
 
-        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$accessToken}";
+        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$accessToken}:" . CommonVal::VERSION_TOKEN;
         Redis::del($key);
         foreach ($groupedPermissions as $method => $paths) {
             Redis::hset($key, $method, json_encode($paths));
@@ -100,6 +100,7 @@ class CredentialService
         $payload = [
             'id' => (string)$adminMstId,
             'type' => CommonVal::ADMIN_TYPE,
+            'version' => CommonVal::VERSION_TOKEN,
         ];
 
         // Generate new access token
@@ -191,17 +192,12 @@ class CredentialService
     /**
      * Handle refresh token
      *
-     * @param string|null $accessToken
      * @param string|null $refreshToken
      * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function refreshToken(string|null $accessToken, string|null $refreshToken): JsonResponse
+    public function refreshToken(string|null $refreshToken): JsonResponse
     {
-        if ($accessToken) {
-            $this->revokeToken($accessToken, false);
-        }
-
         $adminMstId = $this->revokeToken($refreshToken, true);
         $token = $this->generateToken($adminMstId);
         $this->getAndSetPermission($adminMstId, $token['access_token']);
@@ -265,7 +261,7 @@ class CredentialService
      */
     public function logout(string|null $accessToken, string|null $refreshToken): JsonResponse
     {
-        $adminMstId = $this->revokeToken($accessToken, false);
+        $this->revokeToken($accessToken, false);
         $this->revokeToken($refreshToken, true);
 
         // Delete permission cache if exist

@@ -39,7 +39,6 @@ class JsonWebToken
         return [
             'id'   => $payload['id'] ?? '',                                        // ID of the token (member id)
             'type' => $payload['type'] ?? '',                                      // Type of the token (member type)
-            'role' => $payload['role'] ?? '',                                      // RoleMst of the token (member role)
             'iat'  => time(),                                                      // Time when JWT was issued.
             'exp'  => time() + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS) // Expiration time
         ];
