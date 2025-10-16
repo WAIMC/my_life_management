@@ -228,7 +228,7 @@ Dưới đây là bộ tài liệu tổng hợp tất cả logic bạn mô tả,
    - Tên: `refresh_token`
    - TTL: 3 ngày
    - `HttpOnly=true`, `Secure=true`, `SameSite=Strict`
-   - `path='/auth/refresh'` → Cho phép tự động đính kèm cho path này.
+   - `path='/auth/'` → Cho phép tự động đính kèm cho path này.
 
 8. **Response**
    ```json
@@ -242,6 +242,10 @@ Dưới đây là bộ tài liệu tổng hợp tất cả logic bạn mô tả,
    - Lưu `access_token` trong memory (RAM).
    - Mất khi reload hoặc đóng trang → cần gọi `/auth/refresh` để lấy lại token mới.
    - Cookie `refresh_token` được gửi tự động nếu cùng domain và đúng `path` như set-cookie trả về.
+
+10. **DB**
+    - Tạo cron job xóa refresh token có column token_mst.expired_at < now() định kỳ mỗi ngày
+    - Chạy độc lập không ảnh hưởng transaction chính
 
 ---
 

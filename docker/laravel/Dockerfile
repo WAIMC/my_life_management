@@ -33,8 +33,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Thiết lập thư mục làm việc
 WORKDIR /var/www/laravel-api
 
-# Cài đặt dependencies từ mã nguồn được ánh xạ qua volume
-# Lưu ý: composer install sẽ được chạy sau khi volume được gắn
-CMD composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-http \
-    && chown -R www-data:www-data /var/www/laravel-api/storage /var/www/laravel-api/bootstrap/cache \
-    && php-fpm
+# Chú ý: Không cần tạo user và thiết lập quyền ở đây
+# Do sử dụng docker-compose.simple.yml với cấu hình đơn giản hóa
+# Quyền được thiết lập bằng script start.sh
+
+CMD ["php-fpm"]

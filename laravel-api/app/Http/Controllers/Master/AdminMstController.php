@@ -17,7 +17,7 @@ class AdminMstController extends Controller
     )
     {
     }
-
+    
     /**
      * AdminMst list
      *

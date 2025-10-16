@@ -45,6 +45,7 @@ use App\Interfaces\Master\LanguageMstInterface;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use App\Interfaces\Master\PolicyDepartmentMstInterface;
 use App\Interfaces\Master\RoleMstInterface;
+use App\Interfaces\Master\TokenMstInterface;
 use App\Interfaces\Master\TranslationLanguageMstInterface;
 use App\Interfaces\Master\TranslationMstInterface;
 use App\Repositories\BaseRepository;
@@ -88,6 +89,7 @@ use App\Repositories\Master\LanguageMstRepository;
 use App\Repositories\Master\OriginalTranslatorMstRepository;
 use App\Repositories\Master\PolicyDepartmentMstRepository;
 use App\Repositories\Master\RoleMstRepository;
+use App\Repositories\Master\TokenMstRepository;
 use App\Repositories\Master\TranslationLanguageMstRepository;
 use App\Repositories\Master\TranslationMstRepository;
 use Illuminate\Support\ServiceProvider;
@@ -108,6 +110,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         OriginalTranslatorMstInterface::class => OriginalTranslatorMstRepository::class,
         PolicyDepartmentMstInterface::class => PolicyDepartmentMstRepository::class,
         RoleMstInterface::class => RoleMstRepository::class,
+        TokenMstInterface::class => TokenMstRepository::class,
         TranslationLanguageMstInterface::class => TranslationLanguageMstRepository::class,
         TranslationMstInterface::class => TranslationMstRepository::class,
 

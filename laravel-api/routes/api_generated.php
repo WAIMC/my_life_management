@@ -230,3 +230,9 @@ Route::post('user-mgmt-hist/store', [\App\Http\Controllers\History\Management\Us
 Route::put('user-mgmt-hist/update/{id}', [\App\Http\Controllers\History\Management\UserMgmtHistController::class, 'update']);
 Route::delete('user-mgmt-hist/delete/{id}', [\App\Http\Controllers\History\Management\UserMgmtHistController::class, 'delete']);
 
+// Routes for token_mst
+Route::get('token-mst/list', [\App\Http\Controllers\Master\TokenMstController::class, 'list']);
+Route::post('token-mst/store', [\App\Http\Controllers\Master\TokenMstController::class, 'store']);
+Route::put('token-mst/update/{id}', [\App\Http\Controllers\Master\TokenMstController::class, 'update']);
+Route::delete('token-mst/delete/{id}', [\App\Http\Controllers\Master\TokenMstController::class, 'delete']);
+

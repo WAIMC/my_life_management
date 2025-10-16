@@ -97,63 +97,51 @@ class SyncApiPermissions extends Command
 
                 if (Str::startsWith($route->uri(), $this->prefixApi)) {
                     $this->info('In progress ...');
-                    $uriParts = explode('/', $route->uri());
-                    if (count($uriParts) >= 4) {
-                        $featureSlug = $uriParts[2];
-                        $action = $uriParts[3];
-                        $featureName = str_replace('-', ' ', $featureSlug);
+                    [$controller, $method] = explode('@', class_basename($route->getActionName()));
+                    $controllerName = str_replace('Controller', '', $controller);
+                    $controllerName = preg_replace('/([a-z])([A-Z])/', '$1 $2', $controllerName);
+                    $controllerName = ucwords($controllerName);
+                    $method = ucfirst($method);
 
-                        // Update feature
-                        $feature = FeatureMst::firstOrCreate(
-                            ['name' => $featureName],
-                            [
-                                'group_name' => $this->adminGroup,
-                                'description' => '',
-                                'status' => 1,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]
-                        );
+                    // Update feature
+                    $feature = FeatureMst::firstOrCreate(
+                        ['name' => $controllerName],
+                        [
+                            'group_name' => $this->adminGroup,
+                            'description' => '',
+                            'status' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
 
-                        // Update API
-                        $apiPath = $route->uri();
+                    // Update api
+                    $api = ApiMst::firstOrCreate(
+                        [
+                            'path' => $route->uri()
+                        ],
+                        [
+                            'type' => TypeOfMethod::fromName($route->methods()[0]),
+                            'name' => $method . ' ' . $controllerName,
+                            'path' => $route->uri(),
+                            'is_active' => true,
+                            'feature_mst_id' => $feature->id,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
 
-                        // Based on the error message, both name and path might be limited to 50 chars in the actual database
-                        // Even though migration shows path should be 100 chars, let's restrict both to 45 to be very safe
-                        $apiName = substr($action . ' ' . $featureName, 0, 45);
-                        $apiPathTrimmed = substr($apiPath, 0, 45);
-
-                        $this->info('API Name: ' . $apiName);
-                        $this->info('API Path: ' . $apiPathTrimmed);
-                        $this->info('route : ' . $route->methods()[0]);
-
-                        $api = ApiMst::firstOrCreate(
-                            [
-                                'path' => $apiPathTrimmed
-                            ],
-                            [
-                                'type' => TypeOfMethod::fromName($route->methods()[0]),
-                                'name' => $apiName,
-                                'path' => $apiPathTrimmed,
-                                'is_active' => true,
-                                'feature_mst_id' => $feature->id,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]
-                        );
-
-                        // Link to admin role - Use updateOrInsert for composite primary key
-                        ApiRoleMst::updateOrInsert(
-                            [
-                                'api_mst_id' => $api->id,
-                                'role_mst_id' => $rootRole->id,
-                            ],
-                            [
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]
-                        );
-                    }
+                    // Link to admin role - Use updateOrInsert for composite primary key
+                    ApiRoleMst::updateOrInsert(
+                        [
+                            'api_mst_id' => $api->id,
+                            'role_mst_id' => $rootRole->id,
+                        ],
+                        [
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
 
                     $this->info('Done.');
                 } else {

@@ -1,7 +1,7 @@
 services:
   ml-php:
     container_name: ml-php
-    build: ./laravel
+    image: php:8.2-fpm-alpine
     volumes:
       - ../laravel-api:/var/www/laravel-api
     environment:
@@ -19,6 +19,16 @@ services:
     depends_on:
       - ml-postgres
       - ml-redis
+    command: >
+      sh -c "
+        apk add --no-cache postgresql-dev autoconf gcc g++ make libc-dev redis sudo &&
+        docker-php-ext-install pdo_pgsql &&
+        curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
+        cd /var/www/laravel-api &&
+        chmod -R 777 storage bootstrap/cache &&
+        composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-http &&
+        php-fpm
+      "
 
   ml-nginx:
     container_name: ml-nginx

@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Redis;
 use UnexpectedValueException;
+use App\Models\Master\TokenMst;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 
 class CredentialService
 {
@@ -22,20 +25,22 @@ class CredentialService
     /**
      * Handle login admin
      *
-     * @param array $payload
+     * @param Request $request
      * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function login(array $payload): JsonResponse
+    public function login(Request $request): JsonResponse
     {
-        $admin = AdminMst::where('user_name', $payload['user_name'])->first();
+        dd('aaa');
+        $credentials = $request->only('user_name', 'password');
+        $admin = AdminMst::where('user_name', $credentials['user_name'])->first();
 
         // Check is valid credential
         if (!$admin) {
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
         } else if ($admin->limit_access >= CommonVal::LIMIT_ACCESS_FAIL) {
             throw new AuthorizationException(Messages::E0610, CommonVal::HTTP_UNAUTHORIZED);
-        } else if (!Hash::check($payload['password'], $admin->password)) {
+        } else if (!Hash::check($credentials['password'], $admin->password)) {
             $admin->limit_access += 1;
             $admin->save();
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
@@ -46,11 +51,20 @@ class CredentialService
 
         $token = $this->generateToken($admin->id);
         $this->getAndSetPermission($admin->id, $token['access_token']);
-        $data = $this->generateCookieForToken($token['access_token'], $token['refresh_token']);
+        $refreshCookie = $this->updateRefreshTokenInCookie($token['refresh_token']);
+        $this->updateRefreshTokenInRepo([
+            null,
+            $refreshCookie,
+            $admin->id,
+            $request,
+        ]);
 
-        return response()->json([])
-            ->withCookie($data['set_access_token_cookie'])
-            ->withCookie($data['set_refresh_token_cookie']);
+        return response()->json([
+                'auth_type' => 'bearer',
+                'ttl' => CommonVal::MAX_ACCESS_TTL,
+                'access_token' => $token['access_token'],
+            ])
+            ->withCookie($refreshCookie);
     }
 
     /**
@@ -62,28 +76,37 @@ class CredentialService
      */
     private function getAndSetPermission(int $adminMstId, string $accessToken): void
     {
-        /**
-         * Get and set permission for this user
-         */
-        $permissions = DB::table('admin_permission_view')
-            ->where('admin_mst_id', $adminMstId)
-            ->select('type', 'path')
-            ->distinct()
-            ->get()
-            ->toArray();
+        $parentKey = CommonVal::ADMIN_TYPE . ":{$adminMstId}";
+        $tokenKey = $parentKey . ":{$accessToken}:";
+        Redis::hset($tokenKey, 'last_access_at', now());
+        Redis::expire($tokenKey, CommonVal::MAX_ACCESS_TTL);
 
-        // Group path by method
-        $groupedPermissions = collect($permissions)
-            ->groupBy(fn($item) => strtoupper($item->type))
-            ->map(fn($items) => $items->pluck('path')->unique()->values()->toArray())
-            ->toArray();
+        // Update parent key's expire time to match the tokenKey
+        Redis::expire($parentKey, Redis::ttl($tokenKey));
 
-        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$accessToken}:" . CommonVal::VERSION_TOKEN;
-        Redis::del($key);
-        foreach ($groupedPermissions as $method => $paths) {
-            Redis::hset($key, $method, json_encode($paths));
+        // Check if parent Key exists in Redis hash
+        $permissionTableKey = $parentKey . ":" . CommonVal::ADMIN_PERMISSION_TABLE;
+        if (!Redis::exists($permissionTableKey)) {
+            /**
+             * Get and set permission for this user
+             */
+            $permissions = DB::table('admin_permission_view')
+                ->where('admin_mst_id', $adminMstId)
+                ->select('type', 'path')
+                ->distinct()
+                ->get()
+                ->toArray();
+
+            // Group path by method
+            $groupedPermissions = collect($permissions)
+                ->groupBy(fn($item) => strtoupper($item->type))
+                ->map(fn($items) => $items->pluck('path')->unique()->values()->toArray())
+                ->toArray();
+
+            foreach ($groupedPermissions as $method => $paths) {
+                Redis::hset($permissionTableKey, $method, json_encode($paths));
+            }
         }
-        Redis::expire($key, CommonVal::MAX_ACCESS_TTL);
     }
 
     /**
@@ -100,7 +123,6 @@ class CredentialService
         $payload = [
             'id' => (string)$adminMstId,
             'type' => CommonVal::ADMIN_TYPE,
-            'version' => CommonVal::VERSION_TOKEN,
         ];
 
         // Generate new access token
@@ -124,69 +146,25 @@ class CredentialService
     /**
      * Generate cookie for token
      *
-     * @param string|null $accessToken
      * @param string|null $refreshToken
-     * @return array
+     * @return string
      */
-    private function generateCookieForToken(string|null $accessToken, string|null $refreshToken): array
+    private function updateRefreshTokenInCookie(string|null $refreshToken): string
     {
-        if ($accessToken) {
-            $accessCookie = cookie(
-            'access_token',
-            $accessToken,
-            CommonVal::MAX_ACCESS_TTL / 60,             // 5 Minute
-            '/',            // path
-            config('session.domain'), // domain
-            app()->environment('production'), // secure
-            true,            // httpOnly
-            false,           // raw
-            'Strict'         // SameSite
+        $ttl = $refreshToken ? CommonVal::MAX_REFRESH_TTL / 60 : -1;
+        $tokenValue = $refreshToken ?? null;
+
+        return cookie(
+            'refresh_token',
+            $tokenValue,
+            $ttl,
+            'api/admin/account',
+            config('session.domain'),
+            app()->environment('production'),
+            true,
+            false,
+            'Strict'
         );
-        } else {
-            $accessCookie = cookie(
-                'access_token',
-                null,
-                -1,
-                '/',
-                config('session.domain'),
-                app()->environment('production'),
-                true,
-                false,
-                'Strict'
-            );
-        }
-
-
-        if ($refreshToken) {
-            $refreshCookie = cookie(
-                'refresh_token',
-                $refreshToken,
-                CommonVal::MAX_REFRESH_TTL / 60,     // 7 Day
-                '/',
-                config('session.domain'),
-                app()->environment('production'),
-                true,
-                false,
-                'Strict'
-            );
-        } else {
-            $refreshCookie = cookie(
-                'refresh_token',
-                null,
-                -1,
-                '/',
-                config('session.domain'),
-                app()->environment('production'),
-                true,
-                false,
-                'Strict'
-            );
-        }
-
-        return [
-            'set_access_token_cookie' => $accessCookie,
-            'set_refresh_token_cookie' => $refreshCookie,
-        ];
     }
 
     /**
@@ -201,7 +179,7 @@ class CredentialService
         $adminMstId = $this->revokeToken($refreshToken, true);
         $token = $this->generateToken($adminMstId);
         $this->getAndSetPermission($adminMstId, $token['access_token']);
-        $data = $this->generateCookieForToken($token['access_token'], $token['refresh_token']);
+        $data = $this->updateRefreshTokenInCookie($token['access_token'], $token['refresh_token']);
 
         return response()->json([])
             ->withCookie($data['set_access_token_cookie'])
@@ -268,10 +246,36 @@ class CredentialService
         $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$accessToken}";
         Redis::del($key);
 
-        $data = $this->generateCookieForToken(null, null);
+        $data = $this->updateRefreshTokenInCookie(null, null);
 
         return response()->json([])
             ->withCookie($data['set_access_token_cookie'])
             ->withCookie($data['set_refresh_token_cookie']);
+    }
+
+    /**
+     * Summary of update refresh token in repo
+     * 
+     * @param mixed $payload
+     * @return void
+     */
+    private function updateRefreshTokenInRepo($payload):void
+    {
+        [$refreshTokenOld, $refreshTokenNew, $accountId, $request] = $payload;
+
+        if ($refreshTokenOld) {
+            $hashedToken = Hash::make($refreshTokenOld);
+            TokenMst::where('token_hash', $hashedToken)->delete();
+        }
+
+        if ($refreshTokenNew) {
+            TokenMst::create([
+                'token_hash' => Hash::make($refreshTokenNew),
+                'account_id'=> $accountId,
+                'device_name' => $request->header('User-Agent'),
+                'ip_address' => $request->ip(),
+                'expired_at' => now()->addSeconds(value: CommonVal::MAX_REFRESH_TTL),
+            ]);
+        }
     }
 }

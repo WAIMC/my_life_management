@@ -4222,5 +4222,109 @@
         "index": [],
         "partitioned_by": [],
         "tablespace": null
+    },
+    {
+        "table_name": "token_mst",
+        "schema": "public",
+        "primary_key": [
+            "id"
+        ],
+        "columns": [
+            {
+                "name": "id",
+                "type": "integer",
+                "size": null,
+                "references": null,
+                "unique": false,
+                "nullable": false,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "token_hash",
+                "type": "character varying",
+                "size": 255,
+                "references": null,
+                "unique": false,
+                "nullable": true,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "account_id",
+                "type": "integer",
+                "size": null,
+                "references": null,
+                "unique": false,
+                "nullable": false,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "device_name",
+                "type": "character varying",
+                "size": 255,
+                "references": null,
+                "unique": false,
+                "nullable": true,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "ip_address",
+                "type": "character varying",
+                "size": 255,
+                "references": null,
+                "unique": false,
+                "nullable": true,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "expired_at",
+                "type": "timestamp",
+                "size": 0,
+                "references": null,
+                "unique": false,
+                "nullable": true,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "created_at",
+                "type": "timestamp",
+                "size": 0,
+                "references": null,
+                "unique": false,
+                "nullable": true,
+                "default": null,
+                "check": null
+            },
+            {
+                "name": "updated_at",
+                "type": "timestamp",
+                "size": 0,
+                "references": null,
+                "unique": false,
+                "nullable": true,
+                "default": null,
+                "check": null
+            }
+        ],
+        "alter": {},
+        "checks": [],
+        "index": [],
+        "partitioned_by": [],
+        "constraints": {
+            "primary_keys": [
+                {
+                    "columns": [
+                        "id"
+                    ],
+                    "constraint_name": "token_mst_pkey"
+                }
+            ]
+        },
+        "tablespace": null
     }
 ]

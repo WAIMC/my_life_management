@@ -446,3 +446,14 @@ CREATE TABLE user_mgmt_hist (
     author_id integer NOT NULL,
     created_at timestamp(0) without time zone NOT NULL
 );
+CREATE TABLE public.token_mst (
+	id integer NOT NULL,
+	token_hash character varying(255),
+	account_id integer NOT NULL,
+	device_name character varying(255) NULL,
+	ip_address character varying(255) NULL,
+	expired_at timestamp(0) NULL,
+	created_at timestamp(0) NULL,
+	updated_at timestamp(0) NULL,
+	CONSTRAINT token_mst_pkey PRIMARY KEY (id)
+);

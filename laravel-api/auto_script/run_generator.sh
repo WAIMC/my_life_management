@@ -101,4 +101,9 @@ $SHELL_CMD "$SCRIPTS_DIR/generate_route.sh"
 echo "Running Repository Bindings Generator..."
 $SHELL_CMD "$SCRIPTS_DIR/generate_repository_binding.sh"
 
+# Fix permissions after all scripts have run
+echo "Fixing permissions for generated files..."
+SCRIPT_DIR=$(dirname "$0")
+$SHELL_CMD "$SCRIPT_DIR/fix_permissions.sh"
+
 echo "All generation scripts completed"

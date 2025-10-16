@@ -25,7 +25,7 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->cookie('access_token');
+        $token = $request->bearerToken();
 
         // Check existing access token
         if (!$token) {
@@ -40,19 +40,20 @@ class AdminMiddleware
         }
 
         /**
-         * Check access token had exited in black list
+         * Check access token had exited
          */
-        $key = CommonVal::BLACKLIST_ACCESS_TOKEN . ':' . $token . ':' . $credentials['version'];
-        if (Redis::hget($key, 'id')) {
+        $parentKey = CommonVal::ADMIN_TYPE . ":{$credentials['id']}";
+        $tokenKey = $parentKey . ":{$token}:";
+        if (!Redis::exists($tokenKey, 'id')) {
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$credentials['id']}:" . $credentials['version'];
+        $permissionTableKey = $parentKey . ":" . CommonVal::ADMIN_PERMISSION_TABLE;
         $method = strtoupper($request->method());
         $uri = $request->route()->uri();
 
         // Check permission access
-        $pathsJson = Redis::hget($key, $method);
+        $pathsJson = Redis::hget($permissionTableKey, $method);
         if (!$pathsJson) {
             throw new NotFoundHttpException(Messages::E0404, null, CommonVal::HTTP_UNAUTHORIZED);
         }

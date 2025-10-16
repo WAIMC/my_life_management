@@ -26,9 +26,7 @@ class CredentialController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->only('user_name', 'password');
-
-        return $this->credentialService->login($credentials);
+        return $this->credentialService->login($request);
     }
 
     /**
