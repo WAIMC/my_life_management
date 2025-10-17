@@ -4,6 +4,7 @@ services:
     image: php:8.2-fpm-alpine
     volumes:
       - ../laravel-api:/var/www/laravel-api
+    working_dir: /var/www/laravel-api
     environment:
       # PostgreSQL
       DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}

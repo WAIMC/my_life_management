@@ -21,10 +21,10 @@ class CredentialController extends Controller
      * Login admin account
      *
      * @param LoginRequest $request
-     * @return JsonResponse
+     * @return array
      * @throws AuthorizationException
      */
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request): array
     {
         return $this->credentialService->login($request);
     }
@@ -33,28 +33,23 @@ class CredentialController extends Controller
      * Refresh token admin account
      *
      * @param Request $request
-     * @return JsonResponse
+     * @return array
      * @throws AuthorizationException
      */
-    public function refreshToken(Request $request): JsonResponse
+    public function refreshToken(Request $request): array
     {
-        $refreshToken = $request->cookie('refresh_token');
-
-        return $this->credentialService->refreshToken($refreshToken);
+        return $this->credentialService->refreshToken($request);
     }
 
     /**
      * Logout admin account
      *
      * @param Request $request
-     * @return JsonResponse
+     * @return array
      * @throws AuthorizationException
      */
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request): array
     {
-        $accessToken = $request->cookie('access_token');
-        $refreshToken = $request->cookie('refresh_token');
-
-        return $this->credentialService->logout($accessToken, $refreshToken);
+        return $this->credentialService->logout($request);
     }
 }

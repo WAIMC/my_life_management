@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Redis;
 use UnexpectedValueException;
 use App\Models\Master\TokenMst;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
 
 class CredentialService
 {
@@ -26,12 +25,11 @@ class CredentialService
      * Handle login admin
      *
      * @param Request $request
-     * @return JsonResponse
+     * @return array
      * @throws AuthorizationException
      */
-    public function login(Request $request): JsonResponse
+    public function login(Request $request): array
     {
-        dd('aaa');
         $credentials = $request->only('user_name', 'password');
         $admin = AdminMst::where('user_name', $credentials['user_name'])->first();
 
@@ -50,21 +48,20 @@ class CredentialService
         }
 
         $token = $this->generateToken($admin->id);
-        $this->getAndSetPermission($admin->id, $token['access_token']);
-        $refreshCookie = $this->updateRefreshTokenInCookie($token['refresh_token']);
-        $this->updateRefreshTokenInRepo([
-            null,
-            $refreshCookie,
+        $this->storeAccessTokenAndSetPermission($admin->id, $token['access_token']);
+        $setRefreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
+        $this->storeRefreshToken([
+            $token['refresh_token'],
             $admin->id,
             $request,
         ]);
 
-        return response()->json([
-                'auth_type' => 'bearer',
-                'ttl' => CommonVal::MAX_ACCESS_TTL,
-                'access_token' => $token['access_token'],
-            ])
-            ->withCookie($refreshCookie);
+        return [
+            'auth_type' => 'bearer',
+            'ttl' => CommonVal::MAX_ACCESS_TTL,
+            'access_token' => $token['access_token'],
+            '_cookie' => $setRefreshCookie,
+        ];
     }
 
     /**
@@ -74,15 +71,12 @@ class CredentialService
      * @param string $accessToken
      * @return void
      */
-    private function getAndSetPermission(int $adminMstId, string $accessToken): void
+    private function storeAccessTokenAndSetPermission(int $adminMstId, string $accessToken): void
     {
         $parentKey = CommonVal::ADMIN_TYPE . ":{$adminMstId}";
-        $tokenKey = $parentKey . ":{$accessToken}:";
+        $tokenKey = $parentKey . ":{$accessToken}";
         Redis::hset($tokenKey, 'last_access_at', now());
         Redis::expire($tokenKey, CommonVal::MAX_ACCESS_TTL);
-
-        // Update parent key's expire time to match the tokenKey
-        Redis::expire($parentKey, Redis::ttl($tokenKey));
 
         // Check if parent Key exists in Redis hash
         $permissionTableKey = $parentKey . ":" . CommonVal::ADMIN_PERMISSION_TABLE;
@@ -107,6 +101,7 @@ class CredentialService
                 Redis::hset($permissionTableKey, $method, json_encode($paths));
             }
         }
+        Redis::expire($permissionTableKey, Redis::ttl($tokenKey));
     }
 
     /**
@@ -149,16 +144,16 @@ class CredentialService
      * @param string|null $refreshToken
      * @return string
      */
-    private function updateRefreshTokenInCookie(string|null $refreshToken): string
+    private function generateRefreshTokenForCookie(string|null $refreshToken): string
     {
-        $ttl = $refreshToken ? CommonVal::MAX_REFRESH_TTL / 60 : -1;
+        $ttl = $refreshToken ? (CommonVal::MAX_REFRESH_TTL / 60) : -1;
         $tokenValue = $refreshToken ?? null;
 
         return cookie(
             'refresh_token',
             $tokenValue,
             $ttl,
-            'api/admin/account',
+            '/api/admin/account',
             config('session.domain'),
             app()->environment('production'),
             true,
@@ -170,20 +165,30 @@ class CredentialService
     /**
      * Handle refresh token
      *
-     * @param string|null $refreshToken
-     * @return JsonResponse
+     * @param Request $request
+     * @return array
      * @throws AuthorizationException
      */
-    public function refreshToken(string|null $refreshToken): JsonResponse
+    public function refreshToken(Request $request): array
     {
+        $refreshToken = $request->cookie('refresh_token');
+
         $adminMstId = $this->revokeToken($refreshToken, true);
         $token = $this->generateToken($adminMstId);
-        $this->getAndSetPermission($adminMstId, $token['access_token']);
-        $data = $this->updateRefreshTokenInCookie($token['access_token'], $token['refresh_token']);
+        $this->storeAccessTokenAndSetPermission($adminMstId, $token['access_token']);
+        $this->storeRefreshToken([
+            $token['refresh_token'],
+            $adminMstId,
+            $request,
+        ]);
+        $refreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
 
-        return response()->json([])
-            ->withCookie($data['set_access_token_cookie'])
-            ->withCookie($data['set_refresh_token_cookie']);
+        return [
+            'auth_type' => 'bearer',
+            'ttl' => CommonVal::MAX_ACCESS_TTL,
+            'access_token' => $token['access_token'],
+            '_cookie' => $refreshCookie,
+        ];
     }
 
     /**
@@ -213,18 +218,25 @@ class CredentialService
             throw new UnexpectedValueException(Messages::E0608);
         }
 
-        /**
-         * Check token had exited in black list
-         */
-        $tokenKeyType = ($isRefresh ? CommonVal::BLACKLIST_REFRESH_TOKEN : CommonVal::BLACKLIST_ACCESS_TOKEN);
-        $key = $tokenKeyType . ':' . $token;
-        if (Redis::hget($key, 'id')) {
-            throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
-        }
+        // Revoke token
+        if ($isRefresh) {
+            // Delete refresh token in repo using deterministic hash
+            $tokenId = md5($token);
+            $refreshTokenData = TokenMst::where('token_hash', $tokenId)
+                ->where('account_id', $credentials['id'])
+                ->first();
 
-        // Add token to black list
-        Redis::hset($key, 'id', $credentials['id']);
-        Redis::expireat($key, $credentials['exp']);
+            if (!$refreshTokenData) {
+                throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+            }
+
+            $refreshTokenData->delete();
+        } else {
+            // Delete access token in redis
+            $parentKey = CommonVal::ADMIN_TYPE . ":{$credentials['id']}";
+            $tokenKey = $parentKey . ":{$token}";
+            Redis::del($tokenKey);
+        }
 
         return $credentials['id'];
     }
@@ -232,25 +244,25 @@ class CredentialService
     /**
      * Logout admin account
      *
-     * @param string|null $accessToken
-     * @param string|null $refreshToken
-     * @return JsonResponse
+     * @param Request $request
+     * @return array
      * @throws AuthorizationException
      */
-    public function logout(string|null $accessToken, string|null $refreshToken): JsonResponse
+    public function logout(Request $request): array
     {
+        $accessToken = $request->bearerToken();
+        $refreshToken = $request->cookie('refresh_token');
+
         $this->revokeToken($accessToken, false);
         $this->revokeToken($refreshToken, true);
+        $setRefreshCookie = $this->generateRefreshTokenForCookie(null);
 
-        // Delete permission cache if exist
-        $key = CommonVal::ADMIN_PERMISSION_TABLE . ":{$accessToken}";
-        Redis::del($key);
-
-        $data = $this->updateRefreshTokenInCookie(null, null);
-
-        return response()->json([])
-            ->withCookie($data['set_access_token_cookie'])
-            ->withCookie($data['set_refresh_token_cookie']);
+        return [
+            'auth_type' => 'bearer',
+            'ttl' => CommonVal::MAX_ACCESS_TTL,
+            'access_token' => null,
+            '_cookie' => $setRefreshCookie,
+        ];
     }
 
     /**
@@ -259,18 +271,16 @@ class CredentialService
      * @param mixed $payload
      * @return void
      */
-    private function updateRefreshTokenInRepo($payload):void
+    private function storeRefreshToken($payload):void
     {
-        [$refreshTokenOld, $refreshTokenNew, $accountId, $request] = $payload;
+        [$refreshToken, $accountId, $request] = $payload;
 
-        if ($refreshTokenOld) {
-            $hashedToken = Hash::make($refreshTokenOld);
-            TokenMst::where('token_hash', $hashedToken)->delete();
-        }
-
-        if ($refreshTokenNew) {
+        if ($refreshToken) {
+            // Generate a unique identifier for the token
+            $tokenId = md5($refreshToken);
+            
             TokenMst::create([
-                'token_hash' => Hash::make($refreshTokenNew),
+                'token_hash' => $tokenId, // Store deterministic hash instead of random hash
                 'account_id'=> $accountId,
                 'device_name' => $request->header('User-Agent'),
                 'ip_address' => $request->ip(),

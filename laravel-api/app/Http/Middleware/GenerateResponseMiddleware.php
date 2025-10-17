@@ -38,19 +38,19 @@ class GenerateResponseMiddleware
             return $response;
         }
 
-        // Keep cookie + header original
-        $cookies = $response->headers->getCookies();
-        $headers = $response->headers->all();
-
         // Process different response types
         $responseApi = $this->processResponse($response, $request, $statusCode);
 
-        foreach ($cookies as $cookie) {
+        foreach ($response->headers->getCookies() as $cookie) {
             $responseApi->headers->setCookie($cookie);
         }
-        foreach ($headers as $key => $values) {
-            foreach ($values as $v) {
-                $responseApi->headers->set($key, $v, false);
+
+        // Copy non-cookie headers
+        foreach ($response->headers->all() as $key => $values) {
+            if (strtolower($key) !== 'set-cookie') {
+                foreach ($values as $v) {
+                    $responseApi->headers->set($key, $v, false);
+                }
             }
         }
 
@@ -67,40 +67,32 @@ class GenerateResponseMiddleware
      */
     private function processResponse(mixed $response, Request $request, int $statusCode): JsonResponse
     {
-        // Handle JsonResource responses (Laravel API Resources)
-        if ($response instanceof JsonResource) {
-            return self::successResponse($response->resolve($request), $statusCode);
+        if ($response instanceof JsonResource) { // Handle JsonResource responses (Laravel API Resources)
+            $response = $response->resolve($request);
+        } else if ($response instanceof JsonResponse) { // Handle existing JsonResponse objects
+            // We only extract the data, not cookies or headers
+            $response = $response->getData(true);
+        } else if (method_exists($response, 'getContent')) { // Handle responses with getContent method (like regular Response objects)
+            // Try to decode content as JSON
+            $decoded = json_decode($response->getContent(), true);
+
+            // Return decoded content if it's valid JSON, otherwise return as is
+            $response = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $response->getContent();
         }
 
-        // Handle existing JsonResponse objects
-        if ($response instanceof JsonResponse) {
-            return self::successResponse($response->getData(true), $statusCode);
+        // Check if '_cookie' key exists in the response array
+        $cookie = null;
+        if (is_array($response) && array_key_exists('_cookie', $response)) {
+            $cookie = $response['_cookie'];
+            unset($response['_cookie']);
         }
 
-        // Handle responses with getContent method (like regular Response objects)
-        if (method_exists($response, 'getContent')) {
-            return $this->processContentResponse($response->getContent(), $statusCode);
+        $responseApi = self::successResponse($response, $statusCode);
+
+        if ($cookie) {
+            $responseApi->headers->set('Set-Cookie', $cookie, false);
         }
 
-        // Handle any other response type
-        return self::successResponse($response, $statusCode);
-    }
-
-    /**
-     * Process response content, attempt to decode JSON.
-     *
-     * @param mixed $content
-     * @param int $statusCode
-     * @return JsonResponse
-     */
-    private function processContentResponse(mixed $content, int $statusCode): JsonResponse
-    {
-        // Try to decode content as JSON
-        $decoded = json_decode($content, true);
-
-        // Return decoded content if it's valid JSON, otherwise return as is
-        $data = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $content;
-
-        return self::successResponse($data, $statusCode);
+        return $responseApi;
     }
 }

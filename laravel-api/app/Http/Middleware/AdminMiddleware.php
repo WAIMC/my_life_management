@@ -25,14 +25,14 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken();
+        $accessToken = $request->bearerToken();
 
         // Check existing access token
-        if (!$token) {
+        if (!$accessToken) {
             throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
         }
 
-        $payload = JsonWebToken::decode($token, env('ACCESS_TOKEN_SECRET'));
+        $payload = JsonWebToken::decode($accessToken, env('ACCESS_TOKEN_SECRET'));
         $credentials = $payload['body'];
         // Check request from member type admin
         if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
@@ -43,8 +43,8 @@ class AdminMiddleware
          * Check access token had exited
          */
         $parentKey = CommonVal::ADMIN_TYPE . ":{$credentials['id']}";
-        $tokenKey = $parentKey . ":{$token}:";
-        if (!Redis::exists($tokenKey, 'id')) {
+        $tokenKey = $parentKey . ":{$accessToken}";
+        if (!Redis::exists($tokenKey)) {
             throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
         }
 
