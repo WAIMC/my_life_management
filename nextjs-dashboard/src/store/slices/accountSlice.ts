@@ -23,6 +23,8 @@ const accountSlice = createSlice({
   reducers: {
     // Fetch Account
     fetchAccountRequest: (state, action: PayloadAction<FetchAccountPayload>) => {
+      // mark action as used to satisfy linting while keeping payload typed
+      void action;
       state.loading = true;
       state.error = null;
     },
@@ -38,6 +40,7 @@ const accountSlice = createSlice({
 
     // Fetch Accounts List
     fetchAccountsRequest: (state, action: PayloadAction<FetchAccountsPayload>) => {
+      void action;
       state.loading = true;
       state.error = null;
     },
@@ -53,6 +56,7 @@ const accountSlice = createSlice({
 
     // Create Account
     createAccountRequest: (state, action: PayloadAction<CreateAccountPayload>) => {
+      void action;
       state.loading = true;
       state.error = null;
       state.success = false;
@@ -71,6 +75,7 @@ const accountSlice = createSlice({
 
     // Update Account
     updateAccountRequest: (state, action: PayloadAction<UpdateAccountPayload>) => {
+      void action;
       state.loading = true;
       state.error = null;
       state.success = false;
@@ -95,6 +100,7 @@ const accountSlice = createSlice({
 
     // Delete Account
     deleteAccountRequest: (state, action: PayloadAction<DeleteAccountPayload>) => {
+      void action;
       state.loading = true;
       state.error = null;
       state.success = false;
@@ -120,6 +126,14 @@ const accountSlice = createSlice({
       state.success = false;
       state.loading = false;
     },
+    // Logout/Clear account
+    logout: (state) => {
+      state.accounts = [];
+      state.currentAccount = null;
+      state.loading = false;
+      state.error = null;
+      state.success = false;
+    },
   },
 });
 
@@ -140,6 +154,7 @@ export const {
   deleteAccountSuccess,
   deleteAccountFailure,
   resetAccountState,
+  logout,
 } = accountSlice.actions;
 
 export default accountSlice.reducer;

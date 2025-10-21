@@ -54,8 +54,9 @@ export default function LoginExample() {
         const errors = getErrorMessages(response);
         setError(errors.join(', '));
       }
-    } catch (err: any) {
-      setError(err.message || MESSAGES.ERROR.DEFAULT);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : MESSAGES.ERROR.DEFAULT;
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -66,8 +67,9 @@ export default function LoginExample() {
       await logoutApi();
       alert(MESSAGES.SUCCESS.LOGOUT);
       window.location.href = '/login';
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      alert(message);
     }
   };
 

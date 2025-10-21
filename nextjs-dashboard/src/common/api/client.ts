@@ -10,9 +10,8 @@ import {
   CONTENT_TYPES,
   AUTH_TYPES,
 } from '../constants';
-import { getAccessToken, setAccessToken, clearTokens, isTokenExpired } from '../utils/token';
-import { encodeQueryString } from '../utils/encode';
-import type { ApiResponse, ApiRequestConfig, HttpMethod } from '../types/api.types';
+import { getAccessToken, clearTokens, isTokenExpired, setVolatileAccessToken } from '../utils/token';
+import type { ApiResponse, ApiRequestConfig } from '../types/api.types';
 
 /**
  * Create Axios Instance
@@ -69,7 +68,9 @@ const createApiClient = (): AxiosInstance => {
       return response;
     },
     async (error: AxiosError) => {
-      const originalRequest: any = error.config;
+      const originalRequest = (error && error.config)
+        ? (error.config as AxiosRequestConfig & { _retry?: boolean })
+        : undefined;
 
       // Log error in development
       if (process.env.NODE_ENV === 'development') {
@@ -82,16 +83,22 @@ const createApiClient = (): AxiosInstance => {
       }
 
       // Handle 401 Unauthorized - Token expired
-      if (error.response?.status === HTTP_STATUS.UNAUTHORIZED && !originalRequest._retry) {
+      if (error.response?.status === HTTP_STATUS.UNAUTHORIZED && originalRequest) {
+        if (originalRequest._retry) {
+          return Promise.reject(error);
+        }
         originalRequest._retry = true;
 
         try {
           // Try to refresh token
           const newToken = await refreshAccessToken();
           if (newToken) {
-            setAccessToken(newToken);
-            originalRequest.headers[REQUEST_HEADERS.AUTHORIZATION] = `${AUTH_TYPES.BEARER} ${newToken}`;
-            return instance(originalRequest);
+            setVolatileAccessToken(newToken);
+
+            if (originalRequest.headers) {
+              originalRequest.headers[REQUEST_HEADERS.AUTHORIZATION] = `${AUTH_TYPES.BEARER} ${newToken}`;
+            }
+            return instance(originalRequest as AxiosRequestConfig);
           }
         } catch (refreshError) {
           // Refresh failed, logout user
@@ -129,10 +136,11 @@ const refreshAccessToken = async (): Promise<string | null> => {
       }
     );
 
-    const { data } = response.data as ApiResponse;
-    return data.access_token || null;
-  } catch (error) {
-    console.error('Failed to refresh token:', error);
+  const apiResp = response.data as ApiResponse<Record<string, unknown>>;
+  const data = apiResp.data as { access_token?: string } | undefined;
+  return data?.access_token || null;
+  } catch (err: unknown) {
+    console.error('Failed to refresh token:', err);
     return null;
   }
 };
@@ -140,7 +148,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
 /**
  * Generic API Request Handler
  */
-export const apiRequest = async <T = any>(
+export const apiRequest = async <T = unknown>(
   url: string,
   config: ApiRequestConfig = {}
 ): Promise<ApiResponse<T>> => {
@@ -160,7 +168,7 @@ export const apiRequest = async <T = any>(
       if (token && isTokenExpired(token)) {
         const newToken = await refreshAccessToken();
         if (newToken) {
-          setAccessToken(newToken);
+          setVolatileAccessToken(newToken);
         } else {
           throw new Error('Token expired and refresh failed');
         }
@@ -186,9 +194,9 @@ export const apiRequest = async <T = any>(
 /**
  * GET Request
  */
-export const apiGet = <T = any>(
+export const apiGet = <T = unknown>(
   url: string,
-  params?: Record<string, any>,
+  params?: Record<string, unknown>,
   config?: Omit<ApiRequestConfig, 'method' | 'params'>
 ): Promise<ApiResponse<T>> => {
   return apiRequest<T>(url, { ...config, method: 'GET', params });
@@ -197,9 +205,9 @@ export const apiGet = <T = any>(
 /**
  * POST Request
  */
-export const apiPost = <T = any>(
+export const apiPost = <T = unknown>(
   url: string,
-  data?: any,
+  data?: unknown,
   config?: Omit<ApiRequestConfig, 'method' | 'data'>
 ): Promise<ApiResponse<T>> => {
   return apiRequest<T>(url, { ...config, method: 'POST', data });
@@ -208,9 +216,9 @@ export const apiPost = <T = any>(
 /**
  * PUT Request
  */
-export const apiPut = <T = any>(
+export const apiPut = <T = unknown>(
   url: string,
-  data?: any,
+  data?: unknown,
   config?: Omit<ApiRequestConfig, 'method' | 'data'>
 ): Promise<ApiResponse<T>> => {
   return apiRequest<T>(url, { ...config, method: 'PUT', data });
@@ -219,9 +227,9 @@ export const apiPut = <T = any>(
 /**
  * PATCH Request
  */
-export const apiPatch = <T = any>(
+export const apiPatch = <T = unknown>(
   url: string,
-  data?: any,
+  data?: unknown,
   config?: Omit<ApiRequestConfig, 'method' | 'data'>
 ): Promise<ApiResponse<T>> => {
   return apiRequest<T>(url, { ...config, method: 'PATCH', data });
@@ -230,7 +238,7 @@ export const apiPatch = <T = any>(
 /**
  * DELETE Request
  */
-export const apiDelete = <T = any>(
+export const apiDelete = <T = unknown>(
   url: string,
   config?: Omit<ApiRequestConfig, 'method'>
 ): Promise<ApiResponse<T>> => {
@@ -240,9 +248,9 @@ export const apiDelete = <T = any>(
 /**
  * Handle API Errors
  */
-export const handleApiError = (error: any): Error => {
+export const handleApiError = (error: unknown): Error => {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<ApiResponse>;
+    const axiosError = error as AxiosError<ApiResponse<unknown>>;
 
     // Network error
     if (!axiosError.response) {

@@ -9,7 +9,6 @@ import {
 } from '@/common/api/account.api';
 import { isApiSuccess, getErrorMessages } from '@/common/api/client';
 import type {
-  Account,
   FetchAccountPayload,
   FetchAccountsPayload,
   CreateAccountPayload,
@@ -48,8 +47,9 @@ function* handleFetchAccount(action: PayloadAction<FetchAccountPayload>) {
       const errors = getErrorMessages(response);
       yield put(fetchAccountFailure(errors.join(', ')));
     }
-  } catch (error: any) {
-    yield put(fetchAccountFailure(error.message || 'Failed to fetch account'));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch account';
+    yield put(fetchAccountFailure(message));
   }
 }
 
@@ -66,8 +66,9 @@ function* handleFetchAccounts(action: PayloadAction<FetchAccountsPayload>) {
       const errors = getErrorMessages(response);
       yield put(fetchAccountsFailure(errors.join(', ')));
     }
-  } catch (error: any) {
-    yield put(fetchAccountsFailure(error.message || 'Failed to fetch accounts'));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch accounts';
+    yield put(fetchAccountsFailure(message));
   }
 }
 
@@ -84,8 +85,9 @@ function* handleCreateAccount(action: PayloadAction<CreateAccountPayload>) {
       const errors = getErrorMessages(response);
       yield put(createAccountFailure(errors.join(', ')));
     }
-  } catch (error: any) {
-    yield put(createAccountFailure(error.message || 'Failed to create account'));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to create account';
+    yield put(createAccountFailure(message));
   }
 }
 
@@ -104,8 +106,9 @@ function* handleUpdateAccount(action: PayloadAction<UpdateAccountPayload>) {
       const errors = getErrorMessages(response);
       yield put(updateAccountFailure(errors.join(', ')));
     }
-  } catch (error: any) {
-    yield put(updateAccountFailure(error.message || 'Failed to update account'));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update account';
+    yield put(updateAccountFailure(message));
   }
 }
 
@@ -122,8 +125,9 @@ function* handleDeleteAccount(action: PayloadAction<DeleteAccountPayload>) {
       const errors = getErrorMessages(response);
       yield put(deleteAccountFailure(errors.join(', ')));
     }
-  } catch (error: any) {
-    yield put(deleteAccountFailure(error.message || 'Failed to delete account'));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to delete account';
+    yield put(deleteAccountFailure(message));
   }
 }
 

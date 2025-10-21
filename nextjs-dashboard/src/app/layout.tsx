@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "../store/Provider";
+import ThemeProvider from "@/components/layout/ThemeProvider";
+import MasterLayout from "@/components/layout/MasterLayout";
+import ToastProvider from "@/components/ui/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,11 +27,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ReduxProvider>{children}</ReduxProvider>
+  // Do not set theme-related attributes on the server-rendered <html> element.
+  // The `next-themes` provider injects a script that updates `document.documentElement`
+  // at runtime (based on localStorage or system preference). That script may
+  // mutate the `<html>` attributes before React hydrates which causes React to
+  // log a hydration mismatch warning. We add `suppressHydrationWarning` here to
+  // avoid that noisy warning for the root element.
+  <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ReduxProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <MasterLayout>{children}</MasterLayout>
+            </ToastProvider>
+          </ThemeProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

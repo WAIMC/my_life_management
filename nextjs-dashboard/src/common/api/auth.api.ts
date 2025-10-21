@@ -2,9 +2,9 @@
  * Auth API Services
  */
 
-import { apiPost, apiGet } from './client';
+import { apiPost } from './client';
 import { apiPaths } from './paths';
-import { setAccessToken, setRefreshToken, clearTokens } from '../utils/token';
+import { setVolatileAccessToken, clearTokens, setRefreshToken } from '../utils/token';
 import type { ApiResponse, AuthTokenResponse } from '../types/api.types';
 
 export interface LoginCredentials {
@@ -42,7 +42,10 @@ export const loginApi = async (credentials: LoginCredentials): Promise<ApiRespon
 
   // Save tokens if login successful
   if (!response.error.status && response.data.access_token) {
-    setAccessToken(response.data.access_token);
+    setVolatileAccessToken(response.data.access_token);
+    if (response.data.refresh_token) {
+      setRefreshToken(response.data.refresh_token);
+    }
   }
 
   return response;
@@ -56,9 +59,9 @@ export const logoutApi = async (): Promise<ApiResponse<null>> => {
     const response = await apiPost<null>(apiPaths.auth.logout());
     clearTokens();
     return response;
-  } catch (error) {
+  } catch (err: unknown) {
     clearTokens();
-    throw error;
+    throw err instanceof Error ? err : new Error('Logout failed');
   }
 };
 
@@ -70,7 +73,10 @@ export const refreshTokenApi = async (): Promise<ApiResponse<AuthTokenResponse>>
 
   // Update access token
   if (!response.error.status && response.data.access_token) {
-    setAccessToken(response.data.access_token);
+    setVolatileAccessToken(response.data.access_token);
+    if (response.data.refresh_token) {
+      setRefreshToken(response.data.refresh_token);
+    }
   }
 
   return response;
@@ -79,27 +85,27 @@ export const refreshTokenApi = async (): Promise<ApiResponse<AuthTokenResponse>>
 /**
  * Register
  */
-export const registerApi = async (data: RegisterData): Promise<ApiResponse<any>> => {
+export const registerApi = async (data: RegisterData): Promise<ApiResponse<unknown>> => {
   return apiPost(apiPaths.auth.register(), data, { requireAuth: false });
 };
 
 /**
  * Verify Email
  */
-export const verifyEmailApi = async (token: string): Promise<ApiResponse<any>> => {
+export const verifyEmailApi = async (token: string): Promise<ApiResponse<unknown>> => {
   return apiPost(apiPaths.auth.verifyEmail(), { token }, { requireAuth: false });
 };
 
 /**
  * Forgot Password
  */
-export const forgotPasswordApi = async (email: string): Promise<ApiResponse<any>> => {
+export const forgotPasswordApi = async (email: string): Promise<ApiResponse<unknown>> => {
   return apiPost(apiPaths.auth.forgotPassword(), { email }, { requireAuth: false });
 };
 
 /**
  * Reset Password
  */
-export const resetPasswordApi = async (data: ResetPasswordData): Promise<ApiResponse<any>> => {
+export const resetPasswordApi = async (data: ResetPasswordData): Promise<ApiResponse<unknown>> => {
   return apiPost(apiPaths.auth.resetPassword(), data, { requireAuth: false });
 };

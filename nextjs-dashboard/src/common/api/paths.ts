@@ -6,16 +6,26 @@ import { API_ENDPOINTS } from '../constants';
 import { encodeQueryString } from '../utils/encode';
 
 /**
- * Build full API URL
+ * Normalize a path segment (trim trailing/leading slashes)
  */
-export const buildApiUrl = (path: string, params?: Record<string, any>): string => {
-  let url = path.startsWith('/') ? path : `/${path}`;
-  
+const trimSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+
+/**
+ * Build full API URL relative to the API base path. If `path` is already an absolute URL, it is returned as-is (with query params appended).
+ */
+export const buildApiUrl = (path: string, params?: Record<string, unknown>): string => {
+  const hasScheme = /^https?:\/\//i.test(path);
+
+  let url = path;
+  if (!hasScheme) {
+    url = `/${trimSlashes(path)}`;
+  }
+
   if (params && Object.keys(params).length > 0) {
     const queryString = encodeQueryString(params);
-    url += `?${queryString}`;
+    url += (url.includes('?') ? '&' : '?') + queryString;
   }
-  
+
   return url;
 };
 
@@ -36,7 +46,7 @@ export const apiPaths = {
 
   // Users
   users: {
-    list: (params?: Record<string, any>) => buildApiUrl(API_ENDPOINTS.USERS.LIST, params),
+  list: (params?: Record<string, unknown>) => buildApiUrl(API_ENDPOINTS.USERS.LIST, params),
     detail: (id: number | string) => API_ENDPOINTS.USERS.DETAIL(id),
     create: () => API_ENDPOINTS.USERS.CREATE,
     update: (id: number | string) => API_ENDPOINTS.USERS.UPDATE(id),
@@ -46,7 +56,7 @@ export const apiPaths = {
 
   // Accounts
   accounts: {
-    list: (params?: Record<string, any>) => buildApiUrl(API_ENDPOINTS.ACCOUNTS.LIST, params),
+  list: (params?: Record<string, unknown>) => buildApiUrl(API_ENDPOINTS.ACCOUNTS.LIST, params),
     detail: (id: number | string) => API_ENDPOINTS.ACCOUNTS.DETAIL(id),
     create: () => API_ENDPOINTS.ACCOUNTS.CREATE,
     update: (id: number | string) => API_ENDPOINTS.ACCOUNTS.UPDATE(id),
@@ -60,6 +70,6 @@ export const apiPaths = {
 export const queryParams = {
   pagination: (page: number = 1, limit: number = 10) => ({ page, limit }),
   search: (query: string) => ({ search: query }),
-  filter: (filters: Record<string, any>) => filters,
+  filter: (filters: Record<string, unknown>) => filters,
   sort: (field: string, order: 'asc' | 'desc' = 'asc') => ({ sort: field, order }),
 };

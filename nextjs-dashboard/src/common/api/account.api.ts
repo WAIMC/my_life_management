@@ -3,7 +3,7 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from '@/common/api/client';
-import { apiPaths, queryParams } from '@/common/api/paths';
+import { apiPaths } from '@/common/api/paths';
 import type { ApiResponse } from '@/common/types/api.types';
 import type { Account } from '@/store/types/accountTypes';
 

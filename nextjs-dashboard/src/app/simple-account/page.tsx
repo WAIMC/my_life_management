@@ -13,10 +13,8 @@ export default function SimpleAccountExample() {
     error,
     success,
     fetchAccounts,
-    createAccount,
-    updateAccount,
-    deleteAccount,
-    resetState,
+  createAccount,
+  resetState,
   } = useAccount();
 
   // Fetch accounts on mount
