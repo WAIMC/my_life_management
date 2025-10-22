@@ -30,8 +30,8 @@ class UpdateOriginalTranslatorMstHistRequest extends FormRequest
         return [
             'id' => ['required', 'integer', 'min:1', Rule::exists(OriginalTranslatorMstHist::class, 'id')],
             'original_translator_mst_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER, Rule::exists(OriginalTranslatorMst::class, 'id'),],
-            '"table"' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
-            '"column"' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
+            'table' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
+            'column' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
             'field_id' => ['integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'action' => ['required',],
             'author_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
@@ -42,8 +42,8 @@ class UpdateOriginalTranslatorMstHistRequest extends FormRequest
     {
         return [
             'original_translator_mst_id' => __('messages.original_translator_mst_id'),
-            '"table"' => __('messages."table"'),
-            '"column"' => __('messages."column"'),
+            'table' => __('messages.table'),
+            'column' => __('messages.column'),
             'field_id' => __('messages.field_id'),
             'action' => __('messages.action'),
             'author_id' => __('messages.author_id'),

@@ -27,8 +27,8 @@ class ListOriginalTranslatorMstRequest extends FormRequest
     public function rules(): array
     {
         return [
-            '"table"' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
-            '"column"' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
+            'table' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
+            'column' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
             'field_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'is_delete' => ['nullable', new Enum(IsDelete::class),],
             'from_date' => [
@@ -50,8 +50,8 @@ class ListOriginalTranslatorMstRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            '"table"' => __('messages."table"'),
-            '"column"' => __('messages."column"'),
+            'table' => __('messages.table'),
+            'column' => __('messages.column'),
             'field_id' => __('messages.field_id'),
             'is_delete' => __('messages.is_delete'),
             'from_date' => __('messages.from_date'),

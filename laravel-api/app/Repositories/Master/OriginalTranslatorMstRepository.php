@@ -31,18 +31,18 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
         $query = $this->model->query()
             ->select([
                 'id',
-                '"table"',
-                '"column"',
+                'table',
+                'column',
                 'field_id',
                 'updated_at',
             ]);
 
-        if (isset($payload['"table"'])) {
-            $query->where('"table"', 'like', '%' . $payload['"table"'] . '%');
+        if (isset($payload['table'])) {
+            $query->where('table', 'like', '%' . $payload['table'] . '%');
         }
 
-        if (isset($payload['"column"'])) {
-            $query->where('"column"', 'like', '%' . $payload['"column"'] . '%');
+        if (isset($payload['column'])) {
+            $query->where('column', 'like', '%' . $payload['column'] . '%');
         }
 
         if (isset($payload['field_id'])) {
@@ -72,8 +72,8 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
      */
     public function executeStore(array $payload): int
     {
-        $data['"table"'] = $payload['"table"'] ?? null;
-        $data['"column"'] = $payload['"column"'] ?? null;
+        $data['table'] = $payload['table'] ?? null;
+        $data['column'] = $payload['column'] ?? null;
         $data['field_id'] = $payload['field_id'] ?? null;
         $data['is_delete'] = $payload['is_delete'] ?? null;
         $this->model->create($data);
@@ -91,8 +91,8 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
     public function executeUpdate(array $payload): int
     {
         $record = $this->model->find($payload['id']);
-        $record['"table"'] = $payload['"table"'] ?? null;
-        $record['"column"'] = $payload['"column"'] ?? null;
+        $record['table'] = $payload['table'] ?? null;
+        $record['column'] = $payload['column'] ?? null;
         $record['field_id'] = $payload['field_id'] ?? null;
         $record['is_delete'] = $payload['is_delete'] ?? null;
         $record->save();

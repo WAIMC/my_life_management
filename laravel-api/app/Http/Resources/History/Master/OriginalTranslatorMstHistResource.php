@@ -18,8 +18,8 @@ class OriginalTranslatorMstHistResource extends JsonResource
         return [
             'id' => (int)$this->id,
             'original_translator_mst_id' => (int)$this->original_translator_mst_id,
-            '"table"' => (string)$this->"table",
-            '"column"' => (string)$this->"column",
+            'table' => (string)$this->table,
+            'column' => (string)$this->column,
             'field_id' => (int)$this->field_id,
             'action' => (string)$this->action,
             'author_id' => (int)$this->author_id,

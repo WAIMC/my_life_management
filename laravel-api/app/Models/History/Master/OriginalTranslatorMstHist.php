@@ -15,8 +15,8 @@ class OriginalTranslatorMstHist extends Model
      */
     protected $fillable = [
         'original_translator_mst_id',
-        '"table"',
-        '"column"',
+        'table',
+        'column',
         'field_id',
         'action',
         'author_id',
@@ -30,8 +30,8 @@ class OriginalTranslatorMstHist extends Model
     protected $casts = [
         'id' => 'integer',
         'original_translator_mst_id' => 'integer',
-        '"table"' => 'string',
-        '"column"' => 'string',
+        'table' => 'string',
+        'column' => 'string',
         'field_id' => 'integer',
         'action' => 'integer',
         'author_id' => 'integer',

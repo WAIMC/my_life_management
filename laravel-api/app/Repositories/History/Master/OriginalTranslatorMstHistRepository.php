@@ -32,8 +32,8 @@ class OriginalTranslatorMstHistRepository extends BaseRepository implements Orig
             ->select([
                 'id',
                 'original_translator_mst_id',
-                '"table"',
-                '"column"',
+                'table',
+                'column',
                 'field_id',
                 'action',
                 'author_id',
@@ -43,12 +43,12 @@ class OriginalTranslatorMstHistRepository extends BaseRepository implements Orig
             $query->where('original_translator_mst_id', $payload['original_translator_mst_id']);
         }
 
-        if (isset($payload['"table"'])) {
-            $query->where('"table"', 'like', '%' . $payload['"table"'] . '%');
+        if (isset($payload['table'])) {
+            $query->where('table', 'like', '%' . $payload['table'] . '%');
         }
 
-        if (isset($payload['"column"'])) {
-            $query->where('"column"', 'like', '%' . $payload['"column"'] . '%');
+        if (isset($payload['column'])) {
+            $query->where('column', 'like', '%' . $payload['column'] . '%');
         }
 
         if (isset($payload['field_id'])) {
@@ -87,8 +87,8 @@ class OriginalTranslatorMstHistRepository extends BaseRepository implements Orig
     public function executeStore(array $payload): int
     {
         $data['original_translator_mst_id'] = $payload['original_translator_mst_id'] ?? null;
-        $data['"table"'] = $payload['"table"'] ?? null;
-        $data['"column"'] = $payload['"column"'] ?? null;
+        $data['table'] = $payload['table'] ?? null;
+        $data['column'] = $payload['column'] ?? null;
         $data['field_id'] = $payload['field_id'] ?? null;
         $data['action'] = $payload['action'] ?? null;
         $data['author_id'] = $payload['author_id'] ?? null;
@@ -108,8 +108,8 @@ class OriginalTranslatorMstHistRepository extends BaseRepository implements Orig
     {
         $record = $this->model->find($payload['id']);
         $record['original_translator_mst_id'] = $payload['original_translator_mst_id'] ?? null;
-        $record['"table"'] = $payload['"table"'] ?? null;
-        $record['"column"'] = $payload['"column"'] ?? null;
+        $record['table'] = $payload['table'] ?? null;
+        $record['column'] = $payload['column'] ?? null;
         $record['field_id'] = $payload['field_id'] ?? null;
         $record['action'] = $payload['action'] ?? null;
         $record['author_id'] = $payload['author_id'] ?? null;

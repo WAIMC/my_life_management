@@ -29,8 +29,8 @@ class ListOriginalTranslatorMstHistRequest extends FormRequest
     {
         return [
             'original_translator_mst_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
-            '"table"' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
-            '"column"' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
+            'table' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
+            'column' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:64',],
             'field_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'action' => ['nullable',],
             'author_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
@@ -54,8 +54,8 @@ class ListOriginalTranslatorMstHistRequest extends FormRequest
     {
         return [
             'original_translator_mst_id' => __('messages.original_translator_mst_id'),
-            '"table"' => __('messages."table"'),
-            '"column"' => __('messages."column"'),
+            'table' => __('messages.table'),
+            'column' => __('messages.column'),
             'field_id' => __('messages.field_id'),
             'action' => __('messages.action'),
             'author_id' => __('messages.author_id'),

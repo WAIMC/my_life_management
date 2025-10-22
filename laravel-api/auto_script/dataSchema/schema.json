@@ -2124,7 +2124,7 @@
                 "check": null
             },
             {
-                "name": "\"table\"",
+                "name": "table",
                 "type": "character varying",
                 "size": 64,
                 "references": null,
@@ -2134,7 +2134,7 @@
                 "check": null
             },
             {
-                "name": "\"column\"",
+                "name": "column",
                 "type": "character varying",
                 "size": 64,
                 "references": null,
@@ -2218,7 +2218,7 @@
                 "check": null
             },
             {
-                "name": "\"table\"",
+                "name": "table",
                 "type": "character varying",
                 "size": 64,
                 "references": null,
@@ -2228,7 +2228,7 @@
                 "check": null
             },
             {
-                "name": "\"column\"",
+                "name": "column",
                 "type": "character varying",
                 "size": 64,
                 "references": null,

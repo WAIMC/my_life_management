@@ -14,8 +14,8 @@ class OriginalTranslatorMst extends Model
      * @var string[]
      */
     protected $fillable = [
-        '"table"',
-        '"column"',
+        'table',
+        'column',
         'field_id',
         'is_delete',
     ];
@@ -27,8 +27,8 @@ class OriginalTranslatorMst extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        '"table"' => 'string',
-        '"column"' => 'string',
+        'table' => 'string',
+        'column' => 'string',
         'field_id' => 'integer',
         'is_delete' => 'boolean',
         'created_at' => 'datetime',

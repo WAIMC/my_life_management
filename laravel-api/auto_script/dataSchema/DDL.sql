@@ -224,8 +224,8 @@ CREATE TABLE language_mst_hist (
 );
 CREATE TABLE original_translator_mst (
     id integer NOT NULL,
-    "table" character varying(64) NOT NULL,
-    "column" character varying(64) NOT NULL,
+    table character varying(64) NOT NULL,
+    column character varying(64) NOT NULL,
     field_id integer NOT NULL,
     is_delete boolean DEFAULT false NOT NULL,
     created_at timestamp(0) without time zone,
@@ -234,8 +234,8 @@ CREATE TABLE original_translator_mst (
 CREATE TABLE original_translator_mst_hist (
     id integer NOT NULL,
     original_translator_mst_id integer NOT NULL,
-    "table" character varying(64),
-    "column" character varying(64),
+    table character varying(64),
+    column character varying(64),
     field_id integer,
     action smallint NOT NULL,
     author_id integer NOT NULL,

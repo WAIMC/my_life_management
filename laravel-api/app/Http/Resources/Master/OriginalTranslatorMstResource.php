@@ -17,8 +17,8 @@ class OriginalTranslatorMstResource extends JsonResource
     {
         return [
             'id' => (int)$this->id,
-            '"table"' => (string)$this->"table",
-            '"column"' => (string)$this->"column",
+            'table' => (string)$this->table,
+            'column' => (string)$this->column,
             'field_id' => (int)$this->field_id,
             'is_delete' => (bool)$this->is_delete,
             'updated_at' => (string)date(CommonVal::DATE_FORMAT, strtotime($this->updated_at)),
