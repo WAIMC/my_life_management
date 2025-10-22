@@ -16,7 +16,9 @@ RUN apk add --no-cache \
     py3-pip \
     sudo \
     jq \
-    curl-dev \
+    curl \
+    git \
+    file \
     libxml2-dev \
     openssl-dev \
     && docker-php-ext-install pdo_pgsql \
