@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "gen:api:types": "openapi-typescript public/api/openapi.yaml --output src/lib/api-types.ts"
+    "gen:api:types": "openapi-typescript public/api/openapi.yaml --output src/lib/api-types.ts",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -15,6 +16,8 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
+  "@radix-ui/react-context-menu": "^1.0.0",
+  "formidable": "^3.5.2",
     "@reduxjs/toolkit": "^2.9.1",
     "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
@@ -31,6 +34,10 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^14.0.0",
+    "jsdom": "^22.1.0",
+    "vitest": "^1.2.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.22",

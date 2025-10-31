@@ -2770,8 +2770,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 
 export interface components {
-  schemas: {
-  };
+  schemas: Record<string, never>;
   responses: never;
   parameters: never;
   requestBodies: never;

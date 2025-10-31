@@ -9,13 +9,31 @@ tôi có 2 source laravel-api và nextjs-dashboard, tôi muốn đồng bộ rou
 
 	- Cài Đặt Dependencies
 	+ Asyn await
+	Note: dự án dùng pnpm (xem `pnpm-lock.yaml`). Thay vì `npm`, dùng `pnpm` để cài và chạy scripts.
+
 	```
-	npm i @reduxjs/toolkit react-redux redux-saga axios lucide-react next-themes
-	npm i -D @types/node
+	pnpm add @reduxjs/toolkit react-redux redux-saga axios lucide-react next-themes
+	pnpm add -D @types/node
 	```
 
 	- Shadcn UI: Chạy ```npx shadcn-ui@latest init`` (chọn TypeScript, default theme). Add components cần: 
-	```npx shadcn-ui@latest add button input card table dialog form avatar```.
+	```npx shadcn-ui@latest add button input card table dialog form avatar```. 
+
+	Ví dụ các lệnh thường dùng với pnpm:
+
+	```bash
+	# cài toàn bộ dependencies theo package.json
+	pnpm install
+
+	# chạy dev server
+	pnpm dev
+
+	# build
+	pnpm build
+
+	# lint
+	pnpm lint
+	```
 - Phase 2: Define stucture và core page (v)
 	+ Tạo themeprovider, layout master, theme color 
  		/ header
@@ -24,16 +42,16 @@ tôi có 2 source laravel-api và nextjs-dashboard, tôi muốn đồng bộ rou
 	+ Tạo page
 		/ Home, category, .....
 - Phase 3: Integrate API Calls with Laravel Backend
-	+ Setup đồng bộ route api và path call api front-end (x)
-	+ Setup common (v)
+	+ Setup đồng bộ route api và path call api front-end
+	+ Setup common
 		/ API: path api, call api type method, handle error api, handle success api, encode, decode, set access token, set header, auth beaver, set payload body
 		/ Message: 
 		/ Const:
 		/ Validation:
 
-	+ API client (axios) + env config + proxy dev để FE gọi api laravel (v)
-	+ setup redux & saga fetching (v)
-	+ Success|Error handling response (v)
+	+ API client (axios) + env config + proxy dev để FE gọi api laravel
+	+ setup redux & saga fetching
+	+ Success|Error handling response
 	+ Setup auth
 - Phase 4: Implement core feature
 	+ Dark mode
@@ -45,6 +63,8 @@ tôi có 2 source laravel-api và nextjs-dashboard, tôi muốn đồng bộ rou
 	+ Error handling & feedback UI (toast, skeletons, error boundaries).
 	+ Bookmark/favorite (localStorage for guest, API for logged-in).
 	+ Lazy-load images/videos, responsive images (next/image).
+		/ Sử dụng dịch vụ ... làm kho chứa
+		/ 
 - Phase 5: Testing, optimize, dockerization
 	+ Testing
 	+ Optimize: minify, monitor performance SEo & lazy loading

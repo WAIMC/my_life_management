@@ -80,7 +80,8 @@ function UserMenu({ mounted }: { mounted?: boolean }) {
 
       <div
         role="menu"
-        className={`origin-top-right absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border rounded shadow z-50 transform transition-all duration-150 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+        className={`origin-top-right absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border rounded shadow z-50 transform transition-all duration-150 ${open ? 'opacity-100 scale-100 data-[state=open]:pointer-events-auto' : 'opacity-0 scale-95 data-[state=closed]:pointer-events-none pointer-events-none'}`}
+        data-state={open ? 'open' : 'closed'}
       >
         <div className="p-2">
           <div className="mb-2 text-sm">

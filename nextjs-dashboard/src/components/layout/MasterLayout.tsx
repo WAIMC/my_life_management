@@ -5,6 +5,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import Breadcrumbs from "./Breadcrumbs";
+import DevPointerGuard from '@/components/DevPointerGuard'
 
 type Props = {
   children: React.ReactNode;
@@ -90,6 +91,8 @@ export default function MasterLayout({ children }: Props) {
     <div className={`min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 ${collapsed ? 'with-sidebar-compact' : 'with-sidebar-expanded'}`}>
       <Header onToggleSidebar={() => setCollapsed((c) => !c)} toggleRef={toggleRef} />
 
+  <DevPointerGuard />
+
       <div className="flex flex-1">
         {/* Sidebar for desktop */}
         <div className={`hidden md:block`}>
@@ -107,7 +110,7 @@ export default function MasterLayout({ children }: Props) {
           </div>
         </div>
 
-        <main className="flex-1 p-4">
+  <main className={`flex-1 p-4 ${collapsed ? 'mobile-sidebar-open' : ''}`}>
           <div className="max-w-7xl mx-auto main-shift">
             <Breadcrumbs />
             {children}

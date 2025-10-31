@@ -4,9 +4,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 type Toast = { id: string; type: 'success' | 'error' | 'info' | 'warning'; message: string };
 
-const ToastContext = createContext({
-  push: (t: Omit<Toast, 'id'>) => {},
-});
+const ToastContext = createContext<{ push: (t: Omit<Toast, 'id'>) => void }>({ push: () => {} });
 
 export const useToast = () => useContext(ToastContext);
 

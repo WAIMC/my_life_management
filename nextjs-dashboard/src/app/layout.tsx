@@ -5,6 +5,7 @@ import ReduxProvider from "../store/Provider";
 import ThemeProvider from "@/components/layout/ThemeProvider";
 import MasterLayout from "@/components/layout/MasterLayout";
 import ToastProvider from "@/components/ui/ToastProvider";
+import DevConsoleFilter from '@/components/dev/DevConsoleFilter'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
         <ReduxProvider>
           <ThemeProvider>
             <ToastProvider>
+              <DevConsoleFilter />
               <MasterLayout>{children}</MasterLayout>
             </ToastProvider>
           </ThemeProvider>

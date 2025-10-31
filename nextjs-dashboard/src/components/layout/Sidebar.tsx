@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Home, BarChart2, Settings } from "lucide-react";
+import { Home, BarChart2, Settings, Image as ImageIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { menuItems } from "./menu";
 
@@ -22,6 +22,8 @@ export default function Sidebar({ collapsed = false, compact = false, onNavigate
         return <Home size={16} />;
       case "bar":
         return <BarChart2 size={16} />;
+      case "media":
+        return <ImageIcon size={16} />;
       case "settings":
         return <Settings size={16} />;
       default:

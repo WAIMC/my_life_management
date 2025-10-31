@@ -20,12 +20,16 @@ export const handleSuccess = <T = unknown>(response: ApiResponse<T>, toast?: (op
 export const handleError = (respOrError: unknown, toast?: (opts: { type: 'success'|'info'|'warning'|'error'; message: string }) => void) => {
   let messages: string[] = [String(MESSAGES.ERROR.DEFAULT)];
 
-  if (respOrError && typeof respOrError === 'object' && 'error' in (respOrError as any)) {
-  messages = getErrorMessages(respOrError as ApiResponse) as string[];
+  const isApiResponse = (v: unknown): v is ApiResponse => {
+    return typeof v === 'object' && v !== null && 'error' in (v as Record<string, unknown>)
+  }
+
+  if (isApiResponse(respOrError)) {
+    messages = getErrorMessages(respOrError as ApiResponse) as string[];
   } else if (respOrError instanceof Error) {
-  messages = [String((respOrError as Error).message)];
+    messages = [String(respOrError.message)];
   } else if (typeof respOrError === 'string') {
-  messages = [String(respOrError)];
+    messages = [respOrError];
   }
 
   const message = messages.join(', ');

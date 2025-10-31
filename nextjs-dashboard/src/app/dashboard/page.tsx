@@ -1,4 +1,5 @@
 import React from "react";
+import FileManager from "@/components/layout/FileManagerFixed";
 
 export default function DashboardPage() {
   return (
@@ -9,6 +10,10 @@ export default function DashboardPage() {
         <div className="p-4 bg-white dark:bg-slate-800 rounded shadow card-appear">Card 1</div>
         <div className="p-4 bg-white dark:bg-slate-800 rounded shadow card-appear">Card 2</div>
         <div className="p-4 bg-white dark:bg-slate-800 rounded shadow card-appear">Card 3</div>
+      </div>
+
+      <div className="mt-8">
+        <FileManager />
       </div>
     </div>
   );
