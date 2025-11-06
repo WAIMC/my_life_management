@@ -119,10 +119,10 @@ Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Redux saga toolkit, zod, axios,
 
 npx create-next-app@latest my-personal-blog --typescript --tailwind --app --use-pnpm
 ✔ Which linter would you like to use? › ESLint
-✔ Would you like to use React Compiler? … No / Yes
-✔ Would you like your code inside a `src/` directory? … No / Yes
-✔ Would you like to use Turbopack? (recommended) … No / Yes
-✔ Would you like to customize the import alias (`@/*` by default)? … No / Yes
+✔ Would you like to use React Compiler? … Yes
+✔ Would you like your code inside a `src/` directory? …  Yes
+✔ Would you like to use Turbopack? (recommended) …  Yes
+✔ Would you like to customize the import alias (`@/*` by default)? … Yes
 ✔ What import alias would you like configured? … @/*
 
 cd my-personal-blog
@@ -155,3 +155,5 @@ pnpm install -D @types/react @types/node
 pnpm install -D eslint-config-prettier eslint-plugin-prettier
 pnpm install -D prettier prettier-plugin-tailwindcss
 pnpm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
+
+- Done setup common redux toolkit + saga
