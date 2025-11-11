@@ -1,9 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-interface AuthState {
-  accessToken: string | null;
-  isAuthenticated: boolean;
-}
+import { AuthState } from '@/types/authType';
 
 const initialState: AuthState = {
   accessToken: null,
@@ -14,23 +10,13 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    loginStart: () => initialState,
-    loginSuccess: (state, action: PayloadAction<string>) => {
+    setAuth: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload;
       state.isAuthenticated = true;
     },
-    loginFailure: (state) => {
-      state.isAuthenticated = false;
-    },
-    refreshSuccess: (state, action: PayloadAction<string>) => {
-      state.accessToken = action.payload;
-    },
-    logout: (state) => {
-      state.accessToken = null;
-      state.isAuthenticated = false;
-    },
+    clearAuth: () => initialState,
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, refreshSuccess, logout } = authSlice.actions;
+export const { setAuth, clearAuth } = authSlice.actions;
 export default authSlice.reducer;
