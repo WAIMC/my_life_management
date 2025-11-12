@@ -133,8 +133,3 @@ thì **các tính năng tối thiểu nên có** gồm:
 > 🔄 Đồng bộ metadata (Drive ↔ DB)
 > 🧱 Quản lý quyền thao tác
 
----
-
-Nếu bạn muốn, mình có thể giúp bạn **vẽ cấu trúc thư mục code (Next.js + FastAPI hoặc Laravel)** cho module file manager này,
-hoặc tạo **sơ đồ flow API (upload → lưu DB → trả về UI)**.
-👉 Bạn muốn mình làm tiếp phần nào?

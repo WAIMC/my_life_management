@@ -10,7 +10,7 @@ import type { AppStore } from '../redux/store';
 
 // Init axios instance
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.example.com',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:81/api',
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
@@ -36,8 +36,8 @@ axiosInstance.interceptors.request.use(
       const state = appStore.getState();
       const accessToken = state.auth.accessToken;
 
-      // Add Authorization header for all requests (except refresh-token)
-      if (accessToken && config.url !== API_URL.REFRESH_TOKEN) {
+      // Add Authorization header for all requests (except refresh-token and login)
+      if (accessToken && config.url !== API_URL.REFRESH_TOKEN && config.url !== API_URL.LOGIN) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
 

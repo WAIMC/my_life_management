@@ -6,4 +6,5 @@ export type LoginPayload = {
 export type AuthState = {
   accessToken: string | null;
   isAuthenticated: boolean;
+  redirectUrl?: string | null;
 }

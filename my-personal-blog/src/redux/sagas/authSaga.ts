@@ -1,6 +1,6 @@
 import { call, put, takeEvery } from 'redux-saga/effects';
 import * as API from '@/lib/apiMethod';
-import { clearAuth, setAuth } from '@/redux/slices/authSlice';
+import { clearAuth, setAuth, setRedirectUrl } from '@/redux/slices/authSlice';
 import {setLoading} from '@/redux/slices/commonSlice';
 import { LOGIN, LOGOUT } from '@/constants/apiUrl'
 import toast from 'react-hot-toast';
@@ -18,12 +18,27 @@ function* loginSaga(action: { type: string; payload: LoginPayload }): SagaIterat
       throw new Error('No access token received');
     }
     
+    // Get redirect URL từ window.location
+    let redirectUrl = '/admin';
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectParam = searchParams.get('redirect');
+      
+      // Chỉ redirect đến URL admin nếu nó bắt đầu với /admin
+      if (redirectParam && redirectParam.startsWith('/admin')) {
+        redirectUrl = redirectParam;
+      } else {
+        redirectUrl = '/admin';
+      }
+    }
+    
     yield put(setAuth(accessToken));
-    toast.success('Login successful');
+    yield put(setRedirectUrl(redirectUrl));
+    toast.success('Đăng nhập thành công');
   } catch (error) {
     yield put(clearAuth());
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    toast.error('Login failed: ' + errorMessage);
+    toast.error('Đăng nhập thất bại: ' + errorMessage);
   } finally {
     yield put(setLoading(false));
   }

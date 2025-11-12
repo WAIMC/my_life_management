@@ -4,6 +4,7 @@ import { AuthState } from '@/types/authType';
 const initialState: AuthState = {
   accessToken: null,
   isAuthenticated: false,
+  redirectUrl: null,
 };
 
 const authSlice = createSlice({
@@ -15,8 +16,11 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
     },
     clearAuth: () => initialState,
+    setRedirectUrl: (state, action: PayloadAction<string | null>) => {
+      state.redirectUrl = action.payload;
+    },
   },
 });
 
-export const { setAuth, clearAuth } = authSlice.actions;
+export const { setAuth, clearAuth, setRedirectUrl } = authSlice.actions;
 export default authSlice.reducer;
