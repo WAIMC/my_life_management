@@ -157,3 +157,4 @@ pnpm install -D prettier prettier-plugin-tailwindcss
 pnpm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
 
 - Done setup common redux toolkit + saga
+- Done setup common call api, handle request sent and response revices

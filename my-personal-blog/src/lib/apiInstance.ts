@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { makeStore } from '../redux/store';
 import toast from 'react-hot-toast';
 import * as API_URL from '@/constants/apiUrl';
 import * as CLIENT_URL from '@/constants/clientUrl';
@@ -7,6 +6,7 @@ import { ERR_MESS } from '@/constants/messages';
 import { setAuth, clearAuth } from '@/redux/slices/authSlice';
 import { handleCommonError } from './apiErrorHandle';
 import { ErrorResponse } from '@/types/apiType';
+import type { AppStore } from '../redux/store';
 
 // Init axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -18,8 +18,8 @@ const axiosInstance: AxiosInstance = axios.create({
   },
 });
 
-// Get Redux store once to avoid repeated initialization
-let appStore = makeStore();
+// Get Redux store reference (set by providers)
+let appStore: AppStore | null = null;
 
 // Queue to handle multiple requests when refresh token
 let isRefreshing = false;
@@ -31,18 +31,20 @@ const requestQueue: Array<() => void> = [];
 // REQUEST INTERCEPTOR
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get access token from Redux state
-    const state = appStore.getState();
-    const accessToken = state.auth.accessToken;
+    // Get access token from Redux state if store is initialized
+    if (appStore) {
+      const state = appStore.getState();
+      const accessToken = state.auth.accessToken;
 
-    // Add Authorization header for all requests (except refresh-token)
-    if (accessToken && config.url !== API_URL.REFRESH_TOKEN) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
+      // Add Authorization header for all requests (except refresh-token)
+      if (accessToken && config.url !== API_URL.REFRESH_TOKEN) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
 
-    // Attach credentials (cookie) for necessary endpoints
-    if (config.url === API_URL.REFRESH_TOKEN || config.url === API_URL.LOGOUT) {
-      config.withCredentials = true;
+      // Attach credentials (cookie) for necessary endpoints
+      if (config.url === API_URL.REFRESH_TOKEN || config.url === API_URL.LOGOUT) {
+        config.withCredentials = true;
+      }
     }
 
     // Add cache control headers per request
@@ -62,6 +64,10 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    if (!appStore) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: number };
 
     // Handle 401 error - Unauthorized (Token expired)
@@ -94,7 +100,7 @@ axiosInstance.interceptors.response.use(
           const newAccessToken = response.data.accessToken;
 
           // Update new token in Redux
-          appStore.dispatch(setAuth(newAccessToken));
+          appStore!.dispatch(setAuth(newAccessToken));
 
           // Process queued requests
           requestQueue.forEach(cb => cb());
@@ -103,7 +109,7 @@ axiosInstance.interceptors.response.use(
           return newAccessToken;
         } catch {
           // Refresh token failed -> Redirect to login page
-          appStore.dispatch(clearAuth());
+          appStore!.dispatch(clearAuth());
           
           if (typeof window !== 'undefined') {
             toast.error(ERR_MESS.E0002);
@@ -133,7 +139,7 @@ axiosInstance.interceptors.response.use(
 
 export default axiosInstance;
 
-// Export store setter for initialization in root layout if needed
-export const updateAppStore = (store: ReturnType<typeof makeStore>) => {
+// Export store setter for initialization in providers
+export const setAppStore = (store: AppStore) => {
   appStore = store;
 };
