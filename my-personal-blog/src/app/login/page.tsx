@@ -30,7 +30,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setSubmitError(null);
     dispatch({
-      type: 'auth/loginSaga',
+      type: 'auth/loginRequest',
       payload: data,
     });
   };

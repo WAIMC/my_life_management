@@ -16,5 +16,5 @@ return [
     ],
     'exposed_headers' => ['Content-Length', 'Connection'],  // Expose nếu cần
     'max_age' => 86400,  // Cache preflight
-    'supports_credentials' => false,  // Set true nếu dùng cookies với credentials
+    //'supports_credentials' => false,  // Set true nếu dùng cookies với credentials
 ];

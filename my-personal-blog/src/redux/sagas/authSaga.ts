@@ -1,42 +1,49 @@
 import { call, put, takeEvery } from 'redux-saga/effects';
 import * as API from '@/lib/apiMethod';
-import { clearAuth, setAuth, setRedirectUrl } from '@/redux/slices/authSlice';
-import {setLoading} from '@/redux/slices/commonSlice';
-import { LOGIN, LOGOUT } from '@/constants/apiUrl'
+import { clearAuth, setRedirectUrl } from '@/redux/slices/authSlice';
+import { setLoading } from '@/redux/slices/commonSlice';
+import { LOGIN, LOGOUT } from '@/constants/apiUrl';
 import toast from 'react-hot-toast';
 import { SagaIterator } from 'redux-saga';
 import { LoginPayload } from '@/types/authType';
 import * as CLIENT_URL from '@/constants/clientUrl';
+import { syncAuthStateAcrossTabs, clearAutoRefresh } from '@/lib/authManager';
+import broadcastManager from '@/lib/broadcastChannelManager';
 
 function* loginSaga(action: { type: string; payload: LoginPayload }): SagaIterator {
   try {
+    console.log('Login payload:', action.payload);
     yield put(setLoading(true));
-    const response = yield call(API.apiPost, LOGIN, action.payload);
-    const accessToken = response?.data?.data?.access_token;
-    
-    if (!accessToken) {
-      throw new Error('No access token received');
-    }
-    
-    // Get redirect URL từ window.location
-    let redirectUrl = '/admin';
+    const response = (yield call(API.apiPost, LOGIN, action.payload));
+    const accessToken = response?.access_token;
+    const ttl = response?.ttl;
+
+    // Logic 3: Đồng bộ trạng thái đăng nhập giữa các tab
+    syncAuthStateAcrossTabs(accessToken, ttl);
+
+    // Determine redirect URL
+    let redirectUrl = CLIENT_URL.ADMIN;
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const redirectParam = searchParams.get('redirect');
-      
-      // Chỉ redirect đến URL admin nếu nó bắt đầu với /admin
-      if (redirectParam && redirectParam.startsWith('/admin')) {
+
+      // Only redirect to admin URL if it starts with /admin
+      if (redirectParam && redirectParam.startsWith(CLIENT_URL.ADMIN)) {
         redirectUrl = redirectParam;
       } else {
-        redirectUrl = '/admin';
+        redirectUrl = CLIENT_URL.ADMIN;
       }
     }
-    
-    yield put(setAuth(accessToken));
+
     yield put(setRedirectUrl(redirectUrl));
-    toast.success('Đăng nhập thành công');
+
+    // Redirect after successful login
+    if (typeof window !== 'undefined') {
+      window.location.href = redirectUrl;
+    }
   } catch (error) {
     yield put(clearAuth());
+    clearAutoRefresh();
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     toast.error('Đăng nhập thất bại: ' + errorMessage);
   } finally {
@@ -49,12 +56,21 @@ function* logoutSaga(): SagaIterator {
     yield put(setLoading(true));
     yield call(API.apiPost, LOGOUT, {});
     yield put(clearAuth());
+    clearAutoRefresh();
+
+    // Logic 5: Đăng xuất tất cả tab cùng origin
+    // Broadcast logout message
+    const tabId = broadcastManager.getTabId();
+    broadcastManager.broadcastLogout(tabId);
+
     toast.success('Logout successful');
-    
+
     if (typeof window !== 'undefined') {
       window.location.href = CLIENT_URL.LOGIN;
     }
   } catch (error) {
+    yield put(clearAuth());
+    clearAutoRefresh();
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     toast.error('Logout failed: ' + errorMessage);
   } finally {
@@ -63,6 +79,6 @@ function* logoutSaga(): SagaIterator {
 }
 
 export default function* authSaga() {
-  yield takeEvery('auth/loginSaga', loginSaga);
-  yield takeEvery('auth/logoutSaga', logoutSaga);
+  yield takeEvery('auth/loginRequest', loginSaga);
+  yield takeEvery('auth/logoutRequest', logoutSaga);
 }

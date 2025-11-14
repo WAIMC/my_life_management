@@ -28,6 +28,22 @@ let refreshPromise: Promise<string | null> | null = null;
 // Keep track of pending requests for refresh
 const requestQueue: Array<() => void> = [];
 
+/**
+ * Check if there are other tabs with active session
+ */
+const hasOtherActiveTab = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  const state = appStore?.getState();
+  const tabId = state?.auth.tabId;
+  const accessToken = state?.auth.accessToken;
+  const refreshAtTime = state?.auth.refreshAtTime;
+  const leaderId = state?.auth.leaderId;
+
+  // Nếu có tab_id, accessToken, refreshAtTime, leaderId -> có tab hoạt động
+  return !!(tabId && accessToken && refreshAtTime && leaderId);
+};
+
 // REQUEST INTERCEPTOR
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -70,8 +86,15 @@ axiosInstance.interceptors.response.use(
 
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: number };
 
-    // Handle 401 error - Unauthorized (Token expired)
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    // Handle 401 error - Unauthorized (Token expired or invalid)
+    // Skip refresh if on login page or if it's already a refresh token request
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes(API_URL.REFRESH_TOKEN) &&
+      !originalRequest.url?.includes(API_URL.LOGIN)
+    ) {
       // Mark retry attempt
       originalRequest._retry = 1;
 
@@ -96,21 +119,53 @@ axiosInstance.interceptors.response.use(
       refreshPromise = (async () => {
         try {
           // Call API refresh token (server will read refresh token from cookie)
-          const response = await axiosInstance.post(API_URL.REFRESH_TOKEN);
-          const newAccessToken = response.data.accessToken;
+          const response = await axiosInstance.post<{ access_token: string; ttl: number }>(
+            API_URL.REFRESH_TOKEN
+          );
+          const newAccessToken = response.data.access_token;
+          const newTtl = response.data.ttl;
 
           // Update new token in Redux
           appStore!.dispatch(setAuth(newAccessToken));
 
+          // Re-setup auto refresh with new ttl
+          const { syncAuthStateAcrossTabs } = await import('./authManager');
+          syncAuthStateAcrossTabs(newAccessToken, newTtl);
+
           // Process queued requests
-          requestQueue.forEach(cb => cb());
+          requestQueue.forEach((cb) => cb());
           requestQueue.length = 0;
 
           return newAccessToken;
         } catch {
-          // Refresh token failed -> Redirect to login page
+          // Logic 2: Token lỗi (refresh thất bại)
+
+          // Kiểm tra: có tab nào cùng origin đang hoạt động không?
+          if (hasOtherActiveTab()) {
+            // Logic 2.1: Khi mở nhiều tab, reload nhiều lần
+            // Lấy thông tin từ tab khác
+            const state = appStore!.getState();
+            const accessToken = state.auth.accessToken;
+            const refreshAtTime = state.auth.refreshAtTime;
+            const leaderId = state.auth.leaderId;
+
+            if (accessToken && refreshAtTime && leaderId) {
+              // Lấy token từ tab khác
+              const { syncAuthStateAcrossTabs: syncAuth } = await import('./authManager');
+              const ttl = Math.ceil((refreshAtTime - Date.now()) / 1000);
+              syncAuth(accessToken, Math.max(ttl, 1));
+
+              return accessToken;
+            }
+          }
+
+          // Logic 2.2: Truy cập page lần đầu hoặc không có tab nào hoạt động
+          // Redirect sang login page
           appStore!.dispatch(clearAuth());
-          
+
+          const { clearAutoRefresh } = await import('./authManager');
+          clearAutoRefresh();
+
           if (typeof window !== 'undefined') {
             toast.error(ERR_MESS.E0002);
             window.location.href = CLIENT_URL.LOGIN;

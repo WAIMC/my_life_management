@@ -5,6 +5,9 @@ const initialState: AuthState = {
   accessToken: null,
   isAuthenticated: false,
   redirectUrl: null,
+  tabId: null,
+  leaderId: null,
+  refreshAtTime: null,
 };
 
 const authSlice = createSlice({
@@ -19,8 +22,33 @@ const authSlice = createSlice({
     setRedirectUrl: (state, action: PayloadAction<string | null>) => {
       state.redirectUrl = action.payload;
     },
+    setTabId: (state, action: PayloadAction<string>) => {
+      state.tabId = action.payload;
+    },
+    setLeaderId: (state, action: PayloadAction<string>) => {
+      state.leaderId = action.payload;
+    },
+    setRefreshAtTime: (state, action: PayloadAction<number>) => {
+      state.refreshAtTime = action.payload;
+    },
+    loginRequest: () => {
+      // Saga will handle this
+    },
+    logoutRequest: () => {
+      // Saga will handle this
+    },
   },
 });
 
-export const { setAuth, clearAuth, setRedirectUrl } = authSlice.actions;
+export const {
+  setAuth,
+  clearAuth,
+  setRedirectUrl,
+  setTabId,
+  setLeaderId,
+  setRefreshAtTime,
+  loginRequest,
+  logoutRequest,
+} = authSlice.actions;
 export default authSlice.reducer;
+

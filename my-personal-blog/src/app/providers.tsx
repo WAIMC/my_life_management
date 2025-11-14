@@ -4,17 +4,74 @@ import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { makeStore } from '../redux/store';
 import { setAppStore } from '@/lib/apiInstance';
-import { useMemo } from 'react';
+import { initAuthManager, clearAutoRefresh } from '@/lib/authManager';
+import broadcastManager from '@/lib/broadcastChannelManager';
+import { setAuth, setTabId, setLeaderId, setRefreshAtTime, clearAuth } from '@/redux/slices/authSlice';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+
+function BroadcastListener() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Initialize BroadcastChannel
+    broadcastManager.initialize();
+
+    // Listen for broadcast messages from other tabs
+    broadcastManager.onMessage((message) => {
+      switch (message.type) {
+        case 'AUTH_UPDATE': {
+          // Sync auth state from other tabs
+          if (message.accessToken && message.refreshAtTime && message.leaderId) {
+            dispatch(setAuth(message.accessToken));
+            dispatch(setTabId(message.tabId));
+            dispatch(setLeaderId(message.leaderId));
+            dispatch(setRefreshAtTime(message.refreshAtTime));
+          }
+          break;
+        }
+        case 'LOGOUT': {
+          // Handle logout from other tabs
+          dispatch(clearAuth());
+          clearAutoRefresh();
+
+          // Redirect to login
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          break;
+        }
+        case 'TAB_FOCUS': {
+          // Other tab gained focus - update leader if needed
+          // This can be used to rebalance leader assignment
+          break;
+        }
+        case 'TAB_BLUR': {
+          // Other tab lost focus - update leader if needed
+          break;
+        }
+      }
+    });
+
+    return () => {
+      broadcastManager.close();
+    };
+  }, [dispatch]);
+
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const store = useMemo(() => {
         const newStore = makeStore();
         setAppStore(newStore);
+        initAuthManager(newStore);
         return newStore;
     }, []);
     
     return (
         <Provider store={store}>
+            <BroadcastListener />
             {children}
             <Toaster
                 position="top-right"
