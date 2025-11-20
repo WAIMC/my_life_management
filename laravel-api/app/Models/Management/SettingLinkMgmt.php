@@ -2,10 +2,16 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\SettingLinkMgmtHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SettingLinkMgmt extends Model
 {
+    use HasSoftDelete, HasHistory;
+
     protected $table = 'setting_link_mgmt';
 
     /**
@@ -32,4 +38,14 @@ class SettingLinkMgmt extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the history records for the setting link.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(SettingLinkMgmtHist::class, 'setting_link_mgmt_id');
+    }
 }

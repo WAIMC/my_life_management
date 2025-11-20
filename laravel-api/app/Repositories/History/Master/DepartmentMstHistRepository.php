@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
 use App\Models\History\Master\DepartmentMstHist;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class DepartmentMstHistRepository extends BaseRepository implements DepartmentMstHistInterface
@@ -21,61 +20,20 @@ class DepartmentMstHistRepository extends BaseRepository implements DepartmentMs
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
-            ->select([
-                'id',
-                'department_mst_id',
-                'code',
-                'name',
-                'status',
-                'action',
-                'author_id',
-            ]);
-
-        if (isset($payload['department_mst_id'])) {
-            $query->where('department_mst_id', $payload['department_mst_id']);
-        }
-
-        if (isset($payload['code'])) {
-            $query->where('code', 'like', '%' . $payload['code'] . '%');
-        }
-
-        if (isset($payload['name'])) {
-            $query->where('name', 'like', '%' . $payload['name'] . '%');
-        }
-
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        if (isset($payload['author_id'])) {
-            $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+            ->select(['id','department_mst_id','code','name','status','action','author_id'])
+            ->with(['departmentMst:id,code,name', 'author:id,username']);
+        $this->applyFilters($query, $payload, ['department_mst_id','status','action','author_id'], ['code','name']);
+        $this->applyDateRange($query, $payload);
+        $this->applySorting($query, $payload);
+        return $query->paginate($payload['per_page'] ?? 15, ['*'], 'page', $payload['page'] ?? 1);
     }
 
     /**
@@ -86,15 +44,9 @@ class DepartmentMstHistRepository extends BaseRepository implements DepartmentMs
      */
     public function executeStore(array $payload): int
     {
-        $data['department_mst_id'] = $payload['department_mst_id'] ?? null;
-        $data['code'] = $payload['code'] ?? null;
-        $data['name'] = $payload['name'] ?? null;
-        $data['status'] = $payload['status'] ?? null;
-        $data['action'] = $payload['action'] ?? null;
-        $data['author_id'] = $payload['author_id'] ?? null;
-        $this->model->create($data);
-
-        return $this->model->id;
+        $model = $this->model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
 
@@ -106,16 +58,10 @@ class DepartmentMstHistRepository extends BaseRepository implements DepartmentMs
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['department_mst_id'] = $payload['department_mst_id'] ?? null;
-        $record['code'] = $payload['code'] ?? null;
-        $record['name'] = $payload['name'] ?? null;
-        $record['status'] = $payload['status'] ?? null;
-        $record['action'] = $payload['action'] ?? null;
-        $record['author_id'] = $payload['author_id'] ?? null;
-        $record->save();
-
-        return $record->id;
+        $model = $this->model->findOrFail($payload['id']);
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
     /**

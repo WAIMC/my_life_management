@@ -8,8 +8,7 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\AdminDepartmentMstInterface;
 use App\Models\Master\AdminDepartmentMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 
@@ -21,41 +20,38 @@ class AdminDepartmentMstRepository extends BaseRepository implements AdminDepart
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'admin_mst_id',
                 'department_mst_id',
                 'updated_at',
-            ]);
+            ])
+            ->with(['adminMst:id,username,email', 'departmentMst:id,code,name']); // Eager load
 
-        if (isset($payload['admin_mst_id'])) {
-            $query->where('admin_mst_id', $payload['admin_mst_id']);
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'admin_mst_id',
+            'department_mst_id',
+        ]);
 
-        if (isset($payload['department_mst_id'])) {
-            $query->where('department_mst_id', $payload['department_mst_id']);
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload, 'admin_mst_id');
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        $query->orderBy('admin_mst_id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

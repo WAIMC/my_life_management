@@ -2,10 +2,19 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\CategoryMgmtHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class CategoryMgmt extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'category_mgmt';
 
     /**
@@ -42,4 +51,59 @@ class CategoryMgmt extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the parent category.
+     *
+     * @return BelongsTo
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(CategoryMgmt::class, 'parent_id');
+    }
+
+    /**
+     * Get the child categories.
+     *
+     * @return HasMany
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(CategoryMgmt::class, 'parent_id');
+    }
+
+    /**
+     * Get the products in this category.
+     *
+     * @return HasMany
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(ProductMgmt::class, 'category_mgmt_id');
+    }
+
+    /**
+     * Get the skills associated with this category.
+     *
+     * @return BelongsToMany
+     */
+    public function skills(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SkillMgmt::class,
+            'category_skill_mgmt',
+            'category_mgmt_id',
+            'skill_mgmt_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the history records for the category.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(CategoryMgmtHist::class, 'category_mgmt_id');
+    }
 }

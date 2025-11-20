@@ -2,18 +2,29 @@
 
 namespace App\Services\Master;
 
+use App\Services\BaseService;
 use App\Interfaces\Master\TokenMstInterface;
 use App\Interfaces\History\Master\TokenMstHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Master\TokenMstResource;
 
-class TokenMstService
+class TokenMstService extends BaseService
 {
     public function __construct(
-        protected TokenMstInterface $tokenMst, protected TokenMstHistInterface $tokenMstHist
-    )
+        protected TokenMstInterface $tokenMst,
+        protected TokenMstHistInterface $tokenMstHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->tokenMstHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'token_mst_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class TokenMstService
     public function store(array $payload): int
     {
         $id = $this->tokenMst->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['token_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->tokenMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class TokenMstService
     {
         $id = $payload['id'];
         $affected = $this->tokenMst->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['token_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->tokenMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class TokenMstService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['token_mst_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->tokenMstHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->tokenMst->executeDelete($payload['ids']);

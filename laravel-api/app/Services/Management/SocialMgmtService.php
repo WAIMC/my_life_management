@@ -2,18 +2,29 @@
 
 namespace App\Services\Management;
 
+use App\Services\BaseService;
 use App\Interfaces\Management\SocialMgmtInterface;
 use App\Interfaces\History\Management\SocialMgmtHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Management\SocialMgmtResource;
 
-class SocialMgmtService
+class SocialMgmtService extends BaseService
 {
     public function __construct(
-        protected SocialMgmtInterface $socialMgmt, protected SocialMgmtHistInterface $socialMgmtHist
-    )
+        protected SocialMgmtInterface $socialMgmt,
+        protected SocialMgmtHistInterface $socialMgmtHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->socialMgmtHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'social_mgmt_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class SocialMgmtService
     public function store(array $payload): int
     {
         $id = $this->socialMgmt->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['social_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->socialMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class SocialMgmtService
     {
         $id = $payload['id'];
         $affected = $this->socialMgmt->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['social_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->socialMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class SocialMgmtService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['social_mgmt_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->socialMgmtHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->socialMgmt->executeDelete($payload['ids']);

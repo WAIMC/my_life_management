@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\AdminMstInterface;
 use App\Models\Master\AdminMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 
 class AdminMstRepository extends BaseRepository implements AdminMstInterface
@@ -21,12 +20,12 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
@@ -43,65 +42,39 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
                 'is_active',
                 'avatar',
                 'updated_at',
-            ]);
+            ])
+            ->with(['roles:id,name,permission', 'departments:id,code,name']) // Eager load relationships
+            ->notDeleted(); // Use scope from HasSoftDelete trait
 
-        if (isset($payload['email'])) {
-            $query->where('email', $payload['email']);
-        }
+        // Apply exact match filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'email',
+            'phone_number',
+            'birth',
+            'gender',
+            'status',
+            'is_active',
+            'avatar',
+        ], [
+            // Apply LIKE filters
+            'user_name',
+            'first_name',
+            'last_name',
+            'address',
+        ]);
 
-        if (isset($payload['user_name'])) {
-            $query->where('user_name', 'like', '%' . $payload['user_name'] . '%');
-        }
+        // Apply date range filter
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['first_name'])) {
-            $query->where('first_name', 'like', '%' . $payload['first_name'] . '%');
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['last_name'])) {
-            $query->where('last_name', 'like', '%' . $payload['last_name'] . '%');
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['address'])) {
-            $query->where('address', 'like', '%' . $payload['address'] . '%');
-        }
-
-        if (isset($payload['phone_number'])) {
-            $query->where('phone_number', $payload['phone_number']);
-        }
-
-        if (isset($payload['birth'])) {
-            $query->where('birth', $payload['birth']);
-        }
-
-        if (isset($payload['gender'])) {
-            $query->where('gender', $payload['gender']);
-        }
-
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
-
-        if (isset($payload['is_active'])) {
-            $query->where('is_active', $payload['is_active']);
-        }
-
-        if (isset($payload['avatar'])) {
-            $query->where('avatar', $payload['avatar']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -112,26 +85,20 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
      */
     public function executeStore(array $payload): int
     {
-        $data['email'] = $payload['email'] ?? null;
-        $data['user_name'] = $payload['username'] ?? null;
-        $data['password'] = $payload['password'] ? Hash::make($payload['password']) : null;
-        $data['first_name'] = $payload['first_name'] ?? null;
-        $data['last_name'] = $payload['last_name'] ?? null;
-        $data['address'] = $payload['address'] ?? null;
-        $data['phone_number'] = $payload['phone_number'] ?? null;
-        $data['birth'] = $payload['birth'] ?? null;
-        $data['gender'] = $payload['gender'] ?? null;
-        $data['status'] = $payload['status'] ?? null;
-        $data['is_active'] = $payload['is_active'] ?? null;
-        $data['avatar'] = $payload['avatar'] ?? null;
-        $data['email_verified_at'] = $payload['email_verified_at'] ?? null;
-        $data['is_delete'] = $payload['is_delete'] ?? null;
-        $data['remember_token'] = $payload['remember_token'] ?? null;
-        $this->model->create($data);
+        // Use fill() with only fillable fields
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        // Handle password hashing
+        if (isset($payload['password']) && !empty($payload['password'])) {
+            $model->password = Hash::make($payload['password']);
+        }
+
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -141,36 +108,37 @@ class AdminMstRepository extends BaseRepository implements AdminMstInterface
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['email'] = $payload['email'] ?? null;
-        $record['user_name'] = $payload['username'] ?? null;
-        $record['password'] = $payload['password'] ? Hash::make($payload['password']) : null;
-        $record['first_name'] = $payload['first_name'] ?? null;
-        $record['last_name'] = $payload['last_name'] ?? null;
-        $record['address'] = $payload['address'] ?? null;
-        $record['phone_number'] = $payload['phone_number'] ?? null;
-        $record['birth'] = $payload['birth'] ?? null;
-        $record['gender'] = $payload['gender'] ?? null;
-        $record['status'] = $payload['status'] ?? null;
-        $record['is_active'] = $payload['is_active'] ?? null;
-        $record['avatar'] = $payload['avatar'] ?? null;
-        $record['email_verified_at'] = $payload['email_verified_at'] ?? null;
-        $record['is_delete'] = $payload['is_delete'] ?? null;
-        $record['remember_token'] = $payload['remember_token'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        // Check not soft deleted
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        // Update using fill()
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+
+        // Handle password hashing (only if password is provided)
+        if (isset($payload['password']) && !empty($payload['password'])) {
+            $model->password = Hash::make($payload['password']);
+        }
+
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
+        // Soft delete using scope
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
     }
-
 }

@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\History\Management\SkillDescriptionMgmtHistInterface;
 use App\Models\History\Management\SkillDescriptionMgmtHist;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class SkillDescriptionMgmtHistRepository extends BaseRepository implements SkillDescriptionMgmtHistInterface
@@ -26,81 +25,15 @@ class SkillDescriptionMgmtHistRepository extends BaseRepository implements Skill
      * @param array $payload
      * @return Collection
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
-            ->select([
-                'id',
-                'skill_description_mgmt_id',
-                'parent_id',
-                'title',
-                'summary',
-                'article',
-                'status',
-                'is_display',
-                'rank_order',
-                'skill_id',
-                'action',
-                'author_id',
-            ]);
-
-        if (isset($payload['skill_description_mgmt_id'])) {
-            $query->where('skill_description_mgmt_id', $payload['skill_description_mgmt_id']);
-        }
-
-        if (isset($payload['parent_id'])) {
-            $query->where('parent_id', $payload['parent_id']);
-        }
-
-        if (isset($payload['title'])) {
-            $query->where('title', 'like', '%' . $payload['title'] . '%');
-        }
-
-        if (isset($payload['summary'])) {
-            $query->where('summary', 'like', '%' . $payload['summary'] . '%');
-        }
-
-        if (isset($payload['article'])) {
-            $query->where('article', 'like', '%' . $payload['article'] . '%');
-        }
-
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
-
-        if (isset($payload['is_display'])) {
-            $query->where('is_display', $payload['is_display']);
-        }
-
-        if (isset($payload['rank_order'])) {
-            $query->where('rank_order', $payload['rank_order']);
-        }
-
-        if (isset($payload['skill_id'])) {
-            $query->where('skill_id', $payload['skill_id']);
-        }
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        if (isset($payload['author_id'])) {
-            $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+            ->select(['id','skill_description_mgmt_id','parent_id','title','summary','article','status','is_display','rank_order','skill_id','action','author_id'])
+            ->with(['skillDescriptionMgmt:id,title', 'author:id,username']);
+        $this->applyFilters($query, $payload, ['skill_description_mgmt_id','parent_id','status','is_display','rank_order','skill_id','action','author_id'], ['title','summary','article']);
+        $this->applyDateRange($query, $payload);
+        $this->applySorting($query, $payload);
+        return $query->paginate($payload['per_page'] ?? 15, ['*'], 'page', $payload['page'] ?? 1);
     }
 
     /**
@@ -111,8 +44,10 @@ class SkillDescriptionMgmtHistRepository extends BaseRepository implements Skill
      */
     public function executeStore(array $payload): int
     {
-        $data['skill_description_mgmt_id'] = $payload['skill_description_mgmt_id'] ?? null;
-        $data['parent_id'] = $payload['parent_id'] ?? null;
+        $model = $this->model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
+    }
         $data['title'] = $payload['title'] ?? null;
         $data['summary'] = $payload['summary'] ?? null;
         $data['article'] = $payload['article'] ?? null;
@@ -136,7 +71,11 @@ class SkillDescriptionMgmtHistRepository extends BaseRepository implements Skill
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
+        $model = $this->model->findOrFail($payload['id']);
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
+    }
         $record['skill_description_mgmt_id'] = $payload['skill_description_mgmt_id'] ?? null;
         $record['parent_id'] = $payload['parent_id'] ?? null;
         $record['title'] = $payload['title'] ?? null;

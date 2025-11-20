@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\OriginalTranslatorMstInterface;
 use App\Models\Master\OriginalTranslatorMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class OriginalTranslatorMstRepository extends BaseRepository implements OriginalTranslatorMstInterface
@@ -21,47 +20,42 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'id',
-                'table',
-                'column',
-                'field_id',
+                'name',
+                'is_active',
                 'updated_at',
-            ]);
+            ])
+            ->with(['translations:id,key']) // Eager load
+            ->notDeleted();
 
-        if (isset($payload['table'])) {
-            $query->where('table', 'like', '%' . $payload['table'] . '%');
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'is_active',
+        ], [
+            'name',
+        ]);
 
-        if (isset($payload['column'])) {
-            $query->where('column', 'like', '%' . $payload['column'] . '%');
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['field_id'])) {
-            $query->where('field_id', $payload['field_id']);
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -72,15 +66,14 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
      */
     public function executeStore(array $payload): int
     {
-        $data['table'] = $payload['table'] ?? null;
-        $data['column'] = $payload['column'] ?? null;
-        $data['field_id'] = $payload['field_id'] ?? null;
-        $data['is_delete'] = $payload['is_delete'] ?? null;
-        $this->model->create($data);
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -90,25 +83,32 @@ class OriginalTranslatorMstRepository extends BaseRepository implements Original
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['table'] = $payload['table'] ?? null;
-        $record['column'] = $payload['column'] ?? null;
-        $record['field_id'] = $payload['field_id'] ?? null;
-        $record['is_delete'] = $payload['is_delete'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
-    }
+        // Check if original translators have dependent translations
+        $this->checkCanDelete($ids, ['translations']);
 
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
+    }
 }

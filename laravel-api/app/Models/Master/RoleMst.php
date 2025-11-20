@@ -2,10 +2,18 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\RoleMstHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RoleMst extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'role_mst';
 
     /**
@@ -34,4 +42,45 @@ class RoleMst extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the admins associated with the role.
+     *
+     * @return BelongsToMany
+     */
+    public function admins(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            AdminMst::class,
+            'admin_role_mst',
+            'role_mst_id',
+            'admin_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the APIs associated with the role.
+     *
+     * @return BelongsToMany
+     */
+    public function apis(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ApiMst::class,
+            'api_role_mst',
+            'role_mst_id',
+            'api_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the history records for the role.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(RoleMstHist::class, 'role_mst_id');
+    }
 }
+

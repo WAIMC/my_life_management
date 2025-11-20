@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace App\Interfaces\Master;
 
 use App\Interfaces\BaseInterface;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface RoleMstInterface extends BaseInterface
 {
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection;
+    public function list(array $payload): LengthAwarePaginator;
 
     /**
      * Store record

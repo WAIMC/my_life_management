@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\FeatureMstInterface;
 use App\Models\Master\FeatureMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
@@ -21,52 +20,44 @@ class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'id',
                 'name',
                 'group_name',
-                'description',
-                'status',
+                'is_active',
                 'updated_at',
-            ]);
+            ])
+            ->with(['apis:id,name,path,type']) // Eager load
+            ->notDeleted();
 
-        if (isset($payload['name'])) {
-            $query->where('name', 'like', '%' . $payload['name'] . '%');
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'is_active',
+        ], [
+            'name',
+            'group_name',
+        ]);
 
-        if (isset($payload['group_name'])) {
-            $query->where('group_name', 'like', '%' . $payload['group_name'] . '%');
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['description'])) {
-            $query->where('description', 'like', '%' . $payload['description'] . '%');
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -77,16 +68,14 @@ class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
      */
     public function executeStore(array $payload): int
     {
-        $data['name'] = $payload['name'] ?? null;
-        $data['group_name'] = $payload['group_name'] ?? null;
-        $data['description'] = $payload['description'] ?? null;
-        $data['status'] = $payload['status'] ?? null;
-        $data['is_delete'] = $payload['is_delete'] ?? null;
-        $this->model->create($data);
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -96,26 +85,32 @@ class FeatureMstRepository extends BaseRepository implements FeatureMstInterface
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['name'] = $payload['name'] ?? null;
-        $record['group_name'] = $payload['group_name'] ?? null;
-        $record['description'] = $payload['description'] ?? null;
-        $record['status'] = $payload['status'] ?? null;
-        $record['is_delete'] = $payload['is_delete'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
-    }
+        // Check if features have dependent APIs
+        $this->checkCanDelete($ids, ['apis']);
 
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
+    }
 }

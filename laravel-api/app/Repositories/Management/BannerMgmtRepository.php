@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Models\Management\BannerMgmt;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
@@ -21,67 +20,45 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'id',
                 'title',
-                'slug',
-                'description',
+                'image_url',
                 'link',
-                'image',
-                'position',
-                'status',
+                'is_active',
                 'updated_at',
-            ]);
+            ])
+            ->notDeleted(); // No relationships for simple model
 
-        if (isset($payload['title'])) {
-            $query->where('title', 'like', '%' . $payload['title'] . '%');
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'status',
+            'is_display',
+        ], [
+            'title',
+            'link',
+        ]);
 
-        if (isset($payload['slug'])) {
-            $query->where('slug', 'like', '%' . $payload['slug'] . '%');
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['description'])) {
-            $query->where('description', 'like', '%' . $payload['description'] . '%');
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['link'])) {
-            $query->where('link', $payload['link']);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['image'])) {
-            $query->where('image', $payload['image']);
-        }
-
-        if (isset($payload['position'])) {
-            $query->where('position', 'like', '%' . $payload['position'] . '%');
-        }
-
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -92,19 +69,14 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
      */
     public function executeStore(array $payload): int
     {
-        $data['title'] = $payload['title'] ?? null;
-        $data['slug'] = $payload['slug'] ?? null;
-        $data['description'] = $payload['description'] ?? null;
-        $data['link'] = $payload['link'] ?? null;
-        $data['image'] = $payload['image'] ?? null;
-        $data['position'] = $payload['position'] ?? null;
-        $data['status'] = $payload['status'] ?? null;
-        $data['is_delete'] = $payload['is_delete'] ?? null;
-        $this->model->create($data);
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -114,29 +86,29 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['title'] = $payload['title'] ?? null;
-        $record['slug'] = $payload['slug'] ?? null;
-        $record['description'] = $payload['description'] ?? null;
-        $record['link'] = $payload['link'] ?? null;
-        $record['image'] = $payload['image'] ?? null;
-        $record['position'] = $payload['position'] ?? null;
-        $record['status'] = $payload['status'] ?? null;
-        $record['is_delete'] = $payload['is_delete'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
     }
-
 }

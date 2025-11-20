@@ -2,18 +2,29 @@
 
 namespace App\Services\Management;
 
+use App\Services\BaseService;
 use App\Interfaces\Management\SliderMgmtInterface;
 use App\Interfaces\History\Management\SliderMgmtHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Management\SliderMgmtResource;
 
-class SliderMgmtService
+class SliderMgmtService extends BaseService
 {
     public function __construct(
-        protected SliderMgmtInterface $sliderMgmt, protected SliderMgmtHistInterface $sliderMgmtHist
-    )
+        protected SliderMgmtInterface $sliderMgmt,
+        protected SliderMgmtHistInterface $sliderMgmtHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->sliderMgmtHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'slider_mgmt_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class SliderMgmtService
     public function store(array $payload): int
     {
         $id = $this->sliderMgmt->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['slider_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->sliderMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class SliderMgmtService
     {
         $id = $payload['id'];
         $affected = $this->sliderMgmt->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['slider_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->sliderMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class SliderMgmtService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['slider_mgmt_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->sliderMgmtHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->sliderMgmt->executeDelete($payload['ids']);

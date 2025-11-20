@@ -2,18 +2,29 @@
 
 namespace App\Services\Master;
 
+use App\Services\BaseService;
 use App\Interfaces\Master\TranslationMstInterface;
 use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Master\TranslationMstResource;
 
-class TranslationMstService
+class TranslationMstService extends BaseService
 {
     public function __construct(
-        protected TranslationMstInterface $translationMst, protected TranslationMstHistInterface $translationMstHist
-    )
+        protected TranslationMstInterface $translationMst,
+        protected TranslationMstHistInterface $translationMstHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->translationMstHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'translation_mst_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class TranslationMstService
     public function store(array $payload): int
     {
         $id = $this->translationMst->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['translation_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->translationMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class TranslationMstService
     {
         $id = $payload['id'];
         $affected = $this->translationMst->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['translation_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->translationMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class TranslationMstService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['translation_mst_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->translationMstHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->translationMst->executeDelete($payload['ids']);

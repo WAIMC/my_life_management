@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Models\History\Master\TranslationMstHist;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class TranslationMstHistRepository extends BaseRepository implements TranslationMstHistInterface
@@ -21,61 +20,20 @@ class TranslationMstHistRepository extends BaseRepository implements Translation
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
-            ->select([
-                'id',
-                'translation_mst_id',
-                'language_id',
-                'original_id',
-                'value',
-                'action',
-                'author_id',
-            ]);
-
-        if (isset($payload['translation_mst_id'])) {
-            $query->where('translation_mst_id', $payload['translation_mst_id']);
-        }
-
-        if (isset($payload['language_id'])) {
-            $query->where('language_id', $payload['language_id']);
-        }
-
-        if (isset($payload['original_id'])) {
-            $query->where('original_id', $payload['original_id']);
-        }
-
-        if (isset($payload['value'])) {
-            $query->where('value', 'like', '%' . $payload['value'] . '%');
-        }
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        if (isset($payload['author_id'])) {
-            $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+            ->select(['id','translation_mst_id','key','value','action','author_id'])
+            ->with(['translationMst:id,key,value', 'author:id,username']);
+        $this->applyFilters($query, $payload, ['translation_mst_id','action','author_id'], ['key','value']);
+        $this->applyDateRange($query, $payload);
+        $this->applySorting($query, $payload);
+        return $query->paginate($payload['per_page'] ?? 15, ['*'], 'page', $payload['page'] ?? 1);
     }
 
     /**
@@ -86,15 +44,9 @@ class TranslationMstHistRepository extends BaseRepository implements Translation
      */
     public function executeStore(array $payload): int
     {
-        $data['translation_mst_id'] = $payload['translation_mst_id'] ?? null;
-        $data['language_id'] = $payload['language_id'] ?? null;
-        $data['original_id'] = $payload['original_id'] ?? null;
-        $data['value'] = $payload['value'] ?? null;
-        $data['action'] = $payload['action'] ?? null;
-        $data['author_id'] = $payload['author_id'] ?? null;
-        $this->model->create($data);
-
-        return $this->model->id;
+        $model = $this->model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
 
@@ -106,16 +58,10 @@ class TranslationMstHistRepository extends BaseRepository implements Translation
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['translation_mst_id'] = $payload['translation_mst_id'] ?? null;
-        $record['language_id'] = $payload['language_id'] ?? null;
-        $record['original_id'] = $payload['original_id'] ?? null;
-        $record['value'] = $payload['value'] ?? null;
-        $record['action'] = $payload['action'] ?? null;
-        $record['author_id'] = $payload['author_id'] ?? null;
-        $record->save();
-
-        return $record->id;
+        $model = $this->model->findOrFail($payload['id']);
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
     /**

@@ -2,18 +2,29 @@
 
 namespace App\Services\Master;
 
+use App\Services\BaseService;
 use App\Interfaces\Master\AdminMstInterface;
 use App\Interfaces\History\Master\AdminMstHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Master\AdminMstResource;
 
-class AdminMstService
+class AdminMstService extends BaseService
 {
     public function __construct(
-        protected AdminMstInterface $adminMst, protected AdminMstHistInterface $adminMstHist
-    )
+        protected AdminMstInterface $adminMst,
+        protected AdminMstHistInterface $adminMstHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->adminMstHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'admin_mst_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class AdminMstService
     public function store(array $payload): int
     {
         $id = $this->adminMst->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['admin_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->adminMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class AdminMstService
     {
         $id = $payload['id'];
         $affected = $this->adminMst->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['admin_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->adminMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class AdminMstService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['admin_mst_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->adminMstHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->adminMst->executeDelete($payload['ids']);

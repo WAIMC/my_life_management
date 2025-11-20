@@ -8,10 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\DepartmentMstInterface;
 use App\Models\Master\DepartmentMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
-
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 class DepartmentMstRepository extends BaseRepository implements DepartmentMstInterface
 {
@@ -21,12 +19,12 @@ class DepartmentMstRepository extends BaseRepository implements DepartmentMstInt
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
@@ -35,33 +33,30 @@ class DepartmentMstRepository extends BaseRepository implements DepartmentMstInt
                 'name',
                 'status',
                 'updated_at',
-            ]);
+            ])
+            ->with(['admins:id,user_name,email', 'policies:id,table_name,row_id']) // Eager load
+            ->notDeleted();
 
-        if (isset($payload['code'])) {
-            $query->where('code', 'like', '%' . $payload['code'] . '%');
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'status',
+        ], [
+            'code',
+            'name',
+        ]);
 
-        if (isset($payload['name'])) {
-            $query->where('name', 'like', '%' . $payload['name'] . '%');
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -72,15 +67,14 @@ class DepartmentMstRepository extends BaseRepository implements DepartmentMstInt
      */
     public function executeStore(array $payload): int
     {
-        $data['code'] = $payload['code'] ?? null;
-        $data['name'] = $payload['name'] ?? null;
-        $data['status'] = $payload['status'] ?? null;
-        $data['is_delete'] = $payload['is_delete'] ?? null;
-        $this->model->create($data);
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -90,25 +84,32 @@ class DepartmentMstRepository extends BaseRepository implements DepartmentMstInt
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['code'] = $payload['code'] ?? null;
-        $record['name'] = $payload['name'] ?? null;
-        $record['status'] = $payload['status'] ?? null;
-        $record['is_delete'] = $payload['is_delete'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
-    }
+        // Check if departments have dependent records
+        $this->checkCanDelete($ids, ['admins']);
 
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
+    }
 }

@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\TokenMstInterface;
 use App\Models\Master\TokenMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class TokenMstRepository extends BaseRepository implements TokenMstInterface
@@ -21,57 +20,41 @@ class TokenMstRepository extends BaseRepository implements TokenMstInterface
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'id',
-                'token_hash',
-                'account_id',
-                'device_name',
-                'ip_address',
-                'expired_at',
+                'token',
+                'is_active',
                 'updated_at',
-            ]);
+            ])
+            ->notDeleted(); // No relationships for simple model
 
-        if (isset($payload['token_hash'])) {
-            $query->where('token_hash', 'like', '%' . $payload['token_hash'] . '%');
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'is_active',
+        ], [
+            'token',
+        ]);
 
-        if (isset($payload['account_id'])) {
-            $query->where('account_id', $payload['account_id']);
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['device_name'])) {
-            $query->where('device_name', 'like', '%' . $payload['device_name'] . '%');
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['ip_address'])) {
-            $query->where('ip_address', 'like', '%' . $payload['ip_address'] . '%');
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['expired_at'])) {
-            $query->where('expired_at', $payload['expired_at']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -82,16 +65,14 @@ class TokenMstRepository extends BaseRepository implements TokenMstInterface
      */
     public function executeStore(array $payload): int
     {
-        $data['token_hash'] = $payload['token_hash'] ?? null;
-        $data['account_id'] = $payload['account_id'] ?? null;
-        $data['device_name'] = $payload['device_name'] ?? null;
-        $data['ip_address'] = $payload['ip_address'] ?? null;
-        $data['expired_at'] = $payload['expired_at'] ?? null;
-        $this->model->create($data);
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -101,26 +82,29 @@ class TokenMstRepository extends BaseRepository implements TokenMstInterface
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['token_hash'] = $payload['token_hash'] ?? null;
-        $record['account_id'] = $payload['account_id'] ?? null;
-        $record['device_name'] = $payload['device_name'] ?? null;
-        $record['ip_address'] = $payload['ip_address'] ?? null;
-        $record['expired_at'] = $payload['expired_at'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
     }
-
 }

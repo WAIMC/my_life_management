@@ -1,13 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\History\Management;
 
-use App\Constants\CommonVal;
 use App\Interfaces\History\Management\ProductMgmtHistInterface;
 use App\Models\History\Management\ProductMgmtHist;
 use App\Repositories\BaseRepository;
-use DateTime;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 class ProductMgmtHistRepository extends BaseRepository implements ProductMgmtHistInterface
 {
@@ -22,55 +23,33 @@ class ProductMgmtHistRepository extends BaseRepository implements ProductMgmtHis
      * @param array $payload
      * @return Collection
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
-        $query = $this->model->query();
+        $query = $this->model->query()
+            ->with(['productMgmt:id,name', 'author:id,username']);
 
         if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
+            $query->whereIn('id', (array)$payload['id']);
         }
 
-        if (isset($payload['product_mgmt_id'])) {
-            $query->where('product_mgmt_id', $payload['product_mgmt_id']);
-        }
+        $this->applyFilters($query, $payload, [
+            'product_mgmt_id',
+            'category_mgmt_id',
+            'action',
+            'author_id',
+        ], [
+            'name',
+            'code',
+            'description',
+        ]);
 
-        if (isset($payload['category_id'])) {
-            $query->where('category_id', $payload['category_id']);
-        }
+        $this->applyDateRange($query, $payload);
+        $this->applySorting($query, $payload, 'id', 'desc');
 
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['author_id'])) {
-            $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['name'])) {
-            $query->where('name', 'like', "%{$payload['name']}%");
-        }
-
-        if (isset($payload['code'])) {
-            $query->where('code', 'like', "%{$payload['code']}%");
-        }
-
-        if (isset($payload['description'])) {
-            $query->where('description', 'like', "%{$payload['description']}%");
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id', 'desc');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -81,21 +60,11 @@ class ProductMgmtHistRepository extends BaseRepository implements ProductMgmtHis
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['product_mgmt_id'] = $payload['product_mgmt_id'];
-        $data['category_id'] = $payload['category_id'];
-        $data['code'] = $payload['code'];
-        $data['name'] = $payload['name'];
-        $data['slug'] = $payload['slug'];
-        $data['description'] = $payload['description'];
-        $data['status'] = $payload['status'];
-        $data['is_display'] = $payload['is_display'];
-        $data['rank_order'] = $payload['rank_order'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $this->model->create($data);
-
-        return $this->model->id;
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
+        $model->save();
+        return $model->id;
     }
 
     /**
@@ -106,21 +75,10 @@ class ProductMgmtHistRepository extends BaseRepository implements ProductMgmtHis
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['product_mgmt_id'] = $payload['product_mgmt_id'];
-        $data['category_id'] = $payload['category_id'];
-        $data['code'] = $payload['code'];
-        $data['name'] = $payload['name'];
-        $data['slug'] = $payload['slug'];
-        $data['description'] = $payload['description'];
-        $data['status'] = $payload['status'];
-        $data['is_display'] = $payload['is_display'];
-        $data['rank_order'] = $payload['rank_order'];
-        $data['action'] = $payload['action'];
-        $data['author_id'] = $payload['author_id'];
-        $data->save();
-
-        return $data->id;
+        $model = $this->model->findOrFail($payload['id']);
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
     /**

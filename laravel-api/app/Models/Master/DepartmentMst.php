@@ -2,10 +2,18 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\DepartmentMstHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DepartmentMst extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'department_mst';
 
     /**
@@ -34,4 +42,44 @@ class DepartmentMst extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the admins associated with the department.
+     *
+     * @return BelongsToMany
+     */
+    public function admins(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            AdminMst::class,
+            'admin_department_mst',
+            'department_mst_id',
+            'admin_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the policies associated with the department.
+     *
+     * @return BelongsToMany
+     */
+    public function policies(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            PolicyDepartmentMst::class,
+            'department_management_mst',
+            'department_mst_id',
+            'policy_department_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the history records for the department.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(DepartmentMstHist::class, 'department_mst_id');
+    }
 }

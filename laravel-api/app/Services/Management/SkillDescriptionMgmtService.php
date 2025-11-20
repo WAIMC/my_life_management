@@ -2,18 +2,29 @@
 
 namespace App\Services\Management;
 
+use App\Services\BaseService;
 use App\Interfaces\Management\SkillDescriptionMgmtInterface;
 use App\Interfaces\History\Management\SkillDescriptionMgmtHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Management\SkillDescriptionMgmtResource;
 
-class SkillDescriptionMgmtService
+class SkillDescriptionMgmtService extends BaseService
 {
     public function __construct(
-        protected SkillDescriptionMgmtInterface $skillDescriptionMgmt, protected SkillDescriptionMgmtHistInterface $skillDescriptionMgmtHist
-    )
+        protected SkillDescriptionMgmtInterface $skillDescriptionMgmt,
+        protected SkillDescriptionMgmtHistInterface $skillDescriptionMgmtHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->skillDescriptionMgmtHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'skill_description_mgmt_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class SkillDescriptionMgmtService
     public function store(array $payload): int
     {
         $id = $this->skillDescriptionMgmt->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['skill_description_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->skillDescriptionMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class SkillDescriptionMgmtService
     {
         $id = $payload['id'];
         $affected = $this->skillDescriptionMgmt->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['skill_description_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->skillDescriptionMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class SkillDescriptionMgmtService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['skill_description_mgmt_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->skillDescriptionMgmtHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->skillDescriptionMgmt->executeDelete($payload['ids']);

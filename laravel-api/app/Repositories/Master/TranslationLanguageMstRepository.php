@@ -8,9 +8,7 @@ use App\Enums\IsDelete;
 use App\Interfaces\Master\TranslationLanguageMstInterface;
 use App\Models\Master\TranslationLanguageMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 
 class TranslationLanguageMstRepository extends BaseRepository implements TranslationLanguageMstInterface
@@ -21,41 +19,38 @@ class TranslationLanguageMstRepository extends BaseRepository implements Transla
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'translation_mst_id',
                 'language_mst_id',
                 'updated_at',
-            ]);
+            ])
+            ->with(['translationMst:id,key,value', 'languageMst:id,code,name']); // Eager load
 
-        if (isset($payload['translation_mst_id'])) {
-            $query->where('translation_mst_id', $payload['translation_mst_id']);
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'translation_mst_id',
+            'language_mst_id',
+        ]);
 
-        if (isset($payload['language_mst_id'])) {
-            $query->where('language_mst_id', $payload['language_mst_id']);
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload, 'translation_mst_id');
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        $query->orderBy('translation_mst_id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

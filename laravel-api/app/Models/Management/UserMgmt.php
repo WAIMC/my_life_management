@@ -2,10 +2,17 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\UserMgmtHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UserMgmt extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'user_mgmt';
 
     /**
@@ -45,15 +52,25 @@ class UserMgmt extends Model
         'last_name' => 'string',
         'address' => 'string',
         'phone_number' => 'string',
-        'birth' => 'string',
+        'birth' => 'datetime',
         'gender' => 'integer',
         'status' => 'integer',
         'is_active' => 'boolean',
         'avatar' => 'string',
-        'email_verified_at' => 'string',
+        'email_verified_at' => 'datetime',
         'remember_token' => 'string',
         'is_delete' => 'boolean',
-        'created_at' => 'string',
-        'updated_at' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the history records for the user.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(UserMgmtHist::class, 'user_mgmt_id');
+    }
 }

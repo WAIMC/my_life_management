@@ -2,18 +2,29 @@
 
 namespace App\Services\Master;
 
+use App\Services\BaseService;
 use App\Interfaces\Master\PolicyDepartmentMstInterface;
 use App\Interfaces\History\Master\PolicyDepartmentMstHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Master\PolicyDepartmentMstResource;
 
-class PolicyDepartmentMstService
+class PolicyDepartmentMstService extends BaseService
 {
     public function __construct(
-        protected PolicyDepartmentMstInterface $policyDepartmentMst, protected PolicyDepartmentMstHistInterface $policyDepartmentMstHist
-    )
+        protected PolicyDepartmentMstInterface $policyDepartmentMst,
+        protected PolicyDepartmentMstHistInterface $policyDepartmentMstHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->policyDepartmentMstHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'policy_department_mst_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class PolicyDepartmentMstService
     public function store(array $payload): int
     {
         $id = $this->policyDepartmentMst->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['policy_department_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->policyDepartmentMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class PolicyDepartmentMstService
     {
         $id = $payload['id'];
         $affected = $this->policyDepartmentMst->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['policy_department_mst_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->policyDepartmentMstHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class PolicyDepartmentMstService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['policy_department_mst_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->policyDepartmentMstHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->policyDepartmentMst->executeDelete($payload['ids']);

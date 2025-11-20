@@ -2,18 +2,29 @@
 
 namespace App\Services\Management;
 
+use App\Services\BaseService;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\History\Management\BannerMgmtHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Management\BannerMgmtResource;
 
-class BannerMgmtService
+class BannerMgmtService extends BaseService
 {
     public function __construct(
-        protected BannerMgmtInterface $bannerMgmt, protected BannerMgmtHistInterface $bannerMgmtHist
-    )
+        protected BannerMgmtInterface $bannerMgmt,
+        protected BannerMgmtHistInterface $bannerMgmtHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->bannerMgmtHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'banner_mgmt_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class BannerMgmtService
     public function store(array $payload): int
     {
         $id = $this->bannerMgmt->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['banner_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->bannerMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class BannerMgmtService
     {
         $id = $payload['id'];
         $affected = $this->bannerMgmt->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['banner_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->bannerMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class BannerMgmtService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['banner_mgmt_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->bannerMgmtHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->bannerMgmt->executeDelete($payload['ids']);

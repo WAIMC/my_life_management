@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Management;
 
-use App\Constants\CommonVal;
+use App\Enums\IsDelete;
 use App\Interfaces\Management\ProductMgmtInterface;
 use App\Models\Management\ProductMgmt;
 use App\Repositories\BaseRepository;
-use DateTime;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 class ProductMgmtRepository extends BaseRepository implements ProductMgmtInterface
 {
@@ -17,110 +19,106 @@ class ProductMgmtRepository extends BaseRepository implements ProductMgmtInterfa
     }
 
     /**
-     * Get all products with optional filtering
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
-        $query = $this->model->query();
+        $query = $this->model->query()
+            ->select([
+                'id',
+                'category_mgmt_id',
+                'code',
+                'name',
+                'slug',
+                'description',
+                'status',
+                'is_display',
+                'rank_order',
+                'updated_at',
+            ])
+            ->with(['categoryMgmt:id,name,slug'])
+            ->notDeleted();
 
+        // Handle id filter (whereIn)
         if (isset($payload['id'])) {
-            $query->whereIn('id', $payload['id']);
+            $query->whereIn('id', (array)$payload['id']);
         }
 
-        if (isset($payload['category_id'])) {
-            $query->where('category_id', $payload['category_id']);
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'category_mgmt_id',
+            'status',
+            'is_display',
+        ], [
+            'name',
+            'code',
+            'description',
+        ]);
 
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['is_display'])) {
-            $query->where('is_display', $payload['is_display']);
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload, 'id', 'desc');
 
-        if (isset($payload['name'])) {
-            $query->where('name', 'like', "%{$payload['name']}%");
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['code'])) {
-            $query->where('code', 'like', "%{$payload['code']}%");
-        }
-
-        if (isset($payload['description'])) {
-            $query->where('description', 'like', "%{$payload['description']}%");
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id', 'desc');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
-     * Create a new product
+     * Create new record
      *
      * @param array $payload
      * @return int
      */
     public function executeStore(array $payload): int
     {
-        $data = [];
-        $data['category_id'] = $payload['category_id'];
-        $data['code'] = $payload['code'];
-        $data['name'] = $payload['name'];
-        $data['slug'] = $payload['slug'];
-        $data['description'] = $payload['description'];
-        $data['status'] = $payload['status'];
-        $data['is_display'] = $payload['is_display'];
-        $data['rank_order'] = $payload['rank_order'];
-        $this->model->create($data);
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
 
-        return $this->model->id;
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Update an existing product
+     * Update record
      *
      * @param array $payload
      * @return int
      */
     public function executeUpdate(array $payload): int
     {
-        $data = $this->model->findById($payload['id']);
-        $data['category_id'] = $payload['category_id'];
-        $data['code'] = $payload['code'];
-        $data['name'] = $payload['name'];
-        $data['slug'] = $payload['slug'];
-        $data['description'] = $payload['description'];
-        $data['status'] = $payload['status'];
-        $data['is_display'] = $payload['is_display'];
-        $data['rank_order'] = $payload['rank_order'];
-        $data->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $data->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete a product
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->delete();
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
     }
 }

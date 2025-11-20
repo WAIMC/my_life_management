@@ -7,10 +7,10 @@ namespace App\Repositories\Master;
 use App\Enums\IsDelete;
 use App\Interfaces\Master\TranslationMstInterface;
 use App\Models\Master\TranslationMst;
+use App\Models\Master\OriginalTranslatorMst;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class TranslationMstRepository extends BaseRepository implements TranslationMstInterface
@@ -21,47 +21,49 @@ class TranslationMstRepository extends BaseRepository implements TranslationMstI
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'id',
-                'language_id',
-                'original_id',
+                'key',
                 'value',
+                'original_translator_mst_id',
+                'is_active',
                 'updated_at',
-            ]);
+            ])
+            ->with([
+                'originalTranslator:id,name',
+                'languages:id,code,name'
+            ]) // Eager load
+            ->notDeleted();
 
-        if (isset($payload['language_id'])) {
-            $query->where('language_id', $payload['language_id']);
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'id',
+            'is_active',
+            'original_translator_mst_id',
+        ], [
+            'key',
+            'value',
+        ]);
 
-        if (isset($payload['original_id'])) {
-            $query->where('original_id', $payload['original_id']);
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['value'])) {
-            $query->where('value', 'like', '%' . $payload['value'] . '%');
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload);
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -72,14 +74,19 @@ class TranslationMstRepository extends BaseRepository implements TranslationMstI
      */
     public function executeStore(array $payload): int
     {
-        $data['language_id'] = $payload['language_id'] ?? null;
-        $data['original_id'] = $payload['original_id'] ?? null;
-        $data['value'] = $payload['value'] ?? null;
-        $this->model->create($data);
+        // Validate foreign keys
+        $this->validateForeignKeys([
+            'original_translator_mst_id' => OriginalTranslatorMst::class,
+        ], $payload);
 
-        return $this->model->id;
+        $model = $this->model->fill(
+            Arr::only($payload, $this->model->getFillable())
+        );
+
+        $model->save();
+
+        return $model->id;
     }
-
 
     /**
      * Update record
@@ -89,24 +96,34 @@ class TranslationMstRepository extends BaseRepository implements TranslationMstI
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['language_id'] = $payload['language_id'] ?? null;
-        $record['original_id'] = $payload['original_id'] ?? null;
-        $record['value'] = $payload['value'] ?? null;
-        $record->save();
+        $model = $this->model->findOrFail($payload['id']);
 
-        return $record->id;
+        if ($model->isDeleted()) {
+            throw new \LogicException('Cannot update deleted record');
+        }
+
+        // Validate foreign keys
+        $this->validateForeignKeys([
+            'original_translator_mst_id' => OriginalTranslatorMst::class,
+        ], $payload);
+
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+
+        return $model->id;
     }
 
     /**
-     * Delete record
+     * Delete record (soft delete)
      *
      * @param array $ids
      * @return void
      */
     public function executeDelete(array $ids): void
     {
-        $this->model->whereIn('id', $ids)->update(['is_delete' => IsDelete::TRUE->value]);
+        // Soft delete
+        $this->model->whereIn('id', $ids)
+            ->notDeleted()
+            ->update(['is_delete' => IsDelete::TRUE->value]);
     }
-
 }

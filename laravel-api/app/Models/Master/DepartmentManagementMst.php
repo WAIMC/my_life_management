@@ -3,6 +3,7 @@
 namespace App\Models\Master;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DepartmentManagementMst extends Model
 {
@@ -29,4 +30,24 @@ class DepartmentManagementMst extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the department that owns this relationship.
+     *
+     * @return BelongsTo
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentMst::class, 'department_mst_id');
+    }
+
+    /**
+     * Get the policy that owns this relationship.
+     *
+     * @return BelongsTo
+     */
+    public function policy(): BelongsTo
+    {
+        return $this->belongsTo(PolicyDepartmentMst::class, 'policy_department_mst_id');
+    }
 }

@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\History\Management\SettingLinkMgmtHistInterface;
 use App\Models\History\Management\SettingLinkMgmtHist;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class SettingLinkMgmtHistRepository extends BaseRepository implements SettingLinkMgmtHistInterface
@@ -21,56 +20,20 @@ class SettingLinkMgmtHistRepository extends BaseRepository implements SettingLin
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
-            ->select([
-                'id',
-                'setting_link_id',
-                'key',
-                'value',
-                'action',
-                'author_id',
-            ]);
-
-        if (isset($payload['setting_link_id'])) {
-            $query->where('setting_link_id', $payload['setting_link_id']);
-        }
-
-        if (isset($payload['key'])) {
-            $query->where('key', 'like', '%' . $payload['key'] . '%');
-        }
-
-        if (isset($payload['value'])) {
-            $query->where('value', 'like', '%' . $payload['value'] . '%');
-        }
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        if (isset($payload['author_id'])) {
-            $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+            ->select(['id','setting_link_id','key','value','action','author_id'])
+            ->with(['settingLinkMgmt:id,key', 'author:id,username']);
+        $this->applyFilters($query, $payload, ['setting_link_id','action','author_id'], ['key','value']);
+        $this->applyDateRange($query, $payload);
+        $this->applySorting($query, $payload);
+        return $query->paginate($payload['per_page'] ?? 15, ['*'], 'page', $payload['page'] ?? 1);
     }
 
     /**
@@ -81,14 +44,9 @@ class SettingLinkMgmtHistRepository extends BaseRepository implements SettingLin
      */
     public function executeStore(array $payload): int
     {
-        $data['setting_link_id'] = $payload['setting_link_id'] ?? null;
-        $data['key'] = $payload['key'] ?? null;
-        $data['value'] = $payload['value'] ?? null;
-        $data['action'] = $payload['action'] ?? null;
-        $data['author_id'] = $payload['author_id'] ?? null;
-        $this->model->create($data);
-
-        return $this->model->id;
+        $model = $this->model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
 
@@ -100,15 +58,10 @@ class SettingLinkMgmtHistRepository extends BaseRepository implements SettingLin
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
-        $record['setting_link_id'] = $payload['setting_link_id'] ?? null;
-        $record['key'] = $payload['key'] ?? null;
-        $record['value'] = $payload['value'] ?? null;
-        $record['action'] = $payload['action'] ?? null;
-        $record['author_id'] = $payload['author_id'] ?? null;
-        $record->save();
-
-        return $record->id;
+        $model = $this->model->findOrFail($payload['id']);
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
     }
 
     /**

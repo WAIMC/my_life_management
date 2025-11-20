@@ -2,18 +2,29 @@
 
 namespace App\Services\Management;
 
+use App\Services\BaseService;
 use App\Interfaces\Management\SettingLinkMgmtInterface;
 use App\Interfaces\History\Management\SettingLinkMgmtHistInterface;
 use App\Enums\ActionType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Management\SettingLinkMgmtResource;
 
-class SettingLinkMgmtService
+class SettingLinkMgmtService extends BaseService
 {
     public function __construct(
-        protected SettingLinkMgmtInterface $settingLinkMgmt, protected SettingLinkMgmtHistInterface $settingLinkMgmtHist
-    )
+        protected SettingLinkMgmtInterface $settingLinkMgmt,
+        protected SettingLinkMgmtHistInterface $settingLinkMgmtHist
+    ) {
+    }
+
+    protected function getHistoryRepository()
     {
+        return $this->settingLinkMgmtHist;
+    }
+
+    protected function getHistoryForeignKey(): string
+    {
+        return 'setting_link_mgmt_id';
     }
 
     /**
@@ -38,16 +49,7 @@ class SettingLinkMgmtService
     public function store(array $payload): int
     {
         $id = $this->settingLinkMgmt->executeStore($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['setting_link_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::CREATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->settingLinkMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::CREATE, $payload);
 
         return $id;
     }
@@ -62,16 +64,7 @@ class SettingLinkMgmtService
     {
         $id = $payload['id'];
         $affected = $this->settingLinkMgmt->executeUpdate($payload);
-
-        $recordResource = $this->list(['id' => $id]);
-        $historyData = $recordResource->collection->first()->toArray();
-        $historyPayload = $historyData;
-        unset($historyPayload['id']);
-        $historyPayload['setting_link_mgmt_id'] = $id;
-        $historyPayload['action'] = ActionType::UPDATE;
-        $historyPayload['author_id'] = $payload['author_id'] ?? null;
-        $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-        $this->settingLinkMgmtHist->executeStore($historyPayload);
+        $this->recordHistory($id, ActionType::UPDATE, $payload);
 
         return $affected;
     }
@@ -90,18 +83,7 @@ class SettingLinkMgmtService
         }
 
         foreach ($payload['ids'] as $id) {
-            $recordResource = $this->list(['id' => $id]);
-            $record = $recordResource->collection->first();
-            if ($record) {
-                $historyData = $record->toArray();
-                $historyPayload = $historyData;
-                unset($historyPayload['id']);
-                $historyPayload['setting_link_mgmt_id'] = $id;
-                $historyPayload['action'] = ActionType::DELETE;
-                $historyPayload['author_id'] = $payload['author_id'] ?? null;
-                $historyPayload['created_at'] = now()->format('Y-m-d H:i:s');
-                $this->settingLinkMgmtHist->executeStore($historyPayload);
-            }
+            $this->recordHistory($id, ActionType::DELETE, $payload);
         }
 
         $this->settingLinkMgmt->executeDelete($payload['ids']);

@@ -2,10 +2,18 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\SkillDescriptionMgmtHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SkillDescriptionMgmt extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'skill_description_mgmt';
 
     /**
@@ -44,4 +52,24 @@ class SkillDescriptionMgmt extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the skill that owns the description.
+     *
+     * @return BelongsTo
+     */
+    public function skill(): BelongsTo
+    {
+        return $this->belongsTo(SkillMgmt::class, 'skill_mgmt_id');
+    }
+
+    /**
+     * Get the history records for the skill description.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(SkillDescriptionMgmtHist::class, 'skill_description_mgmt_id');
+    }
 }

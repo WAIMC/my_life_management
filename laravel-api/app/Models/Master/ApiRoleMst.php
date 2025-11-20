@@ -3,6 +3,7 @@
 namespace App\Models\Master;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ApiRoleMst extends Model
 {
@@ -29,4 +30,24 @@ class ApiRoleMst extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the API that owns this relationship.
+     *
+     * @return BelongsTo
+     */
+    public function api(): BelongsTo
+    {
+        return $this->belongsTo(ApiMst::class, 'api_mst_id');
+    }
+
+    /**
+     * Get the role that owns this relationship.
+     *
+     * @return BelongsTo
+     */
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(RoleMst::class, 'role_mst_id');
+    }
 }

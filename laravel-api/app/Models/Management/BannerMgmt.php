@@ -2,10 +2,17 @@
 
 namespace App\Models\Management;
 
+use App\Models\History\Management\BannerMgmtHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BannerMgmt extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'banner_mgmt';
 
     /**
@@ -42,4 +49,14 @@ class BannerMgmt extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the history records for the banner.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(BannerMgmtHist::class, 'banner_mgmt_id');
+    }
 }

@@ -8,8 +8,7 @@ use App\Enums\IsDelete;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
 use App\Models\Management\CategorySkillMgmt;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 
@@ -21,41 +20,38 @@ class CategorySkillMgmtRepository extends BaseRepository implements CategorySkil
     }
 
     /**
-     * Get list
+     * Get list with pagination
      *
      * @param array $payload
-     * @return Collection
+     * @return LengthAwarePaginator
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
                 'category_mgmt_id',
                 'skill_mgmt_id',
                 'updated_at',
-            ]);
+            ])
+            ->with(['categoryMgmt:id,name,slug', 'skillMgmt:id,name,icon']); // Eager load
 
-        if (isset($payload['category_mgmt_id'])) {
-            $query->where('category_mgmt_id', $payload['category_mgmt_id']);
-        }
+        // Apply filters
+        $this->applyFilters($query, $payload, [
+            'category_mgmt_id',
+            'skill_mgmt_id',
+        ]);
 
-        if (isset($payload['skill_mgmt_id'])) {
-            $query->where('skill_mgmt_id', $payload['skill_mgmt_id']);
-        }
+        // Apply date range
+        $this->applyDateRange($query, $payload);
 
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
+        // Apply sorting
+        $this->applySorting($query, $payload, 'category_mgmt_id');
 
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
+        // Pagination
+        $perPage = $payload['per_page'] ?? 15;
+        $page = $payload['page'] ?? 1;
 
-        $query->orderBy('category_mgmt_id');
-
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

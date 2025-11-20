@@ -2,10 +2,15 @@
 
 namespace App\Models\Master;
 
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FeatureMst extends Model
 {
+    use HasSoftDelete, HasStatus;
+
     protected $table = 'feature_mst';
 
     /**
@@ -36,4 +41,14 @@ class FeatureMst extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the APIs for the feature.
+     *
+     * @return HasMany
+     */
+    public function apis(): HasMany
+    {
+        return $this->hasMany(ApiMst::class, 'feature_mst_id');
+    }
 }

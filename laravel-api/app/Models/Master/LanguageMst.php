@@ -2,10 +2,18 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\LanguageMstHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LanguageMst extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'language_mst';
 
     /**
@@ -31,7 +39,32 @@ class LanguageMst extends Model
         'name' => 'string',
         'is_active' => 'boolean',
         'is_delete' => 'boolean',
-        'created_at' => 'string',
-        'updated_at' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the translations associated with the language.
+     *
+     * @return BelongsToMany
+     */
+    public function translations(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            TranslationMst::class,
+            'translation_language_mst',
+            'language_mst_id',
+            'translation_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the history records for the language.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(LanguageMstHist::class, 'language_mst_id');
+    }
 }

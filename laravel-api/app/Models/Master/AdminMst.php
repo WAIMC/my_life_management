@@ -2,10 +2,18 @@
 
 namespace App\Models\Master;
 
+use App\Models\History\Master\AdminMstHist;
+use App\Traits\HasSoftDelete;
+use App\Traits\HasStatus;
+use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AdminMst extends Model
 {
+    use HasSoftDelete, HasStatus, HasHistory;
+
     protected $table = 'admin_mst';
 
     /**
@@ -56,4 +64,44 @@ class AdminMst extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the roles associated with the admin.
+     *
+     * @return BelongsToMany
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            RoleMst::class,
+            'admin_role_mst',
+            'admin_mst_id',
+            'role_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the departments associated with the admin.
+     *
+     * @return BelongsToMany
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            DepartmentMst::class,
+            'admin_department_mst',
+            'admin_mst_id',
+            'department_mst_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get the history records for the admin.
+     *
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(AdminMstHist::class, 'admin_mst_id');
+    }
 }

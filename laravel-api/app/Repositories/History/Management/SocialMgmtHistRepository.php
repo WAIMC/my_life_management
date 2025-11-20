@@ -8,9 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\History\Management\SocialMgmtHistInterface;
 use App\Models\History\Management\SocialMgmtHist;
 use App\Repositories\BaseRepository;
-use DateTime;
-use App\Constants\CommonVal;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 
 class SocialMgmtHistRepository extends BaseRepository implements SocialMgmtHistInterface
@@ -26,76 +25,17 @@ class SocialMgmtHistRepository extends BaseRepository implements SocialMgmtHistI
      * @param array $payload
      * @return Collection
      */
-    public function list(array $payload): Collection
+    public function list(array $payload): LengthAwarePaginator
     {
         $query = $this->model->query()
             ->select([
-                'id',
-                'social_mgmt_id',
-                'name',
-                'slug',
-                'link',
-                'image',
-                'status',
-                'is_display',
-                'rank_order',
-                'action',
-                'author_id',
-            ]);
-
-        if (isset($payload['social_mgmt_id'])) {
-            $query->where('social_mgmt_id', $payload['social_mgmt_id']);
-        }
-
-        if (isset($payload['name'])) {
-            $query->where('name', 'like', '%' . $payload['name'] . '%');
-        }
-
-        if (isset($payload['slug'])) {
-            $query->where('slug', 'like', '%' . $payload['slug'] . '%');
-        }
-
-        if (isset($payload['link'])) {
-            $query->where('link', $payload['link']);
-        }
-
-        if (isset($payload['image'])) {
-            $query->where('image', $payload['image']);
-        }
-
-        if (isset($payload['status'])) {
-            $query->where('status', $payload['status']);
-        }
-
-        if (isset($payload['is_display'])) {
-            $query->where('is_display', $payload['is_display']);
-        }
-
-        if (isset($payload['rank_order'])) {
-            $query->where('rank_order', $payload['rank_order']);
-        }
-
-        if (isset($payload['action'])) {
-            $query->where('action', $payload['action']);
-        }
-
-        if (isset($payload['author_id'])) {
-            $query->where('author_id', $payload['author_id']);
-        }
-
-        if (isset($payload['from_date'])) {
-            $fromDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['from_date']);
-            $query->whereDate('updated_at', '>=', $fromDate);
-        }
-
-        if (isset($payload['to_date'])) {
-            $toDate = DateTime::createFromFormat(CommonVal::DATE_FORMAT, $payload['to_date']);
-            $query->whereDate('updated_at', '<=', $toDate);
-        }
-
-        $query->orderBy('id');
-
-        return $query->get();
+                'id','social_mgmt_id','name','slug','link','image','status','is_display','rank_order','action','author_id',
+            ])
+            ->with(['socialMgmt:id,name', 'author:id,username']);
+        $this->applyFilters($query, $payload, ['social_mgmt_id','link','image','status','is_display','rank_order','action','author_id'], ['name','slug']);
+        $this->applyDateRange($query, $payload);
+        $this->applySorting($query, $payload);
+        return $query->paginate($payload['per_page'] ?? 15, ['*'], 'page', $payload['page'] ?? 1);
     }
 
     /**
@@ -106,8 +46,10 @@ class SocialMgmtHistRepository extends BaseRepository implements SocialMgmtHistI
      */
     public function executeStore(array $payload): int
     {
-        $data['social_mgmt_id'] = $payload['social_mgmt_id'] ?? null;
-        $data['name'] = $payload['name'] ?? null;
+        $model = $this->model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
+    }
         $data['slug'] = $payload['slug'] ?? null;
         $data['link'] = $payload['link'] ?? null;
         $data['image'] = $payload['image'] ?? null;
@@ -130,7 +72,11 @@ class SocialMgmtHistRepository extends BaseRepository implements SocialMgmtHistI
      */
     public function executeUpdate(array $payload): int
     {
-        $record = $this->model->find($payload['id']);
+        $model = $this->model->findOrFail($payload['id']);
+        $model->fill(Arr::only($payload, $this->model->getFillable()));
+        $model->save();
+        return $model->id;
+    }
         $record['social_mgmt_id'] = $payload['social_mgmt_id'] ?? null;
         $record['name'] = $payload['name'] ?? null;
         $record['slug'] = $payload['slug'] ?? null;
