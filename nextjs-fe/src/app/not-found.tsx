@@ -2,34 +2,69 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
 
 export default function NotFound() {
+  const handleGoBack = () => {
+    if (typeof window !== 'undefined') {
+      window.history.back();
+    }
+  };
+
   return (
-    <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="text-center">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+      <div className="mx-auto max-w-md px-4 text-center">
+        {/* Icon */}
         <div className="mb-8 flex justify-center">
-          <div className="rounded-full bg-red-100 p-4 dark:bg-red-900/20">
-            <svg className="h-12 w-12 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
+          <div className="rounded-full bg-red-100 p-6 dark:bg-red-900/20">
+            <AlertTriangle className="h-16 w-16 text-red-600 dark:text-red-400" />
           </div>
         </div>
-        <h1 className="mb-2 text-6xl font-bold text-white">404</h1>
-        <p className="mb-2 text-2xl font-semibold text-slate-200">
+
+        {/* Error Code */}
+        <h1 className="mb-4 text-8xl font-bold text-slate-900 dark:text-white">
+          404
+        </h1>
+
+        {/* Title */}
+        <h2 className="mb-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Page Not Found
-        </p>
-        <p className="mb-8 text-slate-400">
+        </h2>
+
+        {/* Description */}
+        <p className="mb-8 text-slate-600 dark:text-slate-400">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          Please check the URL or return to the homepage.
         </p>
+
+        {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button asChild>
-            <Link href="/admin">Back to Dashboard</Link>
+          <Button asChild size="lg" className="gap-2">
+            <Link href="/admin">
+              <Home className="h-4 w-4" />
+              Back to Dashboard
+            </Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link href="/">Go Home</Link>
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={handleGoBack}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Go Back
           </Button>
+        </div>
+
+        {/* Helpful Links */}
+        <div className="mt-12 text-sm text-slate-500 dark:text-slate-500">
+          Need help? Contact{' '}
+          <a
+            href="mailto:support@example.com"
+            className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            support
+          </a>
         </div>
       </div>
     </div>

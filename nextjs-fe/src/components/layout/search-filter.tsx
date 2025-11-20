@@ -3,12 +3,16 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Search, X, Filter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SearchFilterProps {
   placeholder?: string;
   onSearch?: (value: string) => void;
   onFilterClick?: () => void;
   showFilter?: boolean;
+  debounceMs?: number;
+  className?: string;
 }
 
 export function SearchFilter({
@@ -16,8 +20,11 @@ export function SearchFilter({
   onSearch,
   onFilterClick,
   showFilter = true,
+  debounceMs = 300,
+  className,
 }: SearchFilterProps) {
   const [searchValue, setSearchValue] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -31,45 +38,69 @@ export function SearchFilter({
   const handleSearch = useCallback(
     (value: string) => {
       setSearchValue(value);
+      setIsSearching(true);
+
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+
       timeoutRef.current = setTimeout(() => {
         onSearch?.(value);
-      }, 300);
+        setIsSearching(false);
+      }, debounceMs);
     },
-    [onSearch]
+    [onSearch, debounceMs]
   );
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setSearchValue('');
+    setIsSearching(false);
     onSearch?.('');
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  }, [onSearch]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      handleClear();
+    }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative flex-1 max-w-sm">
-        <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+    <div className={cn('flex items-center gap-2', className)}>
+      <div className="relative max-w-sm flex-1">
+        <Search
+          className={cn(
+            'absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors',
+            isSearching
+              ? 'text-blue-500 dark:text-blue-400'
+              : 'text-slate-400'
+          )}
+        />
         <Input
           type="search"
           placeholder={placeholder}
           value={searchValue}
           onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10"
+          onKeyDown={handleKeyDown}
+          className="pl-10 pr-10"
+          aria-label="Search input"
         />
         {searchValue && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+            aria-label="Clear search"
+            type="button"
           >
-            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X className="h-4 w-4" />
           </button>
+        )}
+        {isSearching && !searchValue && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" />
+          </div>
         )}
       </div>
 
@@ -78,18 +109,10 @@ export function SearchFilter({
           variant="outline"
           onClick={onFilterClick}
           className="gap-2"
+          aria-label="Open filters"
         >
-          <svg
-            className="h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          Filter
+          <Filter className="h-4 w-4" />
+          <span className="hidden sm:inline">Filter</span>
         </Button>
       )}
     </div>

@@ -5,7 +5,7 @@ import * as CLIENT_URL from '@/constants/clientUrl';
 import { ERR_MESS } from '@/constants/messages';
 import { setAuth, clearAuth } from '@/redux/slices/authSlice';
 import { handleCommonError } from './apiErrorHandle';
-import { ErrorResponse } from '@/types/apiType';
+import { ApiResponse } from '@/types/apiType';
 import type { AppStore } from '../redux/store';
 
 // Init axios instance
@@ -119,11 +119,12 @@ axiosInstance.interceptors.response.use(
       refreshPromise = (async () => {
         try {
           // Call API refresh token (server will read refresh token from cookie)
-          const response = await axiosInstance.post<{ access_token: string; ttl: number }>(
+          const response = await axiosInstance.post<ApiResponse<{ access_token: string; ttl: number }>>(
             API_URL.REFRESH_TOKEN
           );
-          const newAccessToken = response.data.access_token;
-          const newTtl = response.data.ttl;
+          // Unwrap ApiResponse structure
+          const newAccessToken = response.data.data.access_token;
+          const newTtl = response.data.data.ttl;
 
           // Update new token in Redux
           appStore!.dispatch(setAuth(newAccessToken));
@@ -188,7 +189,7 @@ axiosInstance.interceptors.response.use(
     }
 
     // Handle other errors
-    return handleCommonError(error as AxiosError<ErrorResponse>);
+    return handleCommonError(error as AxiosError<ApiResponse<unknown>>);
   }
 );
 

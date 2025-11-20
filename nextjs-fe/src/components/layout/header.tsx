@@ -12,7 +12,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { 
+  Search, 
+  Bell, 
+  Sun, 
+  Moon, 
+  User,
+  Settings,
+  LogOut,
+  Check
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Notification {
   id: string;
@@ -23,51 +35,75 @@ interface Notification {
 }
 
 export function Header() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 3600000);
+  const twoDaysAgo = new Date(now.getTime() - 172800000);
   
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
-      title: 'New User',
-      message: 'A new user has registered',
+      title: 'New User Registration',
+      message: 'John Doe has registered a new account',
       read: false,
       timestamp: now,
     },
     {
       id: '2',
       title: 'System Alert',
-      message: 'Server uptime check passed',
+      message: 'Server uptime check passed successfully',
       read: true,
       timestamp: oneHourAgo,
     },
+    {
+      id: '3',
+      title: 'New Post Published',
+      message: 'Article "Getting Started with Next.js" is live',
+      read: false,
+      timestamp: twoDaysAgo,
+    },
   ]);
+
+  // Prevent hydration mismatch for theme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
+  const handleMarkAsRead = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+  }, []);
+
+  const handleMarkAllAsRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+  const formatTimestamp = (date: Date) => {
+    try {
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch {
+      return new Date(date).toLocaleTimeString();
+    }
   };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-center justify-between gap-4 px-4 py-3 lg:px-6">
-        {/* Left Section */}
+        {/* Left Section - Search */}
         <div className="flex flex-1 items-center gap-4">
           <div className="hidden flex-1 md:flex">
             <div className="relative w-full max-w-md">
-              <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
-                placeholder="Search..."
+                placeholder="Search... (⌘K)"
                 className="pl-10"
                 type="search"
               />
@@ -75,19 +111,34 @@ export function Header() {
           </div>
         </div>
 
-        {/* Right Section */}
+        {/* Right Section - Actions */}
         <div className="flex items-center gap-2">
           {/* Search Button (Mobile) */}
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden"
+            aria-label="Search"
           >
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <Search className="h-5 w-5" />
           </Button>
+
+          {/* Dark Mode Toggle */}
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              className="transition-transform hover:scale-110"
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5 text-yellow-500" />
+              ) : (
+                <Moon className="h-5 w-5 text-slate-700" />
+              )}
+            </Button>
+          )}
 
           {/* Notifications */}
           <DropdownMenu>
@@ -96,15 +147,13 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="relative"
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
               >
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
+                <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge
                     variant="default"
-                    className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                    className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 p-0 text-xs text-white"
                   >
                     {unreadCount}
                   </Badge>
@@ -118,7 +167,7 @@ export function Header() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-auto p-0 text-xs"
+                    className="h-auto p-0 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     onClick={handleMarkAllAsRead}
                   >
                     Mark all as read
@@ -131,28 +180,38 @@ export function Header() {
                   notifications.map((notification) => (
                     <DropdownMenuItem
                       key={notification.id}
-                      className="cursor-pointer p-3"
+                      className={cn(
+                        'cursor-pointer p-3 transition-colors',
+                        !notification.read && 'bg-blue-50 dark:bg-blue-950/20'
+                      )}
                       onClick={() => handleMarkAsRead(notification.id)}
                     >
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">
-                          {notification.title}
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                          {new Date(notification.timestamp).toLocaleTimeString()}
-                        </p>
+                      <div className="flex flex-1 gap-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">
+                            {notification.title}
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {notification.message}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                            {formatTimestamp(notification.timestamp)}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="flex items-start">
+                            <div className="h-2 w-2 rounded-full bg-blue-600" />
+                          </div>
+                        )}
                       </div>
-                      {!notification.read && (
-                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600" />
-                      )}
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-sm text-slate-500">
-                    No notifications
+                  <div className="p-8 text-center">
+                    <Bell className="mx-auto mb-2 h-12 w-12 text-slate-300 dark:text-slate-700" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      No notifications
+                    </p>
                   </div>
                 )}
               </div>
@@ -162,29 +221,34 @@ export function Header() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 rounded-full">
+              <Button 
+                variant="ghost" 
+                className="gap-2 rounded-full"
+                aria-label="User menu"
+              >
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarImage src="https://github.com/shadcn.png" alt="User avatar" />
                   <AvatarFallback>VD</AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:inline text-sm font-medium">
+                <span className="hidden text-sm font-medium sm:inline">
                   Vinh Dv
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>
-                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-1.78 7.78l-4.24-4.24m-5.08-5.08l-4.24-4.24" />
-                </svg>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600 focus:text-red-600 dark:text-red-400">
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -193,4 +257,9 @@ export function Header() {
       </div>
     </header>
   );
+}
+
+// Helper function for className merging (if not already imported)
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
 }

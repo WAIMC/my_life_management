@@ -5,7 +5,7 @@ import { setLoading } from '@/redux/slices/commonSlice';
 import { LOGIN, LOGOUT } from '@/constants/apiUrl';
 import toast from 'react-hot-toast';
 import { SagaIterator } from 'redux-saga';
-import { LoginPayload } from '@/types/authType';
+import { LoginPayload, LoginResponseData } from '@/types/authType';
 import * as CLIENT_URL from '@/constants/clientUrl';
 import { syncAuthStateAcrossTabs, clearAutoRefresh } from '@/lib/authManager';
 import broadcastManager from '@/lib/broadcastChannelManager';
@@ -14,9 +14,16 @@ function* loginSaga(action: { type: string; payload: LoginPayload }): SagaIterat
   try {
     console.log('Login payload:', action.payload);
     yield put(setLoading(true));
-    const response = (yield call(API.apiPost, LOGIN, action.payload));
-    const accessToken = response?.access_token;
-    const ttl = response?.ttl;
+    
+    // Call login API with proper typing - apiPost now returns unwrapped data
+    const response: LoginResponseData = (yield call(
+      API.apiPost<LoginResponseData>,
+      LOGIN,
+      action.payload
+    )) as LoginResponseData;
+    
+    const accessToken = response.access_token;
+    const ttl = response.ttl;
 
     // Logic 3: Đồng bộ trạng thái đăng nhập giữa các tab
     syncAuthStateAcrossTabs(accessToken, ttl);

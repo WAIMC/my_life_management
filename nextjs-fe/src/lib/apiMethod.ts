@@ -1,5 +1,6 @@
 import axiosInstance from './apiInstance';
 import { AxiosRequestConfig, isAxiosError } from 'axios';
+import { ApiResponse } from '@/types/apiType';
 
 // Interface cho request config
 interface RequestConfig extends AxiosRequestConfig {
@@ -43,11 +44,12 @@ export const apiGet = async <T = unknown>(
   const { retries = 2, ...restConfig } = config || {};
   
   return executeWithRetry(async () => {
-    const response = await axiosInstance.get<T>(url, {
+    const response = await axiosInstance.get<ApiResponse<T>>(url, {
       ...restConfig,
       params: params || config?.params,
     });
-    return response.data;
+    // Unwrap ApiResponse structure: return data field
+    return response.data.data;
   }, retries);
 };
 
@@ -67,11 +69,12 @@ export const apiPost = async <T = unknown>(
   const { retries = 1, ...restConfig } = config || {};
   
   return executeWithRetry(async () => {
-    const response = await axiosInstance.post<T>(url, data, {
+    const response = await axiosInstance.post<ApiResponse<T>>(url, data, {
       ...restConfig,
       params: params || config?.params,
     });
-    return response.data;
+    // Unwrap ApiResponse structure: return data field
+    return response.data.data;
   }, retries);
 };
 
@@ -91,11 +94,12 @@ export const apiPut = async <T = unknown>(
   const { retries = 1, ...restConfig } = config || {};
   
   return executeWithRetry(async () => {
-    const response = await axiosInstance.put<T>(url, data, {
+    const response = await axiosInstance.put<ApiResponse<T>>(url, data, {
       ...restConfig,
       params: params || config?.params,
     });
-    return response.data;
+    // Unwrap ApiResponse structure: return data field
+    return response.data.data;
   }, retries);
 };
 
@@ -115,11 +119,12 @@ export const apiPatch = async <T = unknown>(
   const { retries = 1, ...restConfig } = config || {};
   
   return executeWithRetry(async () => {
-    const response = await axiosInstance.patch<T>(url, data, {
+    const response = await axiosInstance.patch<ApiResponse<T>>(url, data, {
       ...restConfig,
       params: params || config?.params,
     });
-    return response.data;
+    // Unwrap ApiResponse structure: return data field
+    return response.data.data;
   }, retries);
 };
 
@@ -137,10 +142,11 @@ export const apiDelete = async <T = unknown>(
   const { retries = 2, ...restConfig } = config || {};
   
   return executeWithRetry(async () => {
-    const response = await axiosInstance.delete<T>(url, {
+    const response = await axiosInstance.delete<ApiResponse<T>>(url, {
       ...restConfig,
       params: params || config?.params,
     });
-    return response.data;
+    // Unwrap ApiResponse structure: return data field
+    return response.data.data;
   }, retries);
 };

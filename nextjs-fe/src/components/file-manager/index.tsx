@@ -1,210 +1,322 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Sidebar } from './sidebar';
 import { Breadcrumb } from './breadcrumb';
 import { Toolbar } from './toolbar';
 import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
 import { PreviewModal } from './preview-modal';
-import type { MediaFile, ViewMode } from './types';
-import { filterFiles, sortFiles } from './utils';
+import { Pagination } from './pagination';
+import { useFileManager } from '@/hooks/use-file-manager';
+import { buildBreadcrumb } from './utils';
+import { UploadDialog } from './dialogs/upload-dialog';
+import { NewFolderDialog } from './dialogs/new-folder-dialog';
+import { RenameDialog } from './dialogs/rename-dialog';
+import { DeleteConfirmDialog } from './dialogs/delete-confirm-dialog';
+import { MoveCopyDialog } from './dialogs/move-copy-dialog';
+import type { MediaFile } from './types';
 import toast from 'react-hot-toast';
 
-// Mock data for demo
-const MOCK_FILES: MediaFile[] = [
-  {
-    id: '1',
-    drive_id: 'drive_1',
-    name: 'Ảnh du lịch 1.jpg',
-    mime_type: 'image/jpeg',
-    url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=500&h=500&fit=crop',
-    folder_path: '/images/2025',
-    size: 2500000,
-    owner_id: 'user_1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    type: 'file',
-  },
-  {
-    id: '2',
-    drive_id: 'drive_2',
-    name: 'Ảnh du lịch 2.jpg',
-    mime_type: 'image/jpeg',
-    url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=500&fit=crop',
-    folder_path: '/images/2025',
-    size: 3000000,
-    owner_id: 'user_1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    type: 'file',
-  },
-  {
-    id: '3',
-    drive_id: 'drive_3',
-    name: 'Tài liệu.pdf',
-    mime_type: 'application/pdf',
-    url: '#',
-    folder_path: '/documents',
-    size: 1500000,
-    owner_id: 'user_1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    type: 'file',
-  },
-  {
-    id: '4',
-    drive_id: 'drive_4',
-    name: 'Video giới thiệu.mp4',
-    mime_type: 'video/mp4',
-    url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-    folder_path: '/videos',
-    size: 50000000,
-    owner_id: 'user_1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    type: 'file',
-  },
-  {
-    id: '5',
-    drive_id: 'drive_5',
-    name: 'Project files',
-    mime_type: 'folder',
-    url: '',
-    folder_path: '/projects',
-    size: 0,
-    owner_id: 'user_1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    type: 'folder',
-  },
-];
+export default function FileManager() {
+  const {
+    currentPath,
+    viewMode,
+    files,
+    selectedFiles,
+    isLoading,
+    searchQuery,
+    filterOptions,
+    sortOptions,
+    pagination,
+    setCurrentPath,
+    setViewMode,
+    toggleFileSelection,
+    selectAllFiles,
+    setSearchQuery,
+    setFilterOptions,
+    setSortOptions,
+    setPagination,
+    refreshFiles,
+    createFolder,
+    uploadFiles,
+    deleteFiles,
+    renameFile,
+    moveFiles,
+    copyFiles,
+  } = useFileManager();
 
-export const FileManager = () => {
-  const [currentPath, setCurrentPath] = useState('/');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType] = useState('all');
-  const [sortBy] = useState<'name' | 'date' | 'size' | 'type'>('name');
+  // Dialog states
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isMoveCopyOpen, setIsMoveCopyOpen] = useState(false);
+  const [moveCopyMode, setMoveCopyMode] = useState<'move' | 'copy'>('move');
+  
+  // Selection state for operations
+  const [targetFile, setTargetFile] = useState<MediaFile | null>(null);
   const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Filter and sort files
-  const processedFiles = useMemo(() => {
-    let files = [...MOCK_FILES];
-    files = filterFiles(files, searchQuery, filterType);
-    files = sortFiles(files, sortBy);
-    return files;
-  }, [searchQuery, filterType, sortBy]);
+  const breadcrumbItems = buildBreadcrumb(currentPath);
 
-  const handleSelectFile = (fileId: string, selected: boolean) => {
-    setSelectedFiles((prev) => {
-      if (selected) {
-        return [...prev, fileId];
-      } else {
-        return prev.filter((id) => id !== fileId);
-      }
-    });
-  };
-
-  const handleUpload = () => {
-    toast.success('Upload feature coming soon');
-  };
-
-  const handleNewFolder = () => {
-    toast.success('Create folder feature coming soon');
-  };
-
-  const handleDelete = () => {
-    if (selectedFiles.length === 0) {
-      toast.error('Chọn file để xóa');
-      return;
+  // Handlers
+  const handleFileClick = (file: MediaFile) => {
+    if (file.type === 'folder') {
+      setCurrentPath(file.folder_path === '/' ? `/${file.name}` : `${file.folder_path}/${file.name}`);
+    } else {
+      setPreviewFile(file);
     }
-    toast.success('Delete feature coming soon');
   };
 
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success('Đã làm mới');
-    }, 1000);
+  const handleNavigate = (path: string) => {
+    setCurrentPath(path);
   };
 
-  const handleFileDelete = () => {
-    toast.success('File deleted');
+  const handleUpload = async (filesToUpload: File[]) => {
+    try {
+      await uploadFiles(filesToUpload);
+      toast.success('Upload thành công');
+    } catch (error) {
+      toast.error('Upload thất bại');
+    }
   };
 
-  // Breadcrumb items
-  const breadcrumbItems = currentPath
-    .split('/')
-    .filter(Boolean)
-    .map((part, index, arr) => ({
-      label: part.charAt(0).toUpperCase() + part.slice(1),
-      path: '/' + arr.slice(0, index + 1).join('/'),
-    }));
+  const handleCreateFolder = async (name: string) => {
+    try {
+      await createFolder(name);
+      toast.success('Tạo thư mục thành công');
+    } catch (error) {
+      toast.error('Tạo thư mục thất bại');
+    }
+  };
+
+  const handleRename = (file: MediaFile) => {
+    setTargetFile(file);
+    setIsRenameOpen(true);
+  };
+
+  const handleRenameSubmit = async (file: MediaFile, newName: string) => {
+    try {
+      await renameFile(file.id, newName);
+      toast.success('Đổi tên thành công');
+    } catch (error) {
+      toast.error('Đổi tên thất bại');
+    }
+  };
+
+  const handleDelete = (file?: MediaFile) => {
+    if (file) {
+      setTargetFile(file);
+      // If deleting a single file that isn't in selection, clear selection first
+      if (!selectedFiles.includes(file.id)) {
+        // Optional: clear selection or just delete this one
+        // For simplicity, let's just set targetFile and handle logic in confirm
+      }
+    } else {
+      setTargetFile(null);
+    }
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const idsToDelete = targetFile ? [targetFile.id] : selectedFiles;
+      await deleteFiles(idsToDelete);
+      toast.success('Xóa thành công');
+      setTargetFile(null);
+    } catch (error) {
+      toast.error('Xóa thất bại');
+    }
+  };
+
+  const handleMove = (file?: MediaFile) => {
+    setMoveCopyMode('move');
+    if (file) setTargetFile(file);
+    else setTargetFile(null);
+    setIsMoveCopyOpen(true);
+  };
+
+  const handleCopy = (file?: MediaFile) => {
+    setMoveCopyMode('copy');
+    if (file) setTargetFile(file);
+    else setTargetFile(null);
+    setIsMoveCopyOpen(true);
+  };
+
+  const handleMoveCopyConfirm = async (targetPath: string) => {
+    try {
+      const idsToProcess = targetFile ? [targetFile.id] : selectedFiles;
+      if (moveCopyMode === 'move') {
+        await moveFiles(idsToProcess, targetPath);
+        toast.success('Di chuyển thành công');
+      } else {
+        await copyFiles(idsToProcess, targetPath);
+        toast.success('Sao chép thành công');
+      }
+      setTargetFile(null);
+    } catch (error) {
+      toast.error(`${moveCopyMode === 'move' ? 'Di chuyển' : 'Sao chép'} thất bại`);
+    }
+  };
+
+  const handleDownload = (file: MediaFile) => {
+    // In a real app, this would trigger a download
+    // For mock, we just open the URL
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Preview Navigation
+  const handlePreviewNext = () => {
+    if (!previewFile) return;
+    const currentIndex = files.findIndex(f => f.id === previewFile.id);
+    if (currentIndex < files.length - 1) {
+      setPreviewFile(files[currentIndex + 1]);
+    }
+  };
+
+  const handlePreviewPrev = () => {
+    if (!previewFile) return;
+    const currentIndex = files.findIndex(f => f.id === previewFile.id);
+    if (currentIndex > 0) {
+      setPreviewFile(files[currentIndex - 1]);
+    }
+  };
+
+  const hasNextPreview = previewFile 
+    ? files.findIndex(f => f.id === previewFile.id) < files.length - 1 
+    : false;
+  const hasPrevPreview = previewFile 
+    ? files.findIndex(f => f.id === previewFile.id) > 0 
+    : false;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <Sidebar
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
+      <Sidebar 
         currentPath={currentPath}
         onPathChange={setCurrentPath}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        className="hidden w-64 border-r border-border md:block" 
       />
-
-      {/* Main content */}
+      
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={breadcrumbItems}
-          onNavigate={setCurrentPath}
-        />
-
-        {/* Toolbar */}
+        <Breadcrumb items={breadcrumbItems} onNavigate={handleNavigate} />
+        
         <Toolbar
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          onUpload={handleUpload}
-          onNewFolder={handleNewFolder}
-          onDelete={handleDelete}
-          onRefresh={handleRefresh}
+          onUpload={() => setIsUploadOpen(true)}
+          onNewFolder={() => setIsNewFolderOpen(true)}
+          onDelete={() => handleDelete()}
+          onMove={() => handleMove()}
+          onCopy={() => handleCopy()}
+          onRefresh={refreshFiles}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}
-          hasSelection={selectedFiles.length > 0}
+          selectedCount={selectedFiles.length}
+          filterOptions={filterOptions}
+          onFilterChange={setFilterOptions}
+          sortOptions={sortOptions}
+          onSortChange={setSortOptions}
         />
 
-        {/* File grid/list */}
-        <div className="flex-1 overflow-auto bg-background p-4">
+        <div className="flex-1 overflow-auto p-4">
           {viewMode === 'grid' ? (
             <FileGrid
-              files={processedFiles}
+              files={files}
               selectedFiles={selectedFiles}
-              onSelect={handleSelectFile}
-              onFileClick={setPreviewFile}
+              onSelect={toggleFileSelection}
+              onFileClick={handleFileClick}
+              onNavigate={handleNavigate}
               isLoading={isLoading}
+              onPreview={setPreviewFile}
+              onRename={handleRename}
+              onMove={handleMove}
+              onCopy={handleCopy}
+              onDelete={handleDelete}
+              onDownload={handleDownload}
             />
           ) : (
             <FileList
-              files={processedFiles}
+              files={files}
               selectedFiles={selectedFiles}
-              onSelect={handleSelectFile}
-              onFileClick={setPreviewFile}
+              onSelect={toggleFileSelection}
+              onFileClick={handleFileClick}
+              onNavigate={handleNavigate}
               isLoading={isLoading}
+              sortField={sortOptions.field}
+              sortOrder={sortOptions.order}
+              onSort={(field) => setSortOptions({ 
+                field, 
+                order: sortOptions.field === field && sortOptions.order === 'asc' ? 'desc' : 'asc' 
+              })}
+              onPreview={setPreviewFile}
+              onRename={handleRename}
+              onMove={handleMove}
+              onCopy={handleCopy}
+              onDelete={handleDelete}
+              onDownload={handleDownload}
             />
           )}
         </div>
+        
+        <Pagination 
+          pagination={pagination}
+          onPageChange={(page) => setPagination({ ...pagination, page })}
+        />
       </div>
 
-      {/* Preview modal */}
+      {/* Dialogs */}
+      <UploadDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        onUpload={handleUpload}
+        currentPath={currentPath}
+      />
+
+      <NewFolderDialog
+        open={isNewFolderOpen}
+        onOpenChange={setIsNewFolderOpen}
+        onCreateFolder={handleCreateFolder}
+      />
+
+      <RenameDialog
+        open={isRenameOpen}
+        onOpenChange={setIsRenameOpen}
+        file={targetFile}
+        onRename={handleRenameSubmit}
+      />
+
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        count={targetFile ? 1 : selectedFiles.length}
+        itemName={targetFile?.name}
+      />
+
+      <MoveCopyDialog
+        open={isMoveCopyOpen}
+        onOpenChange={setIsMoveCopyOpen}
+        mode={moveCopyMode}
+        count={targetFile ? 1 : selectedFiles.length}
+        onConfirm={handleMoveCopyConfirm}
+        currentPath={currentPath}
+      />
+
       <PreviewModal
         file={previewFile}
         onClose={() => setPreviewFile(null)}
-        onDelete={handleFileDelete}
+        onDelete={(file) => handleDelete(file)}
+        onNext={handlePreviewNext}
+        onPrev={handlePreviewPrev}
+        hasNext={hasNextPreview}
+        hasPrev={hasPrevPreview}
       />
     </div>
   );
-};
+}

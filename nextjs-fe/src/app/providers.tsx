@@ -61,6 +61,8 @@ function BroadcastListener() {
   return null;
 }
 
+import { ThemeProvider } from 'next-themes';
+
 export function Providers({ children }: { children: React.ReactNode }) {
     const store = useMemo(() => {
         const newStore = makeStore();
@@ -71,34 +73,41 @@ export function Providers({ children }: { children: React.ReactNode }) {
     
     return (
         <Provider store={store}>
-            <BroadcastListener />
-            {children}
-            <Toaster
-                position="top-right"
-                reverseOrder={false}
-                gutter={8}
-                toastOptions={{
-                    duration: 4000,
-                    style: {
-                        background: '#fff',
-                        color: '#000',
-                    },
-                    success: {
+            <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange={false}
+            >
+                <BroadcastListener />
+                {children}
+                <Toaster
+                    position="top-right"
+                    reverseOrder={false}
+                    gutter={8}
+                    toastOptions={{
+                        duration: 4000,
                         style: {
-                            background: '#ecfdf5',
-                            color: '#065f46',
-                            border: '1px solid #86efac',
+                            background: '#fff',
+                            color: '#000',
                         },
-                    },
-                    error: {
-                        style: {
-                            background: '#fef2f2',
-                            color: '#7f1d1d',
-                            border: '1px solid #fca5a5',
+                        success: {
+                            style: {
+                                background: '#ecfdf5',
+                                color: '#065f46',
+                                border: '1px solid #86efac',
+                            },
                         },
-                    },
-                }}
-            />
+                        error: {
+                            style: {
+                                background: '#fef2f2',
+                                color: '#7f1d1d',
+                                border: '1px solid #fca5a5',
+                            },
+                        },
+                    }}
+                />
+            </ThemeProvider>
         </Provider>
     );
 }

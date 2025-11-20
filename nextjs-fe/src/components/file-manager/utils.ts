@@ -6,8 +6,9 @@ import {
   FileAudio,
   FileArchive,
   FileCode,
+  Folder,
 } from 'lucide-react';
-import type { MediaFile } from './types';
+import type { MediaFile, FilterOptions, SortOptions } from './types';
 
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';
@@ -20,20 +21,22 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 export const getFileIcon = (mimeType: string) => {
+  if (mimeType === 'folder' || mimeType === 'application/vnd.google-apps.folder') return Folder;
   if (mimeType.startsWith('image/')) return FileImage;
   if (mimeType.startsWith('video/')) return FileVideo;
   if (mimeType.startsWith('audio/')) return FileAudio;
   if (
     mimeType.includes('pdf') ||
     mimeType.includes('word') ||
-    mimeType.includes('sheet')
+    mimeType.includes('sheet') ||
+    mimeType.includes('document')
   ) {
     return FileText;
   }
-  if (mimeType.includes('zip') || mimeType.includes('rar')) {
+  if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('compressed')) {
     return FileArchive;
   }
-  if (mimeType.startsWith('text/')) return FileCode;
+  if (mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml')) return FileCode;
 
   return File;
 };
@@ -49,6 +52,8 @@ export const getMimeTypeLabel = (mimeType: string): string => {
     'audio/mpeg': 'MP3',
     'application/pdf': 'PDF',
     'application/zip': 'ZIP',
+    'application/vnd.google-apps.folder': 'Folder',
+    'folder': 'Folder',
   };
 
   return types[mimeType] || mimeType.split('/')[1]?.toUpperCase() || 'File';
@@ -57,42 +62,70 @@ export const getMimeTypeLabel = (mimeType: string): string => {
 export const filterFiles = (
   files: MediaFile[],
   searchQuery: string,
-  filterType: string,
+  options: FilterOptions,
 ) => {
   return files.filter((file) => {
-    const matchesSearch = file.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesType =
-      filterType === 'all' || file.mime_type.startsWith(filterType);
+    // Search query
+    if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
 
-    return matchesSearch && matchesType;
+    // Type filter
+    if (options.type !== 'all') {
+      if (options.type === 'folders' && file.type !== 'folder') return false;
+      if (options.type === 'images' && !file.mime_type.startsWith('image/')) return false;
+      if (options.type === 'videos' && !file.mime_type.startsWith('video/')) return false;
+      if (options.type === 'documents' && (file.type === 'folder' || file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/'))) return false;
+    }
+
+    // Date filter
+    if (options.dateFrom && new Date(file.created_at) < options.dateFrom) return false;
+    if (options.dateTo && new Date(file.created_at) > options.dateTo) return false;
+
+    // Size filter
+    if (options.minSize && file.size < options.minSize) return false;
+    if (options.maxSize && file.size > options.maxSize) return false;
+
+    return true;
   });
 };
 
 export const sortFiles = (
   files: MediaFile[],
-  sortBy: 'name' | 'date' | 'size' | 'type',
+  options: SortOptions,
 ) => {
   const sorted = [...files];
+  const { field, order } = options;
+  const multiplier = order === 'asc' ? 1 : -1;
 
-  switch (sortBy) {
-    case 'name':
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
-      break;
-    case 'date':
-      sorted.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      );
-      break;
-    case 'size':
-      sorted.sort((a, b) => b.size - a.size);
-      break;
-    case 'type':
-      sorted.sort((a, b) => a.mime_type.localeCompare(b.mime_type));
-      break;
-  }
+  sorted.sort((a, b) => {
+    switch (field) {
+      case 'name':
+        return a.name.localeCompare(b.name) * multiplier;
+      case 'date':
+        return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * multiplier;
+      case 'size':
+        return (a.size - b.size) * multiplier;
+      case 'type':
+        return a.mime_type.localeCompare(b.mime_type) * multiplier;
+      default:
+        return 0;
+    }
+  });
 
   return sorted;
+};
+
+export const isValidFileName = (name: string): boolean => {
+  // Check for invalid characters (Windows/Unix common restrictions)
+  const invalidChars = /[<>:"/\\|?*]/;
+  return name.length > 0 && name.length <= 255 && !invalidChars.test(name);
+};
+
+export const buildBreadcrumb = (path: string) => {
+  const parts = path.split('/').filter(Boolean);
+  return parts.map((part, index) => ({
+    label: part,
+    path: '/' + parts.slice(0, index + 1).join('/'),
+  }));
 };

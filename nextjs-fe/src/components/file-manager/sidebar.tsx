@@ -22,6 +22,7 @@ interface SidebarProps {
   onPathChange: (path: string) => void;
   isOpen?: boolean;
   onToggle?: () => void;
+  className?: string;
 }
 
 export const Sidebar = ({
@@ -29,12 +30,13 @@ export const Sidebar = ({
   onPathChange,
   isOpen = true,
   onToggle,
+  className,
 }: SidebarProps) => {
 
   if (!isOpen) return null;
 
   return (
-    <aside className="w-64 border-r border-border bg-background">
+    <aside className={`w-64 border-r border-border bg-background ${className || ''}`}>
       <div className="space-y-2 p-4">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Quản lý Media</h2>

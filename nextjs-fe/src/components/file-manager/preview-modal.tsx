@@ -1,24 +1,45 @@
 'use client';
 
-import { X, Copy, Download, Trash2 } from 'lucide-react';
+import { X, Copy, Download, Trash2, ChevronLeft, ChevronRight, FileText, Music, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { MediaFile } from './types';
 import { formatFileSize } from './utils';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 
 interface PreviewModalProps {
   file: MediaFile | null;
   onClose: () => void;
-  onDelete?: (fileId: string) => void;
+  onDelete?: (file: MediaFile) => void;
+  onNext?: () => void;
+  onPrev?: () => void;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 }
 
 export const PreviewModal = ({
   file,
   onClose,
   onDelete,
+  onNext,
+  onPrev,
+  hasNext,
+  hasPrev,
 }: PreviewModalProps) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!file) return;
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight' && hasNext) onNext?.();
+      if (e.key === 'ArrowLeft' && hasPrev) onPrev?.();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [file, onClose, hasNext, hasPrev, onNext, onPrev]);
+
   if (!file) return null;
 
   const handleCopyLink = () => {
@@ -28,124 +49,156 @@ export const PreviewModal = ({
 
   const handleDelete = () => {
     if (confirm('Bạn có chắc muốn xóa file này?')) {
-      onDelete?.(file.id);
+      onDelete?.(file);
       onClose();
     }
   };
 
   const isImage = file.mime_type.startsWith('image/');
   const isVideo = file.mime_type.startsWith('video/');
+  const isAudio = file.mime_type.startsWith('audio/');
   const isPdf =
     file.mime_type === 'application/pdf' ||
     file.url.includes('.pdf');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="relative max-h-[90vh] w-full max-w-4xl overflow-auto">
-        {/* Close button */}
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="sm"
-          className="absolute right-4 top-4 z-10"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col md:flex-row gap-4">
+        {/* Main Content Area */}
+        <div className="flex-1 relative flex items-center justify-center bg-black/50 rounded-lg overflow-hidden min-h-[300px]">
+          {/* Navigation Buttons */}
+          {hasPrev && (
+            <Button
+              onClick={(e) => { e.stopPropagation(); onPrev?.(); }}
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 z-20 text-white hover:bg-white/20 rounded-full h-12 w-12"
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </Button>
+          )}
+          
+          {hasNext && (
+            <Button
+              onClick={(e) => { e.stopPropagation(); onNext?.(); }}
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 z-20 text-white hover:bg-white/20 rounded-full h-12 w-12"
+            >
+              <ChevronRight className="h-8 w-8" />
+            </Button>
+          )}
 
-        <div className="p-6">
+          {/* Close button */}
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+            className="absolute right-4 top-4 z-20 text-white hover:bg-white/20"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+
           {/* Preview content */}
-          {isImage && (
-            <div className="mb-6 flex justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="w-full h-full flex items-center justify-center p-4">
+            {isImage && (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={file.url}
                 alt={file.name}
-                className="max-h-96 rounded-md object-contain"
+                className="max-h-full max-w-full object-contain"
               />
-            </div>
-          )}
+            )}
 
-          {isVideo && (
-            <div className="mb-6 flex justify-center">
+            {isVideo && (
               <video
                 src={file.url}
-                className="max-h-96 rounded-md"
+                className="max-h-full max-w-full"
                 controls
+                autoPlay
               />
-            </div>
-          )}
+            )}
 
-          {isPdf && (
-            <div className="mb-6 flex justify-center">
+            {isAudio && (
+              <div className="flex flex-col items-center justify-center text-white">
+                <Music className="h-24 w-24 mb-4" />
+                <audio src={file.url} controls className="w-full max-w-md" />
+              </div>
+            )}
+
+            {isPdf && (
               <iframe
                 src={`${file.url}#toolbar=0`}
-                className="h-96 w-full rounded-md"
+                className="w-full h-full bg-white rounded-md"
               />
-            </div>
-          )}
+            )}
 
-          {!isImage && !isVideo && !isPdf && (
-            <div className="mb-6 flex flex-col items-center justify-center py-12">
-              <p className="text-4xl mb-4">📄</p>
-              <p className="text-lg font-medium">{file.name}</p>
-            </div>
-          )}
+            {!isImage && !isVideo && !isAudio && !isPdf && (
+              <div className="flex flex-col items-center justify-center text-white">
+                <FileText className="h-24 w-24 mb-4" />
+                <p className="text-xl font-medium">{file.name}</p>
+                <p className="text-white/70 mt-2">Không thể xem trước file này</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-          {/* File info */}
-          <div className="space-y-4 border-t border-border pt-6">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Tên file</p>
-                <p className="font-medium">{file.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Dung lượng</p>
-                <p className="font-medium">{formatFileSize(file.size)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Loại</p>
-                <p className="font-medium">{file.mime_type}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Ngày tạo</p>
-                <p className="font-medium">
-                  {format(new Date(file.created_at), 'dd/MM/yyyy')}
-                </p>
-              </div>
+        {/* Sidebar Info */}
+        <Card className="w-full md:w-80 h-fit flex-shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="p-6 space-y-6">
+            <div>
+              <h3 className="font-semibold text-lg leading-none tracking-tight mb-1 break-words">
+                {file.name}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {formatFileSize(file.size)}
+              </p>
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-wrap gap-2 border-t border-border pt-6">
-              <Button
-                onClick={handleCopyLink}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Copy className="h-4 w-4" />
-                Sao chép link
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-3 gap-2">
+                <span className="text-muted-foreground">Loại:</span>
+                <span className="col-span-2 font-medium truncate" title={file.mime_type}>
+                  {file.mime_type}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <span className="text-muted-foreground">Ngày tạo:</span>
+                <span className="col-span-2 font-medium">
+                  {format(new Date(file.created_at), 'dd/MM/yyyy HH:mm')}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <span className="text-muted-foreground">Thư mục:</span>
+                <span className="col-span-2 font-medium truncate" title={file.folder_path}>
+                  {file.folder_path}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-4 border-t">
+              <Button onClick={handleCopyLink} variant="outline" className="w-full justify-start">
+                <Copy className="mr-2 h-4 w-4" />
+                Sao chép liên kết
               </Button>
-              <a
-                href={file.url}
-                download
-                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2"
+              <Button asChild variant="outline" className="w-full justify-start">
+                <a href={file.url} download>
+                  <Download className="mr-2 h-4 w-4" />
+                  Tải xuống
+                </a>
+              </Button>
+              <Button 
+                onClick={handleDelete} 
+                variant="destructive" 
+                className="w-full justify-start"
               >
-                <Download className="h-4 w-4" />
-                Tải xuống
-              </a>
-              <Button
-                onClick={handleDelete}
-                variant="destructive"
-                size="sm"
-                className="gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Xóa
+                <Trash2 className="mr-2 h-4 w-4" />
+                Xóa file
               </Button>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -8,7 +8,11 @@ import {
   Grid3x3,
   List,
   Search,
-  MoreVertical,
+  Filter,
+  ArrowUpDown,
+  CheckSquare,
+  Move,
+  Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +21,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type { FilterOptions, SortOptions, SortField, SortOrder, FilterType } from './types';
 
 interface ToolbarProps {
   viewMode: 'grid' | 'list';
@@ -25,10 +40,16 @@ interface ToolbarProps {
   onUpload: () => void;
   onNewFolder: () => void;
   onDelete: () => void;
+  onMove: () => void;
+  onCopy: () => void;
   onRefresh: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
-  hasSelection: boolean;
+  selectedCount: number;
+  filterOptions: FilterOptions;
+  onFilterChange: (options: FilterOptions) => void;
+  sortOptions: SortOptions;
+  onSortChange: (options: SortOptions) => void;
 }
 
 export const Toolbar = ({
@@ -37,15 +58,35 @@ export const Toolbar = ({
   onUpload,
   onNewFolder,
   onDelete,
+  onMove,
+  onCopy,
   onRefresh,
   onSearchChange,
   searchQuery,
-  hasSelection,
+  selectedCount,
+  filterOptions,
+  onFilterChange,
+  sortOptions,
+  onSortChange,
 }: ToolbarProps) => {
+  const handleSort = (field: SortField) => {
+    if (sortOptions.field === field) {
+      onSortChange({
+        ...sortOptions,
+        order: sortOptions.order === 'asc' ? 'desc' : 'asc',
+      });
+    } else {
+      onSortChange({
+        field,
+        order: 'asc',
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 border-b border-border bg-background px-4 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={onUpload}
             variant="default"
@@ -64,58 +105,121 @@ export const Toolbar = ({
             <FolderPlus className="h-4 w-4" />
             Thư mục mới
           </Button>
-          <Button
-            onClick={onDelete}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled={!hasSelection}
-          >
-            <Delete className="h-4 w-4" />
-            Xóa
-          </Button>
-          <Button
-            onClick={onRefresh}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Làm mới
-          </Button>
+          
+          {selectedCount > 0 && (
+            <>
+              <div className="mx-2 h-6 w-px bg-border" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckSquare className="h-4 w-4" />
+                <span>{selectedCount} đã chọn</span>
+              </div>
+              <Button
+                onClick={onMove}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Move className="h-4 w-4" />
+                Di chuyển
+              </Button>
+              <Button
+                onClick={onCopy}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                Sao chép
+              </Button>
+              <Button
+                onClick={onDelete}
+                variant="destructive"
+                size="sm"
+                className="gap-2"
+              >
+                <Delete className="h-4 w-4" />
+                Xóa
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => onViewModeChange('grid')}
-            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-8 w-8"
+            onClick={onRefresh}
+            variant="ghost"
+            size="icon"
+            title="Làm mới"
           >
-            <Grid3x3 className="h-4 w-4" />
+            <RotateCcw className="h-4 w-4" />
           </Button>
-          <Button
-            onClick={() => onViewModeChange('list')}
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-8 w-8"
-          >
-            <List className="h-4 w-4" />
-          </Button>
+
+          <div className="mx-2 h-6 w-px bg-border" />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Lọc: {filterOptions.type === 'all' ? 'Tất cả' : filterOptions.type}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Sắp xếp theo tên</DropdownMenuItem>
-              <DropdownMenuItem>Sắp xếp theo ngày</DropdownMenuItem>
-              <DropdownMenuItem>Sắp xếp theo dung lượng</DropdownMenuItem>
-              <DropdownMenuItem>Sắp xếp theo loại</DropdownMenuItem>
+              <DropdownMenuRadioGroup
+                value={filterOptions.type}
+                onValueChange={(value) =>
+                  onFilterChange({ ...filterOptions, type: value as FilterType })
+                }
+              >
+                <DropdownMenuRadioItem value="all">Tất cả</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="images">Hình ảnh</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="videos">Video</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="documents">Tài liệu</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="folders">Thư mục</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                Sắp xếp
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleSort('name')}>
+                Tên {sortOptions.field === 'name' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('date')}>
+                Ngày tạo {sortOptions.field === 'date' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('size')}>
+                Dung lượng {sortOptions.field === 'size' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('type')}>
+                Loại {sortOptions.field === 'type' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="flex rounded-md border border-input">
+            <Button
+              onClick={() => onViewModeChange('grid')}
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 rounded-r-none px-0"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => onViewModeChange('list')}
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 rounded-l-none px-0"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
