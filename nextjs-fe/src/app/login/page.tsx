@@ -1,129 +1,98 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setRedirectUrl } from '@/redux/slices/authSlice';
-import { loginSchema, type LoginFormData } from '@/lib/validation/loginSchema';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state) => state.common);
-  const { isAuthenticated, accessToken, redirectUrl } = useAppSelector((state) => state.auth);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { login, isLoading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
-  });
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
-  const onSubmit = async (data: LoginFormData) => {
-    setSubmitError(null);
-    dispatch({
-      type: 'auth/loginRequest',
-      payload: data,
-    });
+    try {
+      await login(email, password);
+      router.push('/admin');
+    } catch (error) {
+      // Error is already handled by useAuth hook with notifications
+      console.error('Login failed:', error);
+    }
   };
 
-  // Redirect sau khi đăng nhập thành công
-  useEffect(() => {
-    if (isAuthenticated && accessToken) {
-      const url = redirectUrl || '/admin';
-      // Reset redirectUrl để tránh vòng lặp
-      dispatch(setRedirectUrl(null));
-      
-      // Show success message
-      toast.success('Đăng nhập thành công!');
-      
-      // Short delay to let user see the success message
-      setTimeout(() => {
-        router.push(url);
-      }, 500);
-    }
-  }, [isAuthenticated, accessToken, redirectUrl, router, dispatch]);
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md space-y-8 p-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-            Đăng nhập
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Nhập thông tin đăng nhập của bạn
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+      <Card className="w-full max-w-md p-8 shadow-lg">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Welcome Back
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
+            Sign in to your account to continue
           </p>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {submitError && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800">{submitError}</p>
-            </div>
-          )}
-
-          <div>
-            <label
-              htmlFor="user_name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Tên người dùng
-            </label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="user_name"
-              type="text"
-              {...register('user_name')}
+              id="email"
+              type="email"
+              placeholder="admin@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
               disabled={isLoading}
-              className="mt-1"
-              placeholder="Nhập tên người dùng"
+              className="w-full"
             />
-            {errors.user_name && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.user_name.message}
-              </p>
-            )}
           </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Mật khẩu
-            </label>
+          {/* Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              {...register('password')}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
               disabled={isLoading}
-              className="mt-1"
-              placeholder="Nhập mật khẩu"
+              className="w-full"
             />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.password.message}
-              </p>
-            )}
           </div>
 
+          {/* Submit Button */}
           <Button
             type="submit"
-            disabled={isLoading}
             className="w-full"
+            disabled={isLoading}
+            size="lg"
           >
-            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </Button>
         </form>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+          <p>Forgot your password? Contact your administrator.</p>
+        </div>
       </Card>
     </div>
   );

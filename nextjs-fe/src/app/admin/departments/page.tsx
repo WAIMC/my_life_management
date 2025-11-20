@@ -12,11 +12,11 @@ import { FilterPanel, type FilterField } from '@/components/data-table/filter-pa
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { UserMgmt } from '@/lib/types/api';
+import type { DepartmentMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels, Gender, GenderLabels } from '@/lib/types/enums';
+import { Status, StatusLabels } from '@/lib/types/enums';
 
-export default function UsersPage() {
+export default function DepartmentListPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
@@ -27,12 +27,12 @@ export default function UsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
 
-  const { data, loading, pagination, refetch } = useApiData<UserMgmt>(
-    ENDPOINTS.MANAGEMENT.USER,
+  const { data, loading, pagination, refetch } = useApiData<DepartmentMst>(
+    ENDPOINTS.MASTER.DEPARTMENT,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+  const { remove, loading: deleteLoading } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -55,28 +55,17 @@ export default function UsersPage() {
     }
   };
 
-  const columns: Column<UserMgmt>[] = [
+  const columns: Column<DepartmentMst>[] = [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'user_name', label: 'Username', sortable: true },
-    {
-      key: 'first_name',
-      label: 'Name',
-      sortable: true,
-      render: (user) => `${user.first_name} ${user.last_name}`,
-    },
-    { key: 'email', label: 'Email', sortable: true },
-    {
-      key: 'gender',
-      label: 'Gender',
-      render: (user) => GenderLabels[user.gender as Gender] || 'Unknown',
-    },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'description', label: 'Description' },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (user) => (
-        <Badge variant={user.is_active ? 'default' : 'secondary'}>
-          {user.is_active ? 'Active' : 'Inactive'}
+      render: (dept) => (
+        <Badge variant={dept.is_active ? 'default' : 'secondary'}>
+          {dept.is_active ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
@@ -84,18 +73,11 @@ export default function UsersPage() {
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'user_name', label: 'Username', type: 'text', placeholder: 'Search by username...' },
-    { key: 'email', label: 'Email', type: 'text', placeholder: 'Search by email...' },
-    { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'Search by first name...' },
     {
-      key: 'gender',
-      label: 'Gender',
-      type: 'select',
-      options: [
-        { value: Gender.MALE, label: GenderLabels[Gender.MALE] },
-        { value: Gender.FEMALE, label: GenderLabels[Gender.FEMALE] },
-        { value: Gender.OTHER, label: GenderLabels[Gender.OTHER] },
-      ],
+      key: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Search by name...',
     },
     {
       key: 'status',
@@ -106,21 +88,25 @@ export default function UsersPage() {
         { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
+    {
+      key: 'is_active',
+      label: 'Active',
+      type: 'boolean',
+    },
   ];
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Users Management"
-        description="Manage all users in your system"
+        title="Department Management"
+        description="Manage organizational departments"
         breadcrumbs={[
           { label: 'Admin', href: '/admin' },
-          { label: 'Users', isActive: true },
+          { label: 'Departments', isActive: true },
         ]}
         action={
-          <Button onClick={() => router.push('/admin/users/create')}>
-            Create User
+          <Button onClick={() => router.push('/admin/departments/create')}>
+            Create Department
           </Button>
         }
       />
@@ -142,7 +128,7 @@ export default function UsersPage() {
         {selectedIds.length > 0 && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-between border border-blue-200 dark:border-blue-800">
             <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              {selectedIds.length} user(s) selected
+              {selectedIds.length} department(s) selected
             </span>
             <Button
               variant="destructive"
@@ -164,7 +150,7 @@ export default function UsersPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/users/${id}/edit`)}
+          onEdit={(id) => router.push(`/admin/departments/${id}/edit`)}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -183,8 +169,8 @@ export default function UsersPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete User(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} user(s)? This action cannot be undone.`}
+        title="Delete Department(s)"
+        description={`Are you sure you want to delete ${deleteIds.length} department(s)? This action cannot be undone.`}
         onConfirm={confirmDelete}
         confirmText="Delete"
         variant="destructive"

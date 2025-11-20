@@ -12,27 +12,27 @@ import { FilterPanel, type FilterField } from '@/components/data-table/filter-pa
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { UserMgmt } from '@/lib/types/api';
+import type { SocialMgmt } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels, Gender, GenderLabels } from '@/lib/types/enums';
+import { Status, StatusLabels } from '@/lib/types/enums';
 
-export default function UsersPage() {
+export default function SocialListPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState('rank_order');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
 
-  const { data, loading, pagination, refetch } = useApiData<UserMgmt>(
-    ENDPOINTS.MANAGEMENT.USER,
+  const { data, loading, pagination, refetch } = useApiData<SocialMgmt>(
+    ENDPOINTS.MANAGEMENT.SOCIAL,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+  const { remove, loading: deleteLoading } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -55,28 +55,19 @@ export default function UsersPage() {
     }
   };
 
-  const columns: Column<UserMgmt>[] = [
+  const columns: Column<SocialMgmt>[] = [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'user_name', label: 'Username', sortable: true },
-    {
-      key: 'first_name',
-      label: 'Name',
-      sortable: true,
-      render: (user) => `${user.first_name} ${user.last_name}`,
-    },
-    { key: 'email', label: 'Email', sortable: true },
-    {
-      key: 'gender',
-      label: 'Gender',
-      render: (user) => GenderLabels[user.gender as Gender] || 'Unknown',
-    },
+    { key: 'rank_order', label: 'Order', sortable: true },
+    { key: 'platform', label: 'Platform', sortable: true },
+    { key: 'url', label: 'URL' },
+    { key: 'icon', label: 'Icon' },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (user) => (
-        <Badge variant={user.is_active ? 'default' : 'secondary'}>
-          {user.is_active ? 'Active' : 'Inactive'}
+      render: (item) => (
+        <Badge variant={item.is_active ? 'default' : 'secondary'}>
+          {item.is_active ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
@@ -84,19 +75,7 @@ export default function UsersPage() {
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'user_name', label: 'Username', type: 'text', placeholder: 'Search by username...' },
-    { key: 'email', label: 'Email', type: 'text', placeholder: 'Search by email...' },
-    { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'Search by first name...' },
-    {
-      key: 'gender',
-      label: 'Gender',
-      type: 'select',
-      options: [
-        { value: Gender.MALE, label: GenderLabels[Gender.MALE] },
-        { value: Gender.FEMALE, label: GenderLabels[Gender.FEMALE] },
-        { value: Gender.OTHER, label: GenderLabels[Gender.OTHER] },
-      ],
-    },
+    { key: 'platform', label: 'Platform', type: 'text', placeholder: 'Search by platform...' },
     {
       key: 'status',
       label: 'Status',
@@ -112,15 +91,15 @@ export default function UsersPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Users Management"
-        description="Manage all users in your system"
+        title="Social Management"
+        description="Manage social media links"
         breadcrumbs={[
           { label: 'Admin', href: '/admin' },
-          { label: 'Users', isActive: true },
+          { label: 'Socials', isActive: true },
         ]}
         action={
-          <Button onClick={() => router.push('/admin/users/create')}>
-            Create User
+          <Button onClick={() => router.push('/admin/socials/create')}>
+            Create Social Link
           </Button>
         }
       />
@@ -142,7 +121,7 @@ export default function UsersPage() {
         {selectedIds.length > 0 && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-between border border-blue-200 dark:border-blue-800">
             <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              {selectedIds.length} user(s) selected
+              {selectedIds.length} social link(s) selected
             </span>
             <Button
               variant="destructive"
@@ -164,7 +143,7 @@ export default function UsersPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/users/${id}/edit`)}
+          onEdit={(id) => router.push(`/admin/socials/${id}/edit`)}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -183,8 +162,8 @@ export default function UsersPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete User(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} user(s)? This action cannot be undone.`}
+        title="Delete Social Link(s)"
+        description={`Are you sure you want to delete ${deleteIds.length} social link(s)? This action cannot be undone.`}
         onConfirm={confirmDelete}
         confirmText="Delete"
         variant="destructive"

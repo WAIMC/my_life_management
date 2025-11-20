@@ -2,18 +2,6 @@
 
 ## 🚀 Quick Start
 
-### Start Dev Server
-```bash
-pnpm run dev
-# Open: http://localhost:3000/admin
-```
-
-### Build Production
-```bash
-pnpm run build
-pnpm run start
-```
-
 ## 📁 Main Files
 
 | File | Purpose |
