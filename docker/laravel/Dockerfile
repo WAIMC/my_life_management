@@ -1,42 +1,102 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.3-fpm-alpine AS base
 
-# Cài đặt các extension cần thiết và build tools
+# Install system dependencies and PHP extensions
 RUN apk add --no-cache \
-    postgresql-dev \
-    autoconf \
-    gcc \
-    g++ \
-    make \
-    libc-dev \
-    redis \
-    postgresql-client \
-    nodejs \
-    npm \
-    python3 \
-    py3-pip \
-    sudo \
-    jq \
-    curl \
-    git \
-    file \
-    libxml2-dev \
-    openssl-dev \
-    && docker-php-ext-install pdo_pgsql \
-    && pecl install redis-5.3.7 \
-    && docker-php-ext-enable redis pdo_pgsql
+  postgresql-dev \
+  libzip-dev \
+  libpng-dev \
+  libjpeg-turbo-dev \
+  freetype-dev \
+  oniguruma-dev \
+  curl \
+  bash \
+  && docker-php-ext-configure gd --with-freetype --with-jpeg \
+  && docker-php-ext-install -j$(nproc) \
+  pdo_pgsql \
+  pgsql \
+  zip \
+  exif \
+  pcntl \
+  bcmath \
+  gd \
+  opcache
 
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install simple-ddl-parser
+# Install Redis extension
+RUN apk add --no-cache --virtual .build-deps \
+  autoconf \
+  gcc \
+  g++ \
+  make \
+  && pecl install redis-6.0.2 \
+  && docker-php-ext-enable redis \
+  && apk del .build-deps
 
-# Cài đặt Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Install Composer
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
-# Thiết lập thư mục làm việc
+# Set working directory
 WORKDIR /var/www/laravel-api
 
-# Chú ý: Không cần tạo user và thiết lập quyền ở đây
-# Do sử dụng docker-compose.simple.yml với cấu hình đơn giản hóa
-# Quyền được thiết lập bằng script start.sh
+# ============ Production Stage ============
+FROM base AS production
+
+# Copy custom PHP configuration
+COPY --from=base /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+
+# Create user for Laravel
+RUN addgroup -g 1000 laravel && \
+  adduser -D -u 1000 -G laravel laravel
+
+# Copy application files
+COPY --chown=laravel:laravel . .
+
+# Install dependencies with optimizations
+RUN composer install \
+  --no-dev \
+  --no-interaction \
+  --no-progress \
+  --no-scripts \
+  --prefer-dist \
+  --optimize-autoloader \
+  --classmap-authoritative
+
+# Set permissions
+RUN chown -R laravel:laravel /var/www/laravel-api \
+  && chmod -R 755 /var/www/laravel-api/storage \
+  && chmod -R 755 /var/www/laravel-api/bootstrap/cache
+
+# Switch to non-root user
+USER laravel
+
+# Expose port
+EXPOSE 9000
+
+CMD ["php-fpm"]
+
+# ============ Development Stage ============
+FROM base AS development
+
+# Install development tools
+RUN apk add --no-cache \
+  git \
+  vim \
+  nodejs \
+  npm
+
+# Install Xdebug for development  
+RUN apk add --no-cache --virtual .build-deps \
+  autoconf \
+  gcc \
+  g++ \
+  make \
+  linux-headers \
+  && pecl install xdebug-3.3.1 \
+  && docker-php-ext-enable xdebug \
+  && apk del .build-deps
+
+# Copy custom PHP development configuration
+COPY --from=base /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
+
+WORKDIR /var/www/laravel-api
 
 CMD ["php-fpm"]
