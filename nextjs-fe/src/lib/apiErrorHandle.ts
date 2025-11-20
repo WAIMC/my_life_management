@@ -55,17 +55,13 @@ export const handleCommonError = (error: AxiosError<ApiResponse<unknown>>) => {
       break;
 
     case 500: // Internal Server Error
-      if (typeof window !== 'undefined') {
-        window.location.href = CLIENT_URL.SERVER_ERROR;
-      }
+      toast.error(errorMessage || ERR_MESS.E0500);
       break;
 
     case 502:
     case 503:
     case 504: // Server errors
-      if (typeof window !== 'undefined') {
-        window.location.href = CLIENT_URL.SERVER_ERROR;
-      }
+      toast.error(errorMessage || ERR_MESS.E0503 || 'Service temporarily unavailable. Please try again later.');
       break;
 
     default:

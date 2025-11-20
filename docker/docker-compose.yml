@@ -79,6 +79,7 @@ services:
     build:
       context: ../laravel-api
       dockerfile: ../docker/laravel/Dockerfile
+      target: development
       args:
         PHP_VERSION: "8.3"
     restart: unless-stopped
@@ -101,8 +102,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       
       # Laravel
-      APP_ENV: production
-      APP_DEBUG: "false"
+      APP_ENV: local
+      APP_DEBUG: "true"
     depends_on:
       ml-postgres:
         condition: service_healthy
@@ -129,11 +130,14 @@ services:
     build:
       context: ../nextjs-fe
       dockerfile: ../docker/nextjs/Dockerfile
-      args:
-        NODE_ENV: production
+      target: development
     restart: unless-stopped
+    volumes:
+      - ../nextjs-fe:/app
+      - /app/node_modules
+      - /app/.next
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=${NEXTJS_PORT_INSIDE_ENV}
       - HOSTNAME=0.0.0.0
     ports:

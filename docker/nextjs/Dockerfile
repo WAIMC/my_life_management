@@ -37,8 +37,8 @@ ENV NODE_ENV=production
 # Build Next.js application
 RUN pnpm build
 
-# ============ Stage 3: Runner ============
-FROM node:22-alpine AS runner
+# ============ Stage 3: Production Runner ============
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
@@ -68,3 +68,36 @@ EXPOSE 3456
 
 # Start the application
 CMD ["node", "server.js"]
+
+# ============ Stage 4: Development ============
+FROM node:22-alpine AS development
+
+WORKDIR /app
+
+# Install wget for health checks
+RUN apk add --no-cache wget
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Set environment
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3456
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install all dependencies (including devDependencies)
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+  pnpm install
+
+# Copy application source
+COPY . .
+
+# Expose port
+EXPOSE 3456
+
+# Start development server with hot-reload
+CMD ["pnpm", "dev"]
