@@ -10,6 +10,7 @@ import { loginSchema, type LoginFormData } from '@/lib/validation/loginSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,7 +42,14 @@ export default function LoginPage() {
       const url = redirectUrl || '/admin';
       // Reset redirectUrl để tránh vòng lặp
       dispatch(setRedirectUrl(null));
-      router.push(url);
+      
+      // Show success message
+      toast.success('Đăng nhập thành công!');
+      
+      // Short delay to let user see the success message
+      setTimeout(() => {
+        router.push(url);
+      }, 500);
     }
   }, [isAuthenticated, accessToken, redirectUrl, router, dispatch]);
 

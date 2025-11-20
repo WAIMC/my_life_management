@@ -86,6 +86,9 @@ axiosInstance.interceptors.response.use(
 
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: number };
 
+    // Check if currently on login page - do NOT refresh token per Logic 2.2
+    const isOnLoginPage = typeof window !== 'undefined' && window.location.pathname === CLIENT_URL.LOGIN;
+
     // Handle 401 error - Unauthorized (Token expired or invalid)
     // Skip refresh if on login page or if it's already a refresh token request
     if (
@@ -93,7 +96,8 @@ axiosInstance.interceptors.response.use(
       originalRequest &&
       !originalRequest._retry &&
       !originalRequest.url?.includes(API_URL.REFRESH_TOKEN) &&
-      !originalRequest.url?.includes(API_URL.LOGIN)
+      !originalRequest.url?.includes(API_URL.LOGIN) &&
+      !isOnLoginPage  // Skip refresh if on login page per Logic 2.2
     ) {
       // Mark retry attempt
       originalRequest._retry = 1;
@@ -168,8 +172,10 @@ axiosInstance.interceptors.response.use(
           clearAutoRefresh();
 
           if (typeof window !== 'undefined') {
+            // Save current URL for redirect after login (Logic 2.2)
+            const currentUrl = window.location.pathname + window.location.search;
             toast.error(ERR_MESS.E0002);
-            window.location.href = CLIENT_URL.LOGIN;
+            window.location.href = `${CLIENT_URL.LOGIN}?redirect=${encodeURIComponent(currentUrl)}`;
           }
 
           return null;

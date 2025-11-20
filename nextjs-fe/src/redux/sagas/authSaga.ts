@@ -28,26 +28,23 @@ function* loginSaga(action: { type: string; payload: LoginPayload }): SagaIterat
     // Logic 3: Đồng bộ trạng thái đăng nhập giữa các tab
     syncAuthStateAcrossTabs(accessToken, ttl);
 
-    // Determine redirect URL
+    // Determine redirect URL (Logic 2.2: redirect về URL ban đầu bị 401)
     let redirectUrl = CLIENT_URL.ADMIN;
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const redirectParam = searchParams.get('redirect');
 
-      // Only redirect to admin URL if it starts with /admin
-      if (redirectParam && redirectParam.startsWith(CLIENT_URL.ADMIN)) {
+      // Accept any valid path from redirect parameter
+      if (redirectParam && redirectParam.startsWith('/')) {
         redirectUrl = redirectParam;
-      } else {
-        redirectUrl = CLIENT_URL.ADMIN;
       }
     }
 
+    // Set redirect URL in state for login page to use
     yield put(setRedirectUrl(redirectUrl));
 
-    // Redirect after successful login
-    if (typeof window !== 'undefined') {
-      window.location.href = redirectUrl;
-    }
+    // Note: Actual redirect is handled by login page component via useEffect
+    // This avoids full page reload and allows proper response handling
   } catch (error) {
     yield put(clearAuth());
     clearAutoRefresh();
