@@ -8,10 +8,10 @@ export const API_BASE_URL =
 
 // Authentication
 export const AUTH_ENDPOINTS = {
-  LOGIN: '/auth/login',
-  LOGOUT: '/auth/logout',
-  REFRESH: '/auth/refresh',
-  ME: '/auth/me',
+  LOGIN: '/admin/account/login',
+  LOGOUT: '/admin/account/logout',
+  REFRESH: '/admin/account/refresh',
+  ME: '/admin/account/me',
 } as const;
 
 // Master Data

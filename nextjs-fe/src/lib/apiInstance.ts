@@ -28,22 +28,6 @@ let refreshPromise: Promise<string | null> | null = null;
 // Keep track of pending requests for refresh
 const requestQueue: Array<() => void> = [];
 
-/**
- * Check if there are other tabs with active session
- */
-const hasOtherActiveTab = (): boolean => {
-  if (typeof window === 'undefined') return false;
-
-  const state = appStore?.getState();
-  const tabId = state?.auth.tabId;
-  const accessToken = state?.auth.accessToken;
-  const refreshAtTime = state?.auth.refreshAtTime;
-  const leaderId = state?.auth.leaderId;
-
-  // Nếu có tab_id, accessToken, refreshAtTime, leaderId -> có tab hoạt động
-  return !!(tabId && accessToken && refreshAtTime && leaderId);
-};
-
 // REQUEST INTERCEPTOR
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -130,10 +114,11 @@ axiosInstance.interceptors.response.use(
           const newAccessToken = response.data.data.access_token;
           const newTtl = response.data.data.ttl;
 
+          // Logic 1: Token hết hạn - refresh thành công
           // Update new token in Redux
           appStore!.dispatch(setAuth(newAccessToken));
 
-          // Re-setup auto refresh with new ttl
+          // Logic 3: Đồng bộ trạng thái đăng nhập
           const { syncAuthStateAcrossTabs } = await import('./authManager');
           syncAuthStateAcrossTabs(newAccessToken, newTtl);
 
@@ -142,29 +127,32 @@ axiosInstance.interceptors.response.use(
           requestQueue.length = 0;
 
           return newAccessToken;
-        } catch {
+        } catch (refreshError) {
           // Logic 2: Token lỗi (refresh thất bại)
-
-          // Kiểm tra: có tab nào cùng origin đang hoạt động không?
-          if (hasOtherActiveTab()) {
-            // Logic 2.1: Khi mở nhiều tab, reload nhiều lần
-            // Lấy thông tin từ tab khác
-            const state = appStore!.getState();
-            const accessToken = state.auth.accessToken;
-            const refreshAtTime = state.auth.refreshAtTime;
-            const leaderId = state.auth.leaderId;
-
-            if (accessToken && refreshAtTime && leaderId) {
-              // Lấy token từ tab khác
-              const { syncAuthStateAcrossTabs: syncAuth } = await import('./authManager');
-              const ttl = Math.ceil((refreshAtTime - Date.now()) / 1000);
-              syncAuth(accessToken, Math.max(ttl, 1));
-
-              return accessToken;
+          
+          // Logic 2.1: Kiểm tra có tab nào cùng origin đang hoạt động không?
+          // GỬI REQUEST qua BroadcastChannel để lấy auth từ tab khác
+          try {
+            const broadcastManager = (await import('./broadcastChannelManager')).default;
+            const response = await broadcastManager.requestAuthState(1000);
+            
+            if (response && response.accessToken && response.refreshAtTime && response.leaderId) {
+              // Nhận được token từ tab khác
+              const ttl = Math.ceil((response.refreshAtTime - Date.now()) / 1000);
+              
+              if (ttl > 0) {
+                // Token từ tab khác còn hợp lệ
+                const { syncAuthStateAcrossTabs } = await import('./authManager');
+                syncAuthStateAcrossTabs(response.accessToken, ttl);
+                
+                return response.accessToken;
+              }
             }
+          } catch (broadcastError) {
+            console.warn('Failed to get auth from other tabs:', broadcastError);
           }
 
-          // Logic 2.2: Truy cập page lần đầu hoặc không có tab nào hoạt động
+          // Logic 2.2: Không có tab nào phản hồi hoặc token từ tab khác cũng hết hạn
           // Redirect sang login page
           appStore!.dispatch(clearAuth());
 

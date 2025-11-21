@@ -8,12 +8,14 @@
  */
 
 export interface BroadcastMessage {
-  type: 'AUTH_UPDATE' | 'LOGOUT' | 'TAB_FOCUS' | 'TAB_BLUR';
+  type: 'AUTH_UPDATE' | 'LOGOUT' | 'TAB_FOCUS' | 'TAB_BLUR' | 'AUTH_REQUEST' | 'AUTH_RESPONSE';
   tabId: string;
   leaderId?: string;
   accessToken?: string;
   refreshAtTime?: number;
   timestamp: number;
+  // For AUTH_REQUEST/RESPONSE
+  requestId?: string;
 }
 
 class BroadcastChannelManager {
@@ -127,6 +129,67 @@ class BroadcastChannelManager {
       type: 'LOGOUT',
       tabId: this.tabId,
       leaderId,
+      timestamp: Date.now(),
+    });
+  }
+
+  /**
+   * Request auth state from other tabs
+   * Returns a promise that resolves when another tab responds
+   */
+  requestAuthState(timeoutMs: number = 1000): Promise<BroadcastMessage | null> {
+    return new Promise((resolve) => {
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      let resolved = false;
+
+      // Listen for response
+      const responseHandler = (message: BroadcastMessage) => {
+        if (message.type === 'AUTH_RESPONSE' && message.requestId === requestId && !resolved) {
+          resolved = true;
+          // Remove this specific handler
+          const index = this.messageHandlers.indexOf(responseHandler);
+          if (index > -1) {
+            this.messageHandlers.splice(index, 1);
+          }
+          resolve(message);
+        }
+      };
+
+      this.onMessage(responseHandler);
+
+      // Send request
+      this.broadcast({
+        type: 'AUTH_REQUEST',
+        tabId: this.tabId,
+        requestId,
+        timestamp: Date.now(),
+      });
+
+      // Timeout if no response
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          const index = this.messageHandlers.indexOf(responseHandler);
+          if (index > -1) {
+            this.messageHandlers.splice(index, 1);
+          }
+          resolve(null);
+        }
+      }, timeoutMs);
+    });
+  }
+
+  /**
+   * Respond to auth state request from another tab
+   */
+  respondAuthState(requestId: string, accessToken: string, refreshAtTime: number, leaderId: string) {
+    this.broadcast({
+      type: 'AUTH_RESPONSE',
+      tabId: this.tabId,
+      requestId,
+      leaderId,
+      accessToken,
+      refreshAtTime,
       timestamp: Date.now(),
     });
   }

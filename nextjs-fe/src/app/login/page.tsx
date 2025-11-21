@@ -11,15 +11,32 @@ import { Card } from '@/components/ui/card';
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     try {
-      await login(email, password);
-      router.push('/admin');
+      await login(username, password);
+      
+      // Read redirect from URL using window.location
+      let redirectUrl = '/admin'; // default
+      
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const redirectParam = params.get('redirect');
+        
+        if (redirectParam) {
+          // Security: Only allow internal paths starting with /admin
+          if (redirectParam.startsWith('/admin')) {
+            redirectUrl = redirectParam;
+          }
+        }
+      }
+      
+      console.log('Redirecting to:', redirectUrl);
+      router.push(redirectUrl);
     } catch (error) {
       // Error is already handled by useAuth hook with notifications
       console.error('Login failed:', error);
@@ -39,17 +56,17 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
+          {/* Username Field */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="admin@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="username"
+              type="text"
+              placeholder="admin"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
-              autoComplete="email"
+              autoComplete="username"
               disabled={isLoading}
               className="w-full"
             />

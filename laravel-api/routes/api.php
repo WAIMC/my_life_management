@@ -18,6 +18,7 @@ Route::prefix('admin')
             ->middleware(AdminMiddleware::class)
             ->group(function () {
                 Route::post('account/logout', [CredentialController::class, 'logout']);
+                Route::get('account/me', [CredentialController::class, 'me']);
 
                 require __DIR__ . '/api_generated.php';
             });

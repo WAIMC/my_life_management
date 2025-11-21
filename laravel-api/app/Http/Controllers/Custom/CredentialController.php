@@ -52,4 +52,15 @@ class CredentialController extends Controller
     {
         return $this->credentialService->logout($request);
     }
+
+    /**
+     * Get current authenticated admin user
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function me(Request $request): array
+    {
+        return $this->credentialService->me($request);
+    }
 }

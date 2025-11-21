@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   },
   /* config options here */
   reactCompiler: true,
+  
+  // Enable Turbopack with default settings (Next.js 16+)
+  // Turbopack automatically handles file watching, including in Docker
+  turbopack: {},
 };
 
 export default nextConfig;

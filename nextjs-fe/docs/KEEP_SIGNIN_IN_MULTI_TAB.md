@@ -7,43 +7,8 @@ Bao gồm: giai đoạn khởi động, duy trì, phục hồi, hết hạn, l�
 
 ## ## **Luồng xử lý tổng quan Client**
 
-Khi truy cập một page bất kỳ và call API trả về **401 Unauthorized** -> gọi api refresh token
-  - Nếu không lỗi thực hiện **logic 1**.
-  - Nếu lỗi thì **logic 2**: Kiểm tra có tab nào đang cùng hoạt động không ?
-    - Nếu có thì **logic 2.1**
-    - Nếu không thì **logic 2.2**
----
+- Mỗi khi khởi tạo xử lý **Logic 10.1**
 
-# **Logic 1 – Token hết hạn**
-
-* Khi API trả về **401** do token hết hạn:
-
-  * Thực hiện **Logic 3** để cập nhật token mới.
-  * Sau khi Logic 3 hoàn thành -> Thực hiện lại API bị trả về 401 ban đầu.
-
----
-
-# **Logic 2 – Token lỗi (refresh thất bại)**
-
-Khi refresh token lỗi (khác với hết hạn token tiêu chuẩn của Logic 1):
-
-### **Kiểm tra trạng thái tab**
-
-* Kiểm tra xem **có tab nào cùng origin đang hoạt động hay không**.
-
----
-
-## **Logic 2.1 – Khi mở nhiều tab, reload nhiều lần**
-
-Điều kiện: Có tab khác đang hoạt động.
-
-* Lấy thông tin:
-
-  * access token
-  * refresh_at_time
-  * tạo mới **leader_id** thông qua BroadcastChannel
-* Thực hiện **Logic 3**.
-* Redirect sang URL đã bị trả về **401**.
 
 ### **Nguyên nhân**
 
@@ -55,42 +20,60 @@ Khi mở nhiều tab và reload liên tục:
 
   > **Tạo nhiều token mới cùng lúc → không tối ưu**
 
+
+
+## **Logic 10.1 – logic kiểm tra tình trạng đăng nhập hiện tại**
+* Kiểm tra state hiện tại có đang trong tình trạng đăng nhập hợp lệ hay không bằng cách kiểm tra state access_token = string, leader_id = string, refresh_at_time = string -> tình trạng đăng nhập hợp lệ. Ban đầu khởi tạo app thì access_token, leader_id, refresh_at_time là null -> tình trạng đăng nhập không hợp lệ
+  * Nếu tình trạng đăng nhập hợp lệ (có thể do user cố tình truy cập page /login): thì kiểm tra page hiện tại không phải là page /login và page hiện tại có dạng /admin/* đúng không ?
+    * Nếu đúng thì tiếp tục xử lý tiếp theo
+    * Nếu không thì redirect page /admin
+  * Nếu tình trạng đăng nhập không hợp lệ (có thể do đăng xuất, mở tab mới, truy cập lần đầu, reload page, close tất cả các tab cùng origin, close browser) thì thực hiện **Logic 10.2**
+
+## **Logic 10.2 – logic chia sẻ dữ liệu login multi tab**
+* Kiểm tra các tab khác có hoạt động không ? bằng cách thử gửi broadcast channel kiểm tra các tab khác cùng origin + port + browser có tồn tại và lấy giá trị access token + refresh_at_time + leader_id là string. Nếu không thì không hợp lệ
+  * Nếu hợp lệ (nguyên nhân do mở tab mới, reload page mà tab khác vẫn còn hoạt động), thì thực hiện **Logic 10.6**
+  * Không Hợp lệ (nguyên nhân do đăng xuất, truy cập lần đầu, close tất cả các tab, close browser), thì thực hiện **Logic 10.3**
+
+## **Logic 10.3 – lỗi 401 do hết hạn token or chưa login or login fail**
+* Kiểm tra hiện tại có phải đang ở page /login không ?
+  * Nếu có (nguyên nhân lỗi do login fail, đăng xuất) thì để user login lại. Thực hiện **Logic 10.4**
+    * Nếu thành công thực hiện logic tiếp theo là redirect về page /admin
+  * Nếu không thì (nguyên nhân do hết hạn token, chưa login mà vẫn thực hiện truy cập, reload page or close tab mà không có tab khác cùng duy trì đăng nhập, close browser) thì thực hiện **Logic 10.5**
+
+## **Logic 10.4 – logic login**
+* Note: Nếu có lỗi 401 + đang ở page /login thì không được gọi api refresh token. Check handle common lỗi 401 logic có apply logic này không ? nếu thiếu thêm vào.
+* Call api login và kiểm tra kết quả
+  * Nếu thành công thực hiện **Logic 10.6** + thực hiện tiếp logic tiếp theo
+  * Nếu thất bại thì thực hiện **Logic 10.3** và thông báo kết quả lỗi
+
+## **Logic 10.5 – logic refresh token**
+* Call api refesh token và kiểm tra kết quả
+  * Nếu thành công thì thực hiện **Logic 10.6** và thực hiện lại api bị lỗi status code 401 trước đó bị lỗi
+  * Nếu thất bại thực hiện redirect qua page /login
+
 ---
 
-## **Logic 2.2 – Truy cập page lần đầu**
+## **Logic 10.6 – Đồng bộ trạng thái đăng nhập giữa các tab**
 
-Điều kiện: Không có tab nào khác đang hoạt động hoặc hoạt động nhưng access token + refresh_at_time + leader_id là null.
+Khi đăng nhập or refresh token thành công or mở tab mới or reload page trong khi tab khác đang còn duy trì đăng nhập or đăng xuất:
 
-* Redirect sang **page login**.
-* Nếu login trả về 401 → vẫn ở page login (không được phép gọi refresh token tại đây).
-* Nếu login success:
-
-  * Thực hiện **Logic 3**.
-  * Redirect về URL ban đầu bị trả về 401.
-
----
-
-# **Logic 3 – Đồng bộ trạng thái đăng nhập giữa các tab**
-
-Khi đăng nhập thành công hoặc refresh token thành công:
-
-* Cập nhật:
-
-  * access token
+* Cập nhật state cho tab hiện tại:
+  * access_token
   * refresh_at_time
-  * tạo **tab_id mới** lưu trong sessionStorage (mất khi đóng tab, giữ khi reload)
+  * Tạo **tab_id mới** lưu trong sessionStorage nếu chưa có (mất khi đóng tab, giữ khi reload)
   * cập nhật **leader_id = tab_id** nếu tab hiện tại đang focus
-* Gửi broadcast để đồng bộ cho **tất cả tab cùng origin**.
+* Gửi broadcast channel đến các tab khác để đồng bộ giá trị state như: access_token, leader_id, refresh_at_time cho tất cả tab cùng origin + cùng port + cùng browser.
+* Ở tab hiện tại và các tab khác tạo 1 logic khi nhận event gửi dữ liệu từ broadcast channel, thực hiện kiểm dữ liệu access_token, refresh_at_time, leader_id là null thì thực hiện, cập nhật lại state tại tab đó và thực hiện **Logic 10.8**
 
 ### Nếu tab hiện tại đang focus:
 
 * Tạo **timer** với giá trị:
   **ttl(access_token) – 10 giây**
-* Timer dùng để auto refresh token trước khi hết hạn 10s → đảm bảo trải nghiệm liên tục.
+* Timer dùng để auto refresh token trước khi hết hạn 10s → đảm bảo trải nghiệm duy trì đăng nhập liên tục.
 
 ---
 
-# **Logic 4 – Auto Refresh Token (từ Timer)**
+## **Logic 10.7 – Auto Refresh Token (từ Timer)**
 
 Khi timer đến thời điểm chạy:
 
@@ -106,28 +89,25 @@ Khi timer đến thời điểm chạy:
 ### Nếu cả 2 điều kiện đúng:
 
 * Thực hiện refresh token.
-* Nếu refresh thành công → quay lại **Logic 3**.
+* Nếu refresh thành công → quay lại **Logic 10.6**.
 * Nếu lỗi 401 → redirect về login page.
 
 ---
 
-# **Logic 5 – Đăng xuất tất cả tab cùng origin**
+## **Logic 10.8 – Đăng xuất tất cả tab cùng origin**
 
 Khi người dùng chọn logout:
 
 1. Gửi request revoke với:
-
-   * access token trong payload
-   * refresh token trong cookie
-2. Nếu revoke lỗi → hiển thị thông báo.
-3. Nếu thành công:
-
-   * Thực hiện **Logic 3** với dữ liệu rỗng (clear toàn bộ thông tin đăng nhập).
-   * Redirect tất cả các tab về login page.
+  * access token trong auth beaver header request
+  * refresh token trong cookie
+2. Kiểm tra kết quả logout
+  * Nếu revoke lỗi → hiển thị thông báo.
+  * Nếu thành công Redirect tất cả các tab về page /login
 
 ---
 
-# **7. Tổng kết cơ chế**
+# **Tổng kết cơ chế**
 
 Giải pháp xử lý toàn bộ các giai đoạn:
 

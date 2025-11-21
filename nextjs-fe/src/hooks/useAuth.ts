@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useAppDispatch } from '@/redux/hooks';
+import { setAuth, clearAuth } from '@/redux/slices/authSlice';
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import type {
@@ -22,6 +24,7 @@ interface AuthState {
  * Manages login, logout, and user state
  */
 export function useAuth() {
+  const dispatch = useAppDispatch();
   const [state, setState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
@@ -29,19 +32,22 @@ export function useAuth() {
   });
 
   /**
-   * Login with email and password
+   * Login with username and password
    */
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       const response = await apiClient.post<LoginResponse>(
         ENDPOINTS.AUTH.LOGIN,
-        { email, password } as LoginRequest
+        { user_name: username, password } as LoginRequest
       );
 
       // Store access token
       apiClient.setAccessToken(response.data.access_token);
+      
+      // Update Redux store for AdminLayout
+      dispatch(setAuth(response.data.access_token));
 
       // Fetch user profile
       const userResponse = await apiClient.get<AuthUser>(ENDPOINTS.AUTH.ME);
@@ -59,7 +65,7 @@ export function useAuth() {
       notification.error(message);
       throw error;
     }
-  }, []);
+  }, [dispatch]);
 
   /**
    * Logout and clear tokens
@@ -70,6 +76,9 @@ export function useAuth() {
 
       await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
       apiClient.clearAccessToken();
+      
+      // Clear Redux store
+      dispatch(clearAuth());
 
       setState({
         user: null,
@@ -81,6 +90,8 @@ export function useAuth() {
     } catch (error: any) {
       // Clear state even if API call fails
       apiClient.clearAccessToken();
+      dispatch(clearAuth());
+      
       setState({
         user: null,
         isAuthenticated: false,
@@ -90,7 +101,7 @@ export function useAuth() {
       const message = error.response?.data?.message || 'Logout failed';
       notification.error(message);
     }
-  }, []);
+  }, [dispatch]);
 
   /**
    * Refresh access token

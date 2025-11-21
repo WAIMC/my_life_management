@@ -288,4 +288,45 @@ class CredentialService
             ]);
         }
     }
+
+    /**
+     * Get current authenticated admin user
+     *
+     * @param Request $request
+     * @return array
+     * @throws AuthorizationException
+     */
+    public function me(Request $request): array
+    {
+        $accessToken = $request->bearerToken();
+        
+        if (!$accessToken) {
+            throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+        }
+
+        // Decode token to get user ID
+        $payload = JsonWebToken::decode(
+            $accessToken,
+            env('ACCESS_TOKEN_SECRET'),
+            false
+        );
+        $credentials = $payload['body'];
+
+        // Get admin user information
+        $admin = AdminMst::find($credentials['id']);
+        
+        if (!$admin) {
+            throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+        }
+
+        return [
+            'id' => $admin->id,
+            'user_name' => $admin->user_name,
+            'full_name' => $admin->full_name,
+            'email' => $admin->email,
+            'phone' => $admin->phone,
+            'status' => $admin->status,
+            'is_active' => $admin->is_active,
+        ];
+    }
 }

@@ -337,7 +337,7 @@ export interface UpdateJunctionRequest<T> {
  */
 
 export interface LoginRequest {
-  email: string;
+  user_name: string;
   password: string;
 }
 
