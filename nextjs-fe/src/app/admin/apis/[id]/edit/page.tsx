@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JunctionManager } from '@/components/junction/junction-manager';
+import { HistoryViewer } from '@/components/history';
 import type { ApiMst, RoleMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status } from '@/lib/types/enums';
@@ -85,9 +86,10 @@ export default function EditApiPage() {
 
       <div className="mt-6 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="roles">Roles</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           {/* Details Tab */}
@@ -142,6 +144,17 @@ export default function EditApiPage() {
                 title="Manage API Roles"
                 itemLabel="roles"
                 searchPlaceholder="Search roles..."
+              />
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="api"
+                entityId={apiId}
+                endpoint={`${ENDPOINTS.MASTER.API}-hist`}
               />
             </Card>
           </TabsContent>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { AvatarUpload } from '@/components/crud/avatar-upload';
 import type { AdminMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status, Gender } from '@/lib/types/enums';
@@ -41,6 +43,8 @@ type AdminFormData = z.infer<typeof adminSchema>;
 export default function CreateAdminPage() {
   const router = useRouter();
   const { create, loading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const {
     register,
@@ -58,6 +62,14 @@ export default function CreateAdminPage() {
   });
 
   const onSubmit = async (data: AdminFormData) => {
+    // TODO: Upload avatar if provided
+    // if (avatarFile) {
+    //   const formData = new FormData();
+    //   formData.append('avatar', avatarFile);
+    //   const uploadResponse = await apiClient.post('/upload', formData);
+    //   data.avatar = uploadResponse.data.url;
+    // }
+    
     await create({
       ...data,
       is_delete: false,
@@ -80,6 +92,16 @@ export default function CreateAdminPage() {
       <div className="mt-6 max-w-2xl">
         <Card className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Avatar Upload */}
+            <AvatarUpload
+              value={avatarPreview}
+              onChange={(file, preview) => {
+                setAvatarFile(file);
+                setAvatarPreview(preview);
+              }}
+              maxSize={5}
+            />
+
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">

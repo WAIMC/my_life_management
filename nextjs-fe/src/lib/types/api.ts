@@ -94,6 +94,7 @@ export interface DepartmentMst {
   id: number;
   name: string;
   description?: string;
+  parent_id?: number; // For hierarchical departments
   status: number;
   is_active: boolean;
   is_delete: boolean;

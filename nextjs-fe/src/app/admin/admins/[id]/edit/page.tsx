@@ -23,6 +23,8 @@ import {
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JunctionManager } from '@/components/junction/junction-manager';
+import { AvatarUpload } from '@/components/crud/avatar-upload';
+import { HistoryViewer } from '@/components/history';
 import type { AdminMst, RoleMst, DepartmentMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status, Gender } from '@/lib/types/enums';
@@ -49,6 +51,8 @@ export default function EditAdminPage() {
   const adminId = Number(params.id);
   const { update, loading: updateLoading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
   const [activeTab, setActiveTab] = useState('details');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Junction table for Admin-Role
   const roleJunction = useJunctionTable<RoleMst>(
@@ -95,6 +99,10 @@ export default function EditAdminPage() {
           status: admin.status,
           is_active: admin.is_active,
         });
+        // Set avatar preview if exists
+        if (admin.avatar) {
+          setAvatarPreview(admin.avatar);
+        }
       }
     };
     loadAdmin();
@@ -106,6 +114,13 @@ export default function EditAdminPage() {
     if (!updateData.password) {
       delete updateData.password;
     }
+    // TODO: Upload avatar if changed
+    // if (avatarFile) {
+    //   const formData = new FormData();
+    //   formData.append('avatar', avatarFile);
+    //   const uploadResponse = await apiClient.post('/upload', formData);
+    //   updateData.avatar = uploadResponse.data.url;
+    // }
     await update(adminId, updateData);
     router.push('/admin/admins');
   };
@@ -124,16 +139,27 @@ export default function EditAdminPage() {
 
       <div className="mt-6 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="roles">Roles</TabsTrigger>
             <TabsTrigger value="departments">Departments</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           {/* Details Tab */}
           <TabsContent value="details">
             <Card className="p-6">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Avatar Upload */}
+                <AvatarUpload
+                  value={avatarPreview}
+                  onChange={(file, preview) => {
+                    setAvatarFile(file);
+                    setAvatarPreview(preview);
+                  }}
+                  maxSize={5}
+                />
+
                 {/* Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email">
@@ -326,6 +352,17 @@ export default function EditAdminPage() {
                 title="Manage Admin Departments"
                 itemLabel="departments"
                 searchPlaceholder="Search departments..."
+              />
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="admin"
+                entityId={adminId}
+                endpoint={`${ENDPOINTS.MASTER.ADMIN}-hist`}
               />
             </Card>
           </TabsContent>

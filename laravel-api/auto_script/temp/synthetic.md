@@ -411,3 +411,8 @@ lại permission cache mới. Những dữ liệu cần có trong cache permisso
   - Giới hạn login đồng thời.
   - Giới hạn số refresh token per user/device.
   - Đặt dọn dẹp định kỳ, TTL ngắn cho dữ liệu tạm.
+
+###########
+- Cloudflare R2
+- Supabase Storage free 1GB
+- GitHub Releases / Git LFS

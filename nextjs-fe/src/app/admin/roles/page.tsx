@@ -12,6 +12,12 @@ import { FilterPanel, type FilterField } from '@/components/data-table/filter-pa
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
+import { SavedFilters } from '@/components/advanced/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
+import { ImportExport } from '@/components/crud/import-export';
+import { Can } from '@/components/advanced/permission-control';
+import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 import type { RoleMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status, StatusLabels } from '@/lib/types/enums';
@@ -26,6 +32,7 @@ export default function RoleListPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<RoleMst>(
     ENDPOINTS.MASTER.ROLE,
@@ -95,6 +102,38 @@ export default function RoleListPage() {
     },
   ];
 
+  const searchFields: SearchField[] = [
+    { key: 'name', label: 'Name', type: 'text' },
+    { key: 'description', label: 'Description', type: 'text' },
+    { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] },
+    { key: 'created_at', label: 'Created Date', type: 'date' },
+  ];
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: 'Delete Selected',
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive',
+      onClick: async (ids) => { await remove(ids); refetch(); },
+      confirmMessage: `Delete ${selectedIds.length} role(s)?`,
+      confirmTitle: 'Delete Roles',
+    },
+    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Activate:', ids); refetch(); } },
+    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Deactivate:', ids); refetch(); } },
+  ];
+
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    setAdvancedCriteria(criteria);
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    setFilters(newFilters);
+    setPage(1);
+  };
+
+  const handleImport = async (importedData: any[]) => {
+    console.log('Import:', importedData);
+    refetch();
+  };
+
   return (
     <AdminLayout>
       <PageHeader
@@ -105,13 +144,22 @@ export default function RoleListPage() {
           { label: 'Roles', isActive: true },
         ]}
         action={
-          <Button onClick={() => router.push('/admin/roles/create')}>
-            Create Role
-          </Button>
+          <Can module="role" action="create">
+            <Button onClick={() => router.push('/admin/roles/create')}>
+              Create Role
+            </Button>
+          </Can>
         }
       />
 
       <div className="mt-6 space-y-4">
+        <div className="flex gap-2">
+          <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
+          <SavedFilters currentFilters={filters} onLoad={(f) => { setFilters(f); setPage(1); }} filterKey="role-filters" />
+          <Can module="role" action="export">
+            <ImportExport data={data} onImport={handleImport} filename="roles-export" />
+          </Can>
+        </div>
         <FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
@@ -125,21 +173,14 @@ export default function RoleListPage() {
           fields={filterFields}
         />
 
-        {selectedIds.length > 0 && (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-between border border-blue-200 dark:border-blue-800">
-            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              {selectedIds.length} role(s) selected
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(selectedIds)}
-              disabled={deleteLoading}
-            >
-              Delete Selected
-            </Button>
-          </div>
-        )}
+        <Can module="role" action="delete">
+          <BulkActions
+            selectedIds={selectedIds}
+            onClearSelection={() => setSelectedIds([])}
+            actions={bulkActions}
+            isLoading={loading}
+          />
+        </Can>
 
         <DataTable
           data={data}

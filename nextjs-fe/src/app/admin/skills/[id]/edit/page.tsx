@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HistoryViewer } from '@/components/history';
 import type { SkillMgmt } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status } from '@/lib/types/enums';
@@ -35,6 +37,7 @@ export default function EditSkillPage() {
   const params = useParams();
   const id = Number(params.id);
   const { update, loading: updateLoading } = useCrud<SkillMgmt>(ENDPOINTS.MANAGEMENT.SKILL);
+  const [activeTab, setActiveTab] = useState('details');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -74,9 +77,16 @@ export default function EditSkillPage() {
         ]}
       />
 
-      <div className="mt-6 max-w-2xl">
-        <Card className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="mt-6 max-w-4xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <Card className="p-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" {...register('name')} className={errors.name ? 'border-red-500' : ''} />
@@ -119,7 +129,19 @@ export default function EditSkillPage() {
               <Button type="submit" disabled={updateLoading}>{updateLoading ? 'Updating...' : 'Update'}</Button>
             </div>
           </form>
-        </Card>
+                    </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="skill"
+                entityId={id}
+                endpoint={`${ENDPOINTS.MANAGEMENT.SKILL}-hist`}
+              />
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

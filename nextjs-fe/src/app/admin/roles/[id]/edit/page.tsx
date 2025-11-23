@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HistoryViewer } from '@/components/history';
 import type { RoleMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status } from '@/lib/types/enums';
@@ -39,6 +41,7 @@ export default function EditRolePage() {
   const params = useParams();
   const roleId = Number(params.id);
   const { update, loading: updateLoading } = useCrud<RoleMst>(ENDPOINTS.MASTER.ROLE);
+  const [activeTab, setActiveTab] = useState('details');
 
   const {
     register,
@@ -83,9 +86,16 @@ export default function EditRolePage() {
         ]}
       />
 
-      <div className="mt-6 max-w-2xl">
-        <Card className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="mt-6 max-w-4xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <Card className="p-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">
                 Name <span className="text-red-500">*</span>
@@ -149,8 +159,20 @@ export default function EditRolePage() {
                 {updateLoading ? 'Updating...' : 'Update Role'}
               </Button>
             </div>
-          </form>
-        </Card>
+              </form>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="role"
+                entityId={roleId}
+                endpoint={`${ENDPOINTS.MASTER.ROLE}-hist`}
+              />
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

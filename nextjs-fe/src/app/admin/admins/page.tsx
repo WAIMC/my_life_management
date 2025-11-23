@@ -12,6 +12,12 @@ import { FilterPanel, type FilterField } from '@/components/data-table/filter-pa
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
+import { SavedFilters } from '@/components/advanced/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
+import { ImportExport } from '@/components/crud/import-export';
+import { Can } from '@/components/advanced/permission-control';
+import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 import type { AdminMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status, StatusLabels, Gender, GenderLabels } from '@/lib/types/enums';
@@ -26,6 +32,7 @@ export default function AdminListPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<AdminMst>(
     ENDPOINTS.MASTER.ADMIN,
@@ -143,6 +150,84 @@ export default function AdminListPage() {
     },
   ];
 
+  // Advanced search fields
+  const searchFields: SearchField[] = [
+    { key: 'email', label: 'Email', type: 'text' },
+    { key: 'user_name', label: 'Username', type: 'text' },
+    { key: 'first_name', label: 'First Name', type: 'text' },
+    { key: 'last_name', label: 'Last Name', type: 'text' },
+    { 
+      key: 'status', 
+      label: 'Status', 
+      type: 'select',
+      options: [
+        { value: '1', label: 'Active' },
+        { value: '2', label: 'Inactive' },
+      ]
+    },
+    {
+      key: 'gender',
+      label: 'Gender',
+      type: 'select',
+      options: [
+        { value: '1', label: 'Male' },
+        { value: '2', label: 'Female' },
+        { value: '3', label: 'Other' },
+      ]
+    },
+    { key: 'created_at', label: 'Created Date', type: 'date' },
+  ];
+
+  // Bulk actions
+  const bulkActions: BulkAction[] = [
+    {
+      label: 'Delete Selected',
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive',
+      onClick: async (ids) => {
+        await remove(ids);
+        refetch();
+      },
+      confirmMessage: `Are you sure you want to delete ${selectedIds.length} admin(s)? This action cannot be undone.`,
+      confirmTitle: 'Delete Admins',
+    },
+    {
+      label: 'Activate Selected',
+      icon: <CheckCircle className="h-4 w-4" />,
+      onClick: async (ids) => {
+        // TODO: Implement bulk activate
+        console.log('Activate:', ids);
+        refetch();
+      },
+    },
+    {
+      label: 'Deactivate Selected',
+      icon: <XCircle className="h-4 w-4" />,
+      onClick: async (ids) => {
+        // TODO: Implement bulk deactivate
+        console.log('Deactivate:', ids);
+        refetch();
+      },
+    },
+  ];
+
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    setAdvancedCriteria(criteria);
+    // Convert criteria to filters
+    const newFilters = criteria.reduce((acc, c) => ({
+      ...acc,
+      [c.field]: c.value
+    }), {});
+    setFilters(newFilters);
+    setPage(1);
+  };
+
+  const handleImport = async (importedData: any[]) => {
+    // TODO: Implement import logic
+    console.log('Import data:', importedData);
+    refetch();
+  };
+
   return (
     <AdminLayout>
       <PageHeader
@@ -153,13 +238,38 @@ export default function AdminListPage() {
           { label: 'Admins', isActive: true },
         ]}
         action={
-          <Button onClick={() => router.push('/admin/admins/create')}>
-            Create Admin
-          </Button>
+          <Can module="admin" action="create">
+            <Button onClick={() => router.push('/admin/admins/create')}>
+              Create Admin
+            </Button>
+          </Can>
         }
       />
 
       <div className="mt-6 space-y-4">
+        {/* Advanced Search & Filters */}
+        <div className="flex gap-2">
+          <AdvancedSearch
+            fields={searchFields}
+            onSearch={handleAdvancedSearch}
+          />
+          <SavedFilters
+            currentFilters={filters}
+            onLoad={(loadedFilters) => {
+              setFilters(loadedFilters);
+              setPage(1);
+            }}
+            filterKey="admin-filters"
+          />
+          <Can module="admin" action="export">
+            <ImportExport
+              data={data}
+              onImport={handleImport}
+              filename="admins-export"
+            />
+          </Can>
+        </div>
+
         <FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
@@ -173,21 +283,15 @@ export default function AdminListPage() {
           fields={filterFields}
         />
 
-        {selectedIds.length > 0 && (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-between border border-blue-200 dark:border-blue-800">
-            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              {selectedIds.length} admin(s) selected
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(selectedIds)}
-              disabled={deleteLoading}
-            >
-              Delete Selected
-            </Button>
-          </div>
-        )}
+        {/* Bulk Actions */}
+        <Can module="admin" action="delete">
+          <BulkActions
+            selectedIds={selectedIds}
+            onClearSelection={() => setSelectedIds([])}
+            actions={bulkActions}
+            isLoading={loading}
+          />
+        </Can>
 
         <DataTable
           data={data}
@@ -200,6 +304,28 @@ export default function AdminListPage() {
           sortOrder={sortOrder}
           onEdit={(id) => router.push(`/admin/admins/${id}/edit`)}
           onDelete={(id) => handleDelete([id])}
+          renderActions={(admin) => (
+            <div className="flex gap-2">
+              <Can module="admin" action="update">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/admin/admins/${admin.id}/edit`)}
+                >
+                  Edit
+                </Button>
+              </Can>
+              <Can module="admin" action="delete">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleDelete([admin.id])}
+                >
+                  Delete
+                </Button>
+              </Can>
+            </div>
+          )}
         />
 
         <Pagination

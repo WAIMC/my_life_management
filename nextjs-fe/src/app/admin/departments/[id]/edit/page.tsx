@@ -24,6 +24,8 @@ import {
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JunctionManager } from '@/components/junction/junction-manager';
+import { HistoryViewer } from '@/components/history';
+import { DepartmentTree } from '@/components/crud/department-tree';
 import type { DepartmentMst, PolicyDepartmentMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status } from '@/lib/types/enums';
@@ -31,6 +33,7 @@ import { Status } from '@/lib/types/enums';
 const departmentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
+  parent_id: z.coerce.number().optional().nullable(),
   status: z.coerce.number().min(1).max(2),
   is_active: z.boolean(),
 });
@@ -43,6 +46,8 @@ export default function EditDepartmentPage() {
   const departmentId = Number(params.id);
   const { update, loading: updateLoading } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
   const [activeTab, setActiveTab] = useState('details');
+  const [allDepartments, setAllDepartments] = useState<DepartmentMst[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState<number | undefined>();
 
   // Junction table for Department-PolicyDepartment
   const policyDepartmentJunction = useJunctionTable<PolicyDepartmentMst>(
@@ -66,14 +71,24 @@ export default function EditDepartmentPage() {
 
   useEffect(() => {
     const loadDepartment = async () => {
+      // Load all departments for tree
+      const response = await departmentService.list({ per_page: 1000 });
+      if (response?.data?.data) {
+        // Filter out current department to prevent circular reference
+        setAllDepartments(response.data.data.filter((d: DepartmentMst) => d.id !== departmentId));
+      }
+
+      // Load current department data
       const department = await departmentService.getById(departmentId);
       if (department) {
         reset({
           name: department.name,
           description: department.description || '',
+          parent_id: department.parent_id,
           status: department.status,
           is_active: department.is_active,
         });
+        setSelectedParentId(department.parent_id);
       }
     };
     loadDepartment();
@@ -98,9 +113,10 @@ export default function EditDepartmentPage() {
 
       <div className="mt-6 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="policy-departments">Policy Departments</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           {/* Details Tab */}
@@ -128,6 +144,38 @@ export default function EditDepartmentPage() {
                     {...register('description')}
                     rows={4}
                   />
+                </div>
+
+                {/* Parent Department Selection */}
+                <div className="space-y-2">
+                  <Label>Parent Department</Label>
+                  <div className="rounded-md border p-4 max-h-64 overflow-y-auto">
+                    <DepartmentTree
+                      departments={allDepartments}
+                      selectedId={selectedParentId}
+                      onSelect={(dept) => {
+                        setSelectedParentId(dept.id);
+                        setValue('parent_id', dept.id);
+                      }}
+                    />
+                    {selectedParentId && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => {
+                          setSelectedParentId(undefined);
+                          setValue('parent_id', null as any);
+                        }}
+                      >
+                        Clear Selection
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Select a parent department to create a hierarchy. Leave empty for root level.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -187,6 +235,17 @@ export default function EditDepartmentPage() {
                 title="Manage Policy Departments"
                 itemLabel="policy departments"
                 searchPlaceholder="Search policy departments..."
+              />
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="department"
+                entityId={departmentId}
+                endpoint={`${ENDPOINTS.MASTER.DEPARTMENT}-hist`}
               />
             </Card>
           </TabsContent>

@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HistoryViewer } from '@/components/history';
 import { JunctionManager } from '@/components/junction/junction-manager';
 import type { CategoryMgmt, SkillMgmt } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';

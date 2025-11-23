@@ -1,0 +1,116 @@
+/**
+ * History Model Types
+ * Auto-generated from Laravel API history models
+ */
+
+// Base History Interface
+export interface BaseHistory {
+  id: number;
+  action: 'create' | 'update' | 'delete';
+  changed_by: number; // Admin ID who made the change
+  changed_at: string;
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
+  ip_address?: string;
+  user_agent?: string;
+}
+
+// ============================================
+// MASTER HISTORY MODELS
+// ============================================
+
+export interface AdminMstHist extends BaseHistory {
+  admin_mst_id: number;
+}
+
+export interface RoleMstHist extends BaseHistory {
+  role_mst_id: number;
+}
+
+export interface DepartmentMstHist extends BaseHistory {
+  department_mst_id: number;
+}
+
+export interface ApiMstHist extends BaseHistory {
+  api_mst_id: number;
+}
+
+export interface FeatureMstHist extends BaseHistory {
+  feature_mst_id: number;
+}
+
+export interface LanguageMstHist extends BaseHistory {
+  language_mst_id: number;
+}
+
+export interface TranslationMstHist extends BaseHistory {
+  translation_mst_id: number;
+}
+
+export interface PolicyDepartmentMstHist extends BaseHistory {
+  policy_department_mst_id: number;
+}
+
+export interface OriginalTranslatorMstHist extends BaseHistory {
+  original_translator_mst_id: number;
+}
+
+// ============================================
+// MANAGEMENT HISTORY MODELS
+// ============================================
+
+export interface UserMgmtHist extends BaseHistory {
+  user_mgmt_id: number;
+}
+
+export interface CategoryMgmtHist extends BaseHistory {
+  category_mgmt_id: number;
+}
+
+export interface SkillMgmtHist extends BaseHistory {
+  skill_mgmt_id: number;
+}
+
+export interface SkillDescriptionMgmtHist extends BaseHistory {
+  skill_description_mgmt_id: number;
+}
+
+export interface BannerMgmtHist extends BaseHistory {
+  banner_mgmt_id: number;
+}
+
+export interface SliderMgmtHist extends BaseHistory {
+  slider_mgmt_id: number;
+}
+
+export interface SocialMgmtHist extends BaseHistory {
+  social_mgmt_id: number;
+}
+
+export interface SettingLinkMgmtHist extends BaseHistory {
+  setting_link_mgmt_id: number;
+}
+
+// ============================================
+// HISTORY DIFF TYPE
+// ============================================
+
+export interface HistoryDiff {
+  field: string;
+  oldValue: any;
+  newValue: any;
+  label?: string;
+}
+
+// ============================================
+// HISTORY FILTER OPTIONS
+// ============================================
+
+export interface HistoryFilterOptions {
+  action?: 'create' | 'update' | 'delete';
+  changed_by?: number;
+  from_date?: string;
+  to_date?: string;
+  page?: number;
+  per_page?: number;
+}

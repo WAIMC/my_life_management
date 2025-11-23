@@ -1,5 +1,5 @@
 import { setAuth, clearAuth, setTabId, setLeaderId, setRefreshAtTime } from '@/redux/slices/authSlice';
-import { apiPost } from './apiMethod';
+import { apiClient } from '@/lib/api-client';
 import { REFRESH_TOKEN } from '@/constants/apiUrl';
 import * as CLIENT_URL from '@/constants/clientUrl';
 import type { AppStore } from '@/redux/store';
@@ -109,9 +109,9 @@ const performAutoRefresh = async () => {
   }
 
   try {
-    const response = await apiPost<{ access_token: string; ttl: number }>(REFRESH_TOKEN, {});
-    const newAccessToken = response?.access_token;
-    const newTtl = response?.ttl;
+    const response = await apiClient.post<{ access_token: string; ttl: number }>(REFRESH_TOKEN, {});
+    const newAccessToken = response?.data?.access_token;
+    const newTtl = response?.data?.ttl;
 
     if (!newAccessToken || !newTtl) {
       throw new Error('Invalid token response');

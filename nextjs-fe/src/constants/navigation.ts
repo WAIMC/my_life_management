@@ -4,7 +4,25 @@ import {
   FileText, 
   Settings,
   LucideIcon,
-  FolderOpen
+  FolderOpen,
+  Database,
+  Package,
+  Shield,
+  Building2,
+  Code,
+  Sparkles,
+  Languages,
+  MessageSquare,
+  Key,
+  FileCheck,
+  UserCog,
+  Grid3x3,
+  Briefcase,
+  Layers,
+  Image,
+  Sliders,
+  Share2,
+  Link,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -23,19 +41,116 @@ export const NAVIGATION_MENU: MenuItem[] = [
     href: '/admin',
   },
   {
-    label: 'Users',
-    icon: Users,
-    href: '/admin/users',
+    label: 'File Manager',
+    icon: FolderOpen,
+    href: '/admin/file-manager',
+  },
+  {
+    label: 'Master Data',
+    icon: Database,
+    children: [
+      {
+        label: 'Admins',
+        icon: UserCog,
+        href: '/admin/admins',
+      },
+      {
+        label: 'Roles',
+        icon: Shield,
+        href: '/admin/roles',
+      },
+      {
+        label: 'Departments',
+        icon: Building2,
+        href: '/admin/departments',
+      },
+      {
+        label: 'APIs',
+        icon: Code,
+        href: '/admin/apis',
+      },
+      {
+        label: 'Features',
+        icon: Sparkles,
+        href: '/admin/features',
+      },
+      {
+        label: 'Languages',
+        icon: Languages,
+        href: '/admin/languages',
+      },
+      {
+        label: 'Translations',
+        icon: MessageSquare,
+        href: '/admin/translations',
+      },
+      {
+        label: 'Tokens',
+        icon: Key,
+        href: '/admin/tokens',
+      },
+      {
+        label: 'Policy Departments',
+        icon: FileCheck,
+        href: '/admin/policy-departments',
+      },
+      {
+        label: 'Original Translators',
+        icon: UserCog,
+        href: '/admin/original-translators',
+      },
+    ],
+  },
+  {
+    label: 'Content Management',
+    icon: Package,
+    children: [
+      {
+        label: 'Users',
+        icon: Users,
+        href: '/admin/users',
+      },
+      {
+        label: 'Categories',
+        icon: Grid3x3,
+        href: '/admin/categories',
+      },
+      {
+        label: 'Skills',
+        icon: Briefcase,
+        href: '/admin/skills',
+      },
+      {
+        label: 'Skill Descriptions',
+        icon: Layers,
+        href: '/admin/skill-descriptions',
+      },
+      {
+        label: 'Banners',
+        icon: Image,
+        href: '/admin/banners',
+      },
+      {
+        label: 'Sliders',
+        icon: Sliders,
+        href: '/admin/sliders',
+      },
+      {
+        label: 'Social Links',
+        icon: Share2,
+        href: '/admin/socials',
+      },
+      {
+        label: 'Setting Links',
+        icon: Link,
+        href: '/admin/setting-links',
+      },
+    ],
   },
   {
     label: 'Posts',
     icon: FileText,
     href: '/admin/posts',
-  },
-  {
-    label: 'File Manager',
-    icon: FolderOpen,
-    href: '/admin/file-manager',
   },
   {
     label: 'Settings',

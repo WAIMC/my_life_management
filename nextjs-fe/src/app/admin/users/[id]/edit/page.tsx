@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HistoryViewer } from '@/components/history';
+import { AvatarUpload } from '@/components/crud/avatar-upload';
 import type { UserMgmt } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status, Gender } from '@/lib/types/enums';
@@ -40,6 +43,9 @@ export default function EditUserPage() {
   const params = useParams();
   const userId = Number(params.id);
   const { update, loading: updateLoading } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+  const [activeTab, setActiveTab] = useState('details');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
@@ -62,6 +68,10 @@ export default function EditUserPage() {
           is_active: user.is_active,
           password: '', // Don't populate password
         });
+        // Set avatar preview if exists
+        if (user.avatar) {
+          setAvatarPreview(user.avatar);
+        }
       }
     };
     loadUser();
@@ -73,6 +83,13 @@ export default function EditUserPage() {
     if (!data.password || data.password === '') {
       delete updateData.password;
     }
+    // TODO: Upload avatar if changed
+    // if (avatarFile) {
+    //   const formData = new FormData();
+    //   formData.append('avatar', avatarFile);
+    //   const uploadResponse = await apiClient.post('/upload', formData);
+    //   updateData.avatar = uploadResponse.data.url;
+    // }
     await update(userId, updateData);
     router.push('/admin/users');
   };
@@ -89,9 +106,26 @@ export default function EditUserPage() {
         ]}
       />
 
-      <div className="mt-6 max-w-2xl">
-        <Card className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="mt-6 max-w-4xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <Card className="p-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Avatar Upload */}
+                <AvatarUpload
+                  value={avatarPreview}
+                  onChange={(file, preview) => {
+                    setAvatarFile(file);
+                    setAvatarPreview(preview);
+                  }}
+                  maxSize={5}
+                />
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first_name">First Name <span className="text-red-500">*</span></Label>
@@ -174,7 +208,19 @@ export default function EditUserPage() {
               <Button type="submit" disabled={updateLoading}>{updateLoading ? 'Updating...' : 'Update User'}</Button>
             </div>
           </form>
-        </Card>
+                    </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="user"
+                entityId={userId}
+                endpoint={`${ENDPOINTS.MANAGEMENT.USER}-hist`}
+              />
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

@@ -12,7 +12,7 @@
  */
 
 import { AppStore } from '@/redux/store';
-import { apiPost } from './apiMethod';
+import { apiClient } from '@/lib/api-client';
 import { REFRESH_TOKEN } from '@/constants/apiUrl';
 import * as CLIENT_URL from '@/constants/clientUrl';
 import broadcastManager from './broadcastChannelManager';
@@ -44,14 +44,14 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
   // Try refresh token from cookie (Logic 1)
   // This is the primary way to restore auth on reload
   try {
-    const response = await apiPost<{ access_token: string; ttl: number }>(
+    const response = await apiClient.post<{ access_token: string; ttl: number }>(
       REFRESH_TOKEN,
       {}
     );
     
-    if (response?.access_token && response?.ttl) {
+    if (response?.data?.access_token && response?.data?.ttl) {
       // Refresh successful - sync state across tabs
-      syncAuthStateAcrossTabs(response.access_token, response.ttl);
+      syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
       store.dispatch(setAuthInitialized(true));
       return;
     }

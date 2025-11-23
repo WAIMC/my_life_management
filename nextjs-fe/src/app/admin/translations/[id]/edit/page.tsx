@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JunctionManager } from '@/components/junction/junction-manager';
+import { HistoryViewer } from '@/components/history';
 import type { TranslationMst, LanguageMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status } from '@/lib/types/enums';
@@ -85,9 +86,10 @@ export default function EditTranslationPage() {
 
       <div className="mt-6 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="languages">Languages</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           {/* Details Tab */}
@@ -143,6 +145,17 @@ export default function EditTranslationPage() {
                 title="Manage Translation Languages"
                 itemLabel="languages"
                 searchPlaceholder="Search languages..."
+              />
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <Card className="p-6">
+              <HistoryViewer
+                entityType="translation"
+                entityId={translationId}
+                endpoint={`${ENDPOINTS.MASTER.TRANSLATION}-hist`}
               />
             </Card>
           </TabsContent>

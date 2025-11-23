@@ -1,19 +1,24 @@
 import { configureStore } from "@reduxjs/toolkit";
-import createSagaMiddleware from "redux-saga";
 import rootReducer from "./rootReducer";
-import rootSaga from "./rootSaga";
 
-const sagaMiddleware = createSagaMiddleware();
+/**
+ * Redux Store Configuration
+ * 
+ * Note: Redux Saga has been removed in favor of TanStack Query for data fetching.
+ * Redux is now only used for client-side UI state (auth, common state).
+ * Server state is managed by TanStack Query.
+ */
 
 export const makeStore = () => {
   const store = configureStore({
     reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ serializableCheck: false }).concat(sagaMiddleware),
+      getDefaultMiddleware({ 
+        serializableCheck: false 
+      }),
     devTools: process.env.NODE_ENV !== 'production',
   });
 
-  sagaMiddleware.run(rootSaga);
   return store;
 };
 
