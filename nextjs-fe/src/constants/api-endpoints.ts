@@ -10,7 +10,7 @@ export const API_BASE_URL =
 export const AUTH_ENDPOINTS = {
   LOGIN: '/admin/account/login',
   LOGOUT: '/admin/account/logout',
-  REFRESH: '/admin/account/refresh',
+  REFRESH: '/admin/account/refresh-token',
   ME: '/admin/account/me',
 } as const;
 

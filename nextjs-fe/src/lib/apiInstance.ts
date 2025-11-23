@@ -7,6 +7,7 @@ import { setAuth, clearAuth } from '@/redux/slices/authSlice';
 import { handleCommonError } from './apiErrorHandle';
 import { ApiResponse } from '@/types/apiType';
 import type { AppStore } from '../redux/store';
+import { navigateTo } from './navigation';
 
 // Init axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -163,7 +164,8 @@ axiosInstance.interceptors.response.use(
             // Save current URL for redirect after login (Logic 2.2)
             const currentUrl = window.location.pathname + window.location.search;
             toast.error(ERR_MESS.E0002);
-            window.location.href = `${CLIENT_URL.LOGIN}?redirect=${encodeURIComponent(currentUrl)}`;
+            // Use client-side navigation instead of window.location
+            navigateTo(`${CLIENT_URL.LOGIN}?redirect=${encodeURIComponent(currentUrl)}`);
           }
 
           return null;

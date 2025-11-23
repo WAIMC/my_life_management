@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppSelector } from '@/redux/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +11,24 @@ import { Card } from '@/components/ui/card';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isLoading } = useAuth();
+  const { isAuthenticated, authInitialized } = useAppSelector((state) => state.auth);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  // Logic 10.1: Redirect if already authenticated
+  useEffect(() => {
+    if (authInitialized && isAuthenticated) {
+      const redirectParam = searchParams.get('redirect');
+      const redirectUrl = redirectParam && redirectParam.startsWith('/admin') 
+        ? redirectParam 
+        : '/admin';
+      
+      console.log('Already authenticated, redirecting to:', redirectUrl);
+      router.push(redirectUrl);
+    }
+  }, [authInitialized, isAuthenticated, searchParams, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

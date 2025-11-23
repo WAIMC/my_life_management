@@ -14,24 +14,60 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, className }: AdminLayoutProps) {
   const router = useRouter();
-  const { accessToken, isAuthenticated } = useAppSelector((state) => state.auth);
-  const [isLoading, setIsLoading] = useState(true);
+  const { accessToken, isAuthenticated, authInitialized } = useAppSelector((state) => state.auth);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Fix hydration error: Only render after client-side mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
+    // Only check auth after initialization is complete
+    if (!authInitialized) {
+      return;
+    }
+
+    // If no valid auth after initialization, redirect to login
     if (!accessToken || !isAuthenticated) {
       const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin';
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-    } else {
-      setIsLoading(false);
+      console.log('No valid auth, redirecting to login from:', currentPath);
+      setShouldRedirect(true);
     }
-  }, [accessToken, isAuthenticated, router]);
+  }, [authInitialized, accessToken, isAuthenticated]);
 
-  if (isLoading || !accessToken || !isAuthenticated) {
+  useEffect(() => {
+    if (shouldRedirect) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin';
+      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [shouldRedirect, router]);
+
+  // Prevent hydration mismatch: Don't render anything until mounted
+  if (!isMounted) {
+    return null;
+  }
+
+  // Show loading while auth is initializing
+  if (!authInitialized) {
     return (
       <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-950">
         <div className="text-center">
           <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-800 dark:border-t-blue-400" />
           <p className="text-sm text-slate-600 dark:text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while redirecting
+  if (shouldRedirect || !accessToken || !isAuthenticated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-950">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-800 dark:border-t-blue-400" />
+          <p className="text-sm text-slate-600 dark:text-slate-400">Redirecting to login...</p>
         </div>
       </div>
     );

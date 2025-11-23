@@ -10,6 +10,7 @@ export type AuthState = {
   tabId: string | null; // Current tab ID
   leaderId: string | null; // ID of leader tab managing refresh
   refreshAtTime: number | null; // Time when token should be refreshed (in ms)
+  authInitialized: boolean; // Whether auth initialization has completed
 }
 
 export type LoginResponseData = {

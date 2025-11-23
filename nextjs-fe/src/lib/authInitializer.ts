@@ -14,19 +14,30 @@
 import { AppStore } from '@/redux/store';
 import { apiPost } from './apiMethod';
 import { REFRESH_TOKEN } from '@/constants/apiUrl';
+import * as CLIENT_URL from '@/constants/clientUrl';
 import broadcastManager from './broadcastChannelManager';
 import { syncAuthStateAcrossTabs } from './authManager';
+import { setAuthInitialized } from '@/redux/slices/authSlice';
 
 /**
  * Initialize auth state on app start
  * Should be called once when app loads
  */
 export const initializeAuth = async (store: AppStore): Promise<void> => {
+  // Logic 10.4: Do NOT call refresh token if on login page
+  // Check page before any auth logic
+  if (typeof window !== 'undefined' && window.location.pathname === CLIENT_URL.LOGIN) {
+    console.log('On login page - skip auth initialization');
+    store.dispatch(setAuthInitialized(true));
+    return;
+  }
+
   const state = store.getState();
   const { accessToken, refreshAtTime } = state.auth;
   
   // Skip if already have valid token
   if (accessToken && refreshAtTime && refreshAtTime > Date.now()) {
+    store.dispatch(setAuthInitialized(true));
     return;
   }
   
@@ -41,6 +52,7 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
     if (response?.access_token && response?.ttl) {
       // Refresh successful - sync state across tabs
       syncAuthStateAcrossTabs(response.access_token, response.ttl);
+      store.dispatch(setAuthInitialized(true));
       return;
     }
   } catch (error) {
@@ -59,6 +71,7 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
       if (ttl > 0) {
         // Got valid token from another tab
         syncAuthStateAcrossTabs(response.accessToken, ttl);
+        store.dispatch(setAuthInitialized(true));
         return;
       }
     }
@@ -70,4 +83,5 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
   // Logic 2.2: No auth available
   // State remains null, AdminLayout will redirect to login
   // This is the expected behavior for first-time access or expired sessions
+  store.dispatch(setAuthInitialized(true));
 };

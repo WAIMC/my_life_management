@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse, ApiErrorResponse } from './types/api';
+import { navigateTo } from './navigation';
 
 /**
  * Centralized API Client with JWT authentication and automatic token refresh
@@ -61,9 +62,8 @@ class ApiClient {
           } catch (refreshError) {
             // Refresh failed, clear token and redirect to login
             this.clearAccessToken();
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login';
-            }
+            // Use client-side navigation instead of window.location
+            navigateTo('/login');
             return Promise.reject(refreshError);
           }
         }

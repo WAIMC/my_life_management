@@ -9,6 +9,7 @@ import { LoginPayload, LoginResponseData } from '@/types/authType';
 import * as CLIENT_URL from '@/constants/clientUrl';
 import { syncAuthStateAcrossTabs, clearAutoRefresh } from '@/lib/authManager';
 import broadcastManager from '@/lib/broadcastChannelManager';
+import { navigateTo } from '@/lib/navigation';
 
 function* loginSaga(action: { type: string; payload: LoginPayload }): SagaIterator {
   try {
@@ -69,9 +70,8 @@ function* logoutSaga(): SagaIterator {
 
     toast.success('Logout successful');
 
-    if (typeof window !== 'undefined') {
-      window.location.href = CLIENT_URL.LOGIN;
-    }
+    // Use client-side navigation instead of window.location
+    navigateTo(CLIENT_URL.LOGIN);
   } catch (error) {
     yield put(clearAuth());
     clearAutoRefresh();

@@ -9,8 +9,27 @@ import { initializeAuth } from '@/lib/authInitializer';
 import broadcastManager from '@/lib/broadcastChannelManager';
 import { setAuth, setTabId, setLeaderId, setRefreshAtTime, clearAuth } from '@/redux/slices/authSlice';
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppStore } from '@/redux/store';
+import { setNavigateFunction, clearNavigateFunction, navigateTo } from '@/lib/navigation';
+
+function NavigationProvider() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Set navigation function for use in sagas and interceptors
+    setNavigateFunction((path: string) => {
+      router.push(path);
+    });
+
+    return () => {
+      clearNavigateFunction();
+    };
+  }, [router]);
+
+  return null;
+}
 
 function BroadcastListener() {
   const dispatch = useDispatch();
@@ -38,10 +57,8 @@ function BroadcastListener() {
           dispatch(clearAuth());
           clearAutoRefresh();
 
-          // Redirect to login
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
+          // Use client-side navigation instead of window.location
+          navigateTo('/login');
           break;
         }
         case 'AUTH_REQUEST': {
@@ -79,26 +96,14 @@ function BroadcastListener() {
 }
 
 function AuthInitializer() {
-  const [initialized, setInitialized] = useState(false);
   const store = useStore();
 
   useEffect(() => {
-    initializeAuth(store as AppStore).finally(() => {
-      setInitialized(true);
-    });
+    // Run in background, don't block rendering
+    initializeAuth(store as AppStore);
   }, [store]);
 
-  if (!initialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600 dark:border-slate-700 dark:border-t-slate-300 mx-auto"></div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Don't block rendering - AdminLayout and LoginPage will handle their own auth checks
   return null;
 }
 
@@ -120,6 +125,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 enableSystem
                 disableTransitionOnChange={false}
             >
+                <NavigationProvider />
                 <BroadcastListener />
                 <AuthInitializer />
                 {children}

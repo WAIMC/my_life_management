@@ -49,9 +49,9 @@ export const handleCommonError = (error: AxiosError<ApiResponse<unknown>>) => {
       break;
 
     case 404: // Not Found
-      if (typeof window !== 'undefined') {
-        window.location.href = CLIENT_URL.NOT_FOUND;
-      }
+      // Don't redirect - Next.js will handle this with not-found.tsx
+      // Just show error toast
+      toast.error(errorMessage || 'Resource not found');
       break;
 
     case 500: // Internal Server Error

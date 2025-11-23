@@ -4,6 +4,7 @@ import { REFRESH_TOKEN } from '@/constants/apiUrl';
 import * as CLIENT_URL from '@/constants/clientUrl';
 import type { AppStore } from '@/redux/store';
 import broadcastManager from './broadcastChannelManager';
+import { navigateTo } from './navigation';
 
 let refreshTimer: NodeJS.Timeout | null = null;
 let appStore: AppStore | null = null;
@@ -128,9 +129,9 @@ const performAutoRefresh = async () => {
     appStore.dispatch(clearAuth());
     clearAutoRefresh();
 
-    // Redirect to login
+    // Use client-side navigation instead of window.location
     if (typeof window !== 'undefined') {
-      window.location.href = `${CLIENT_URL.LOGIN}?redirect=${encodeURIComponent(currentUrl)}`;
+      navigateTo(`${CLIENT_URL.LOGIN}?redirect=${encodeURIComponent(currentUrl)}`);
     }
   }
 };

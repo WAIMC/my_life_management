@@ -8,6 +8,7 @@ const initialState: AuthState = {
   tabId: null,
   leaderId: null,
   refreshAtTime: null,
+  authInitialized: false,
 };
 
 const authSlice = createSlice({
@@ -31,6 +32,9 @@ const authSlice = createSlice({
     setRefreshAtTime: (state, action: PayloadAction<number>) => {
       state.refreshAtTime = action.payload;
     },
+    setAuthInitialized: (state, action: PayloadAction<boolean>) => {
+      state.authInitialized = action.payload;
+    },
     loginRequest: () => {
       // Saga will handle this
     },
@@ -47,6 +51,7 @@ export const {
   setTabId,
   setLeaderId,
   setRefreshAtTime,
+  setAuthInitialized,
   loginRequest,
   logoutRequest,
 } = authSlice.actions;

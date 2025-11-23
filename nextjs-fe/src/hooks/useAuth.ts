@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAppDispatch } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setAuth, clearAuth } from '@/redux/slices/authSlice';
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '@/constants/api-endpoints';
@@ -25,6 +25,7 @@ interface AuthState {
  */
 export function useAuth() {
   const dispatch = useAppDispatch();
+  const leaderId = useAppSelector((state) => state.auth.leaderId);
   const [state, setState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
@@ -33,6 +34,7 @@ export function useAuth() {
 
   /**
    * Login with username and password
+   * Logic 10.4: Call API login and sync state across tabs
    */
   const login = useCallback(async (username: string, password: string) => {
     try {
@@ -46,8 +48,10 @@ export function useAuth() {
       // Store access token
       apiClient.setAccessToken(response.data.access_token);
       
-      // Update Redux store for AdminLayout
-      dispatch(setAuth(response.data.access_token));
+      // Logic 10.6: Đồng bộ trạng thái đăng nhập giữa các tab
+      // Sync auth state across all tabs via broadcast channel
+      const { syncAuthStateAcrossTabs } = await import('@/lib/authManager');
+      syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
 
       // Fetch user profile
       const userResponse = await apiClient.get<AuthUser>(ENDPOINTS.AUTH.ME);
@@ -69,6 +73,7 @@ export function useAuth() {
 
   /**
    * Logout and clear tokens
+   * Logic 10.8: Đăng xuất tất cả tab cùng origin
    */
   const logout = useCallback(async () => {
     try {
@@ -79,6 +84,10 @@ export function useAuth() {
       
       // Clear Redux store
       dispatch(clearAuth());
+
+      // Logic 10.8: Broadcast logout to all tabs
+      const broadcastManager = (await import('@/lib/broadcastChannelManager')).default;
+      broadcastManager.broadcastLogout(leaderId || '');
 
       setState({
         user: null,
@@ -101,7 +110,7 @@ export function useAuth() {
       const message = error.response?.data?.message || 'Logout failed';
       notification.error(message);
     }
-  }, [dispatch]);
+  }, [dispatch, leaderId]);
 
   /**
    * Refresh access token

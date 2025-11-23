@@ -320,3 +320,6 @@ export default function FileManager() {
     </div>
   );
 }
+
+// Named export for convenience
+export { FileManager };
