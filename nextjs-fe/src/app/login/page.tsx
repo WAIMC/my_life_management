@@ -1,31 +1,34 @@
-'use client';
+"use client";
 
-import { useState, FormEvent, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { useAppSelector } from '@/redux/hooks';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
+import { useState, FormEvent, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppSelector } from "@/redux/hooks";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isLoading } = useAuth();
-  const { isAuthenticated, authInitialized } = useAppSelector((state) => state.auth);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const { isAuthenticated, authInitialized } = useAppSelector(
+    (state) => state.auth
+  );
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   // Logic 10.1: Redirect if already authenticated
   useEffect(() => {
     if (authInitialized && isAuthenticated) {
-      const redirectParam = searchParams.get('redirect');
-      const redirectUrl = redirectParam && redirectParam.startsWith('/admin') 
-        ? redirectParam 
-        : '/admin';
-      
-      console.log('Already authenticated, redirecting to:', redirectUrl);
+      const redirectParam = searchParams.get("redirect");
+      const redirectUrl =
+        redirectParam && redirectParam.startsWith("/admin")
+          ? redirectParam
+          : "/admin";
+
+      console.log("Already authenticated, redirecting to:", redirectUrl);
       router.push(redirectUrl);
     }
   }, [authInitialized, isAuthenticated, searchParams, router]);
@@ -35,27 +38,10 @@ export default function LoginPage() {
 
     try {
       await login(username, password);
-      
-      // Read redirect from URL using window.location
-      let redirectUrl = '/admin'; // default
-      
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const redirectParam = params.get('redirect');
-        
-        if (redirectParam) {
-          // Security: Only allow internal paths starting with /admin
-          if (redirectParam.startsWith('/admin')) {
-            redirectUrl = redirectParam;
-          }
-        }
-      }
-      
-      console.log('Redirecting to:', redirectUrl);
-      router.push(redirectUrl);
+      // Redirect will be handled by useEffect when isAuthenticated updates in Redux
     } catch (error) {
       // Error is already handled by useAuth hook with notifications
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     }
   };
 
@@ -117,7 +103,7 @@ export default function LoginPage() {
                 Signing in...
               </>
             ) : (
-              'Sign In'
+              "Sign In"
             )}
           </Button>
         </form>

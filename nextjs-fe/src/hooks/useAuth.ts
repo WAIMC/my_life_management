@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setAuth, clearAuth } from '@/redux/slices/authSlice';
-import { apiClient } from '@/lib/api-client';
-import { ENDPOINTS } from '@/constants/api-endpoints';
+import { useState, useCallback } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { setAuth, clearAuth } from "@/redux/slices/authSlice";
+import { apiClient } from "@/lib/api-client";
+import { ENDPOINTS } from "@/constants/api-endpoints";
 import type {
   LoginRequest,
   LoginResponse,
   AuthUser,
   ApiResponse,
-} from '@/lib/types/api';
-import { notification } from '@/lib/notification';
+} from "@/lib/types/api";
+import { notification } from "@/lib/notification";
 
 interface AuthState {
   user: AuthUser | null;
@@ -36,40 +36,46 @@ export function useAuth() {
    * Login with username and password
    * Logic 10.4: Call API login and sync state across tabs
    */
-  const login = useCallback(async (username: string, password: string) => {
-    try {
-      setState((prev) => ({ ...prev, isLoading: true }));
+  const login = useCallback(
+    async (username: string, password: string) => {
+      try {
+        setState((prev) => ({ ...prev, isLoading: true }));
 
-      const response = await apiClient.post<LoginResponse>(
-        ENDPOINTS.AUTH.LOGIN,
-        { user_name: username, password } as LoginRequest
-      );
+        const response = await apiClient.post<LoginResponse>(
+          ENDPOINTS.AUTH.LOGIN,
+          { user_name: username, password } as LoginRequest
+        );
 
-      // Store access token
-      apiClient.setAccessToken(response.data.access_token);
-      
-      // Logic 10.6: Đồng bộ trạng thái đăng nhập giữa các tab
-      // Sync auth state across all tabs via broadcast channel
-      const { syncAuthStateAcrossTabs } = await import('@/lib/authManager');
-      syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
+        // Store access token
+        apiClient.setAccessToken(response.data.access_token);
 
-      // Fetch user profile
-      const userResponse = await apiClient.get<AuthUser>(ENDPOINTS.AUTH.ME);
+        // Update Redux state immediately (synchronous) to prevent race condition
+        dispatch(setAuth(response.data.access_token));
 
-      setState({
-        user: userResponse.data,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+        // Logic 10.6: Đồng bộ trạng thái đăng nhập giữa các tab
+        // Sync auth state across all tabs via broadcast channel
+        const { syncAuthStateAcrossTabs } = await import("@/lib/authManager");
+        syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
 
-      notification.success('Login successful');
-    } catch (error: any) {
-      setState((prev) => ({ ...prev, isLoading: false }));
-      const message = error.response?.data?.message || 'Login failed';
-      notification.error(message);
-      throw error;
-    }
-  }, [dispatch]);
+        // Fetch user profile
+        const userResponse = await apiClient.get<AuthUser>(ENDPOINTS.AUTH.ME);
+
+        setState({
+          user: userResponse.data,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        notification.success("Login successful");
+      } catch (error: any) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        const message = error.response?.data?.message || "Login failed";
+        notification.error(message);
+        throw error;
+      }
+    },
+    [dispatch]
+  );
 
   /**
    * Logout and clear tokens
@@ -81,13 +87,14 @@ export function useAuth() {
 
       await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
       apiClient.clearAccessToken();
-      
+
       // Clear Redux store
       dispatch(clearAuth());
 
       // Logic 10.8: Broadcast logout to all tabs
-      const broadcastManager = (await import('@/lib/broadcastChannelManager')).default;
-      broadcastManager.broadcastLogout(leaderId || '');
+      const broadcastManager = (await import("@/lib/broadcastChannelManager"))
+        .default;
+      broadcastManager.broadcastLogout(leaderId || "");
 
       setState({
         user: null,
@@ -95,19 +102,19 @@ export function useAuth() {
         isLoading: false,
       });
 
-      notification.success('Logged out successfully');
+      notification.success("Logged out successfully");
     } catch (error: any) {
       // Clear state even if API call fails
       apiClient.clearAccessToken();
       dispatch(clearAuth());
-      
+
       setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
       });
 
-      const message = error.response?.data?.message || 'Logout failed';
+      const message = error.response?.data?.message || "Logout failed";
       notification.error(message);
     }
   }, [dispatch, leaderId]);
