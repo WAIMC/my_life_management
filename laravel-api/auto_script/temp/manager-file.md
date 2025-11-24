@@ -1,5 +1,6 @@
 Dưới đây là **PLAN triển khai đầy đủ, rõ ràng, theo thứ tự thực hiện** cho mô hình:
-**Next.js (FE) → Laravel API → Cloudflare R2 (Storage)**
+**Next.js (FE) → Laravel API → Google Drive (Storage)**
+
 Không có code, chỉ hướng dẫn kiến trúc – quy trình – luồng dữ liệu – bảo mật – cấu trúc.
 
 ---
@@ -9,9 +10,9 @@ Không có code, chỉ hướng dẫn kiến trúc – quy trình – luồng d�
 ## 1. **Mục tiêu hệ thống**
 
 * Next.js upload ảnh/video/document từ FE → Laravel.
-* Laravel kiểm tra auth → upload lên Cloudflare R2.
-* Laravel trả về file URL + metadata → FE lưu vào DB.
-* FE load media bằng public URL hoặc signed URL.
+* Laravel kiểm tra auth → upload lên Google Drive thông qua API.
+* Laravel trả về file ID + metadata → FE lưu vào DB.
+* FE load media thông qua API của Laravel (proxied) hoặc Google Drive Link (nếu public).
 * Quản lý CRUD: upload, rename, move folder, delete, list.
 
 ---
@@ -23,23 +24,23 @@ Không có code, chỉ hướng dẫn kiến trúc – quy trình – luồng d�
         |
         | HTTP Request (Upload/CRUD)
         v
-[ Laravel API ] --- uses AWS SDK ---> [ Cloudflare R2 Bucket ]
+[ Laravel API ] --- uses Google Drive API ---> [ Google Drive Storage ]
         |
-        | DB record (file path, metadata)
+        | DB record (file_id, metadata)
         v
 [ MySQL/Postgres ]
 ```
 
 ### Laravel làm các nhiệm vụ:
 
-* Xác thực user
-* Validate file
-* Tương tác R2 thông qua SDK S3
-* Tạo signed URL khi FE cần
+* Xác thực user.
+* Validate file.
+* Tương tác Google Drive thông qua **Google Drive API** (sử dụng Service Account).
+* Stream file về cho Client (để bảo mật đường dẫn thực).
 * Ghi metadata vào database:
-
+  * google_file_id
   * tên file
-  * path
+  * path (logic folder)
   * kích thước
   * loại file
   * admin_mst_id
@@ -47,21 +48,23 @@ Không có code, chỉ hướng dẫn kiến trúc – quy trình – luồng d�
 
 ### Next.js làm:
 
-* UI upload
-* Preview image
-* Hiển thị list file
-* Gửi lệnh CRUD → Laravel API
-* Dùng signed URL hoặc public URL để load hình
+* UI upload.
+* Preview image.
+* Hiển thị list file.
+* Gửi lệnh CRUD → Laravel API.
+* Load hình ảnh thông qua API Laravel (ví dụ: `/api/files/{id}/view`).
 
 ---
 
-# ☁️ **3. Cấu trúc R2 bucket**
+# ☁️ **3. Cấu trúc Folder trên Google Drive**
+
+Bạn sẽ tạo một **Root Folder** dành riêng cho ứng dụng này. Mọi file sẽ nằm trong đó.
 
 ```
-r2-bucket/
+MyLifeManagement_Root/ (Root Folder ID)
     ├── images/
-    │     ├── YYYY/
-    │     │     └── MM/
+    │     ├── 2025/
+    │     │     └── 11/
     │     └── thumbs/
     ├── videos/
     ├── documents/
@@ -71,31 +74,17 @@ r2-bucket/
 
 ### Tại sao tách folder theo năm/tháng?
 
-* Tránh folder chứa quá nhiều file.
-* Tối ưu tốc độ list.
-* Dễ backup và cleanup.
+* Google Drive có thể xử lý số lượng file lớn, nhưng việc phân chia giúp dễ quản lý logic và backup thủ công nếu cần.
 
 ---
 
-# 🔐 **4. Bảo mật – Token – Access Rules**
+# 🔐 **4. Bảo mật – Service Account**
 
-1. **Không bao giờ cho FE giữ bất kỳ R2 key nào.**
-2. **Laravel giữ toàn bộ secret key** (Access Key & Secret Key).
-3. R2 bucket có 2 chế độ:
-
-   * **Public Read**: ai cũng xem được ⇒ phù hợp blog.
-   * **Private**: cần signed URL ⇒ phù hợp tài liệu bảo mật.
-
-Bạn chọn 1:
-
-### ✓ Blog dùng ảnh/video → **Public Read**
-
-* FE load ảnh qua URL:
-  `https://<accountid>.r2.cloudflarestorage.com/<bucket>/<path>`
-
-### ✓ Tài liệu cần bảo mật → **Private**
-
-* Laravel tạo signed URL khi FE cần.
+1. **Không dùng tài khoản Google cá nhân trực tiếp**: Sử dụng **Service Account** (Google Cloud Platform).
+2. **Credential**: File `service-account.json` sẽ được đặt trong Laravel (không public ra ngoài).
+3. **Quyền truy cập**:
+   * Service Account được share quyền "Editor" vào `MyLifeManagement_Root` folder của Google Drive chính của bạn.
+   * Laravel dùng Service Account để thao tác (Upload, Delete, Read).
 
 ---
 
@@ -104,7 +93,6 @@ Bạn chọn 1:
 ## FE (Next.js)
 
 1. User chọn file → FE gọi API Laravel:
-
    ```
    POST /api/files/upload
    ```
@@ -112,114 +100,85 @@ Bạn chọn 1:
 
 ## Laravel
 
-1. Xác thực JWT (đã có)
+1. Xác thực JWT.
 2. Validate file (size, type).
-3. Upload file vào R2 với key:
-
-   ```
-   images/2025/11/uuid.jpg
-   ```
-4. Save file info vào DB.
-5. Trả về response:
-
-   * public_url
-   * path
-   * metadata
-
-## FE nhận và hiển thị hình.
+3. Upload file lên Google Drive vào folder tương ứng (tự động tạo folder nếu chưa có).
+4. Nhận về `file_id`, `web_view_link`, `web_content_link`.
+5. Save file info vào DB.
+6. Trả về response cho FE.
 
 ---
 
 # 🗂️ **6. Luồng xử lý READ file**
 
-Có 2 phương án:
+Do Google Drive link gốc thường có hạn chế về bandwidth hoặc yêu cầu quyền truy cập phức tạp, khuyến nghị dùng **Laravel làm Proxy**.
 
----
-
-### **Phương án A – Public Read (blog dùng hình)**
-
-➡️ FE load trực tiếp bằng **public_url** trong DB.
-
-Ưu điểm:
-
-* Không cần Laravel xử lý ảnh.
-* Tốc độ CDN rất nhanh.
-
----
-
-### **Phương án B – Private bucket (tài liệu quan trọng)**
+### **Phương án: Laravel Proxy (Bảo mật & Ổn định)**
 
 ➡️ FE gọi Laravel:
-
 ```
-GET /api/files/{id}/url
+GET /api/files/{id}/view
 ```
 
-Laravel trả về signed URL có hiệu lực 10 phút.
+➡️ Laravel:
+1. Tìm `google_file_id` từ DB.
+2. Gọi Google Drive API lấy content stream.
+3. Stream trả về browser với header đúng (image/jpeg, video/mp4...).
+4. Có thể cache response này để tăng tốc.
+
+*Ưu điểm*:
+* Không lộ link Google Drive thật.
+* Kiểm soát quyền truy cập chặt chẽ (chỉ user login mới xem được nếu muốn).
 
 ---
 
 # 🧰 **7. Luồng xử lý DELETE file**
 
 ## FE
-
 Gọi:
-
 ```
 DELETE /api/files/{id}
 ```
 
 ## Laravel
-
 1. Kiểm tra quyền.
-2. Xoá file trong R2 bằng key.
+2. Gọi Google Drive API xoá file theo `file_id`.
 3. Xoá record DB.
 
 ---
 
 # 🔧 **8. Luồng xử lý RENAME file**
 
-Không rename trực tiếp được → phải:
+Google Drive hỗ trợ rename trực tiếp (không cần copy/delete như S3).
 
-1. Copy file sang tên mới.
-2. Xoá file cũ.
-3. Cập nhật DB path mới.
-
-Laravel thực hiện toàn bộ quy trình.
+1. FE gửi tên mới.
+2. Laravel gọi Google Drive API update metadata (name) cho `file_id`.
+3. Cập nhật DB.
 
 ---
 
 # 📁 **9. Luồng xử lý MOVE folder hoặc MOVE file**
 
-Giống rename nhưng đổi đường dẫn thư mục:
+Google Drive hỗ trợ move bằng cách thay đổi `parents`.
 
-1. Copy file sang thư mục mới.
-2. Xoá file cũ.
+1. FE gửi `new_folder_id`.
+2. Laravel gọi Google Drive API: remove parent cũ, add parent mới.
 3. Update DB.
-
-Next.js chỉ gửi:
-
-```
-PUT /api/files/{id}/move
-{
-    new_folder: "images/2025/12"
-}
-```
 
 ---
 
-# 📜 **10. Database Schema gợi ý (không code)**
+# 📜 **10. Database Schema gợi ý**
 
 Bảng `media_files`:
 
 * id
 * admin_mst_id
+* google_file_id (Quan trọng: ID chuỗi của Google Drive)
 * original_name
 * extension
 * mime_type
 * size
-* path (key trong R2)
-* url (nếu public)
+* folder_path (để hiển thị UI)
 * is_public (bool)
 * metadata (json)
 * created_at
@@ -230,129 +189,69 @@ Bảng `media_files`:
 # ⚙️ **11. Các API chuẩn bạn cần trong Laravel**
 
 1. `POST /files/upload`
-2. `GET /files` – list
-3. `GET /files/{id}` – metadata
-4. `GET /files/{id}/url` – signed URL
+2. `GET /files` – list (phân trang từ DB)
+3. `GET /files/{id}/view` – stream file content
+4. `GET /files/{id}/download` – force download
 5. `DELETE /files/{id}`
 6. `PUT /files/{id}/rename`
 7. `PUT /files/{id}/move`
 8. `POST /folders/create`
-9. `GET /folders/tree`
 
 ---
 
-# 🎨 **12. UI Next.js gợi ý**
+# 🚀 **12. Setup Google Cloud (Quan trọng)**
 
-**Upload page**
+Bạn cần thực hiện các bước này trước khi code:
 
-* Drag & Drop
-* Preview thumbnail
-* Upload progress
-
-**Media Manager**
-
-* List dạng grid: hình, video, file
-* Sort by name/date/size
-* Folder tree (sidebar)
-* Actions: rename, delete, move
-
-**File Details**
-
-* URL
-* Metadata (size, type)
-* Copy link button
+1. Vào **Google Cloud Console**.
+2. Tạo Project mới.
+3. Enable **Google Drive API**.
+4. Tạo **Service Account**:
+   * Vào "Credentials" -> "Create Credentials" -> "Service Account".
+   * Tải JSON Key về, đổi tên thành `google-drive-credentials.json`.
+   * Lưu vào `storage/app/` (nhớ `.gitignore`).
+5. **Share Folder**:
+   * Tạo folder trên Google Drive thật của bạn.
+   * Chuột phải -> Share -> Nhập email của Service Account (có trong file JSON) -> Quyền Editor.
+   * Lấy ID của folder này làm `GOOGLE_DRIVE_ROOT_FOLDER_ID` trong `.env`.
 
 ---
 
-# 🚀 **13. Tối ưu quan trọng**
+# �️ **13. Thư viện Laravel khuyên dùng**
 
-### 1. Cache DB kết hợp CDN
+Sử dụng package adapter để tích hợp vào Laravel Filesystem (Storage Facade) cho chuẩn:
 
-* Public file → FE load qua CDN Cloudflare = nhanh.
-* Metadata nên cache Redis.
+* Package: `spatie/laravel-google-cloud-storage` (dành cho GCS, nhưng Google Drive thường dùng package khác hoặc custom adapter).
+* **Khuyên dùng**: `masbug/flysystem-google-drive-ext` hoặc tự viết Service Wrapper dùng `google/apiclient`.
 
-### 2. Tự động tạo thumbnail
-
-* Khi upload → queue job tạo thumbnail size nhỏ.
-* Lưu vào folder `/thumbs/`.
-
-### 3. Upload chunked file (video lớn)
-
-* FE chunk → Laravel chunk → R2 multipart upload.
+*Cách đơn giản nhất*: Dùng `google/apiclient` trực tiếp trong Service class riêng để kiểm soát tốt hơn các tính năng như Create Folder, Move, Rename mà Flysystem đôi khi hạn chế.
 
 ---
 
-# 🛠️ **14. Local Development với Docker**
+# 📌 **14. Checklist thực hiện**
 
-Bạn cần 3 service:
-
-* `app` (Laravel)
-* `next` (Next.js)
-* `db` (MySQL/Postgres)
-
-Không cần kéo R2 về local.
-Bạn tạo 1 **local S3 mock** như:
-
-* MinIO
-* LocalStack S3
-
-→ Giúp test giống S3/R2.
-
----
-
-# 📌 **15. Checklist thực hiện theo thứ tự**
-
-### **Tuần 1 – Setup Storage**
-
-* Tạo Cloudflare R2 bucket
-* Tạo Access Key
-* Set public/private ACL
-* Cấu hình Laravel sử dụng S3 driver
-
----
+### **Tuần 1 – Setup & Core**
+* [ ] Setup Google Cloud Project & Service Account.
+* [ ] Cấu hình biến môi trường `.env` (Client ID, Secret, Refresh Token hoặc Service Account JSON).
+* [ ] Viết `GoogleDriveService` trong Laravel để test kết nối (List files, Upload thử).
 
 ### **Tuần 2 – API Backend**
+* [ ] Tạo bảng `media_files`.
+* [ ] API Upload (lưu file lên Drive, lưu DB).
+* [ ] API Stream file (View).
+* [ ] API Delete/Rename.
 
-* Tạo bảng media_files
-* Viết API upload
-* Viết API list + delete + rename + move
-* Thêm signed URL API
-* Thêm queue tạo thumbnail
-
----
-
-### **Tuần 3 – Next.js Media UI**
-
-* Trang upload
-* Media manager grid
-* Folder tree
-* Modal rename/move
-* Xem preview hình/video
-
----
+### **Tuần 3 – Next.js UI**
+* [ ] UI Upload (Dropzone).
+* [ ] Grid View file.
+* [ ] Preview ảnh/video.
 
 ### **Tuần 4 – Hoàn thiện**
-
-* Role: ai được upload, ai được xem
-* Caching
-* Thiết kế UI đẹp
-* Log hoạt động
+* [ ] Caching (Redis) cho API list.
+* [ ] Tối ưu tốc độ stream.
 
 ---
 
 # 🎯 **Kết luận**
 
-Cloudflare R2 + Laravel API + Next.js là kiến trúc **hoàn hảo nhất** hiện tại vì:
-
-* Free + không cần card
-* Tốc độ cực nhanh qua CDN
-* S3-compatible → tương thích tốt
-* FE không phải giữ secret key
-* Kiến trúc sạch, bảo mật, dễ scale
-* Phù hợp từ blog cá nhân → hệ thống lớn
-
----
-
-Nếu bạn muốn, tôi có thể tiếp tục hỗ trợ bạn:
-
-### 👉 Bạn muốn tôi viết **Flowchart**, hay **Folder structure**, hay **API Spec chi tiết** trước?
+Chuyển sang Google Drive giúp bạn tận dụng dung lượng lưu trữ lớn miễn phí (15GB+) hoặc gói mua rẻ, không lo về bandwidth cost nếu dùng cá nhân/nội bộ. Việc dùng Service Account giúp bảo mật và tách biệt quyền truy cập.

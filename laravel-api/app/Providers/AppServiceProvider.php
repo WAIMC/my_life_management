@@ -11,7 +11,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->register(RepositoryServiceProvider::class);
+        // Bind interfaces to implementations
+        $this->app->bind(
+            \App\Interfaces\Management\MediaFileInterface::class,
+            \App\Repositories\Management\MediaFileRepository::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Management\GoogleDriveConfigInterface::class,
+            \App\Repositories\Management\GoogleDriveConfigRepository::class
+        );
     }
 
     /**

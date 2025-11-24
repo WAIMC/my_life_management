@@ -69,35 +69,46 @@ EXPOSE 3456
 # Start the application
 CMD ["node", "server.js"]
 
-# ============ Stage 4: Development ============
+# ============ Stage 4: Development (Optimized for Hot Reload) ============
 FROM node:22-alpine AS development
 
 WORKDIR /app
 
-# Install wget for health checks
-RUN apk add --no-cache wget
+# Install system dependencies for development
+RUN apk add --no-cache wget bash libc6-compat
 
-# Enable pnpm
+# Enable pnpm (we'll use it if pnpm-lock.yaml exists, otherwise npm)
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Set environment
+# Set environment variables
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
-ENV PORT=3456
+ENV PORT=6543
 
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
+# Copy package files first for better layer caching
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
 
-# Install all dependencies (including devDependencies)
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-  pnpm install
+# Install dependencies in the image (not at runtime)
+# This makes container startup much faster
+# Use pnpm if pnpm-lock.yaml exists, otherwise use npm with --legacy-peer-deps
+RUN if [ -f pnpm-lock.yaml ]; then \
+      echo "Using pnpm..." && \
+      pnpm install --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then \
+      echo "Using npm with legacy peer deps..." && \
+      npm ci --legacy-peer-deps; \
+    else \
+      echo "No lockfile found, using npm install..." && \
+      npm install --legacy-peer-deps; \
+    fi
 
-# Copy application source
-COPY . .
+# Note: Source code will be mounted as volume at runtime
+# This allows hot-reload without rebuilding the image
 
 # Expose port
-EXPOSE 3456
+EXPOSE 6543
 
-# Start development server with hot-reload
-CMD ["pnpm", "dev"]
+# Start Next.js development server
+# Use npm by default (can be overridden in docker-compose)
+CMD ["npm", "run", "dev"]

@@ -5,7 +5,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import { makeStore } from '../redux/store';
-import { queryClient } from '@/lib/queryClient';
 import { setAppStore } from '@/lib/api-client';
 import { initAuthManager, clearAutoRefresh } from '@/lib/authManager';
 import { initializeAuth } from '@/lib/authInitializer';
@@ -16,6 +15,21 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppStore } from '@/redux/store';
 import { setNavigateFunction, clearNavigateFunction, navigateTo } from '@/lib/navigation';
+import { QueryClient } from '@tanstack/react-query';
+
+// Create query client instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: true,
+      refetchOnMount: false,
+      refetchOnReconnect: true,
+    },
+  },
+});
 
 function NavigationProvider() {
   const router = useRouter();

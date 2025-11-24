@@ -164,6 +164,23 @@ Route::prefix('admin')
                 Route::put('setting-link-mgmt/update/{id}', [\App\Http\Controllers\Management\SettingLinkMgmtController::class, 'update']);
                 Route::delete('setting-link-mgmt/delete/{id}', [\App\Http\Controllers\Management\SettingLinkMgmtController::class, 'delete']);
 
+                // Media File Management
+                Route::post('media-files/upload', [\App\Http\Controllers\Management\MediaFileController::class, 'upload']);
+                Route::get('media-files', [\App\Http\Controllers\Management\MediaFileController::class, 'list']);
+                Route::get('media-files/{id}', [\App\Http\Controllers\Management\MediaFileController::class, 'show']);
+                Route::get('media-files/{id}/view', [\App\Http\Controllers\Management\MediaFileController::class, 'view'])->name('api.media-files.view');
+                Route::get('media-files/{id}/download', [\App\Http\Controllers\Management\MediaFileController::class, 'download'])->name('api.media-files.download');
+                Route::put('media-files/{id}/rename', [\App\Http\Controllers\Management\MediaFileController::class, 'rename']);
+                Route::put('media-files/{id}/move', [\App\Http\Controllers\Management\MediaFileController::class, 'move']);
+                Route::delete('media-files/delete', [\App\Http\Controllers\Management\MediaFileController::class, 'delete']);
+
+                // Google Drive Configuration Management
+                Route::post('google-drive-configs/upload', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'upload']);
+                Route::get('google-drive-configs', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'list']);
+                Route::get('google-drive-configs/active', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'getActive']);
+                Route::put('google-drive-configs/{id}/activate', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'activate']);
+                Route::delete('google-drive-configs/delete', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'delete']);
+
                 // ============================================================
                 // HISTORY ROUTES (Audit Trail)
                 // ============================================================

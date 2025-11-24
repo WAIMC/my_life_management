@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // ===================================================
-  // FULL CLIENT-SIDE RENDERING (CSR) CONFIGURATION
+  // FULL CLIENT-SIDE RENDERING (CSR) - SPA MODE
   // ===================================================
   // This Next.js app is configured as a Single Page Application (SPA)
   // with full client-side rendering. No server-side features are used.
@@ -20,20 +20,27 @@ const nextConfig: NextConfig = {
   
   // Disable server-side features
   experimental: {
-    // Build optimizations can be added here
+    // Add experimental features as needed
   },
   
-  // Enable React Compiler for better performance
-  reactCompiler: true,
-  
-  // Enable Turbopack for faster development builds
-  turbopack: {},
-  
-  // Optional: Set base path if deploying to subdirectory
-  // basePath: '/my-app',
-  
-  // Optional: Control trailing slashes
-  // trailingSlash: true,
+  // Development mode optimizations (only used during 'next dev')
+  // These settings help with hot-reload in Docker environment
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      // Enable file watching with polling for Docker environments
+      // Required because Docker's file system events don't propagate to containers
+      if (process.env.WATCHPACK_POLLING === 'true') {
+        config.watchOptions = {
+          poll: 1000,           // Check for changes every 1 second
+          aggregateTimeout: 300, // Delay rebuild after detecting changes
+          ignored: /node_modules/, // Don't watch node_modules
+        };
+      }
+    }
+    
+    return config;
+  },
 };
 
 export default nextConfig;
+

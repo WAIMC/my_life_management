@@ -133,13 +133,21 @@ services:
       target: development
     restart: unless-stopped
     volumes:
+      # Mount source code for hot-reload (exclude .next for better HMR)
       - ../nextjs-fe:/app
-      - /app/node_modules
+      # Exclude .next directory - let it be generated in container
       - /app/.next
+      # Exclude node_modules - use the ones from image build
+      - /app/node_modules
+      # Mount entrypoint script for easy debugging (optional)
+      - ../docker/nextjs/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     environment:
       - NODE_ENV=development
       - PORT=${NEXTJS_PORT_INSIDE_ENV}
       - HOSTNAME=0.0.0.0
+      # Enable file watching for Docker (required for hot-reload)
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "${NEXTJS_PORT_OUTSIDE_ENV}:${NEXTJS_PORT_INSIDE_ENV}"
     expose:
@@ -148,8 +156,8 @@ services:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 40s
+      retries: 3
+      start_period: 30s  # Reduced since dependencies are pre-installed
     networks:
       - app-network
     deploy:

@@ -23,6 +23,7 @@ import {
   Sliders,
   Share2,
   Link,
+  Cloud,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -44,6 +45,11 @@ export const NAVIGATION_MENU: MenuItem[] = [
     label: 'File Manager',
     icon: FolderOpen,
     href: '/admin/file-manager',
+  },
+  {
+    label: 'Media',
+    icon: Image,
+    href: '/admin/media',
   },
   {
     label: 'Master Data',
@@ -170,6 +176,11 @@ export const NAVIGATION_MENU: MenuItem[] = [
         label: 'Notifications', 
         icon: Settings,
         href: '/admin/settings/notifications' 
+      },
+      { 
+        label: 'Google Drive', 
+        icon: Cloud,
+        href: '/admin/settings/google-drive' 
       },
     ],
   },

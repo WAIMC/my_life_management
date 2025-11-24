@@ -416,3 +416,4 @@ lại permission cache mới. Những dữ liệu cần có trong cache permisso
 - Cloudflare R2
 - Supabase Storage free 1GB
 - GitHub Releases / Git LFS
+- gg drive api
