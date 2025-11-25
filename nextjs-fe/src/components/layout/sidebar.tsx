@@ -8,8 +8,13 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { NAVIGATION_MENU, type MenuItem, isRouteActive } from '@/constants/navigation';
 
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
@@ -17,9 +22,15 @@ export function Sidebar() {
     setExpandedMenu(expandedMenu === label ? null : label);
   };
 
-  const handleLogout = () => {
-    // TODO: Implement logout logic
-    console.log('Logout clicked');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout API fails, redirect to login
+      router.push('/login');
+    }
   };
 
   const closeSidebar = () => {

@@ -18,6 +18,7 @@ export default function LoginPage() {
   );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   // Logic 10.1: Redirect if already authenticated
   useEffect(() => {
@@ -35,12 +36,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
 
     try {
       await login(username, password);
       // Redirect will be handled by useEffect when isAuthenticated updates in Redux
-    } catch (error) {
-      // Error is already handled by useAuth hook with notifications
+    } catch (error: any) {
+      // Show error message to user
+      const errorMessage = error.response?.data?.message || "Invalid username or password";
+      setError(errorMessage);
       console.error("Login failed:", error);
     }
   };
@@ -89,6 +93,13 @@ export default function LoginPage() {
               className="w-full"
             />
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 p-3">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+          )}
 
           {/* Submit Button */}
           <Button
