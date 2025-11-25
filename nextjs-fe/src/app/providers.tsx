@@ -127,59 +127,59 @@ function AuthInitializer() {
 import { ThemeProvider } from 'next-themes';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    const store = useMemo(() => {
-        const newStore = makeStore();
-        setAppStore(newStore);
-        initAuthManager(newStore);
-        return newStore;
-    }, []);
-    
-    return (
-        <QueryClientProvider client={queryClient}>
-            <Provider store={store}>
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="system"
-                    enableSystem
-                    disableTransitionOnChange={false}
-                >
-                    <NavigationProvider />
-                    <BroadcastListener />
-                    <AuthInitializer />
-                    {children}
-                    <Toaster
-                        position="top-right"
-                        reverseOrder={false}
-                        gutter={8}
-                        toastOptions={{
-                            duration: 4000,
-                            style: {
-                                background: '#fff',
-                                color: '#000',
-                            },
-                            success: {
-                                style: {
-                                    background: '#ecfdf5',
-                                    color: '#065f46',
-                                    border: '1px solid #86efac',
-                                },
-                            },
-                            error: {
-                                style: {
-                                    background: '#fef2f2',
-                                    color: '#7f1d1d',
-                                    border: '1px solid #fca5a5',
-                                },
-                            },
-                        }}
-                    />
-                </ThemeProvider>
-            </Provider>
-            {/* React Query Devtools - only in development */}
-            {process.env.NODE_ENV === 'development' && (
-                <ReactQueryDevtools initialIsOpen={false} />
-            )}
-        </QueryClientProvider>
-    );
+  const store = useMemo(() => {
+    const newStore = makeStore();
+    setAppStore(newStore);
+    initAuthManager(newStore);
+    return newStore;
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <NavigationProvider />
+          <BroadcastListener />
+          <AuthInitializer />
+          {children}
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            gutter={8}
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#fff',
+                color: '#000',
+              },
+              success: {
+                style: {
+                  background: '#ecfdf5',
+                  color: '#065f46',
+                  border: '1px solid #86efac',
+                },
+              },
+              error: {
+                style: {
+                  background: '#fef2f2',
+                  color: '#7f1d1d',
+                  border: '1px solid #fca5a5',
+                },
+              },
+            }}
+          />
+        </ThemeProvider>
+      </Provider>
+      {/* React Query Devtools - only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QueryClientProvider>
+  );
 }
 

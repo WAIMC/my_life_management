@@ -13,8 +13,8 @@ export const makeStore = () => {
   const store = configureStore({
     reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ 
-        serializableCheck: false 
+      getDefaultMiddleware({
+        serializableCheck: false
       }),
     devTools: process.env.NODE_ENV !== 'production',
   });

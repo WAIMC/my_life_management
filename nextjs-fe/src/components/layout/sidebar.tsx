@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Menu, X, LogOut, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,20 @@ export function Sidebar() {
   const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+
+  // Auto-expand menu based on current pathname
+  useEffect(() => {
+    const currentMenu = NAVIGATION_MENU.find((item) => {
+      if (item.children) {
+        return item.children.some((child) => pathname.startsWith(child.href!));
+      }
+      return false;
+    });
+
+    if (currentMenu) {
+      setExpandedMenu(currentMenu.label);
+    }
+  }, [pathname]);
 
   const toggleMenu = (label: string) => {
     setExpandedMenu(expandedMenu === label ? null : label);

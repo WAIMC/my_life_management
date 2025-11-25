@@ -34,13 +34,13 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
 
   const state = store.getState();
   const { accessToken, refreshAtTime } = state.auth;
-  
+
   // Skip if already have valid token
   if (accessToken && refreshAtTime && refreshAtTime > Date.now()) {
     store.dispatch(setAuthInitialized(true));
     return;
   }
-  
+
   // Try refresh token from cookie (Logic 1)
   // This is the primary way to restore auth on reload
   try {
@@ -48,7 +48,7 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
       REFRESH_TOKEN,
       {}
     );
-    
+
     if (response?.data?.access_token && response?.data?.ttl) {
       // Refresh successful - sync state across tabs
       syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
@@ -59,15 +59,15 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
     // Refresh failed, continue to Logic 2
     console.debug('Refresh token failed on init, trying other tabs...');
   }
-  
+
   // Logic 2.1: Request auth state from other tabs
   // This handles the case where another tab has valid token
   try {
     const response = await broadcastManager.requestAuthState(1000);
-    
+
     if (response?.accessToken && response?.refreshAtTime && response?.leaderId) {
       const ttl = Math.ceil((response.refreshAtTime - Date.now()) / 1000);
-      
+
       if (ttl > 0) {
         // Got valid token from another tab
         syncAuthStateAcrossTabs(response.accessToken, ttl);
@@ -79,7 +79,7 @@ export const initializeAuth = async (store: AppStore): Promise<void> => {
     // No other tabs or failed to get auth
     console.debug('No other tabs with valid auth');
   }
-  
+
   // Logic 2.2: No auth available
   // State remains null, AdminLayout will redirect to login
   // This is the expected behavior for first-time access or expired sessions

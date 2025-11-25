@@ -6,6 +6,7 @@ import { SearchFilter } from '@/components/layout/search-filter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const posts = [
   { id: 1, title: 'Getting Started with Next.js', status: 'Published', author: 'John Doe', date: '2024-01-15' },
@@ -24,13 +25,15 @@ export default function PostsPage() {
           { label: 'Posts', isActive: true },
         ]}
         action={
-          <Button className="gap-2">
-            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Create Post
-          </Button>
+          <Link href="/admin/posts/create">
+            <Button className="gap-2">
+              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Create Post
+            </Button>
+          </Link>
         }
       />
 
