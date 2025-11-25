@@ -81,7 +81,8 @@ RUN apk add --no-cache \
   git \
   vim \
   nodejs \
-  npm
+  npm \
+  postgresql-client
 
 # Install Xdebug for development  
 RUN apk add --no-cache --virtual .build-deps \
@@ -99,4 +100,10 @@ COPY --from=base /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.i
 
 WORKDIR /var/www/laravel-api
 
-CMD ["php-fpm"]
+# Copy entrypoint script - file is in laravel-api directory
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+# Note: composer.json, composer.lock, and other files will be mounted via volume
+# Composer install will be handled by the entrypoint script for flexibility
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

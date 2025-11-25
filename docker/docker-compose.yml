@@ -18,22 +18,9 @@ services:
     ports:
       - "${POSTGRES_PORT_OUTSIDE_ENV}:${POSTGRES_PORT_INSIDE_ENV}"
     command: >
-      postgres
-      -c shared_buffers=256MB
-      -c max_connections=200
-      -c effective_cache_size=512MB
-      -c maintenance_work_mem=64MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-      -c work_mem=4MB
-      -c min_wal_size=1GB
-      -c max_wal_size=4GB
-      -c hba_file=/etc/postgresql/pg_hba.conf
+      postgres -c shared_buffers=256MB -c max_connections=200 -c effective_cache_size=512MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=4MB -c min_wal_size=1GB -c max_wal_size=4GB -c hba_file=/etc/postgresql/pg_hba.conf
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -57,9 +44,9 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "${REDIS_PORT_OUTSIDE_ENV}:${REDIS_PORT_INSIDE_ENV}"
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -86,6 +73,8 @@ services:
     working_dir: /var/www/laravel-api
     volumes:
       - ../laravel-api:/var/www/laravel-api
+      # Exclude vendor from host mount - let container manage it
+      - /var/www/laravel-api/vendor
       - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     environment:
       # Database
@@ -95,12 +84,12 @@ services:
       DB_DATABASE: ${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      
+
       # Redis
       REDIS_HOST: ${REDIS_HOST_INSIDE_ENV}
       REDIS_PORT: ${REDIS_PORT_INSIDE_ENV}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      
+
       # Laravel
       APP_ENV: local
       APP_DEBUG: "true"
@@ -110,11 +99,11 @@ services:
       ml-redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "php-fpm -t || exit 1"]
+      test: [ "CMD-SHELL", "php-fpm -t || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s # Extended to allow entrypoint setup script to complete
     networks:
       - app-network
     deploy:
@@ -140,7 +129,7 @@ services:
       # Exclude node_modules - use the ones from image build
       - /app/node_modules
       # Mount entrypoint script for easy debugging (optional)
-      - ../docker/nextjs/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+      # - ../docker/nextjs/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     environment:
       - NODE_ENV=development
       - PORT=${NEXTJS_PORT_INSIDE_ENV}
@@ -153,11 +142,11 @@ services:
     expose:
       - "${NEXTJS_PORT_INSIDE_ENV}"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1"]
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s  # Reduced since dependencies are pre-installed
+      start_period: 30s # Reduced since dependencies are pre-installed
     networks:
       - app-network
     deploy:
@@ -187,7 +176,7 @@ services:
       ml-nextjs:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
