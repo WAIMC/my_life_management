@@ -10,7 +10,7 @@ import { initAuthManager, clearAutoRefresh } from '@/lib/authManager';
 import { initializeAuth } from '@/lib/authInitializer';
 import broadcastManager from '@/lib/broadcastChannelManager';
 import { setAuth, setTabId, setLeaderId, setRefreshAtTime, clearAuth } from '@/redux/slices/authSlice';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppStore } from '@/redux/store';
@@ -51,26 +51,40 @@ function NavigationProvider() {
 function BroadcastListener() {
   const dispatch = useDispatch();
   const authState = useSelector((state: RootState) => state.auth);
+  const authStateRef = useRef(authState);
+
+  // Keep ref updated with latest authState
+  useEffect(() => {
+    authStateRef.current = authState;
+  }, [authState]);
 
   useEffect(() => {
     // Initialize BroadcastChannel
     broadcastManager.initialize();
 
     // Listen for broadcast messages from other tabs
-    broadcastManager.onMessage((message) => {
+    broadcastManager.onMessage(async (message) => {
       switch (message.type) {
         case 'AUTH_UPDATE': {
-          // Sync auth state from other tabs
+          // Logic 10.6: Sync auth state from other tabs
           if (message.accessToken && message.refreshAtTime && message.leaderId) {
             dispatch(setAuth(message.accessToken));
-            dispatch(setTabId(message.tabId));
+            // Set own tabId, not the sender's tabId
+            dispatch(setTabId(broadcastManager.getTabId()));
             dispatch(setLeaderId(message.leaderId));
             dispatch(setRefreshAtTime(message.refreshAtTime));
+
+            // Logic 10.6: Setup auto-refresh timer if this tab is focused
+            const ttl = Math.ceil((message.refreshAtTime - Date.now()) / 1000);
+            if (ttl > 0 && document.hasFocus()) {
+              const { setupAutoRefresh } = await import('@/lib/authManager');
+              setupAutoRefresh(ttl);
+            }
           }
           break;
         }
         case 'LOGOUT': {
-          // Handle logout from other tabs
+          // Logic 10.8: Handle logout from other tabs
           dispatch(clearAuth());
           clearAutoRefresh();
 
@@ -79,16 +93,25 @@ function BroadcastListener() {
           break;
         }
         case 'AUTH_REQUEST': {
-          // Another tab is requesting auth state
+          // Logic 10.2: Another tab is requesting auth state
           // Respond if we have valid auth state
-          const { accessToken, refreshAtTime, leaderId } = authState;
+          const { accessToken, refreshAtTime, leaderId } = authStateRef.current;
+          console.log('[Broadcast] Received AUTH_REQUEST, current auth:', {
+            hasToken: !!accessToken,
+            hasRefreshTime: !!refreshAtTime,
+            hasLeader: !!leaderId,
+            requestId: message.requestId
+          });
           if (accessToken && refreshAtTime && leaderId && message.requestId) {
+            console.log('[Broadcast] Responding with auth state');
             broadcastManager.respondAuthState(
               message.requestId,
               accessToken,
               refreshAtTime,
               leaderId
             );
+          } else {
+            console.log('[Broadcast] Cannot respond - missing auth data');
           }
           break;
         }
@@ -101,13 +124,61 @@ function BroadcastListener() {
           // Other tab lost focus - update leader if needed
           break;
         }
+        case 'HEARTBEAT': {
+          // Update last heartbeat time for leader tracking
+          if (message.leaderId === authStateRef.current.leaderId) {
+            // Leader is alive - update timestamp
+            console.log('[Broadcast] Heartbeat received from leader:', message.leaderId);
+            broadcastManager.updateHeartbeatTimestamp(message.timestamp);
+          }
+          break;
+        }
+        case 'LEADER_ELECTED': {
+          // New leader elected - update state
+          if (message.newLeaderId) {
+            console.log('[Broadcast] New leader elected:', message.newLeaderId);
+            dispatch(setLeaderId(message.newLeaderId));
+            
+            // If this tab is new leader - start heartbeat & refresh timer
+            const currentTabId = broadcastManager.getTabId();
+            if (message.newLeaderId === currentTabId) {
+              console.log('[Broadcast] This tab is the new leader - starting heartbeat and refresh');
+              
+              const { setupAutoRefresh } = await import('@/lib/authManager');
+              const ttl = authStateRef.current.refreshAtTime 
+                ? Math.ceil((authStateRef.current.refreshAtTime - Date.now()) / 1000)
+                : 0;
+              
+              if (ttl > 0) {
+                // Start heartbeat
+                broadcastManager.startHeartbeat(currentTabId);
+                // Setup refresh timer
+                setupAutoRefresh(ttl);
+              }
+            }
+          }
+          break;
+        }
+        case 'REFRESH_FAIL': {
+          // Leader failed to refresh - all tabs logout
+          console.error('[Broadcast] Refresh failed broadcast received - logging out all tabs');
+          dispatch(clearAuth());
+          clearAutoRefresh();
+          
+          const { default: localStorageManager } = await import('@/lib/localStorageManager');
+          localStorageManager.clearAuthMeta();
+          
+          broadcastManager.stopHeartbeat();
+          navigateTo('/login');
+          break;
+        }
       }
     });
 
     return () => {
       broadcastManager.close();
     };
-  }, [dispatch, authState]);
+  }, [dispatch]);
 
   return null;
 }
@@ -116,7 +187,11 @@ function AuthInitializer() {
   const store = useStore();
 
   useEffect(() => {
-    // Run in background, don't block rendering
+    // CRITICAL: Initialize BroadcastChannel BEFORE running authInitializer
+    // This ensures other tabs can respond to AUTH_REQUEST
+    broadcastManager.initialize();
+    
+    // Run auth initialization in background
     initializeAuth(store as AppStore);
   }, [store]);
 

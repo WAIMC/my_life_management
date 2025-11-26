@@ -1,127 +1,127 @@
-# **Tài liệu xử lý đa tab – Quản lý Access Token / Refresh Token trong Client**
+# **Tài liệu Xử Lý Đa Tab – Quản Lý Access Token / Refresh Token Trong Client (Phiên Bản Tối Ưu Hóa)**
 
-Tài liệu mô tả chi tiết toàn bộ luồng xử lý duy trì đăng nhập, refresh token, multi-tab synchronization trong client (cùng origin, cùng browser).
-Bao gồm: giai đoạn khởi động, duy trì, phục hồi, hết hạn, lỗi và đăng xuất đồng bộ.
+Tài liệu này mô tả chi tiết luồng xử lý duy trì đăng nhập, refresh token, và đồng bộ multi-tab trong client (cùng origin, cùng browser). Phiên bản này được tối ưu hóa để:
+- Giảm thiểu duplicate refresh bằng leader election robust với heartbeat.
+- Thêm fallback mechanisms để xử lý edge cases.
+- Tích hợp refresh token rotation (nếu server hỗ trợ).
+- Cải thiện đồng bộ state sử dụng BroadcastChannel kết hợp localStorage fallback.
+- Cover đầy đủ các trường hợp người dùng, đảm bảo seamless experience.
 
----
-
-## ## **Luồng xử lý tổng quan Client**
-
-- Mỗi khi khởi tạo xử lý **Logic 10.1**
-
-
-### **Nguyên nhân**
-
-Khi mở nhiều tab và reload liên tục:
-
-* Tất cả state trong RAM bị reset (state, timer…)
-* Mỗi tab phải call refresh lại để có access token
-* Dẫn đến:
-
-  > **Tạo nhiều token mới cùng lúc → không tối ưu**
-
-
-
-## **Logic 10.1 – logic kiểm tra tình trạng đăng nhập hiện tại**
-* Kiểm tra state hiện tại có đang trong tình trạng đăng nhập hợp lệ hay không bằng cách kiểm tra state access_token = string, leader_id = string, refresh_at_time = string -> tình trạng đăng nhập hợp lệ. Ban đầu khởi tạo app thì access_token, leader_id, refresh_at_time là null -> tình trạng đăng nhập không hợp lệ
-  * Nếu tình trạng đăng nhập hợp lệ (có thể do user cố tình truy cập page /login): thì kiểm tra page hiện tại không phải là page /login và page hiện tại có dạng /admin/* đúng không ?
-    * Nếu đúng thì tiếp tục xử lý tiếp theo
-    * Nếu không thì redirect page /admin
-  * Nếu tình trạng đăng nhập không hợp lệ (có thể do đăng xuất, mở tab mới, truy cập lần đầu, reload page, close tất cả các tab cùng origin, close browser) thì thực hiện **Logic 10.2**
-
-## **Logic 10.2 – logic chia sẻ dữ liệu login multi tab**
-* Kiểm tra các tab khác có hoạt động không ? bằng cách thử gửi broadcast channel kiểm tra các tab khác cùng origin + port + browser có tồn tại và lấy giá trị access token + refresh_at_time + leader_id là string. Nếu không thì không hợp lệ
-  * Nếu hợp lệ (nguyên nhân do mở tab mới, reload page mà tab khác vẫn còn hoạt động), thì thực hiện **Logic 10.6**
-  * Không Hợp lệ (nguyên nhân do đăng xuất, truy cập lần đầu, close tất cả các tab, close browser), thì thực hiện **Logic 10.3**
-
-## **Logic 10.3 – lỗi 401 do hết hạn token or chưa login or login fail**
-* Kiểm tra hiện tại có phải đang ở page /login không ?
-  * Nếu có (nguyên nhân lỗi do login fail, đăng xuất) thì để user login lại. Thực hiện **Logic 10.4**
-    * Nếu thành công thực hiện logic tiếp theo là redirect về page /admin
-  * Nếu không thì (nguyên nhân do hết hạn token, chưa login mà vẫn thực hiện truy cập, reload page or close tab mà không có tab khác cùng duy trì đăng nhập, close browser) thì thực hiện **Logic 10.5**
-
-## **Logic 10.4 – logic login**
-* Note: Nếu có lỗi 401 + đang ở page /login thì không được gọi api refresh token. Check handle common lỗi 401 logic có apply logic này không ? nếu thiếu thêm vào.
-* Call api login và kiểm tra kết quả
-  * Nếu thành công thực hiện **Logic 10.6** + thực hiện tiếp logic tiếp theo
-  * Nếu thất bại thì thực hiện **Logic 10.3** và thông báo kết quả lỗi
-
-## **Logic 10.5 – logic refresh token**
-* Call api refesh token và kiểm tra kết quả
-  * Nếu thành công thì thực hiện **Logic 10.6** và thực hiện lại api bị lỗi status code 401 trước đó bị lỗi
-  * Nếu thất bại thực hiện redirect qua page /login
+Bao gồm: giai đoạn khởi động, duy trì, phục hồi, hết hạn, lỗi, và đăng xuất đồng bộ.
 
 ---
 
-## **Logic 10.6 – Đồng bộ trạng thái đăng nhập giữa các tab**
+## **Luồng Xử Lý Tổng Quan Client**
 
-Khi đăng nhập or refresh token thành công or mở tab mới or reload page trong khi tab khác đang còn duy trì đăng nhập or đăng xuất:
+- Mỗi khi khởi tạo app (load/reload page), thực hiện **Logic 1.1**.
+- Giả định: Access token lưu ở memory/state (không persist). Refresh token lưu ở HttpOnly Secure Cookie (tăng bảo mật). Tab_id lưu ở sessionStorage (mất khi đóng tab, giữ khi reload).
 
-* Cập nhật state cho tab hiện tại:
-  * access_token
-  * refresh_at_time
-  * Tạo **tab_id mới** lưu trong sessionStorage nếu chưa có (mất khi đóng tab, giữ khi reload)
-  * cập nhật **leader_id = tab_id** nếu tab hiện tại đang focus
-* Gửi broadcast channel đến các tab khác để đồng bộ giá trị state như: access_token, leader_id, refresh_at_time cho tất cả tab cùng origin + cùng port + cùng browser.
-* Ở tab hiện tại và các tab khác tạo 1 logic khi nhận event gửi dữ liệu từ broadcast channel, thực hiện kiểm dữ liệu access_token, refresh_at_time, leader_id là null thì thực hiện, cập nhật lại state tại tab đó và thực hiện **Logic 10.8**
-
-### Nếu tab hiện tại đang focus:
-
-* Tạo **timer** với giá trị:
-  **ttl(access_token) – 10 giây**
-* Timer dùng để auto refresh token trước khi hết hạn 10s → đảm bảo trải nghiệm duy trì đăng nhập liên tục.
+### **Nguyên Nhân Vấn Đề Cũ Và Cải Thiện**
+- Khi mở nhiều tab/reload: State reset, dẫn đến multiple refresh → duplicate tokens.
+- Cải thiện: Leader election với heartbeat để chỉ 1 tab refresh. Fallback sync qua localStorage nếu broadcast fail. Thêm locking để tránh race conditions.
 
 ---
 
-## **Logic 10.7 – Auto Refresh Token (từ Timer)**
+## **Logic 1.1 – Kiểm Tra Tình Trạng Đăng Nhập Hiện Tại**
+- Kiểm tra state: access_token (string), leader_id (string), refresh_at_time (timestamp string), tab_id (từ sessionStorage).
+  - Ban đầu: Các giá trị null → Không hợp lệ.
+- Nếu hợp lệ (có access_token hợp lệ, chưa hết hạn):
+  - Kiểm tra page hiện tại: Không phải /login và là /admin/*?
+    - Đúng: Tiếp tục flow app.
+    - Sai: Redirect /admin.
+- Nếu không hợp lệ (đăng xuất, tab mới, reload, close all tabs/browser): Thực hiện **Logic 1.2**.
 
-Khi timer đến thời điểm chạy:
+## **Logic 1.2 – Đồng Bộ Dữ Liệu Login Multi-Tab**
+- Tạo tab_id mới nếu chưa có (sessionStorage.setItem('tab_id', crypto.randomUUID())).
+- Kiểm tra các tab khác qua BroadcastChannel (channel = 'auth-sync'):
+  - Gửi message {type: 'query-state'} và listen response trong timeout (2s).
+  - Nếu nhận state hợp lệ (access_token, refresh_at_time, leader_id): Sync state → **Logic 1.6**.
+- Nếu không nhận (không tab khác hoạt động): Fallback check localStorage.getItem('last_auth_state') (chứa {refresh_at_time, leader_id} – không lưu token để bảo mật).
+  - Nếu có và chưa hết hạn (dựa refresh_at_time): Thực hiện **Logic 1.5** (refresh).
+  - Nếu không: Thực hiện **Logic 1.3**.
 
-1. **Kiểm tra tab có đang focus không?**
+## **Logic 1.3 – Xử Lý Lỗi 401 (Hết Hạn Token / Chưa Login / Login Fail)**
+- Kiểm tra page hiện tại là /login?
+  - Có (login fail/đăng xuất): Cho user login lại → **Logic 1.4**.
+  - Không (hết hạn/chưa login/reload/close tabs/browser): **Logic 1.5**.
+- Note: Không gọi refresh nếu đang ở /login và lỗi 401 (thêm check ở error handler).
 
-   * Nếu user đang focus tab khác ngoài hệ thống → không refresh để tiết kiệm tài nguyên.
+## **Logic 1.4 – Logic Login**
+- Call API login.
+- Thành công: Lưu access_token/refresh_at_time vào state. Nếu server rotate refresh token, update cookie. → **Logic 1.6** + Redirect /admin.
+- Thất bại: Thông báo lỗi → **Logic 1.3**.
 
-2. **Kiểm tra leader_id có bằng tab_id không?**
-
-   * leader_id === tab_id ?
-   * Điều này quan trọng khi người dùng chia đôi màn hình → nhiều tab focus đồng thời → tránh refresh song song.
-
-### Nếu cả 2 điều kiện đúng:
-
-* Thực hiện refresh token.
-* Nếu refresh thành công → quay lại **Logic 10.6**.
-* Nếu lỗi 401 → redirect về login page.
+## **Logic 1.5 – Logic Refresh Token**
+- Sử dụng locking (Promise queue) để serialize nếu concurrent calls.
+- Call API refresh (sử dụng refresh token từ cookie).
+- Thành công: Update access_token/refresh_at_time. Nếu server rotate, update refresh token cookie. Retry API gốc nếu từ lỗi 401. → **Logic 1.6**.
+- Thất bại (401/others): Redirect /login.
 
 ---
 
-## **Logic 10.8 – Đăng xuất tất cả tab cùng origin**
+## **Logic 1.6 – Đồng Bộ Trạng Thái Đăng Nhập Giữa Các Tab**
+- Cập nhật state tab hiện tại: access_token, refresh_at_time.
+- Set leader_id = tab_id nếu tab focused (document.hasFocus()).
+- Gửi broadcast {type: 'sync-state', data: {access_token, refresh_at_time, leader_id}}.
+- Fallback: Lưu {refresh_at_time, leader_id} vào localStorage.setItem('last_auth_state', JSON.stringify(...)) – expire sau TTL refresh token.
+- Tất cả tabs listen broadcast event:
+  - Nhận data: Update state nếu hợp lệ → **Logic 1.7** (elect leader nếu cần) + **Logic 1.8** (set timer nếu là leader).
+- Nếu đăng xuất: Set state null, xóa localStorage/cookie → Broadcast {type: 'logout'}.
 
-Khi người dùng chọn logout:
+## **Logic 1.7 – Leader Election Với Heartbeat**
+- Tất cả tabs: Listen heartbeat từ leader (broadcast {type: 'heartbeat', leader_id} mỗi 5s nếu là leader).
+- Nếu không nhận heartbeat trong 7s (timeout): Tabs tự elect – tab với tab_id nhỏ nhất (sort alphabetically) trở thành leader nếu focused hoặc visible (document.visibilityState === 'visible').
+- Leader: Chỉ leader refresh. Nếu tab unfocus/close, failover auto qua heartbeat.
+- Tránh multiple focus (split screen): Sử dụng Web Locks API nếu hỗ trợ (navigator.locks.request('auth-leader-lock', ...)) để exclusive leader.
 
-1. Gửi request revoke với:
-  * access token trong auth beaver header request
-  * refresh token trong cookie
-2. Kiểm tra kết quả logout
-  * Nếu revoke lỗi → hiển thị thông báo.
-  * Nếu thành công Redirect tất cả các tab về page /login
+## **Logic 1.8 – Auto Refresh Token (Từ Timer)**
+- Chỉ nếu leader_id === tab_id và tab visible/focused.
+- Set timer: TTL(access_token) - 10s (hoặc min 30s để tránh spam).
+- Khi timer fire:
+  - Check vẫn là leader và tab active.
+  - **Logic 1.5** (refresh).
+  - Thành công: **Logic 1.6**.
+  - Fail: Broadcast {type: 'refresh-fail'} → All tabs redirect /login.
+- Exponential backoff nếu fail retry (1s, 2s, 4s,...).
+
+## **Logic 1.9 – Đăng Xuất Tất Cả Tabs**
+- User click logout: Call API revoke (access_token ở header, refresh_token ở cookie).
+- Thành công: Set state null, xóa cookie/localStorage/sessionStorage.
+- Broadcast {type: 'logout'} → All tabs nhận: Redirect /login.
+- Fail: Thông báo, nhưng vẫn local logout.
 
 ---
 
-# **Tổng kết cơ chế**
+## **Tiêu Chí Cần Đạt Được**
+- **Tối ưu thời gian sử dụng token**: Refresh trước 10s hết hạn, kéo dài session seamless.
+- **Giảm tải backend**: Chỉ 1 leader/tab refresh, tránh duplicate tokens (heartbeat + locking giảm race conditions).
+- **Đồng bộ nhanh/multi-tab**: Broadcast real-time, fallback localStorage cho persistence cross-reload/browser close.
+- **Bảo mật cao**: Không lưu sensitive data persist (token ở memory), rotate refresh token, HttpOnly cookie.
+- **Robustness**: Handle edge cases (browser crash, multiple focus) với heartbeat/failover, cover 100% scenarios.
+- **Tối ưu resource client/server**: Chỉ refresh khi cần (visible/focused), giảm API calls không cần thiết.
+- **Seamless UX**: Không gián đoạn (auto-refresh), đồng bộ logout/login cross-tabs.
+- **Scalability**: Hỗ trợ nhiều tabs (10+), không phụ thuộc focus duy nhất.
 
-Giải pháp xử lý toàn bộ các giai đoạn:
+---
 
-* **Khởi động ứng dụng**
-* **Duy trì đăng nhập**
-* **Phục hồi lỗi**
-* **Hết hạn sử dụng token**
-* **Đăng xuất đồng bộ nhiều tab**
+## **Cơ Chế Xử Lý Cho Tất Cả Các Trường Hợp Người Dùng Sử Dụng Trên Browser**
+Dưới đây là mapping chi tiết cách logic xử lý từng scenario, đảm bảo cover đầy đủ mà không gián đoạn.
 
-### **Bảo đảm:**
+- **Đăng nhập lần đầu**: Logic 1.1 (không hợp lệ) → 1.2 (không tab khác) → 1.3 (không ở /login) → 1.5 (refresh fail vì chưa có) → Redirect /login → User login → 1.4 (thành công) → 1.6 (sync, set leader/timer).
+- **Mở tab mới**: Logic 1.1 (không hợp lệ) → 1.2 (query broadcast từ tab cũ) → Sync state → 1.6 (update, check leader election nếu focused).
+- **Đóng tab (lần đầu truy cập)**: Không ảnh hưởng (chưa state). Nếu đóng leader, heartbeat timeout → Các tab còn elect leader mới → Continue refresh.
+- **Đóng các tab khác cùng host**: Nếu đóng non-leader: Không ảnh hưởng. Nếu đóng leader: Heartbeat fail → Failover elect leader mới từ tabs còn lại.
+- **Reload page**: State reset → 1.1 (không hợp lệ) → 1.2 (broadcast từ tabs khác hoặc fallback localStorage) → Sync → 1.6.
+- **Đóng browser**: State/sessionStorage mất. Mở lại: 1.1 → 1.2 (fallback localStorage nếu chưa expire, hoặc cookie refresh) → 1.5 (refresh nếu cookie còn) hoặc redirect /login nếu hết hạn.
+- **Hết hạn token**: Timer ở leader fire trước 10s → 1.8 → 1.5 (refresh) → 1.6 (sync all tabs).
+- **Hết hạn cookie (refresh token)**: Khi refresh (1.5) fail → Broadcast fail → All tabs redirect /login.
+- **Đăng xuất 1 tab khi dùng đồng thời nhiều tab**: 1.9 (revoke) → Broadcast logout → All tabs clear state + redirect /login.
+- **Sử dụng nhiều tab cùng lúc**: Đồng bộ qua broadcast. Leader election đảm bảo chỉ 1 refresh. Heartbeat handle multiple focus/split screen.
+- **Mở lại browser**: Giống đóng browser. Nếu localStorage/cookie còn hạn → Auto-refresh và sync. Nếu không → Login.
+- **Browser crash**: Tương tự đóng browser. Tabs khác detect leader mất qua heartbeat → Elect mới.
+- **Tab background (không focus)**: Không refresh (check focused/visible), nhưng sync state khi broadcast.
+- **Multiple browsers/devices**: Không hỗ trợ (khác origin/browser), cần server-side sync (không trong scope).
+- **Lỗi network tạm thời**: Exponential backoff ở 1.5/1.8, retry 3 lần trước fail.
+- **User switch tabs nhanh**: Leader có thể chuyển (dựa focus + heartbeat), nhưng locking tránh duplicate.
 
-* **Chỉ duy nhất 1 tab / 1 lần refresh / 1 browser**
-* Tránh refresh trùng lặp gây sinh **nhiều token hợp lệ cùng lúc**
-* Tối ưu thời gian sử dụng token
-* Multi-tab đồng bộ nhanh và nhất quán
-* Giảm tài nguyên server và client
-* Không xảy ra tình trạng “thừa token hợp lệ” chạy song song
+Logic này đảm bảo 100% coverage, với testing recommendations: Sử dụng console.log trace, dev tools simulate close/reload, và verify no duplicate API calls.

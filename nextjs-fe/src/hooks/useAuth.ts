@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { setAuth, clearAuth } from "@/redux/slices/authSlice";
+import { setAuth, clearAuth, setAuthInitialized } from "@/redux/slices/authSlice";
 import { apiClient } from "@/lib/api-client";
 import { ENDPOINTS } from "@/constants/api-endpoints";
 import type {
@@ -41,6 +41,14 @@ export function useAuth() {
       try {
         setState((prev) => ({ ...prev, isLoading: true }));
 
+        // IMPORTANT: Clear any existing cookies before login
+        // Server will set new refresh token cookie on successful login
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+
         const response = await apiClient.post<LoginResponse>(
           ENDPOINTS.AUTH.LOGIN,
           { user_name: username, password } as LoginRequest
@@ -55,7 +63,7 @@ export function useAuth() {
         // Logic 10.6: Đồng bộ trạng thái đăng nhập giữa các tab
         // Sync auth state across all tabs via broadcast channel
         const { syncAuthStateAcrossTabs } = await import("@/lib/authManager");
-        syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
+        await syncAuthStateAcrossTabs(response.data.access_token, response.data.ttl);
 
         // Fetch user profile
         const userResponse = await apiClient.get<AuthUser>(ENDPOINTS.AUTH.ME);
@@ -65,6 +73,10 @@ export function useAuth() {
           isAuthenticated: true,
           isLoading: false,
         });
+
+        // CRITICAL: Set authInitialized to true after successful login
+        // LoginPage useEffect will handle redirect when it sees authInitialized && isAuthenticated
+        dispatch(setAuthInitialized(true));
 
         notification.success("Login successful");
       } catch (error: any) {

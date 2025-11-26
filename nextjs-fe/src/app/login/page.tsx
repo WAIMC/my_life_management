@@ -22,6 +22,12 @@ export default function LoginPage() {
 
   // Logic 10.1: Redirect if already authenticated
   useEffect(() => {
+    console.log('[LoginPage] useEffect triggered:', {
+      authInitialized,
+      isAuthenticated,
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    });
+
     if (authInitialized && isAuthenticated) {
       const redirectParam = searchParams.get("redirect");
       const redirectUrl =
@@ -29,8 +35,14 @@ export default function LoginPage() {
           ? redirectParam
           : "/admin";
 
-      console.log("Already authenticated, redirecting to:", redirectUrl);
+      console.log("[LoginPage] Authenticated! Redirecting to:", redirectUrl);
       router.push(redirectUrl);
+    } else {
+      console.log('[LoginPage] Not redirecting:', {
+        authInitialized,
+        isAuthenticated,
+        reason: !authInitialized ? 'auth not initialized' : 'not authenticated'
+      });
     }
   }, [authInitialized, isAuthenticated, searchParams, router]);
 
@@ -39,8 +51,13 @@ export default function LoginPage() {
     setError(""); // Clear previous errors
 
     try {
+      // useAuth.login() calls syncAuthStateAcrossTabs which updates Redux
       await login(username, password);
-      // Redirect will be handled by useEffect when isAuthenticated updates in Redux
+      
+      // DO NOT manually redirect here!
+      // The useEffect (lines 24-35) will handle redirect when isAuthenticated becomes true
+      // This prevents race condition where AdminLayout checks auth before state propagates
+      console.log("Login successful, waiting for state to propagate...");
     } catch (error: any) {
       // Show error message to user
       const errorMessage = error.response?.data?.message || "Invalid username or password";

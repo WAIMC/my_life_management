@@ -24,6 +24,8 @@ let appStore: AppStore | null = null;
 // Queue to handle multiple requests when refresh token
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
+let refreshRetryCount = 0;
+const MAX_RETRIES = 3;
 
 class ApiClient {
   private client: AxiosInstance;
@@ -120,30 +122,74 @@ class ApiClient {
           isRefreshing = true;
 
           refreshPromise = (async () => {
+            let lastError: any = null;
+            
+            // Exponential backoff retry loop
+            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+              try {
+                console.log(`[ApiClient] Refresh token attempt ${attempt + 1}/${MAX_RETRIES + 1}`);
+                
+                // Call API refresh token (server will read refresh token from cookie)
+                const response = await this.client.post<ApiResponse<{ access_token: string; ttl: number }>>(
+                  API_URL.REFRESH_TOKEN
+                );
+                // Unwrap ApiResponse structure
+                const newAccessToken = response.data.data.access_token;
+                const newTtl = response.data.data.ttl;
+
+                // Logic 1: Token hết hạn - refresh thành công
+                // Update new token in Redux
+                appStore!.dispatch(setAuth(newAccessToken));
+
+                // Logic 3: Đồng bộ trạng thái đăng nhập
+                const { syncAuthStateAcrossTabs } = await import('./authManager');
+                await syncAuthStateAcrossTabs(newAccessToken, newTtl);
+                
+                // Reset retry count on success
+                refreshRetryCount = 0;
+                console.log('[ApiClient] Refresh token SUCCESS');
+
+                return newAccessToken;
+              } catch (refreshError: any) {
+                lastError = refreshError;
+                
+                // Check if network error (can retry)
+                const isNetworkError = 
+                  refreshError.code === 'ECONNREFUSED' || 
+                  refreshError.code === 'ETIMEDOUT' ||
+                  refreshError.code === 'ERR_NETWORK' ||
+                  refreshError.message?.toLowerCase().includes('network') ||
+                  refreshError.message?.toLowerCase().includes('timeout');
+                
+                if (isNetworkError && attempt < MAX_RETRIES) {
+                  // Exponential backoff: 1s, 2s, 4s
+                  const delayMs = Math.pow(2, attempt) * 1000;
+                  console.warn(
+                    `[ApiClient] Refresh failed (network error, attempt ${attempt + 1}/${MAX_RETRIES + 1}), ` +
+                    `retrying in ${delayMs}ms...`,
+                    refreshError.message
+                  );
+                  await new Promise(resolve => setTimeout(resolve, delayMs));
+                  continue; // Retry
+                }
+                
+                // Non-network error or max retries reached - break
+                console.error(
+                  `[ApiClient] Refresh failed (${isNetworkError ? 'network error' : 'auth error'}), ` +
+                  `max retries ${isNetworkError ? 'reached' : 'N/A'}`
+                );
+                break;
+              }
+            }
+
+            // All retries failed - fallback to existing logic (broadcast, redirect login)
             try {
-              // Call API refresh token (server will read refresh token from cookie)
-              const response = await this.client.post<ApiResponse<{ access_token: string; ttl: number }>>(
-                API_URL.REFRESH_TOKEN
-              );
-              // Unwrap ApiResponse structure
-              const newAccessToken = response.data.data.access_token;
-              const newTtl = response.data.data.ttl;
-
-              // Logic 1: Token hết hạn - refresh thành công
-              // Update new token in Redux
-              appStore!.dispatch(setAuth(newAccessToken));
-
-              // Logic 3: Đồng bộ trạng thái đăng nhập
-              const { syncAuthStateAcrossTabs } = await import('./authManager');
-              syncAuthStateAcrossTabs(newAccessToken, newTtl);
-
-              return newAccessToken;
-            } catch (refreshError) {
               // Logic 2: Token lỗi (refresh thất bại)
               
               // Logic 2.1: Kiểm tra có tab nào cùng origin đang hoạt động không?
               // GỬI REQUEST qua BroadcastChannel để lấy auth từ tab khác
               try {
+                console.log('[ApiClient] Trying to get auth from other tabs after refresh failure...');
                 const broadcastManager = (await import('./broadcastChannelManager')).default;
                 const response = await broadcastManager.requestAuthState(1000);
                 
@@ -153,22 +199,30 @@ class ApiClient {
                   
                   if (ttl > 0) {
                     // Token từ tab khác còn hợp lệ
+                    console.log('[ApiClient] Got valid token from other tab');
                     const { syncAuthStateAcrossTabs } = await import('./authManager');
-                    syncAuthStateAcrossTabs(response.accessToken, ttl);
+                    await syncAuthStateAcrossTabs(response.accessToken, ttl);
                     
                     return response.accessToken;
                   }
                 }
               } catch (broadcastError) {
-                console.warn('Failed to get auth from other tabs:', broadcastError);
+                console.warn('[ApiClient] Failed to get auth from other tabs:', broadcastError);
               }
 
               // Logic 2.2: Không có tab nào phản hồi hoặc token từ tab khác cũng hết hạn
               // Redirect sang login page
+              console.error('[ApiClient] All refresh attempts failed, redirecting to login');
               appStore!.dispatch(clearAuth());
 
               const { clearAutoRefresh } = await import('./authManager');
               clearAutoRefresh();
+              
+              const { default: broadcastManager } = await import('./broadcastChannelManager');
+              broadcastManager.stopHeartbeat();
+              
+              const { default: localStorageManager } = await import('./localStorageManager');
+              localStorageManager.clearAuthMeta();
 
               if (typeof window !== 'undefined') {
                 // Save current URL for redirect after login (Logic 2.2)

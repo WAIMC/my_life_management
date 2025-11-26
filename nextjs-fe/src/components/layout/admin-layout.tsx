@@ -26,15 +26,31 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
   useEffect(() => {
     // Only check auth after initialization is complete
     if (!authInitialized) {
+      console.log('[AdminLayout] Auth not initialized yet, waiting...');
       return;
     }
 
-    // If no valid auth after initialization, redirect to login
-    if (!accessToken || !isAuthenticated) {
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin';
-      console.log('No valid auth, redirecting to login from:', currentPath);
-      setShouldRedirect(true);
-    }
+    console.log('[AdminLayout] Checking auth state:', { 
+      accessToken: accessToken?.substring(0, 10) + '...', 
+      isAuthenticated,
+      authInitialized 
+    });
+
+    // CRITICAL: Wait a bit for state to propagate after authInitialized becomes true
+    // This prevents race condition where authInitializer sets authInitialized=true
+    // but hasn't set accessToken yet
+    const timer = setTimeout(() => {
+      // If no valid auth after initialization + delay, redirect to login
+      if (!accessToken || !isAuthenticated) {
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin';
+        console.log('[AdminLayout] No valid auth, redirecting to login from:', currentPath);
+        setShouldRedirect(true);
+      } else {
+        console.log('[AdminLayout] Auth valid, allowing access');
+      }
+    }, 150); // Small delay to let authInitializer finish setting state
+
+    return () => clearTimeout(timer);
   }, [authInitialized, accessToken, isAuthenticated]);
 
   useEffect(() => {

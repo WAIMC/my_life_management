@@ -8,7 +8,7 @@
  */
 
 export interface BroadcastMessage {
-  type: 'AUTH_UPDATE' | 'LOGOUT' | 'TAB_FOCUS' | 'TAB_BLUR' | 'AUTH_REQUEST' | 'AUTH_RESPONSE';
+  type: 'AUTH_UPDATE' | 'LOGOUT' | 'TAB_FOCUS' | 'TAB_BLUR' | 'AUTH_REQUEST' | 'AUTH_RESPONSE' | 'HEARTBEAT' | 'LEADER_ELECTED' | 'REFRESH_FAIL';
   tabId: string;
   leaderId?: string;
   accessToken?: string;
@@ -16,6 +16,8 @@ export interface BroadcastMessage {
   timestamp: number;
   // For AUTH_REQUEST/RESPONSE
   requestId?: string;
+  // For LEADER_ELECTED
+  newLeaderId?: string;
 }
 
 class BroadcastChannelManager {
@@ -23,6 +25,9 @@ class BroadcastChannelManager {
   private tabId: string;
   private messageHandlers: Array<(message: BroadcastMessage) => void> = [];
   private isInitialized = false;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private lastHeartbeatTime: number = Date.now();
+  private heartbeatTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     // Generate unique tab ID stored in sessionStorage (lost on close, kept on reload)
@@ -205,8 +210,115 @@ class BroadcastChannelManager {
    * Handle received message
    */
   private handleMessage(message: BroadcastMessage) {
+    // Update heartbeat tracking if this is a heartbeat message
+    if (message.type === 'HEARTBEAT' && message.leaderId) {
+      this.lastHeartbeatTime = message.timestamp;
+    }
+
     this.messageHandlers.forEach((handler) => {
       handler(message);
+    });
+  }
+
+  /**
+   * Start sending heartbeat messages as the leader
+   * @param leaderId - Current leader tab ID
+   * @param intervalMs - Heartbeat interval in milliseconds (default: 5000ms)
+   */
+  startHeartbeat(leaderId: string, intervalMs: number = 5000): void {
+    this.stopHeartbeat();
+
+    console.log('[Broadcast] Starting heartbeat as leader:', leaderId);
+
+    this.heartbeatTimer = setInterval(() => {
+      this.broadcast({
+        type: 'HEARTBEAT',
+        tabId: this.tabId,
+        leaderId,
+        timestamp: Date.now(),
+      });
+    }, intervalMs);
+  }
+
+  /**
+   * Stop sending heartbeat messages
+   */
+  stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+      console.log('[Broadcast] Stopped heartbeat');
+    }
+  }
+
+  /**
+   * Listen for heartbeat timeout and trigger callback
+   * @param onTimeout - Callback when heartbeat timeout detected
+   * @param timeoutMs - Timeout duration in milliseconds (default: 7000ms)
+   */
+  listenForHeartbeat(onTimeout: () => void, timeoutMs: number = 7000): void {
+    // Clear existing timeout
+    if (this.heartbeatTimeoutTimer) {
+      clearTimeout(this.heartbeatTimeoutTimer);
+    }
+
+    const checkHeartbeat = () => {
+      const timeSinceLastHeartbeat = Date.now() - this.lastHeartbeatTime;
+
+      if (timeSinceLastHeartbeat > timeoutMs) {
+        console.log('[Broadcast] Heartbeat timeout detected (%dms since last heartbeat)', timeSinceLastHeartbeat);
+        onTimeout();
+      } else {
+        // Schedule next check
+        this.heartbeatTimeoutTimer = setTimeout(checkHeartbeat, timeoutMs);
+      }
+    };
+
+    // Start checking
+    this.heartbeatTimeoutTimer = setTimeout(checkHeartbeat, timeoutMs);
+  }
+
+  /**
+   * Stop listening for heartbeat timeout
+   */
+  stopListeningForHeartbeat(): void {
+    if (this.heartbeatTimeoutTimer) {
+      clearTimeout(this.heartbeatTimeoutTimer);
+      this.heartbeatTimeoutTimer = null;
+    }
+  }
+
+  /**
+   * Update last heartbeat timestamp (called externally)
+   */
+  updateHeartbeatTimestamp(timestamp: number): void {
+    this.lastHeartbeatTime = timestamp;
+  }
+
+  /**
+   * Broadcast leader election result
+   */
+  broadcastLeaderElected(newLeaderId: string): void {
+    console.log('[Broadcast] Broadcasting new leader:', newLeaderId);
+    this.broadcast({
+      type: 'LEADER_ELECTED',
+      tabId: this.tabId,
+      newLeaderId,
+      leaderId: newLeaderId,
+      timestamp: Date.now(),
+    });
+  }
+
+  /**
+   * Broadcast refresh token failure
+   * Signals all tabs to logout
+   */
+  broadcastRefreshFail(): void {
+    console.log('[Broadcast] Broadcasting refresh failure');
+    this.broadcast({
+      type: 'REFRESH_FAIL',
+      tabId: this.tabId,
+      timestamp: Date.now(),
     });
   }
 
@@ -214,6 +326,9 @@ class BroadcastChannelManager {
    * Close BroadcastChannel
    */
   close() {
+    this.stopHeartbeat();
+    this.stopListeningForHeartbeat();
+
     if (this.channel) {
       this.channel.close();
       this.channel = null;

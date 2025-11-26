@@ -5,10 +5,12 @@ import * as CLIENT_URL from '@/constants/clientUrl';
 import type { AppStore } from '@/redux/store';
 import broadcastManager from './broadcastChannelManager';
 import { navigateTo } from './navigation';
+import localStorageManager from './localStorageManager';
 
-let refreshTimer: NodeJS.Timeout | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 let appStore: AppStore | null = null;
 let isTabFocused = false;
+let isAcquiringLeader = false; // Flag to prevent duplicate leader acquisition
 
 /**
  * Initialize auth manager with store reference
@@ -44,17 +46,122 @@ const isCurrentTabFocused = (): boolean => {
 };
 
 /**
+ * Elect a new leader tab
+ * Uses Web Locks API if available, falls back to focus-based selection
+ * @returns Promise<string> - ID of the elected leader
+ */
+export const electLeader = async (): Promise<string> => {
+  if (!appStore || isAcquiringLeader) {
+    return '';
+  }
+
+  isAcquiringLeader = true;
+
+  try {
+    const currentTabId = broadcastManager.getTabId();
+    const isFocused = isCurrentTabFocused();
+    const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
+
+    console.log('[AuthManager] Electing leader...', { currentTabId, isFocused, isVisible });
+
+    // Try Web Locks API for exclusive leader lock
+    if (typeof navigator !== 'undefined' && 'locks' in navigator) {
+      try {
+        console.log('[AuthManager] Attempting Web Locks API for leader election');
+        
+        // Check if lock is already held
+        const lockState = await navigator.locks.query();
+        const hasLeaderLock = lockState.held?.some(lock => lock.name === 'auth-leader-lock');
+        
+        if (!hasLeaderLock && (isFocused || isVisible)) {
+          // Try to acquire lock (non-blocking request)
+          await navigator.locks.request('auth-leader-lock', { mode: 'exclusive', ifAvailable: true }, async (lock) => {
+            if (lock) {
+              console.log('[AuthManager] Acquired leader lock via Web Locks API');
+              appStore!.dispatch(setLeaderId(currentTabId));
+              
+              // Start heartbeat
+              broadcastManager.startHeartbeat(currentTabId);
+              broadcastManager.broadcastLeaderElected(currentTabId);
+              
+              // Hold lock indefinitely (this tab is leader until closed/unfocused)
+              return new Promise(() => {}); // Never resolves = holds lock
+            }
+            return null;
+          });
+        }
+        
+        return currentTabId;
+      } catch (error) {
+        console.warn('[AuthManager] Web Locks API failed, falling back:', error);
+        // Fall through to fallback method
+      }
+    }
+
+    // Fallback: Focus/visibility-based election
+    console.log('[AuthManager] Using fallback leader election (focus-based)');
+    
+    if (isFocused || isVisible) {
+      console.log('[AuthManager] This tab elected as leader (focused/visible)');
+      appStore.dispatch(setLeaderId(currentTabId));
+      
+      // Start heartbeat
+      broadcastManager.startHeartbeat(currentTabId);
+      broadcastManager.broadcastLeaderElected(currentTabId);
+      
+      return currentTabId;
+    }
+
+    // If this tab is not focused/visible, wait for another tab to claim leadership
+    console.log('[AuthManager] This tab is not focused/visible, waiting for leader election');
+    return '';
+    
+  } finally {
+    isAcquiringLeader = false;
+  }
+};
+
+/**
+ * Handle heartbeat timeout - elect new leader
+ */
+export const handleHeartbeatTimeout = async (): Promise<void> => {
+  console.log('[AuthManager] Heartbeat timeout - electing new leader');
+  await electLeader();
+};
+
+/**
  * Logic 3: Đồng bộ trạng thái đăng nhập giữa các tab
  * Cập nhật: access token, refresh_at_time, tab_id, leader_id
+ * Enhanced với: heartbeat, localStorage persistence, leader election
  */
-export const syncAuthStateAcrossTabs = (accessToken: string, ttl: number) => {
-  if (!appStore) return;
+export const syncAuthStateAcrossTabs = async (accessToken: string, ttl: number): Promise<void> => {
+  console.log('[AuthManager] syncAuthStateAcrossTabs called', { 
+    hasAppStore: !!appStore, 
+    accessToken: accessToken?.substring(0, 10) + '...', 
+    ttl 
+  });
+  
+  if (!appStore) {
+    console.error('[AuthManager] appStore is null! Cannot sync state');
+    return;
+  }
 
   const tabId = broadcastManager.getTabId();
   const refreshAtTime = Date.now() + (ttl - 10) * 1000;
 
-  // Xác định leader_id: nếu tab hiện tại focus thì trở thành leader
-  const leaderId = isCurrentTabFocused() ? tabId : appStore.getState().auth.leaderId || tabId;
+  // Get current leader or elect new leader if needed
+  let leaderId = appStore.getState().auth.leaderId;
+  
+  // If no leader exists and this tab is focused, elect this tab as leader
+  if (!leaderId && isCurrentTabFocused()) {
+    console.log('[AuthManager] No leader exists, electing this tab');
+    leaderId = await electLeader();
+  } else if (!leaderId) {
+    // If no leader and not focused, use current tab as temporary leader
+    leaderId = tabId;
+  }
+
+  console.log('[AuthManager] Updating Redux state', { tabId, leaderId, refreshAtTime });
 
   // Cập nhật Redux state
   appStore.dispatch(setAuth(accessToken));
@@ -62,11 +169,18 @@ export const syncAuthStateAcrossTabs = (accessToken: string, ttl: number) => {
   appStore.dispatch(setLeaderId(leaderId));
   appStore.dispatch(setRefreshAtTime(refreshAtTime));
 
+  console.log('[AuthManager] Redux state updated, broadcasting...');
+
   // Gửi broadcast để đồng bộ cho tất cả tab cùng origin
   broadcastManager.broadcastAuthUpdate(accessToken, refreshAtTime, leaderId);
 
-  // Nếu tab hiện tại focus: tạo timer auto refresh
-  if (isCurrentTabFocused()) {
+  // Save metadata to localStorage for browser close/reopen scenarios
+  localStorageManager.saveAuthMeta(refreshAtTime, leaderId);
+
+  // Nếu tab hiện tại là leader: start heartbeat và timer auto refresh
+  if (leaderId === tabId) {
+    console.log('[AuthManager] This tab is leader - starting heartbeat and refresh timer');
+    broadcastManager.startHeartbeat(leaderId);
     setupAutoRefresh(ttl);
   }
 };
@@ -90,13 +204,16 @@ export const setupAutoRefresh = (ttl: number) => {
 
 /**
  * Perform auto refresh token
+ * Enhanced with: retry logic, failure broadcasting, localStorage cleanup
  */
 const performAutoRefresh = async () => {
   if (!appStore) return;
 
-  // Kiểm tra: tab có đang focus không?
-  if (!isCurrentTabFocused()) {
-    return; // Không refresh nếu tab không focus
+  // Kiểm tra: tab có đang visible không?
+  const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
+  if (!isVisible && !isCurrentTabFocused()) {
+    console.log('[AuthManager] Tab not visible/focused - skipping auto refresh');
+    return; // Không refresh nếu tab không visible và không focus
   }
 
   const state = appStore.getState();
@@ -105,8 +222,11 @@ const performAutoRefresh = async () => {
 
   // Kiểm tra: leader_id có bằng tab_id không?
   if (leaderId !== tabId) {
+    console.log('[AuthManager] Not leader - skipping auto refresh');
     return; // Không refresh nếu không phải leader
   }
+
+  console.log('[AuthManager] Performing auto refresh as leader');
 
   try {
     const response = await apiClient.post<{ access_token: string; ttl: number }>(REFRESH_TOKEN, {});
@@ -117,10 +237,17 @@ const performAutoRefresh = async () => {
       throw new Error('Invalid token response');
     }
 
+    console.log('[AuthManager] Auto refresh SUCCESS');
+
     // Logic 3: Đồng bộ trạng thái sau khi refresh thành công
-    syncAuthStateAcrossTabs(newAccessToken, newTtl);
-  } catch {
+    await syncAuthStateAcrossTabs(newAccessToken, newTtl);
+  } catch (error) {
+    console.error('[AuthManager] Auto refresh FAILED:', error);
+    
     if (!appStore) return;
+
+    // Broadcast refresh failure to all tabs
+    broadcastManager.broadcastRefreshFail();
 
     // Save current URL for redirect after login
     const currentUrl = typeof window !== 'undefined' ? window.location.pathname : '/admin';
@@ -128,6 +255,8 @@ const performAutoRefresh = async () => {
     // Clear auth on failure
     appStore.dispatch(clearAuth());
     clearAutoRefresh();
+    broadcastManager.stopHeartbeat();
+    localStorageManager.clearAuthMeta();
 
     // Use client-side navigation instead of window.location
     if (typeof window !== 'undefined') {
