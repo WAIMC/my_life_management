@@ -41,12 +41,7 @@ export const localStorageManager = {
       };
 
       localStorage.setItem(AUTH_META_KEY, JSON.stringify(meta));
-      console.log('[LocalStorage] Saved auth meta:', {
-        refreshAtTime: new Date(refreshAtTime).toISOString(),
-        leaderId,
-      });
     } catch (error) {
-      console.error('[LocalStorage] Failed to save auth meta:', error);
     }
   },
 
@@ -60,7 +55,6 @@ export const localStorageManager = {
     try {
       const raw = localStorage.getItem(AUTH_META_KEY);
       if (!raw) {
-        console.log('[LocalStorage] No auth meta found');
         return null;
       }
 
@@ -68,7 +62,6 @@ export const localStorageManager = {
 
       // Validate required fields
       if (!meta.refreshAtTime || !meta.leaderId || !meta.savedAt) {
-        console.warn('[LocalStorage] Invalid auth meta - missing fields');
         this.clearAuthMeta();
         return null;
       }
@@ -76,7 +69,6 @@ export const localStorageManager = {
       // Check if metadata has expired based on refresh token TTL
       const age = Date.now() - meta.savedAt;
       if (age > REFRESH_TOKEN_TTL_MS) {
-        console.log('[LocalStorage] Auth meta expired (age: %dms, TTL: %dms)', age, REFRESH_TOKEN_TTL_MS);
         this.clearAuthMeta();
         return null;
       }
@@ -85,20 +77,10 @@ export const localStorageManager = {
       // If so, metadata is stale but may still be useful for refresh attempt
       const timeUntilRefresh = meta.refreshAtTime - Date.now();
       if (timeUntilRefresh < -60000) {
-        // More than 1 minute past refresh time - likely stale
-        console.warn('[LocalStorage] Auth meta is stale (refresh time was %dms ago)', -timeUntilRefresh);
-        // Don't clear - let caller try refresh and handle failure
+        // More than 1 minute past refresh time - likely stale// Don't clear - let caller try refresh and handle failure
       }
-
-      console.log('[LocalStorage] Loaded auth meta:', {
-        refreshAtTime: new Date(meta.refreshAtTime).toISOString(),
-        leaderId: meta.leaderId,
-        age: `${Math.round(age / 1000)}s`,
-      });
-
       return meta;
     } catch (error) {
-      console.error('[LocalStorage] Failed to load auth meta:', error);
       this.clearAuthMeta();
       return null;
     }
@@ -113,9 +95,7 @@ export const localStorageManager = {
 
     try {
       localStorage.removeItem(AUTH_META_KEY);
-      console.log('[LocalStorage] Cleared auth meta');
     } catch (error) {
-      console.error('[LocalStorage] Failed to clear auth meta:', error);
     }
   },
 

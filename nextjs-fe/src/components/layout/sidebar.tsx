@@ -36,15 +36,16 @@ export function Sidebar() {
     setExpandedMenu(expandedMenu === label ? null : label);
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Even if logout API fails, redirect to login
-      router.push('/login');
-    }
+  const handleLogout = () => {
+    // DISABLED: Logout and redirect
+    return;
+
+    /* ORIGINAL CODE - COMMENTED OUT
+    // Call logout (clears state synchronously)
+    logout();
+    // Redirect immediately
+    router.push('/login');
+    */
   };
 
   const closeSidebar = () => {

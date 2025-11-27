@@ -26,7 +26,6 @@ export const adminServiceExtended = {
    */
   async assignRoles(adminId: number, roleIds: number[]): Promise<void> {
     // Implementation will depend on API structure
-    console.log('Assign roles:', adminId, roleIds);
   },
 
   /**
@@ -34,7 +33,6 @@ export const adminServiceExtended = {
    */
   async assignDepartments(adminId: number, departmentIds: number[]): Promise<void> {
     // Implementation will depend on API structure
-    console.log('Assign departments:', adminId, departmentIds);
   },
 
   /**
@@ -42,6 +40,5 @@ export const adminServiceExtended = {
    */
   async changePassword(adminId: number, newPassword: string): Promise<void> {
     // Implementation will depend on API structure
-    console.log('Change password for admin:', adminId);
   },
 };

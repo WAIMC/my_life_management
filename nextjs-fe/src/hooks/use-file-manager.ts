@@ -50,7 +50,6 @@ export const useFileManager = (): FileManagerContextType => {
         ...response.pagination
       }));
     } catch (error) {
-      console.error('Error fetching files:', error);
       toast.error('Không thể tải danh sách file');
     } finally {
       setIsLoading(false);

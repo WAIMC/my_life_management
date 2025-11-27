@@ -55,7 +55,6 @@ export const MoveCopyDialog = ({
           setFolders(allFolders.filter(f => f.path !== currentPath));
           setSelectedPath('');
         } catch (error) {
-          console.error('Failed to fetch folders', error);
         } finally {
           setIsFetching(false);
         }
@@ -72,7 +71,6 @@ export const MoveCopyDialog = ({
       await onConfirm(selectedPath);
       onOpenChange(false);
     } catch (error) {
-      console.error('Operation failed', error);
     } finally {
       setIsLoading(false);
     }

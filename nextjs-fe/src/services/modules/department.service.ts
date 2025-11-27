@@ -26,7 +26,6 @@ export const departmentServiceExtended = {
    */
   async getTree(): Promise<DepartmentMst[]> {
     // Implementation will depend on API structure
-    console.log('Get department tree');
     return [];
   },
 
@@ -35,6 +34,5 @@ export const departmentServiceExtended = {
    */
   async assignAdmins(departmentId: number, adminIds: number[]): Promise<void> {
     // Implementation will depend on API structure
-    console.log('Assign admins to department:', departmentId, adminIds);
   },
 };

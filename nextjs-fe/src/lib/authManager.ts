@@ -61,61 +61,50 @@ export const electLeader = async (): Promise<string> => {
     const currentTabId = broadcastManager.getTabId();
     const isFocused = isCurrentTabFocused();
     const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
-
-    console.log('[AuthManager] Electing leader...', { currentTabId, isFocused, isVisible });
-
     // Try Web Locks API for exclusive leader lock
     if (typeof navigator !== 'undefined' && 'locks' in navigator) {
       try {
-        console.log('[AuthManager] Attempting Web Locks API for leader election');
-        
         // Check if lock is already held
         const lockState = await navigator.locks.query();
         const hasLeaderLock = lockState.held?.some(lock => lock.name === 'auth-leader-lock');
-        
+
         if (!hasLeaderLock && (isFocused || isVisible)) {
           // Try to acquire lock (non-blocking request)
           await navigator.locks.request('auth-leader-lock', { mode: 'exclusive', ifAvailable: true }, async (lock) => {
             if (lock) {
-              console.log('[AuthManager] Acquired leader lock via Web Locks API');
               appStore!.dispatch(setLeaderId(currentTabId));
-              
+
               // Start heartbeat
               broadcastManager.startHeartbeat(currentTabId);
               broadcastManager.broadcastLeaderElected(currentTabId);
-              
+
               // Hold lock indefinitely (this tab is leader until closed/unfocused)
-              return new Promise(() => {}); // Never resolves = holds lock
+              return new Promise(() => { }); // Never resolves = holds lock
             }
             return null;
           });
         }
-        
+
         return currentTabId;
       } catch (error) {
-        console.warn('[AuthManager] Web Locks API failed, falling back:', error);
         // Fall through to fallback method
       }
     }
 
     // Fallback: Focus/visibility-based election
-    console.log('[AuthManager] Using fallback leader election (focus-based)');
-    
     if (isFocused || isVisible) {
-      console.log('[AuthManager] This tab elected as leader (focused/visible)');
       appStore.dispatch(setLeaderId(currentTabId));
-      
+
       // Start heartbeat
       broadcastManager.startHeartbeat(currentTabId);
       broadcastManager.broadcastLeaderElected(currentTabId);
-      
+
       return currentTabId;
     }
 
     // If this tab is not focused/visible, wait for another tab to claim leadership
-    console.log('[AuthManager] This tab is not focused/visible, waiting for leader election');
     return '';
-    
+
   } finally {
     isAcquiringLeader = false;
   }
@@ -125,7 +114,6 @@ export const electLeader = async (): Promise<string> => {
  * Handle heartbeat timeout - elect new leader
  */
 export const handleHeartbeatTimeout = async (): Promise<void> => {
-  console.log('[AuthManager] Heartbeat timeout - electing new leader');
   await electLeader();
 };
 
@@ -135,14 +123,7 @@ export const handleHeartbeatTimeout = async (): Promise<void> => {
  * Enhanced với: heartbeat, localStorage persistence, leader election
  */
 export const syncAuthStateAcrossTabs = async (accessToken: string, ttl: number): Promise<void> => {
-  console.log('[AuthManager] syncAuthStateAcrossTabs called', { 
-    hasAppStore: !!appStore, 
-    accessToken: accessToken?.substring(0, 10) + '...', 
-    ttl 
-  });
-  
   if (!appStore) {
-    console.error('[AuthManager] appStore is null! Cannot sync state');
     return;
   }
 
@@ -151,26 +132,19 @@ export const syncAuthStateAcrossTabs = async (accessToken: string, ttl: number):
 
   // Get current leader or elect new leader if needed
   let leaderId = appStore.getState().auth.leaderId;
-  
+
   // If no leader exists and this tab is focused, elect this tab as leader
   if (!leaderId && isCurrentTabFocused()) {
-    console.log('[AuthManager] No leader exists, electing this tab');
     leaderId = await electLeader();
   } else if (!leaderId) {
     // If no leader and not focused, use current tab as temporary leader
     leaderId = tabId;
   }
-
-  console.log('[AuthManager] Updating Redux state', { tabId, leaderId, refreshAtTime });
-
   // Cập nhật Redux state
   appStore.dispatch(setAuth(accessToken));
   appStore.dispatch(setTabId(tabId));
   appStore.dispatch(setLeaderId(leaderId));
   appStore.dispatch(setRefreshAtTime(refreshAtTime));
-
-  console.log('[AuthManager] Redux state updated, broadcasting...');
-
   // Gửi broadcast để đồng bộ cho tất cả tab cùng origin
   broadcastManager.broadcastAuthUpdate(accessToken, refreshAtTime, leaderId);
 
@@ -179,7 +153,6 @@ export const syncAuthStateAcrossTabs = async (accessToken: string, ttl: number):
 
   // Nếu tab hiện tại là leader: start heartbeat và timer auto refresh
   if (leaderId === tabId) {
-    console.log('[AuthManager] This tab is leader - starting heartbeat and refresh timer');
     broadcastManager.startHeartbeat(leaderId);
     setupAutoRefresh(ttl);
   }
@@ -207,12 +180,15 @@ export const setupAutoRefresh = (ttl: number) => {
  * Enhanced with: retry logic, failure broadcasting, localStorage cleanup
  */
 const performAutoRefresh = async () => {
+  // DISABLED: Auto refresh token logic
+  return;
+
+  /* ORIGINAL CODE - COMMENTED OUT
   if (!appStore) return;
 
   // Kiểm tra: tab có đang visible không?
   const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
   if (!isVisible && !isCurrentTabFocused()) {
-    console.log('[AuthManager] Tab not visible/focused - skipping auto refresh');
     return; // Không refresh nếu tab không visible và không focus
   }
 
@@ -222,12 +198,8 @@ const performAutoRefresh = async () => {
 
   // Kiểm tra: leader_id có bằng tab_id không?
   if (leaderId !== tabId) {
-    console.log('[AuthManager] Not leader - skipping auto refresh');
     return; // Không refresh nếu không phải leader
   }
-
-  console.log('[AuthManager] Performing auto refresh as leader');
-
   try {
     const response = await apiClient.post<{ access_token: string; ttl: number }>(REFRESH_TOKEN, {});
     const newAccessToken = response?.data?.access_token;
@@ -236,14 +208,9 @@ const performAutoRefresh = async () => {
     if (!newAccessToken || !newTtl) {
       throw new Error('Invalid token response');
     }
-
-    console.log('[AuthManager] Auto refresh SUCCESS');
-
     // Logic 3: Đồng bộ trạng thái sau khi refresh thành công
     await syncAuthStateAcrossTabs(newAccessToken, newTtl);
   } catch (error) {
-    console.error('[AuthManager] Auto refresh FAILED:', error);
-    
     if (!appStore) return;
 
     // Broadcast refresh failure to all tabs
@@ -263,6 +230,7 @@ const performAutoRefresh = async () => {
       navigateTo(`${CLIENT_URL.LOGIN}?redirect=${encodeURIComponent(currentUrl)}`);
     }
   }
+  */
 };
 
 /**

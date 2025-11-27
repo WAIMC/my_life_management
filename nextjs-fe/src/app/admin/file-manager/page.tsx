@@ -1,24 +1,26 @@
 'use client';
 
-import { FileManager } from '@/components/file-manager';
-import { AdminNavDropdown } from '@/components/layout/admin-nav-dropdown';
+import { AdminLayout } from '@/components/layout/admin-layout';
+import { PageHeader } from '@/components/layout/page-header';
+import { FileManagerContent } from '@/components/file-manager/file-manager-content';
 
 export default function FileManagerPage() {
   return (
-    <div className="flex h-screen flex-col">
-      {/* Navigation Dropdown Bar */}
-      <div className="flex items-center justify-between border-b bg-background px-4 py-3">
-        <div className="flex items-center gap-3">
-          <AdminNavDropdown currentLabel="File Manager" />
-          <div className="h-4 w-px bg-border" />
-          <h1 className="text-lg font-semibold">File Manager</h1>
-        </div>
+    <AdminLayout>
+      {/* Page Header */}
+      <PageHeader
+        title="File Manager"
+        description="Quản lý và tổ chức tệp tin và thư mục của bạn"
+        breadcrumbs={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'File Manager', isActive: true }
+        ]}
+      />
+
+      {/* File Manager Content */}
+      <div className="h-[calc(100vh-16rem)] overflow-hidden">
+        <FileManagerContent />
       </div>
-      
-      {/* File Manager Component */}
-      <div className="flex-1 overflow-hidden">
-        <FileManager />
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

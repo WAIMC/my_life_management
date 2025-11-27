@@ -50,7 +50,6 @@ class BroadcastChannelManager {
       });
       this.isInitialized = true;
     } catch (error) {
-      console.warn('BroadcastChannel not supported:', error);
     }
   }
 
@@ -227,9 +226,6 @@ class BroadcastChannelManager {
    */
   startHeartbeat(leaderId: string, intervalMs: number = 5000): void {
     this.stopHeartbeat();
-
-    console.log('[Broadcast] Starting heartbeat as leader:', leaderId);
-
     this.heartbeatTimer = setInterval(() => {
       this.broadcast({
         type: 'HEARTBEAT',
@@ -247,7 +243,6 @@ class BroadcastChannelManager {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
-      console.log('[Broadcast] Stopped heartbeat');
     }
   }
 
@@ -266,7 +261,6 @@ class BroadcastChannelManager {
       const timeSinceLastHeartbeat = Date.now() - this.lastHeartbeatTime;
 
       if (timeSinceLastHeartbeat > timeoutMs) {
-        console.log('[Broadcast] Heartbeat timeout detected (%dms since last heartbeat)', timeSinceLastHeartbeat);
         onTimeout();
       } else {
         // Schedule next check
@@ -299,7 +293,6 @@ class BroadcastChannelManager {
    * Broadcast leader election result
    */
   broadcastLeaderElected(newLeaderId: string): void {
-    console.log('[Broadcast] Broadcasting new leader:', newLeaderId);
     this.broadcast({
       type: 'LEADER_ELECTED',
       tabId: this.tabId,
@@ -314,7 +307,6 @@ class BroadcastChannelManager {
    * Signals all tabs to logout
    */
   broadcastRefreshFail(): void {
-    console.log('[Broadcast] Broadcasting refresh failure');
     this.broadcast({
       type: 'REFRESH_FAIL',
       tabId: this.tabId,

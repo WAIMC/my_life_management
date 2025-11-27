@@ -48,157 +48,6 @@ function NavigationProvider() {
   return null;
 }
 
-function BroadcastListener() {
-  const dispatch = useDispatch();
-  const authState = useSelector((state: RootState) => state.auth);
-  const authStateRef = useRef(authState);
-
-  // Keep ref updated with latest authState
-  useEffect(() => {
-    authStateRef.current = authState;
-  }, [authState]);
-
-  useEffect(() => {
-    // Initialize BroadcastChannel
-    broadcastManager.initialize();
-
-    // Listen for broadcast messages from other tabs
-    broadcastManager.onMessage(async (message) => {
-      switch (message.type) {
-        case 'AUTH_UPDATE': {
-          // Logic 10.6: Sync auth state from other tabs
-          if (message.accessToken && message.refreshAtTime && message.leaderId) {
-            dispatch(setAuth(message.accessToken));
-            // Set own tabId, not the sender's tabId
-            dispatch(setTabId(broadcastManager.getTabId()));
-            dispatch(setLeaderId(message.leaderId));
-            dispatch(setRefreshAtTime(message.refreshAtTime));
-
-            // Logic 10.6: Setup auto-refresh timer if this tab is focused
-            const ttl = Math.ceil((message.refreshAtTime - Date.now()) / 1000);
-            if (ttl > 0 && document.hasFocus()) {
-              const { setupAutoRefresh } = await import('@/lib/authManager');
-              setupAutoRefresh(ttl);
-            }
-          }
-          break;
-        }
-        case 'LOGOUT': {
-          // Logic 10.8: Handle logout from other tabs
-          dispatch(clearAuth());
-          clearAutoRefresh();
-
-          // Use client-side navigation instead of window.location
-          navigateTo('/login');
-          break;
-        }
-        case 'AUTH_REQUEST': {
-          // Logic 10.2: Another tab is requesting auth state
-          // Respond if we have valid auth state
-          const { accessToken, refreshAtTime, leaderId } = authStateRef.current;
-          console.log('[Broadcast] Received AUTH_REQUEST, current auth:', {
-            hasToken: !!accessToken,
-            hasRefreshTime: !!refreshAtTime,
-            hasLeader: !!leaderId,
-            requestId: message.requestId
-          });
-          if (accessToken && refreshAtTime && leaderId && message.requestId) {
-            console.log('[Broadcast] Responding with auth state');
-            broadcastManager.respondAuthState(
-              message.requestId,
-              accessToken,
-              refreshAtTime,
-              leaderId
-            );
-          } else {
-            console.log('[Broadcast] Cannot respond - missing auth data');
-          }
-          break;
-        }
-        case 'TAB_FOCUS': {
-          // Other tab gained focus - update leader if needed
-          // This can be used to rebalance leader assignment
-          break;
-        }
-        case 'TAB_BLUR': {
-          // Other tab lost focus - update leader if needed
-          break;
-        }
-        case 'HEARTBEAT': {
-          // Update last heartbeat time for leader tracking
-          if (message.leaderId === authStateRef.current.leaderId) {
-            // Leader is alive - update timestamp
-            console.log('[Broadcast] Heartbeat received from leader:', message.leaderId);
-            broadcastManager.updateHeartbeatTimestamp(message.timestamp);
-          }
-          break;
-        }
-        case 'LEADER_ELECTED': {
-          // New leader elected - update state
-          if (message.newLeaderId) {
-            console.log('[Broadcast] New leader elected:', message.newLeaderId);
-            dispatch(setLeaderId(message.newLeaderId));
-            
-            // If this tab is new leader - start heartbeat & refresh timer
-            const currentTabId = broadcastManager.getTabId();
-            if (message.newLeaderId === currentTabId) {
-              console.log('[Broadcast] This tab is the new leader - starting heartbeat and refresh');
-              
-              const { setupAutoRefresh } = await import('@/lib/authManager');
-              const ttl = authStateRef.current.refreshAtTime 
-                ? Math.ceil((authStateRef.current.refreshAtTime - Date.now()) / 1000)
-                : 0;
-              
-              if (ttl > 0) {
-                // Start heartbeat
-                broadcastManager.startHeartbeat(currentTabId);
-                // Setup refresh timer
-                setupAutoRefresh(ttl);
-              }
-            }
-          }
-          break;
-        }
-        case 'REFRESH_FAIL': {
-          // Leader failed to refresh - all tabs logout
-          console.error('[Broadcast] Refresh failed broadcast received - logging out all tabs');
-          dispatch(clearAuth());
-          clearAutoRefresh();
-          
-          const { default: localStorageManager } = await import('@/lib/localStorageManager');
-          localStorageManager.clearAuthMeta();
-          
-          broadcastManager.stopHeartbeat();
-          navigateTo('/login');
-          break;
-        }
-      }
-    });
-
-    return () => {
-      broadcastManager.close();
-    };
-  }, [dispatch]);
-
-  return null;
-}
-
-function AuthInitializer() {
-  const store = useStore();
-
-  useEffect(() => {
-    // CRITICAL: Initialize BroadcastChannel BEFORE running authInitializer
-    // This ensures other tabs can respond to AUTH_REQUEST
-    broadcastManager.initialize();
-    
-    // Run auth initialization in background
-    initializeAuth(store as AppStore);
-  }, [store]);
-
-  // Don't block rendering - AdminLayout and LoginPage will handle their own auth checks
-  return null;
-}
-
 import { ThemeProvider } from 'next-themes';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -219,8 +68,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange={false}
         >
           <NavigationProvider />
-          <BroadcastListener />
-          <AuthInitializer />
+          {/* DISABLED: Authentication components */}
+          {/* <BroadcastListener /> */}
+          {/* <AuthInitializer /> */}
           {children}
           <Toaster
             position="top-right"

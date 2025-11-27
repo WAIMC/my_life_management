@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { mediaFileService } from '@/services/media-file.service';
 import { FileUpload } from './FileUpload';
 import type { MediaFile, ListFilesParams, FileType } from '@/types/media-file.types';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 export function MediaManager() {
   const [files, setFiles] = useState<MediaFile[]>([]);
@@ -57,6 +60,7 @@ export function MediaManager() {
       await mediaFileService.deleteSingle(id);
       loadFiles();
     } catch (error) {
+      console.error('Failed to delete file:', error);
       alert('Failed to delete file');
     }
   };
@@ -70,6 +74,7 @@ export function MediaManager() {
       setSelectedFiles(new Set());
       loadFiles();
     } catch (error) {
+      console.error('Failed to delete files:', error);
       alert('Failed to delete files');
     }
   };
@@ -85,348 +90,175 @@ export function MediaManager() {
   };
 
   return (
-    <div className="media-manager">
-      <div className="manager-header">
-        <h1>Media Manager</h1>
-        <button onClick={() => setShowUpload(!showUpload)} className="btn btn-primary">
+    <div className="mx-auto max-w-7xl px-6 py-6">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Media Manager</h1>
+        <Button onClick={() => setShowUpload(!showUpload)}>
           {showUpload ? 'Hide Upload' : 'Upload File'}
-        </button>
+        </Button>
       </div>
 
+      {/* Upload Section */}
       {showUpload && (
-        <div className="upload-section">
+        <div className="mb-8 rounded-lg bg-slate-50 p-6 dark:bg-slate-900">
           <FileUpload onUploadSuccess={handleUploadSuccess} />
         </div>
       )}
 
-      <div className="manager-toolbar">
-        <div className="search-box">
-          <input
+      {/* Toolbar */}
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        {/* Search Box */}
+        <div className="flex gap-2">
+          <Input
             type="text"
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            className="min-w-[250px]"
           />
-          <button onClick={handleSearch} className="btn btn-sm">Search</button>
+          <Button onClick={handleSearch} variant="secondary" size="sm">
+            Search
+          </Button>
         </div>
 
-        <div className="filter-tabs">
+        {/* Filter Tabs */}
+        <div className="flex gap-2">
           {(['all', 'images', 'videos', 'documents'] as FileType[]).map((type) => (
-            <button
+            <Button
               key={type}
               onClick={() => setFileType(type)}
-              className={`tab ${fileType === type ? 'active' : ''}`}
+              variant={fileType === type ? 'default' : 'outline'}
+              size="sm"
             >
               {type.charAt(0).toUpperCase() + type.slice(1)}
-            </button>
+            </Button>
           ))}
         </div>
 
+        {/* Bulk Delete */}
         {selectedFiles.size > 0 && (
-          <button onClick={handleBulkDelete} className="btn btn-danger">
+          <Button onClick={handleBulkDelete} variant="destructive" size="sm">
             Delete Selected ({selectedFiles.size})
-          </button>
+          </Button>
         )}
       </div>
 
+      {/* Loading State */}
       {loading ? (
-        <div className="loading">Loading...</div>
+        <div className="py-16 text-center text-slate-500 dark:text-slate-400">
+          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-800 dark:border-t-blue-400" />
+          <p>Loading...</p>
+        </div>
       ) : (
         <>
-          <div className="files-grid">
+          {/* Files Grid */}
+          <div className="mb-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {files.map((file) => (
-              <div key={file.id} className="file-card">
-                <div className="file-checkbox">
+              <Card key={file.id} className="group relative overflow-hidden transition-shadow hover:shadow-lg">
+                {/* Checkbox */}
+                <div className="absolute left-3 top-3 z-10">
                   <input
                     type="checkbox"
                     checked={selectedFiles.has(file.id)}
                     onChange={() => toggleFileSelection(file.id)}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
-                <div className="file-preview">
+                {/* File Preview */}
+                <div className="flex h-48 items-center justify-center overflow-hidden bg-slate-100 dark:bg-slate-800">
                   {file.mime_type.startsWith('image/') ? (
-                    <img src={file.view_url} alt={file.original_name} />
+                    <img
+                      src={file.view_url}
+                      alt={file.original_name}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
-                    <div className="file-icon">
+                    <div className="text-6xl">
                       {mediaFileService.getFileTypeIcon(file.mime_type)}
                     </div>
                   )}
                 </div>
 
-                <div className="file-details">
-                  <p className="file-name" title={file.original_name}>
+                {/* File Details */}
+                <div className="p-4">
+                  <p
+                    className="mb-1 truncate font-semibold text-slate-900 dark:text-white"
+                    title={file.original_name}
+                  >
                     {file.original_name}
                   </p>
-                  <p className="file-meta">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {file.human_size} • {new Date(file.created_at).toLocaleDateString()}
                   </p>
                 </div>
 
-                <div className="file-actions">
-                  <button
+                {/* File Actions */}
+                <div className="flex justify-center gap-2 border-t border-slate-200 p-3 dark:border-slate-700">
+                  <Button
                     onClick={() => window.open(file.view_url, '_blank')}
-                    className="action-btn"
+                    variant="ghost"
+                    size="sm"
                     title="View"
                   >
                     👁️
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => mediaFileService.download(file.id, file.original_name)}
-                    className="action-btn"
+                    variant="ghost"
+                    size="sm"
                     title="Download"
                   >
                     ⬇️
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => handleDelete(file.id)}
-                    className="action-btn"
+                    variant="ghost"
+                    size="sm"
                     title="Delete"
                   >
                     🗑️
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
-          {files.length === 0 && (
-            <div className="empty-state">
-              <p>No files found</p>
+          {/* Empty State */}
+          {files.length === 0 && !loading && (
+            <div className="py-16 text-center text-slate-500 dark:text-slate-400">
+              <p className="text-lg">No files found</p>
             </div>
           )}
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="pagination">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="btn btn-sm"
+                variant="outline"
+                size="sm"
               >
                 Previous
-              </button>
-              <span className="page-info">
+              </Button>
+              <span className="text-slate-700 dark:text-slate-300">
                 Page {currentPage} of {totalPages}
               </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              <Button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="btn btn-sm"
+                variant="outline"
+                size="sm"
               >
                 Next
-              </button>
+              </Button>
             </div>
           )}
         </>
       )}
-
-      <style jsx>{`
-        .media-manager {
-          padding: 24px;
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .manager-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 24px;
-        }
-
-        .manager-header h1 {
-          font-size: 28px;
-          font-weight: 700;
-          color: #1a202c;
-        }
-
-        .upload-section {
-          margin-bottom: 32px;
-          padding: 24px;
-          background: #f7fafc;
-          border-radius: 8px;
-        }
-
-        .manager-toolbar {
-          display: flex;
-          gap: 16px;
-          margin-bottom: 24px;
-          flex-wrap: wrap;
-          align-items: center;
-        }
-
-        .search-box {
-          display: flex;
-          gap: 8px;
-        }
-
-        .search-box input {
-          padding: 8px 12px;
-          border: 1px solid #cbd5e0;
-          border-radius: 6px;
-          min-width: 250px;
-        }
-
-        .filter-tabs {
-          display: flex;
-          gap: 8px;
-        }
-
-        .tab {
-          padding: 8px 16px;
-          border: 1px solid #cbd5e0;
-          background: white;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .tab.active {
-          background: #4299e1;
-          color: white;
-          border-color: #4299e1;
-        }
-
-        .files-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 20px;
-          margin-bottom: 24px;
-        }
-
-        .file-card {
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 16px;
-          background: white;
-          transition: all 0.2s;
-          position: relative;
-        }
-
-        .file-card:hover {
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-checkbox {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-        }
-
-        .file-preview {
-          width: 100%;
-          height: 180px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f7fafc;
-          border-radius: 6px;
-          margin-bottom: 12px;
-          overflow: hidden;
-        }
-
-        .file-preview img {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: cover;
-        }
-
-        .file-icon {
-          font-size: 64px;
-        }
-
-        .file-details {
-          margin-bottom: 12px;
-        }
-
-        .file-name {
-          font-weight: 600;
-          color: #2d3748;
-          margin-bottom: 4px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .file-meta {
-          font-size: 13px;
-          color: #718096;
-        }
-
-        .file-actions {
-          display: flex;
-          gap: 8px;
-          justify-content: center;
-        }
-
-        .action-btn {
-          padding: 6px 12px;
-          border: 1px solid #e2e8f0;
-          background: white;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-          background: #f7fafc;
-        }
-
-        .loading, .empty-state {
-          text-align: center;
-          padding: 60px 20px;
-          color: #718096;
-        }
-
-        .pagination {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .page-info {
-          color: #4a5568;
-        }
-
-        .btn {
-          padding: 10px 20px;
-          border-radius: 6px;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-          transition: all 0.2s;
-        }
-
-        .btn-primary {
-          background: #4299e1;
-          color: white;
-        }
-
-        .btn-primary:hover {
-          background: #3182ce;
-        }
-
-        .btn-danger {
-          background: #f56565;
-          color: white;
-        }
-
-        .btn-danger:hover {
-          background: #e53e3e;
-        }
-
-        .btn-sm {
-          padding: 6px 12px;
-          font-size: 14px;
-        }
-
-        .btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      `}</style>
     </div>
   );
 }

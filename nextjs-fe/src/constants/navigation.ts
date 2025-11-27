@@ -1,7 +1,7 @@
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
   Settings,
   LucideIcon,
   FolderOpen,
@@ -45,11 +45,6 @@ export const NAVIGATION_MENU: MenuItem[] = [
     label: 'File Manager',
     icon: FolderOpen,
     href: '/admin/file-manager',
-  },
-  {
-    label: 'Media',
-    icon: Image,
-    href: '/admin/media',
   },
   {
     label: 'Master Data',
@@ -154,33 +149,28 @@ export const NAVIGATION_MENU: MenuItem[] = [
     ],
   },
   {
-    label: 'Posts',
-    icon: FileText,
-    href: '/admin/posts',
-  },
-  {
     label: 'Settings',
     icon: Settings,
     children: [
-      { 
-        label: 'General', 
+      {
+        label: 'General',
         icon: Settings,
-        href: '/admin/settings/general' 
+        href: '/admin/settings/general'
       },
-      { 
-        label: 'Security', 
+      {
+        label: 'Security',
         icon: Settings,
-        href: '/admin/settings/security' 
+        href: '/admin/settings/security'
       },
-      { 
-        label: 'Notifications', 
+      {
+        label: 'Notifications',
         icon: Settings,
-        href: '/admin/settings/notifications' 
+        href: '/admin/settings/notifications'
       },
-      { 
-        label: 'Google Drive', 
+      {
+        label: 'Google Drive',
         icon: Cloud,
-        href: '/admin/settings/google-drive' 
+        href: '/admin/settings/google-drive'
       },
     ],
   },

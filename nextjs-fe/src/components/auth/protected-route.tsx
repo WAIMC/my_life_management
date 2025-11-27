@@ -13,6 +13,10 @@ interface ProtectedRouteProps {
  * Redirects to login if user is not authenticated
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  // DISABLED: Protected route auth check
+  return <>{children}</>;
+
+  /* ORIGINAL CODE - COMMENTED OUT
   const router = useRouter();
   const { isAuthenticated, isLoading, checkAuth } = useAuth();
 
@@ -48,4 +52,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   return <>{children}</>;
+  */
 }

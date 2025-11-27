@@ -111,8 +111,8 @@ export default function DepartmentListPage() {
 
   const bulkActions: BulkAction[] = [
     { label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} department(s)?`, confirmTitle: 'Delete Departments' },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Activate:', ids); refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Deactivate:', ids); refetch(); } },
+    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
+    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
@@ -123,7 +123,6 @@ export default function DepartmentListPage() {
   };
 
   const handleImport = async (importedData: any[]) => {
-    console.log('Import:', importedData);
     refetch();
   };
 

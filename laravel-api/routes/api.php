@@ -14,8 +14,9 @@ Route::prefix('admin')
             Route::post('refresh-token', [CredentialController::class, 'refreshToken']);
         });
 
+        // DISABLED: Authentication middleware
+        // ->middleware(AdminMiddleware::class)
         Route::middleware(TransactionMiddleware::class)
-            ->middleware(AdminMiddleware::class)
             ->group(function () {
                 Route::post('account/logout', [CredentialController::class, 'logout']);
                 Route::get('account/me', [CredentialController::class, 'me']);

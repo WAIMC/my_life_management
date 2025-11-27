@@ -60,7 +60,6 @@ export function BulkActions({
       await action.onClick(selectedIds);
       onClearSelection();
     } catch (error) {
-      console.error('Bulk action failed:', error);
     } finally {
       setIsExecuting(false);
       setConfirmAction(null);
@@ -77,7 +76,6 @@ export function BulkActions({
       icon: <Trash2 className="h-4 w-4" />,
       variant: 'destructive',
       onClick: async (ids) => {
-        console.log('Delete:', ids);
       },
       confirmMessage: `Are you sure you want to delete ${selectedIds.length} item(s)? This action cannot be undone.`,
       confirmTitle: 'Delete Items',
@@ -86,21 +84,18 @@ export function BulkActions({
       label: 'Archive Selected',
       icon: <Archive className="h-4 w-4" />,
       onClick: async (ids) => {
-        console.log('Archive:', ids);
       },
     },
     {
       label: 'Activate Selected',
       icon: <CheckCircle className="h-4 w-4" />,
       onClick: async (ids) => {
-        console.log('Activate:', ids);
       },
     },
     {
       label: 'Deactivate Selected',
       icon: <XCircle className="h-4 w-4" />,
       onClick: async (ids) => {
-        console.log('Deactivate:', ids);
       },
     },
   ];

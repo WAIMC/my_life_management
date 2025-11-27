@@ -123,9 +123,7 @@ export class PerformanceMonitor {
       const existing = this.metrics.get(label) || [];
       this.metrics.set(label, [...existing, duration]);
       
-      if (duration > 1000) {
-        console.warn(`Slow operation: ${label} took ${duration.toFixed(2)}ms`);
-      }
+      if (duration > 1000) {}
     };
   }
 

@@ -118,8 +118,8 @@ export default function RoleListPage() {
       confirmMessage: `Delete ${selectedIds.length} role(s)?`,
       confirmTitle: 'Delete Roles',
     },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Activate:', ids); refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Deactivate:', ids); refetch(); } },
+    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
+    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
@@ -130,7 +130,6 @@ export default function RoleListPage() {
   };
 
   const handleImport = async (importedData: any[]) => {
-    console.log('Import:', importedData);
     refetch();
   };
 

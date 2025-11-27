@@ -26,7 +26,6 @@ export const roleServiceExtended = {
    */
   async assignApis(roleId: number, apiIds: number[]): Promise<void> {
     // Implementation will depend on API structure
-    console.log('Assign APIs to role:', roleId, apiIds);
   },
 
   /**
@@ -34,7 +33,6 @@ export const roleServiceExtended = {
    */
   async getPermissions(roleId: number): Promise<any[]> {
     // Implementation will depend on API structure
-    console.log('Get permissions for role:', roleId);
     return [];
   },
 };

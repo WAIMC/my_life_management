@@ -58,7 +58,6 @@ export function SavedFilters({
         setSavedFilters(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Failed to load saved filters:', error);
     }
   };
 
@@ -67,7 +66,6 @@ export function SavedFilters({
       localStorage.setItem(storageKey, JSON.stringify(filters));
       setSavedFilters(filters);
     } catch (error) {
-      console.error('Failed to save filters:', error);
       toast.error('Failed to save filter');
     }
   };

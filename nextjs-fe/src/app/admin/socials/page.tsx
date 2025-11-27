@@ -95,9 +95,9 @@ export default function SocialListPage() {
     { key: 'is_active', label: 'Active', type: 'boolean' },
   ];
   const searchFields: SearchField[] = [{ key: 'platform', label: 'Platform', type: 'text' }, { key: 'url', label: 'URL', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} social link(s)?`, confirmTitle: 'Delete Social Links' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Activate:', ids); refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Deactivate:', ids); refetch(); } }];
+  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} social link(s)?`, confirmTitle: 'Delete Social Links' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (importedData: any[]) => { console.log('Import:', importedData); refetch(); };
+  const handleImport = async (importedData: any[]) => { refetch(); };
 
   return (
     <AdminLayout>

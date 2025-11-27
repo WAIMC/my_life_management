@@ -91,50 +91,54 @@ export function useAuth() {
 
   /**
    * Logout and clear tokens
-   * Logic 10.8: Đăng xuất tất cả tab cùng origin
+   * Logic 1.9: Đăng xuất tất cả tab cùng origin
+   * CRITICAL: Clear state FIRST (synchronously) before API call
    */
   const logout = useCallback(async () => {
+    // DISABLED: Logout logic
+    return;
+
+    /* ORIGINAL CODE - COMMENTED OUT
     try {
-      setState((prev) => ({ ...prev, isLoading: true }));
-
-      await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
+      // Logic 1.9: Clear Redux state FIRST (synchronously)
       apiClient.clearAccessToken();
-
-      // Clear Redux store
       dispatch(clearAuth());
 
-      // Logic 10.8: Broadcast logout to all tabs
-      const broadcastManager = (await import("@/lib/broadcastChannelManager"))
-        .default;
-      broadcastManager.broadcastLogout(leaderId || "");
+      // Logic 1.9: Broadcast logout to all tabs (async, don't block)
+      import("@/lib/broadcastChannelManager").then(({ default: broadcastManager }) => {
+        broadcastManager.broadcastLogout(leaderId || "");
+      }).catch(err => {
+      });
+
+      // Logic 1.9: Call API to revoke tokens (fire-and-forget, don't await)
+      apiClient.post(ENDPOINTS.AUTH.LOGOUT).catch(err => {});
 
       setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
       });
-
-      notification.success("Logged out successfully");
     } catch (error: any) {
-      // Clear state even if API call fails
+      // Ensure state is cleared even on error
       apiClient.clearAccessToken();
       dispatch(clearAuth());
-
       setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
       });
-
-      const message = error.response?.data?.message || "Logout failed";
-      notification.error(message);
     }
+    */
   }, [dispatch, leaderId]);
 
   /**
    * Refresh access token
    */
   const refreshToken = useCallback(async () => {
+    // DISABLED: Refresh token logic
+    return;
+
+    /* ORIGINAL CODE - COMMENTED OUT
     try {
       const response = await apiClient.post<LoginResponse>(
         ENDPOINTS.AUTH.REFRESH
@@ -145,12 +149,17 @@ export function useAuth() {
       await logout();
       throw error;
     }
+    */
   }, [logout]);
 
   /**
    * Check if user is authenticated (call on app init)
    */
   const checkAuth = useCallback(async () => {
+    // DISABLED: Check auth logic
+    return;
+
+    /* ORIGINAL CODE - COMMENTED OUT
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
@@ -168,6 +177,7 @@ export function useAuth() {
         isLoading: false,
       });
     }
+    */
   }, []);
 
   return {

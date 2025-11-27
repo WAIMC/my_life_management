@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Sidebar } from './sidebar';
 import { Breadcrumb } from './breadcrumb';
 import { Toolbar } from './toolbar';
 import { FileGrid } from './file-grid';
@@ -18,7 +17,7 @@ import { MoveCopyDialog } from './dialogs/move-copy-dialog';
 import type { MediaFile } from './types';
 import toast from 'react-hot-toast';
 
-export default function FileManager() {
+export function FileManagerContent() {
   const {
     currentPath,
     viewMode,
@@ -108,11 +107,6 @@ export default function FileManager() {
   const handleDelete = (file?: MediaFile) => {
     if (file) {
       setTargetFile(file);
-      // If deleting a single file that isn't in selection, clear selection first
-      if (!selectedFiles.includes(file.id)) {
-        // Optional: clear selection or just delete this one
-        // For simplicity, let's just set targetFile and handle logic in confirm
-      }
     } else {
       setTargetFile(null);
     }
@@ -161,8 +155,6 @@ export default function FileManager() {
   };
 
   const handleDownload = (file: MediaFile) => {
-    // In a real app, this would trigger a download
-    // For mock, we just open the URL
     const link = document.createElement('a');
     link.href = file.url;
     link.download = file.name;
@@ -196,79 +188,71 @@ export default function FileManager() {
     : false;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
-      <Sidebar
-        currentPath={currentPath}
-        onPathChange={setCurrentPath}
-        className="hidden w-64 border-r border-border md:block"
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+      <Breadcrumb items={breadcrumbItems} onNavigate={handleNavigate} />
+
+      <Toolbar
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onUpload={() => setIsUploadOpen(true)}
+        onNewFolder={() => setIsNewFolderOpen(true)}
+        onDelete={() => handleDelete()}
+        onMove={() => handleMove()}
+        onCopy={() => handleCopy()}
+        onRefresh={refreshFiles}
+        onSearchChange={setSearchQuery}
+        searchQuery={searchQuery}
+        selectedCount={selectedFiles.length}
+        filterOptions={filterOptions}
+        onFilterChange={setFilterOptions}
+        sortOptions={sortOptions}
+        onSortChange={setSortOptions}
       />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Breadcrumb items={breadcrumbItems} onNavigate={handleNavigate} />
-
-        <Toolbar
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onUpload={() => setIsUploadOpen(true)}
-          onNewFolder={() => setIsNewFolderOpen(true)}
-          onDelete={() => handleDelete()}
-          onMove={() => handleMove()}
-          onCopy={() => handleCopy()}
-          onRefresh={refreshFiles}
-          onSearchChange={setSearchQuery}
-          searchQuery={searchQuery}
-          selectedCount={selectedFiles.length}
-          filterOptions={filterOptions}
-          onFilterChange={setFilterOptions}
-          sortOptions={sortOptions}
-          onSortChange={setSortOptions}
-        />
-
-        <div className="flex-1 overflow-auto p-4">
-          {viewMode === 'grid' ? (
-            <FileGrid
-              files={files}
-              selectedFiles={selectedFiles}
-              onSelect={toggleFileSelection}
-              onFileClick={handleFileClick}
-              onNavigate={handleNavigate}
-              isLoading={isLoading}
-              onPreview={setPreviewFile}
-              onRename={handleRename}
-              onMove={handleMove}
-              onCopy={handleCopy}
-              onDelete={handleDelete}
-              onDownload={handleDownload}
-            />
-          ) : (
-            <FileList
-              files={files}
-              selectedFiles={selectedFiles}
-              onSelect={toggleFileSelection}
-              onFileClick={handleFileClick}
-              onNavigate={handleNavigate}
-              isLoading={isLoading}
-              sortField={sortOptions.field}
-              sortOrder={sortOptions.order}
-              onSort={(field) => setSortOptions({
-                field,
-                order: sortOptions.field === field && sortOptions.order === 'asc' ? 'desc' : 'asc'
-              })}
-              onPreview={setPreviewFile}
-              onRename={handleRename}
-              onMove={handleMove}
-              onCopy={handleCopy}
-              onDelete={handleDelete}
-              onDownload={handleDownload}
-            />
-          )}
-        </div>
-
-        <Pagination
-          pagination={pagination}
-          onPageChange={(page) => setPagination({ ...pagination, page })}
-        />
+      <div className="flex-1 overflow-auto p-4">
+        {viewMode === 'grid' ? (
+          <FileGrid
+            files={files}
+            selectedFiles={selectedFiles}
+            onSelect={toggleFileSelection}
+            onFileClick={handleFileClick}
+            onNavigate={handleNavigate}
+            isLoading={isLoading}
+            onPreview={setPreviewFile}
+            onRename={handleRename}
+            onMove={handleMove}
+            onCopy={handleCopy}
+            onDelete={handleDelete}
+            onDownload={handleDownload}
+          />
+        ) : (
+          <FileList
+            files={files}
+            selectedFiles={selectedFiles}
+            onSelect={toggleFileSelection}
+            onFileClick={handleFileClick}
+            onNavigate={handleNavigate}
+            isLoading={isLoading}
+            sortField={sortOptions.field}
+            sortOrder={sortOptions.order}
+            onSort={(field) => setSortOptions({
+              field,
+              order: sortOptions.field === field && sortOptions.order === 'asc' ? 'desc' : 'asc'
+            })}
+            onPreview={setPreviewFile}
+            onRename={handleRename}
+            onMove={handleMove}
+            onCopy={handleCopy}
+            onDelete={handleDelete}
+            onDownload={handleDownload}
+          />
+        )}
       </div>
+
+      <Pagination
+        pagination={pagination}
+        onPageChange={(page) => setPagination({ ...pagination, page })}
+      />
 
       {/* Dialogs */}
       <UploadDialog
@@ -320,7 +304,3 @@ export default function FileManager() {
     </div>
   );
 }
-
-// Named exports for convenience
-export { FileManager };
-export { FileManagerContent } from './file-manager-content';

@@ -50,7 +50,6 @@ export function ImportExport({
       setIsOpen(false);
     } catch (error) {
       toast.error('Export failed');
-      console.error('Export error:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -70,7 +69,6 @@ export function ImportExport({
       setIsOpen(false);
     } catch (error) {
       toast.error('Import failed');
-      console.error('Import error:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -85,7 +83,6 @@ export function ImportExport({
       toast.success(`Downloaded ${format.toUpperCase()} template`);
     } catch (error) {
       toast.error('Template download failed');
-      console.error('Template download error:', error);
     } finally {
       setIsProcessing(false);
     }

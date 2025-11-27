@@ -119,8 +119,8 @@ export default function AdminListPage() {
       confirmMessage: `Delete ${selectedIds.length} admin(s)?`,
       confirmTitle: 'Delete Admins',
     },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Activate:', ids); refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { console.log('Deactivate:', ids); refetch(); } },
+    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
+    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
@@ -131,7 +131,6 @@ export default function AdminListPage() {
   };
 
   const handleImport = async (importedData: any[]) => {
-    console.log('Import:', importedData);
     refetch();
   };
 

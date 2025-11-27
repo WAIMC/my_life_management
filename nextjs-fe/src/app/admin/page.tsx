@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/card';
 
 export default function AdminDashboard() {
   const handleSearch = (value: string) => {
-    console.log('Searching for:', value);
   };
 
   return (

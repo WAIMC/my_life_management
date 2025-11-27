@@ -89,7 +89,6 @@ export const UploadDialog = ({
         onOpenChange(false);
       }, 500);
     } catch (error) {
-      console.error('Upload failed:', error);
       setUploading(false);
     } finally {
       clearInterval(interval);

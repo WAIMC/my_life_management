@@ -20,30 +20,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // Logic 10.1: Redirect if already authenticated
+  // DISABLED: Redirect if already authenticated
   useEffect(() => {
-    console.log('[LoginPage] useEffect triggered:', {
-      authInitialized,
-      isAuthenticated,
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
+    // DISABLED: Auto-redirect logic
+    return;
 
+    /* ORIGINAL CODE - COMMENTED OUT
     if (authInitialized && isAuthenticated) {
       const redirectParam = searchParams.get("redirect");
       const redirectUrl =
         redirectParam && redirectParam.startsWith("/admin")
           ? redirectParam
           : "/admin";
-
-      console.log("[LoginPage] Authenticated! Redirecting to:", redirectUrl);
       router.push(redirectUrl);
     } else {
-      console.log('[LoginPage] Not redirecting:', {
-        authInitialized,
-        isAuthenticated,
-        reason: !authInitialized ? 'auth not initialized' : 'not authenticated'
-      });
     }
+    */
   }, [authInitialized, isAuthenticated, searchParams, router]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -53,16 +45,14 @@ export default function LoginPage() {
     try {
       // useAuth.login() calls syncAuthStateAcrossTabs which updates Redux
       await login(username, password);
-      
+
       // DO NOT manually redirect here!
       // The useEffect (lines 24-35) will handle redirect when isAuthenticated becomes true
       // This prevents race condition where AdminLayout checks auth before state propagates
-      console.log("Login successful, waiting for state to propagate...");
     } catch (error: any) {
       // Show error message to user
       const errorMessage = error.response?.data?.message || "Invalid username or password";
       setError(errorMessage);
-      console.error("Login failed:", error);
     }
   };
 

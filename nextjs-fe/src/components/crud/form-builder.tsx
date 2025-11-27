@@ -102,7 +102,6 @@ export function FormBuilder({
     try {
       await onSubmit(values);
     } catch (error) {
-      console.error('Form submission error:', error);
     }
   };
 
