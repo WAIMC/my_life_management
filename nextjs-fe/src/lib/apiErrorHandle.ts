@@ -64,6 +64,10 @@ export const handleCommonError = (error: AxiosError<ApiResponse<unknown>>) => {
       toast.error(errorMessage || ERR_MESS.E0503 || 'Service temporarily unavailable. Please try again later.');
       break;
 
+    case 507: // Insufficient Storage (Google Drive quota)
+      toast.error(errorMessage || 'Storage quota exceeded. Please free up space or upgrade your storage.');
+      break;
+
     default:
       // Unknown error
       toast.error(errorMessage || ERR_MESS.E1000);

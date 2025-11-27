@@ -63,41 +63,4 @@ class MediaFile extends Model
     {
         return $this->belongsTo(\App\Models\Master\AdminMst::class, 'admin_mst_id');
     }
-
-    /**
-     * Get the file URL for viewing.
-     *
-     * @return string
-     */
-    public function getViewUrlAttribute(): string
-    {
-        return route('api.media-files.view', ['id' => $this->id]);
-    }
-
-    /**
-     * Get the file URL for downloading.
-     *
-     * @return string
-     */
-    public function getDownloadUrlAttribute(): string
-    {
-        return route('api.media-files.download', ['id' => $this->id]);
-    }
-
-    /**
-     * Get human-readable file size.
-     *
-     * @return string
-     */
-    public function getHumanSizeAttribute(): string
-    {
-        $bytes = $this->size;
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
-        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-            $bytes /= 1024;
-        }
-        
-        return round($bytes, 2) . ' ' . $units[$i];
-    }
 }

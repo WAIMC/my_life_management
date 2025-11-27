@@ -31,6 +31,7 @@ export const UploadDialog = ({
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -70,6 +71,7 @@ export const UploadDialog = ({
 
     setUploading(true);
     setProgress(0);
+    setError(null);
 
     // Simulate progress
     const interval = setInterval(() => {
@@ -88,8 +90,21 @@ export const UploadDialog = ({
         setProgress(0);
         onOpenChange(false);
       }, 500);
-    } catch (error) {
+    } catch (err: any) {
       setUploading(false);
+      setProgress(0);
+      
+      // Extract error message from API response
+      let errorMessage = 'Upload failed. Please try again.';
+      
+      if (err?.response?.data?.error?.messages) {
+        errorMessage = err.response.data.error.messages;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      console.error('Upload error:', err);
     } finally {
       clearInterval(interval);
     }
@@ -166,6 +181,25 @@ export const UploadDialog = ({
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-destructive">Upload Failed</p>
+                <p className="text-destructive/90 mt-1">{error}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setError(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           )}
 

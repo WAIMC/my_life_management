@@ -131,6 +131,7 @@ echo ""
 
 # Step 5: Set proper permissions
 echo -e "${YELLOW}[5/6] Setting file permissions...${NC}"
+chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 echo -e "${GREEN}  ✓ Permissions set${NC}"
 echo ""

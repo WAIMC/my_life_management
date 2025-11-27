@@ -155,6 +155,39 @@ class MediaFileService {
     
     return `${size.toFixed(2)} ${units[unitIndex]}`;
   }
+
+  /**
+   * Create folder
+   */
+  async createFolder(params: import('@/types/media-file.types').CreateFolderParams): Promise<{ id: number; google_file_id: string; name: string; folder_path: string }> {
+    const response = await apiClient.post<{ id: number; google_file_id: string; name: string; folder_path: string }>(
+      `${this.baseUrl}/folders`,
+      params
+    );
+    return response.data;
+  }
+
+  /**
+   * List folders
+   */
+  async listFolders(params?: import('@/types/media-file.types').ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
+    const response = await apiClient.get<PaginatedResponse<MediaFile>>(
+      `${this.baseUrl}/folders`,
+      params
+    );
+    return response.data;
+  }
+
+  /**
+   * Copy files to different folder
+   */
+  async copy(params: import('@/types/media-file.types').CopyFilesParams): Promise<{ copied_count: number; copied_ids: number[] }> {
+    const response = await apiClient.post<{ copied_count: number; copied_ids: number[] }>(
+      `${this.baseUrl}/copy`,
+      params
+    );
+    return response.data;
+  }
 }
 
 export const mediaFileService = new MediaFileService();

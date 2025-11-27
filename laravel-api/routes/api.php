@@ -174,6 +174,9 @@ Route::prefix('admin')
                 Route::put('media-files/{id}/rename', [\App\Http\Controllers\Management\MediaFileController::class, 'rename']);
                 Route::put('media-files/{id}/move', [\App\Http\Controllers\Management\MediaFileController::class, 'move']);
                 Route::delete('media-files/delete', [\App\Http\Controllers\Management\MediaFileController::class, 'delete']);
+                Route::post('media-files/folders', [\App\Http\Controllers\Management\MediaFileController::class, 'createFolder']);
+                Route::get('media-files/folders', [\App\Http\Controllers\Management\MediaFileController::class, 'listFolders']);
+                Route::post('media-files/copy', [\App\Http\Controllers\Management\MediaFileController::class, 'copy']);
 
                 // Google Drive Configuration Management
                 Route::post('google-drive-configs/upload', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'upload']);

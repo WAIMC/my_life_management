@@ -5,8 +5,13 @@ namespace App\Services\Custom;
 use Google\Client as GoogleClient;
 use Google\Service\Drive as GoogleDrive;
 use Google\Service\Drive\DriveFile;
+use Google\Service\Exception as GoogleServiceException;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use App\Exceptions\GoogleDriveFileNotFoundException;
+use App\Exceptions\GoogleDriveAuthException;
+use App\Exceptions\GoogleDriveQuotaExceededException;
+use App\Exceptions\GoogleDrivePermissionException;
 
 class GoogleDriveService
 {
@@ -32,24 +37,80 @@ class GoogleDriveService
         
         if ($dbConfig) {
             // Use credentials from database
-            $this->client->setAuthConfig($dbConfig->credentials_array);
-            $this->rootFolderId = $dbConfig->root_folder_id;
-            Log::info('Using Google Drive credentials from database', ['config_id' => $dbConfig->id]);
+            try {
+                $this->client->setAuthConfig($dbConfig->credentials_array);
+                $this->rootFolderId = $dbConfig->root_folder_id;
+                
+                // Validate root folder ID
+                if (empty($this->rootFolderId) || $this->rootFolderId === 'your_google_drive_root_folder_id_here') {
+                    Log::error('Google Drive root folder ID is not configured in database', [
+                        'config_id' => $dbConfig->id,
+                        'root_folder_id' => $this->rootFolderId
+                    ]);
+                    throw new Exception(
+                        "Google Drive root folder ID is not configured. Please set a valid root folder ID in the Google Drive configuration (current value: '{$this->rootFolderId}'). " .
+                        "You can find your folder ID in the Google Drive URL when viewing the folder."
+                    );
+                }
+                
+                Log::info('Using Google Drive credentials from database', ['config_id' => $dbConfig->id]);
+            } catch (\Exception $e) {
+                Log::error('Failed to initialize Google Drive with database credentials', [
+                    'error' => $e->getMessage(),
+                    'config_id' => $dbConfig->id
+                ]);
+                throw new Exception("Failed to initialize Google Drive with database credentials: " . $e->getMessage());
+            }
         } else {
             // Fall back to file-based configuration
             $credentialsPath = config('services.google_drive.credentials_path');
             
             if (!file_exists($credentialsPath)) {
-                throw new Exception("Google Drive credentials not found. Please upload credentials via admin panel or configure file at: {$credentialsPath}");
+                Log::error('Google Drive credentials file not found', [
+                    'expected_path' => $credentialsPath,
+                    'absolute_path' => base_path($credentialsPath)
+                ]);
+                throw new Exception(
+                    "Google Drive credentials not found. Please either:\n" .
+                    "1. Upload credentials via Admin Panel > Google Drive Configuration, OR\n" .
+                    "2. Place your credentials JSON file at: {$credentialsPath}\n" .
+                    "You can download credentials from Google Cloud Console."
+                );
             }
 
-            $this->client->setAuthConfig($credentialsPath);
+            try {
+                $this->client->setAuthConfig($credentialsPath);
+            } catch (\Exception $e) {
+                Log::error('Invalid Google Drive credentials file', [
+                    'path' => $credentialsPath,
+                    'error' => $e->getMessage()
+                ]);
+                throw new Exception("Invalid Google Drive credentials file at {$credentialsPath}: " . $e->getMessage());
+            }
+            
             $this->rootFolderId = config('services.google_drive.root_folder_id');
-            Log::info('Using Google Drive credentials from file');
+            
+            // Validate root folder ID
+            if (empty($this->rootFolderId) || $this->rootFolderId === 'your_google_drive_root_folder_id_here') {
+                Log::error('Google Drive root folder ID is not configured in .env', [
+                    'current_value' => $this->rootFolderId
+                ]);
+                throw new Exception(
+                    "Google Drive root folder ID is not configured. Please set GOOGLE_DRIVE_ROOT_FOLDER_ID in your .env file. " .
+                    "Current value: '{$this->rootFolderId}'. " .
+                    "You can find your folder ID in the Google Drive URL when viewing the folder (e.g., https://drive.google.com/drive/folders/YOUR_FOLDER_ID)."
+                );
+            }
+            
+            Log::info('Using Google Drive credentials from file', ['credentials_path' => $credentialsPath]);
         }
 
         $this->client->addScope(GoogleDrive::DRIVE_FILE);
         $this->service = new GoogleDrive($this->client);
+        
+        Log::info('Google Drive client initialized successfully', [
+            'root_folder_id' => $this->rootFolderId
+        ]);
     }
 
     /**
@@ -98,6 +159,8 @@ class GoogleDriveService
                 'web_view_link' => $driveFile->getWebViewLink(),
                 'web_content_link' => $driveFile->getWebContentLink(),
             ];
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, '', 'upload');
         } catch (Exception $e) {
             Log::error('Google Drive upload failed: ' . $e->getMessage());
             throw new Exception('Failed to upload file to Google Drive: ' . $e->getMessage());
@@ -116,6 +179,8 @@ class GoogleDriveService
             return $this->service->files->get($fileId, [
                 'fields' => 'id, name, size, mimeType, webViewLink, webContentLink, createdTime, modifiedTime'
             ]);
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $fileId, 'get');
         } catch (Exception $e) {
             Log::error('Google Drive get file failed: ' . $e->getMessage());
             throw new Exception('Failed to get file from Google Drive: ' . $e->getMessage());
@@ -136,6 +201,8 @@ class GoogleDriveService
             ]);
 
             return $response->getBody()->getContents();
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $fileId, 'download');
         } catch (Exception $e) {
             Log::error('Google Drive download failed: ' . $e->getMessage());
             throw new Exception('Failed to download file from Google Drive: ' . $e->getMessage());
@@ -153,6 +220,8 @@ class GoogleDriveService
         try {
             $this->service->files->delete($fileId);
             return true;
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $fileId, 'delete');
         } catch (Exception $e) {
             Log::error('Google Drive delete failed: ' . $e->getMessage());
             throw new Exception('Failed to delete file from Google Drive: ' . $e->getMessage());
@@ -176,6 +245,8 @@ class GoogleDriveService
             return $this->service->files->update($fileId, $fileMetadata, [
                 'fields' => 'id, name'
             ]);
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $fileId, 'rename');
         } catch (Exception $e) {
             Log::error('Google Drive rename failed: ' . $e->getMessage());
             throw new Exception('Failed to rename file in Google Drive: ' . $e->getMessage());
@@ -205,6 +276,8 @@ class GoogleDriveService
                 'removeParents' => $previousParents,
                 'fields' => 'id, parents'
             ]);
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $fileId, 'move');
         } catch (Exception $e) {
             Log::error('Google Drive move failed: ' . $e->getMessage());
             throw new Exception('Failed to move file in Google Drive: ' . $e->getMessage());
@@ -232,6 +305,8 @@ class GoogleDriveService
             ]);
 
             return $folder->getId();
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $parentId, 'create folder');
         } catch (Exception $e) {
             Log::error('Google Drive create folder failed: ' . $e->getMessage());
             throw new Exception('Failed to create folder in Google Drive: ' . $e->getMessage());
@@ -320,9 +395,56 @@ class GoogleDriveService
                 'files' => $response->getFiles(),
                 'nextPageToken' => $response->getNextPageToken()
             ];
+        } catch (GoogleServiceException $e) {
+            $this->handleGoogleException($e, $folderId ?? '', 'list files');
         } catch (Exception $e) {
             Log::error('Google Drive list files failed: ' . $e->getMessage());
             throw new Exception('Failed to list files from Google Drive: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Convert Google Service Exception to custom exception
+     *
+     * @param GoogleServiceException $e
+     * @param string $fileId
+     * @param string $operation
+     * @throws GoogleDriveFileNotFoundException
+     * @throws GoogleDriveAuthException
+     * @throws GoogleDriveQuotaExceededException
+     * @throws GoogleDrivePermissionException
+     * @throws Exception
+     */
+    protected function handleGoogleException(GoogleServiceException $e, string $fileId = '', string $operation = ''): void
+    {
+        $code = $e->getCode();
+        $message = $e->getMessage();
+
+        Log::error("Google Drive API Error [{$code}]: {$message}", [
+            'file_id' => $fileId,
+            'operation' => $operation
+        ]);
+
+        switch ($code) {
+            case 404:
+                throw new GoogleDriveFileNotFoundException($fileId);
+            
+            case 401:
+                throw new GoogleDriveAuthException($message);
+            
+            case 403:
+                // Check if it's quota or permission issue
+                if (str_contains(strtolower($message), 'quota') || str_contains(strtolower($message), 'storage')) {
+                    throw new GoogleDriveQuotaExceededException($message);
+                }
+                throw new GoogleDrivePermissionException($fileId, $operation);
+            
+            case 507:
+                throw new GoogleDriveQuotaExceededException($message);
+            
+            default:
+                throw new Exception("Google Drive error: {$message}", $code);
+        }
+    }
 }
+

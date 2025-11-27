@@ -50,6 +50,16 @@ export interface DeleteFilesParams {
   ids: number[];
 }
 
+export interface CreateFolderParams {
+  name: string;
+  folder_path?: string;
+}
+
+export interface CopyFilesParams {
+  ids: number[];
+  target_folder_path: string;
+}
+
 export interface UploadFileResponse {
   id: number;
   google_file_id: string;
