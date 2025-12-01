@@ -4,7 +4,6 @@ namespace App\Services\Management;
 
 use App\Services\BaseService;
 use App\Interfaces\Management\MediaFileInterface;
-use App\Services\Custom\GoogleDriveService;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Management\MediaFileResource;
 use Illuminate\Http\UploadedFile;
@@ -50,71 +49,14 @@ class MediaFileService extends BaseService
     }
 
     /**
-     * Upload file to Google Drive and store metadata
+     * Upload file (placeholder - Google Drive functionality removed)
      *
      * @param array $payload
      * @return array
      */
     public function upload(array $payload): array
     {
-        /** @var UploadedFile $file */
-        $file = $payload['file'];
-        $adminMstId = $payload['admin_mst_id'];
-        
-        // Determine folder path based on file type and date
-        $folderPath = $this->generateFolderPath($file);
-
-        try {
-            // Upload to Google Drive
-            $driveResult = $this->getGoogleDriveService()->uploadFile($file, $folderPath);
-
-            // Store metadata in database
-            $mediaFileData = [
-                'admin_mst_id' => $adminMstId,
-                'google_file_id' => $driveResult['file_id'],
-                'original_name' => $file->getClientOriginalName(),
-                'extension' => $file->getClientOriginalExtension(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'folder_path' => $folderPath,
-                'is_public' => $payload['is_public'] ?? false,
-                'metadata' => [
-                    'web_view_link' => $driveResult['web_view_link'] ?? null,
-                    'web_content_link' => $driveResult['web_content_link'] ?? null,
-                ],
-                'status' => 1,
-            ];
-
-            $id = $this->mediaFile->executeStore($mediaFileData);
-
-            \Log::info('File uploaded successfully', [
-                'id' => $id,
-                'google_file_id' => $driveResult['file_id'],
-                'original_name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'folder_path' => $folderPath
-            ]);
-
-            return [
-                'id' => $id,
-                'google_file_id' => $driveResult['file_id'],
-                'original_name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'folder_path' => $folderPath,
-            ];
-        } catch (Exception $e) {
-            \Log::error('MediaFileService::upload failed', [
-                'error' => $e->getMessage(),
-                'file_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize(),
-                'mime_type' => $file->getMimeType(),
-                'folder_path' => $folderPath,
-                'admin_mst_id' => $adminMstId,
-                'exception_class' => get_class($e),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw new Exception('File upload failed: ' . $e->getMessage());
-        }
+        throw new Exception('File upload functionality has been removed. Google Drive integration is no longer available.');
     }
 
     /**
@@ -133,7 +75,6 @@ class MediaFileService extends BaseService
 
         return [
             'id' => $mediaFile->id,
-            'google_file_id' => $mediaFile->google_file_id,
             'original_name' => $mediaFile->original_name,
             'extension' => $mediaFile->extension,
             'mime_type' => $mediaFile->mime_type,
@@ -148,30 +89,14 @@ class MediaFileService extends BaseService
     }
 
     /**
-     * Download file content from Google Drive
+     * Download file (placeholder - Google Drive functionality removed)
      *
      * @param int $id
      * @return array ['content' => string, 'mime_type' => string, 'filename' => string]
      */
     public function downloadFile(int $id): array
     {
-        $mediaFile = $this->mediaFile->find($id);
-        
-        if (!$mediaFile) {
-            throw new Exception('File not found');
-        }
-
-        try {
-            $content = $this->getGoogleDriveService()->downloadFile($mediaFile->google_file_id);
-
-            return [
-                'content' => $content,
-                'mime_type' => $mediaFile->mime_type,
-                'filename' => $mediaFile->original_name,
-            ];
-        } catch (Exception $e) {
-            throw new Exception('File download failed: ' . $e->getMessage());
-        }
+        throw new Exception('File download functionality has been removed. Google Drive integration is no longer available.');
     }
 
     /**
@@ -182,27 +107,7 @@ class MediaFileService extends BaseService
      */
     public function rename(array $payload): int
     {
-        $id = $payload['id'];
-        $newName = $payload['new_name'];
-
-        $mediaFile = $this->mediaFile->find($id);
-        
-        if (!$mediaFile) {
-            throw new Exception('File not found');
-        }
-
-        try {
-            // Rename in Google Drive
-            $this->getGoogleDriveService()->renameFile($mediaFile->google_file_id, $newName);
-
-            // Update database
-            return $this->mediaFile->executeUpdate([
-                'id' => $id,
-                'original_name' => $newName,
-            ]);
-        } catch (Exception $e) {
-            throw new Exception('File rename failed: ' . $e->getMessage());
-        }
+        throw new Exception('File rename functionality has been removed. Google Drive integration is no longer available.');
     }
 
     /**
@@ -213,27 +118,7 @@ class MediaFileService extends BaseService
      */
     public function move(array $payload): int
     {
-        $id = $payload['id'];
-        $newFolderPath = $payload['new_folder_path'];
-
-        $mediaFile = $this->mediaFile->find($id);
-        
-        if (!$mediaFile) {
-            throw new Exception('File not found');
-        }
-
-        try {
-            // Move in Google Drive
-            $this->getGoogleDriveService()->moveFile($mediaFile->google_file_id, $newFolderPath);
-
-            // Update database
-            return $this->mediaFile->executeUpdate([
-                'id' => $id,
-                'folder_path' => $newFolderPath,
-            ]);
-        } catch (Exception $e) {
-            throw new Exception('File move failed: ' . $e->getMessage());
-        }
+        throw new Exception('File move functionality has been removed. Google Drive integration is no longer available.');
     }
 
     /**
@@ -244,24 +129,7 @@ class MediaFileService extends BaseService
      */
     public function delete(array $payload): void
     {
-        $ids = is_array($payload['ids']) ? $payload['ids'] : [$payload['ids']];
-
-        foreach ($ids as $id) {
-            $mediaFile = $this->mediaFile->find($id);
-            
-            if ($mediaFile) {
-                try {
-                    // Delete from Google Drive
-                    $this->getGoogleDriveService()->deleteFile($mediaFile->google_file_id);
-                } catch (Exception $e) {
-                    // Log error but continue with database deletion
-                    \Log::error('Failed to delete file from Google Drive: ' . $e->getMessage());
-                }
-            }
-        }
-
-        // Soft delete from database
-        $this->mediaFile->executeDelete($ids);
+        throw new Exception('File delete functionality has been removed. Google Drive integration is no longer available.');
     }
 
     /**

@@ -129,16 +129,5 @@ class MediaFileRepository implements MediaFileInterface
             ->first();
     }
 
-    /**
-     * Find media file by Google Drive file ID
-     *
-     * @param string $googleFileId
-     * @return MediaFile|null
-     */
-    public function findByGoogleFileId(string $googleFileId): ?MediaFile
-    {
-        return MediaFile::where('google_file_id', $googleFileId)
-            ->where('is_delete', false)
-            ->first();
-    }
+
 }

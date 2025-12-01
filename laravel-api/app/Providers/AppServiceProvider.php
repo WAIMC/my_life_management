@@ -17,10 +17,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\Management\MediaFileRepository::class
         );
 
-        $this->app->bind(
-            \App\Interfaces\Management\GoogleDriveConfigInterface::class,
-            \App\Repositories\Management\GoogleDriveConfigRepository::class
-        );
+
     }
 
     /**

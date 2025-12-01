@@ -90,7 +90,7 @@ class GenerateResponseMiddleware
         $responseApi = self::successResponse($response, $statusCode);
 
         if ($cookie) {
-            $responseApi->headers->set('Set-Cookie', $cookie, false);
+            $responseApi = $responseApi->withCookie($cookie);
         }
 
         return $responseApi;

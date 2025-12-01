@@ -153,7 +153,7 @@ class CredentialService
             'refresh_token',
             $tokenValue,
             $ttl,
-            '/api/admin/account',
+            '/',
             config('session.domain'),
             app()->environment('production'),
             true,

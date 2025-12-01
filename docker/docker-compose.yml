@@ -20,7 +20,7 @@ services:
     command: >
       postgres -c shared_buffers=256MB -c max_connections=200 -c effective_cache_size=512MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=4MB -c min_wal_size=1GB -c max_wal_size=4GB -c hba_file=/etc/postgresql/pg_hba.conf
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,9 +44,9 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "${REDIS_PORT_OUTSIDE_ENV}:${REDIS_PORT_INSIDE_ENV}"
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -99,7 +99,7 @@ services:
       ml-redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "php-fpm -t || exit 1" ]
+      test: ["CMD-SHELL", "php-fpm -t || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,7 +142,11 @@ services:
     expose:
       - "${NEXTJS_PORT_INSIDE_ENV}"
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1" ]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -176,7 +180,15 @@ services:
       ml-nextjs:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health" ]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -190,6 +202,63 @@ services:
         reservations:
           memory: 64M
 
+  # MinIO Object Storage (S3-compatible)
+  ml-minio:
+    container_name: ml-minio
+    image: minio/minio:latest
+    restart: unless-stopped
+    ports:
+      - "${MINIO_PORT_OUTSIDE_ENV}:${MINIO_PORT_INSIDE_ENV}"
+      - "${MINIO_CONSOLE_PORT_OUTSIDE_ENV}:${MINIO_CONSOLE_PORT_INSIDE_ENV}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:${MINIO_CONSOLE_PORT_OUTSIDE_ENV}
+    command: server /data --console-address ":${MINIO_CONSOLE_PORT_INSIDE_ENV}"
+    volumes:
+      - minio_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:${MINIO_PORT_INSIDE_ENV}/minio/health/live",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  # MinIO client - auto init buckets
+  ml-minio-init:
+    container_name: ml-minio-init
+    image: minio/mc:latest
+    depends_on:
+      - ml-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://ml-minio:${MINIO_PORT_INSIDE_ENV} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb myminio/${MINIO_BUCKET} --ignore-existing;
+      /usr/bin/mc mb myminio/${MINIO_PREVIEW_BUCKET} --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/${MINIO_BUCKET};
+      /usr/bin/mc anonymous set download myminio/${MINIO_PREVIEW_BUCKET};
+      exit 0;
+      "
+    networks:
+      - app-network
+
 # Named volumes for data persistence
 volumes:
   postgres_data:
@@ -198,6 +267,9 @@ volumes:
   redis_data:
     driver: local
     name: ml_redis_data
+  minio_data:
+    driver: local
+    name: ml_minio_data
 
 # Network configuration
 networks:

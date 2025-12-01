@@ -178,12 +178,15 @@ Route::prefix('admin')
                 Route::get('media-files/folders', [\App\Http\Controllers\Management\MediaFileController::class, 'listFolders']);
                 Route::post('media-files/copy', [\App\Http\Controllers\Management\MediaFileController::class, 'copy']);
 
-                // Google Drive Configuration Management
-                Route::post('google-drive-configs/upload', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'upload']);
-                Route::get('google-drive-configs', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'list']);
-                Route::get('google-drive-configs/active', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'getActive']);
-                Route::put('google-drive-configs/{id}/activate', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'activate']);
-                Route::delete('google-drive-configs/delete', [\App\Http\Controllers\Management\GoogleDriveConfigController::class, 'delete']);
+                // Media Management (MinIO-based File Manager)
+                Route::get('media-mgmt/list', [\App\Http\Controllers\Management\MediaMgmtController::class, 'list']);
+                Route::post('media-mgmt/upload', [\App\Http\Controllers\Management\MediaMgmtController::class, 'uploadFile']);
+                Route::post('media-mgmt/folder', [\App\Http\Controllers\Management\MediaMgmtController::class, 'createFolder']);
+                Route::put('media-mgmt/{id}/rename', [\App\Http\Controllers\Management\MediaMgmtController::class, 'rename']);
+                Route::put('media-mgmt/{id}/move', [\App\Http\Controllers\Management\MediaMgmtController::class, 'move']);
+                Route::delete('media-mgmt/delete', [\App\Http\Controllers\Management\MediaMgmtController::class, 'delete']);
+
+
 
                 // ============================================================
                 // HISTORY ROUTES (Audit Trail)
