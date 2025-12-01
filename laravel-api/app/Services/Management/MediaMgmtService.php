@@ -37,9 +37,67 @@ class MediaMgmtService extends BaseService
     }
 
     /**
-     * Create folder
+     * Store media (file upload or folder creation)
      */
-    public function createFolder(array $payload): int
+    public function store(array $payload, ?UploadedFile $file = null): int
+    {
+        // If file is provided, upload file
+        if ($file) {
+            return $this->uploadFile($file, $payload);
+        }
+        
+        // Otherwise, create folder
+        return $this->createFolder($payload);
+    }
+
+    /**
+     * Update media (rename or move)
+     */
+    public function update(array $payload): int
+    {
+        $media = $this->mediaMgmt->find($payload['id']);
+
+        if (!$media) {
+            throw new Exception('Media not found');
+        }
+
+        // If new_parent_path is provided, it's a move operation
+        if (isset($payload['new_parent_path'])) {
+            return $this->move($payload, $media);
+        }
+
+        // Otherwise, it's a rename operation
+        if (isset($payload['name'])) {
+            return $this->rename($payload, $media);
+        }
+
+        throw new Exception('Either name or new_parent_path must be provided');
+    }
+
+    /**
+     * Delete (file or folder)
+     */
+    public function delete(array $payload): void
+    {
+        $ids = $payload['ids'] ?? [];
+
+        foreach ($ids as $id) {
+            $media = $this->mediaMgmt->find($id);
+
+            if ($media && $media->isFile() && $media->storage_path) {
+                // Delete from MinIO
+                $this->minioService->delete($media->storage_path);
+            }
+        }
+
+        // Soft delete in DB
+        $this->mediaMgmt->executeDelete($ids);
+    }
+
+    /**
+     * Create folder (internal method)
+     */
+    protected function createFolder(array $payload): int
     {
         $parentPath = $payload['parent_path'] ?? '/';
         $folderName = $payload['name'];
@@ -59,9 +117,9 @@ class MediaMgmtService extends BaseService
     }
 
     /**
-     * Upload file
+     * Upload file (internal method)
      */
-    public function uploadFile(UploadedFile $file, array $payload): int
+    protected function uploadFile(UploadedFile $file, array $payload): int
     {
         $parentPath = $payload['parent_path'] ?? '/';
         $workspaceId = $payload['workspace_id'] ?? null;
@@ -98,16 +156,10 @@ class MediaMgmtService extends BaseService
     }
 
     /**
-     * Rename (file or folder)
+     * Rename (internal method)
      */
-    public function rename(array $payload): int
+    protected function rename(array $payload, $media): int
     {
-        $media = $this->mediaMgmt->find($payload['id']);
-
-        if (!$media) {
-            throw new Exception('Media not found');
-        }
-
         $newName = $payload['name'];
         $parentPath = dirname($media->virtual_path);
         $newVirtualPath = rtrim($parentPath, '/') . '/' . $newName;
@@ -126,16 +178,10 @@ class MediaMgmtService extends BaseService
     }
 
     /**
-     * Move (file or folder)
+     * Move (internal method)
      */
-    public function move(array $payload): int
+    protected function move(array $payload, $media): int
     {
-        $media = $this->mediaMgmt->find($payload['id']);
-
-        if (!$media) {
-            throw new Exception('Media not found');
-        }
-
         $newParentPath = $payload['new_parent_path'] ?? '/';
         $newVirtualPath = rtrim($newParentPath, '/') . '/' . $media->original_name;
 
@@ -149,26 +195,6 @@ class MediaMgmtService extends BaseService
         ];
 
         return $this->mediaMgmt->executeUpdate($updateData);
-    }
-
-    /**
-     * Delete (file or folder)
-     */
-    public function delete(array $payload): void
-    {
-        $ids = $payload['ids'] ?? [];
-
-        foreach ($ids as $id) {
-            $media = $this->mediaMgmt->find($id);
-
-            if ($media && $media->isFile() && $media->storage_path) {
-                // Delete from MinIO
-                $this->minioService->delete($media->storage_path);
-            }
-        }
-
-        // Soft delete in DB
-        $this->mediaMgmt->executeDelete($ids);
     }
 
     /**

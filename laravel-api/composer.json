@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "aws/aws-sdk-php": "^3.300",
         "firebase/php-jwt": "6.10.2",
         "google/apiclient": "^2.15",
         "laravel/framework": "11.34.2",

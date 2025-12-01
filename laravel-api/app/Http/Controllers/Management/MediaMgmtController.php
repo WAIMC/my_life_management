@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Management;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Management\MediaMgmt\UploadFileRequest;
-use App\Http\Requests\Management\MediaMgmt\CreateFolderRequest;
+use App\Http\Requests\Management\MediaMgmt\ListMediaMgmtRequest;
+use App\Http\Requests\Management\MediaMgmt\StoreMediaMgmtRequest;
+use App\Http\Requests\Management\MediaMgmt\UpdateMediaMgmtRequest;
+use App\Http\Requests\Management\MediaMgmt\DeleteMediaMgmtRequest;
 use App\Services\Management\MediaMgmtService;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class MediaMgmtController extends Controller
@@ -18,52 +19,36 @@ class MediaMgmtController extends Controller
     /**
      * List media (files and folders)
      */
-    public function list(Request $request): JsonResource
+    public function list(ListMediaMgmtRequest $request): JsonResource
     {
-        return $this->mediaMgmt->list($request->all());
+        return $this->mediaMgmt->list($request->validated());
     }
 
     /**
-     * Upload file
+     * Store media (file upload or folder creation)
      */
-    public function uploadFile(UploadFileRequest $request): int
+    public function store(StoreMediaMgmtRequest $request): int
     {
-        return $this->mediaMgmt->uploadFile($request->file('file'), $request->all());
+        return $this->mediaMgmt->store($request->validated(), $request->file('file'));
     }
 
     /**
-     * Create folder
+     * Update media (rename or move)
      */
-    public function createFolder(CreateFolderRequest $request): int
+    public function update(UpdateMediaMgmtRequest $request, string $id): int
     {
-        return $this->mediaMgmt->createFolder($request->all());
+        $payload = $request->validated();
+        $payload['id'] = (int)$id;
+        return $this->mediaMgmt->update($payload);
     }
 
     /**
-     * Rename (file or folder)
+     * Delete media (file or folder)
      */
-    public function rename(Request $request, string $id): int
+    public function delete(DeleteMediaMgmtRequest $request, string $id): void
     {
-        $payload = $request->all();
-        $payload['id'] = $id;
-        return $this->mediaMgmt->rename($payload);
-    }
-
-    /**
-     * Move (file or folder)
-     */
-    public function move(Request $request, string $id): int
-    {
-        $payload = $request->all();
-        $payload['id'] = $id;
-        return $this->mediaMgmt->move($payload);
-    }
-
-    /**
-     * Delete (file or folder)
-     */
-    public function delete(Request $request): void
-    {
-        $this->mediaMgmt->delete($request->all());
+        // Support both single delete (from route param) and batch delete (from request body)
+        $ids = $request->has('ids') ? $request->validated()['ids'] : [(int)$id];
+        $this->mediaMgmt->delete(['ids' => $ids]);
     }
 }

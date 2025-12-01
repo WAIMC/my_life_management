@@ -16,20 +16,25 @@ import type {
 } from '@/types/media-file.types';
 
 class MediaFileService {
-  private baseUrl = '/admin/media-files';
+  private baseUrl = '/admin/media-mgmt';
 
   /**
    * Upload file to server
    */
-  async upload(params: UploadFileParams): Promise<UploadFileResponse> {
+  async upload(params: UploadFileParams): Promise<number> {
     const formData = new FormData();
     formData.append('file', params.file);
-    if (params.is_public !== undefined) {
-      formData.append('is_public', params.is_public ? '1' : '0');
+    
+    if (params.parent_path) {
+      formData.append('parent_path', params.parent_path);
+    }
+    
+    if (params.workspace_id !== undefined) {
+      formData.append('workspace_id', params.workspace_id.toString());
     }
 
-    const response = await apiClient.post<UploadFileResponse>(
-      `${this.baseUrl}/upload`,
+    const response = await apiClient.post<number>(
+      `${this.baseUrl}/store`,
       formData,
       {
         headers: {
@@ -45,7 +50,7 @@ class MediaFileService {
    */
   async list(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
     const response = await apiClient.get<PaginatedResponse<MediaFile>>(
-      this.baseUrl,
+      `${this.baseUrl}/list`,
       params
     );
     return response.data;
@@ -93,12 +98,12 @@ class MediaFileService {
   }
 
   /**
-   * Rename file
+   * Rename file or folder
    */
   async rename(id: number, params: RenameFileParams): Promise<number> {
     const response = await apiClient.put<number>(
-      `${this.baseUrl}/${id}/rename`,
-      params
+      `${this.baseUrl}/update/${id}`,
+      { name: params.name }
     );
     return response.data;
   }
@@ -108,8 +113,8 @@ class MediaFileService {
    */
   async move(id: number, params: MoveFileParams): Promise<number> {
     const response = await apiClient.put<number>(
-      `${this.baseUrl}/${id}/move`,
-      params
+      `${this.baseUrl}/update/${id}`,
+      { new_parent_path: params.new_parent_path }
     );
     return response.data;
   }
@@ -118,14 +123,19 @@ class MediaFileService {
    * Delete files
    */
   async delete(params: DeleteFilesParams): Promise<void> {
-    await apiClient.delete(`${this.baseUrl}/delete`, params);
+    // For batch delete, use first ID in route and send all IDs in body
+    const firstId = params.ids[0];
+    await apiClient.delete(
+      `${this.baseUrl}/delete/${firstId}`,
+      { ids: params.ids }
+    );
   }
 
   /**
    * Delete single file
    */
   async deleteSingle(id: number): Promise<void> {
-    await this.delete({ ids: [id] });
+    await apiClient.delete(`${this.baseUrl}/delete/${id}`);
   }
 
   /**
@@ -159,10 +169,14 @@ class MediaFileService {
   /**
    * Create folder
    */
-  async createFolder(params: import('@/types/media-file.types').CreateFolderParams): Promise<{ id: number; google_file_id: string; name: string; folder_path: string }> {
-    const response = await apiClient.post<{ id: number; google_file_id: string; name: string; folder_path: string }>(
-      `${this.baseUrl}/folders`,
-      params
+  async createFolder(params: import('@/types/media-file.types').CreateFolderParams): Promise<number> {
+    const response = await apiClient.post<number>(
+      `${this.baseUrl}/store`,
+      {
+        name: params.name,
+        parent_path: params.parent_path,
+        workspace_id: params.workspace_id,
+      }
     );
     return response.data;
   }
@@ -172,8 +186,8 @@ class MediaFileService {
    */
   async listFolders(params?: import('@/types/media-file.types').ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
     const response = await apiClient.get<PaginatedResponse<MediaFile>>(
-      `${this.baseUrl}/folders`,
-      params
+      `${this.baseUrl}/list`,
+      { ...params, is_file: false }
     );
     return response.data;
   }
@@ -182,11 +196,9 @@ class MediaFileService {
    * Copy files to different folder
    */
   async copy(params: import('@/types/media-file.types').CopyFilesParams): Promise<{ copied_count: number; copied_ids: number[] }> {
-    const response = await apiClient.post<{ copied_count: number; copied_ids: number[] }>(
-      `${this.baseUrl}/copy`,
-      params
-    );
-    return response.data;
+    // Note: Copy functionality not implemented in backend yet
+    // This is a placeholder for future implementation
+    throw new Error('Copy functionality not yet implemented in backend');
   }
 }
 

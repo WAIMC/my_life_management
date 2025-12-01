@@ -26,6 +26,7 @@ use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\Management\CategoryMgmtInterface;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
+use App\Interfaces\Management\MediaMgmtInterface;
 use App\Interfaces\Management\ProductMgmtInterface;
 use App\Interfaces\Management\SettingLinkMgmtInterface;
 use App\Interfaces\Management\SkillDescriptionMgmtInterface;
@@ -70,6 +71,7 @@ use App\Repositories\History\Master\TranslationMstHistRepository;
 use App\Repositories\Management\BannerMgmtRepository;
 use App\Repositories\Management\CategoryMgmtRepository;
 use App\Repositories\Management\CategorySkillMgmtRepository;
+use App\Repositories\Management\MediaMgmtRepository;
 use App\Repositories\Management\ProductMgmtRepository;
 use App\Repositories\Management\SettingLinkMgmtRepository;
 use App\Repositories\Management\SkillDescriptionMgmtRepository;
@@ -118,6 +120,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         BannerMgmtInterface::class => BannerMgmtRepository::class,
         CategoryMgmtInterface::class => CategoryMgmtRepository::class,
         CategorySkillMgmtInterface::class => CategorySkillMgmtRepository::class,
+        MediaMgmtInterface::class => MediaMgmtRepository::class,
         ProductMgmtInterface::class => ProductMgmtRepository::class,
         SettingLinkMgmtInterface::class => SettingLinkMgmtRepository::class,
         SkillDescriptionMgmtInterface::class => SkillDescriptionMgmtRepository::class,

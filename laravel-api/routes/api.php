@@ -165,26 +165,11 @@ Route::prefix('admin')
                 Route::put('setting-link-mgmt/update/{id}', [\App\Http\Controllers\Management\SettingLinkMgmtController::class, 'update']);
                 Route::delete('setting-link-mgmt/delete/{id}', [\App\Http\Controllers\Management\SettingLinkMgmtController::class, 'delete']);
 
-                // Media File Management
-                Route::post('media-files/upload', [\App\Http\Controllers\Management\MediaFileController::class, 'upload']);
-                Route::get('media-files', [\App\Http\Controllers\Management\MediaFileController::class, 'list']);
-                Route::get('media-files/{id}', [\App\Http\Controllers\Management\MediaFileController::class, 'show']);
-                Route::get('media-files/{id}/view', [\App\Http\Controllers\Management\MediaFileController::class, 'view'])->name('api.media-files.view');
-                Route::get('media-files/{id}/download', [\App\Http\Controllers\Management\MediaFileController::class, 'download'])->name('api.media-files.download');
-                Route::put('media-files/{id}/rename', [\App\Http\Controllers\Management\MediaFileController::class, 'rename']);
-                Route::put('media-files/{id}/move', [\App\Http\Controllers\Management\MediaFileController::class, 'move']);
-                Route::delete('media-files/delete', [\App\Http\Controllers\Management\MediaFileController::class, 'delete']);
-                Route::post('media-files/folders', [\App\Http\Controllers\Management\MediaFileController::class, 'createFolder']);
-                Route::get('media-files/folders', [\App\Http\Controllers\Management\MediaFileController::class, 'listFolders']);
-                Route::post('media-files/copy', [\App\Http\Controllers\Management\MediaFileController::class, 'copy']);
-
                 // Media Management (MinIO-based File Manager)
                 Route::get('media-mgmt/list', [\App\Http\Controllers\Management\MediaMgmtController::class, 'list']);
-                Route::post('media-mgmt/upload', [\App\Http\Controllers\Management\MediaMgmtController::class, 'uploadFile']);
-                Route::post('media-mgmt/folder', [\App\Http\Controllers\Management\MediaMgmtController::class, 'createFolder']);
-                Route::put('media-mgmt/{id}/rename', [\App\Http\Controllers\Management\MediaMgmtController::class, 'rename']);
-                Route::put('media-mgmt/{id}/move', [\App\Http\Controllers\Management\MediaMgmtController::class, 'move']);
-                Route::delete('media-mgmt/delete', [\App\Http\Controllers\Management\MediaMgmtController::class, 'delete']);
+                Route::post('media-mgmt/store', [\App\Http\Controllers\Management\MediaMgmtController::class, 'store']);
+                Route::put('media-mgmt/update/{id}', [\App\Http\Controllers\Management\MediaMgmtController::class, 'update']);
+                Route::delete('media-mgmt/delete/{id}', [\App\Http\Controllers\Management\MediaMgmtController::class, 'delete']);
 
 
 

@@ -1,37 +1,44 @@
 /**
  * Media File Types
+ * Updated to match MediaMgmt backend model
  */
 
 export interface MediaFile {
   id: number;
-  admin_mst_id: number;
-  google_file_id: string;
+  workspace_id: number | null;
+  is_file: boolean;
+  virtual_path: string;
+  storage_path: string | null;
   original_name: string;
-  extension: string;
-  mime_type: string;
-  size: number;
-  human_size: string;
-  folder_path: string | null;
-  is_public: boolean;
+  extension: string | null;
+  mime_type: string | null;
+  size: number | null;
+  minio_bucket: string | null;
+  minio_object_key: string | null;
+  minio_etag: string | null;
+  url: string | null;
+  width: number | null;
+  height: number | null;
+  duration: number | null;
   metadata: Record<string, any> | null;
-  status: number;
-  view_url: string;
-  download_url: string;
+  is_delete: boolean;
+  created_by: number | null;
+  updated_by: number | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface UploadFileParams {
   file: File;
-  is_public?: boolean;
+  parent_path?: string;
+  workspace_id?: number;
 }
 
 export interface ListFilesParams {
-  folder_path?: string;
-  file_type?: 'images' | 'videos' | 'documents';
+  parent_path?: string;
+  is_file?: boolean;
   mime_type?: string;
   search?: string;
-  status?: number;
   order_by?: 'created_at' | 'original_name' | 'size';
   order_direction?: 'asc' | 'desc';
   per_page?: number;
@@ -39,11 +46,11 @@ export interface ListFilesParams {
 }
 
 export interface RenameFileParams {
-  new_name: string;
+  name: string;
 }
 
 export interface MoveFileParams {
-  new_folder_path: string;
+  new_parent_path: string;
 }
 
 export interface DeleteFilesParams {
@@ -52,7 +59,8 @@ export interface DeleteFilesParams {
 
 export interface CreateFolderParams {
   name: string;
-  folder_path?: string;
+  parent_path?: string;
+  workspace_id?: number;
 }
 
 export interface CopyFilesParams {
@@ -62,10 +70,9 @@ export interface CopyFilesParams {
 
 export interface UploadFileResponse {
   id: number;
-  google_file_id: string;
   original_name: string;
   size: number;
-  folder_path: string;
+  virtual_path: string;
 }
 
 export type FileType = 'images' | 'videos' | 'documents' | 'all';
