@@ -85,7 +85,7 @@ abstract class BaseService
      * List method must be implemented by child classes
      *
      * @param array $payload
-     * @return JsonResource
+     * @return JsonResource|array
      */
-    abstract public function list(array $payload): JsonResource;
+    abstract public function list(array $payload): JsonResource|array;
 }

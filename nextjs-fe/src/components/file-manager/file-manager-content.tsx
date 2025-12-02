@@ -6,7 +6,7 @@ import { Toolbar } from './toolbar';
 import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
 import { PreviewModal } from './preview-modal';
-import { Pagination } from './pagination';
+
 import { useFileManager } from '@/hooks/use-file-manager';
 import { buildBreadcrumb } from './utils';
 import { UploadDialog } from './dialogs/upload-dialog';
@@ -27,7 +27,6 @@ export function FileManagerContent() {
     searchQuery,
     filterOptions,
     sortOptions,
-    pagination,
     setCurrentPath,
     setViewMode,
     toggleFileSelection,
@@ -35,7 +34,6 @@ export function FileManagerContent() {
     setSearchQuery,
     setFilterOptions,
     setSortOptions,
-    setPagination,
     refreshFiles,
     createFolder,
     uploadFiles,
@@ -199,7 +197,6 @@ export function FileManagerContent() {
         onDelete={() => handleDelete()}
         onMove={() => handleMove()}
         onCopy={() => handleCopy()}
-        onRefresh={refreshFiles}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         selectedCount={selectedFiles.length}
@@ -230,6 +227,7 @@ export function FileManagerContent() {
             files={files}
             selectedFiles={selectedFiles}
             onSelect={toggleFileSelection}
+            onSelectAll={selectAllFiles}
             onFileClick={handleFileClick}
             onNavigate={handleNavigate}
             isLoading={isLoading}
@@ -248,11 +246,6 @@ export function FileManagerContent() {
           />
         )}
       </div>
-
-      <Pagination
-        pagination={pagination}
-        onPageChange={(page) => setPagination({ ...pagination, page })}
-      />
 
       {/* Dialogs */}
       <UploadDialog

@@ -19,7 +19,7 @@ class MediaMgmtController extends Controller
     /**
      * List media (files and folders)
      */
-    public function list(ListMediaMgmtRequest $request): JsonResource
+    public function list(ListMediaMgmtRequest $request): array
     {
         return $this->mediaMgmt->list($request->validated());
     }

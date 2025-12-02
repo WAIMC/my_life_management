@@ -97,8 +97,6 @@ export interface FileManagerContextType {
   setFilterOptions: (options: FilterOptions) => void;
   sortOptions: SortOptions;
   setSortOptions: (options: SortOptions) => void;
-  pagination: PaginationState;
-  setPagination: (pagination: PaginationState) => void;
   
   // Actions
   refreshFiles: () => Promise<void>;

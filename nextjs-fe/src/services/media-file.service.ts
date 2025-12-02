@@ -48,12 +48,12 @@ class MediaFileService {
   /**
    * Get list of media files
    */
-  async list(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
-    const response = await apiClient.get<PaginatedResponse<MediaFile>>(
+  async list(params?: ListFilesParams): Promise<import('@/types/apiType').ApiResponse<MediaFile[]>> {
+    const response = await apiClient.get<MediaFile[]>(
       `${this.baseUrl}/list`,
       params
     );
-    return response.data;
+    return response; // Return full ApiResponse {data: MediaFile[], error: {...}}
   }
 
   /**

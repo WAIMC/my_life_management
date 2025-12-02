@@ -30,10 +30,14 @@ class MediaMgmtService extends BaseService
     /**
      * List media (files and folders)
      */
-    public function list(array $payload): JsonResource
+    public function list(array $payload): array
     {
         $list = $this->mediaMgmt->list($payload);
-        return JsonResource::collection($list);
+        
+        // Manually transform to array to avoid ResourceCollection pagination wrapper
+        return $list->map(function ($item) {
+            return (new \App\Http\Resources\Management\MediaFileResource($item))->resolve();
+        })->values()->all();
     }
 
     /**

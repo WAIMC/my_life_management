@@ -8,8 +8,8 @@ use App\Enums\IsDelete;
 use App\Interfaces\Management\MediaMgmtInterface;
 use App\Models\Management\MediaMgmt;
 use App\Repositories\BaseRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 class MediaMgmtRepository extends BaseRepository implements MediaMgmtInterface
 {
@@ -19,28 +19,29 @@ class MediaMgmtRepository extends BaseRepository implements MediaMgmtInterface
     }
 
     /**
-     * Get list with pagination
+     * Get list of files/folders (file manager - no pagination)
      */
-    public function list(array $payload): LengthAwarePaginator
+    public function list(array $payload): Collection
     {
         $query = $this->model->query()
             ->notDeleted();
 
         // Filter by folder (virtual_path parent)
-        if (isset($payload['parent_path'])) {
-            $parentPath = rtrim($payload['parent_path'], '/');
-            
-            if ($parentPath === '' || $parentPath === '/') {
-                // Root level - only items directly under root (no additional slashes)
-                $query->where(function ($q) {
-                    $q->whereRaw("virtual_path ~ '^/[^/]+/?$'");
-                });
-            } else {
-                // Get only direct children of the parent folder
-                $parentPath = $parentPath . '/';
-                $query->where('virtual_path', 'LIKE', $parentPath . '%')
-                    ->whereRaw("virtual_path ~ ?", ['^' . preg_quote($parentPath, '/') . '[^/]+/?$']);
-            }
+        // Support both 'parent_path' and 'folder_path' for backward compatibility
+        // Default to root level if no folder parameter provided
+        $parentPath = $payload['parent_path'] ?? $payload['folder_path'] ?? '/';
+        $parentPath = rtrim($parentPath, '/');
+        
+        if ($parentPath === '' || $parentPath === '/') {
+            // Root level - only items directly under root (no additional slashes)
+            $query->where(function ($q) {
+                $q->whereRaw("virtual_path ~ '^/[^/]+/?$'");
+            });
+        } else {
+            // Get only direct children of the parent folder
+            $parentPath = $parentPath . '/';
+            $query->where('virtual_path', 'LIKE', $parentPath . '%')
+                ->whereRaw("virtual_path ~ ?", ['^' . preg_quote($parentPath, '/') . '[^/]+/?$']);
         }
 
         // Filter by type (file/folder)
@@ -61,11 +62,8 @@ class MediaMgmtRepository extends BaseRepository implements MediaMgmtInterface
         // Apply sorting
         $this->applySorting($query, $payload, 'id', 'desc');
 
-        // Pagination
-        $perPage = $payload['per_page'] ?? 50;
-        $page = $payload['page'] ?? 1;
-
-        return $query->paginate($perPage, ['*'], 'page', $page);
+        // File manager: return all files without pagination
+        return $query->get();
     }
 
     /**

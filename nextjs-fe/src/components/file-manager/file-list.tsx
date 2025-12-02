@@ -19,6 +19,7 @@ interface FileListProps {
   files: MediaFile[];
   selectedFiles: string[];
   onSelect: (fileId: string, selected: boolean) => void;
+  onSelectAll: (selected: boolean) => void;
   onFileClick: (file: MediaFile) => void;
   onNavigate: (path: string) => void;
   isLoading?: boolean;
@@ -37,6 +38,7 @@ export const FileList = ({
   files,
   selectedFiles,
   onSelect,
+  onSelectAll,
   onFileClick,
   onNavigate,
   isLoading = false,
@@ -63,13 +65,7 @@ export const FileList = ({
   }
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelect('all', true); // Special case handled by parent or loop here
-      // Actually, let's do it here to match interface
-      files.forEach(f => onSelect(f.id, true));
-    } else {
-      files.forEach(f => onSelect(f.id, false));
-    }
+    onSelectAll(checked);
   };
 
   const handleDoubleClick = (file: MediaFile) => {

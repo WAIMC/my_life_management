@@ -45,6 +45,13 @@ class MediaMgmt extends Model
     ];
 
     /**
+     * Attributes to append to model's array/JSON form
+     */
+    protected $appends = [
+        'folder_path',
+    ];
+
+    /**
      * Check if file (not folder)
      */
     public function isFile(): bool
@@ -82,5 +89,22 @@ class MediaMgmt extends Model
         return self::where('virtual_path', 'LIKE', $childrenPath . '%')
             ->notDeleted()
             ->get();
+    }
+
+    /**
+     * Get folder path (parent directory of this file/folder)
+     * This accessor is used by MediaFileResource to return folder_path
+     */
+    public function getFolderPathAttribute(): string
+    {
+        if ($this->is_file) {
+            // For files, return the directory containing the file
+            return dirname($this->virtual_path);
+        } else {
+            // For folders, return the parent folder
+            // Remove trailing slash first
+            $path = rtrim($this->virtual_path, '/');
+            return dirname($path);
+        }
     }
 }

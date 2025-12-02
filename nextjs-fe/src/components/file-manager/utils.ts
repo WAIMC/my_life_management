@@ -20,7 +20,12 @@ export const formatFileSize = (bytes: number): string => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
-export const getFileIcon = (mimeType: string) => {
+export const getFileIcon = (mimeType: string | null | undefined) => {
+  // Handle null/undefined mime_type (e.g., for folders)
+  if (!mimeType) {
+    return File;
+  }
+  
   if (mimeType === 'folder' || mimeType === 'application/vnd.google-apps.folder') return Folder;
   if (mimeType.startsWith('image/')) return FileImage;
   if (mimeType.startsWith('video/')) return FileVideo;
@@ -41,7 +46,12 @@ export const getFileIcon = (mimeType: string) => {
   return File;
 };
 
-export const getMimeTypeLabel = (mimeType: string): string => {
+export const getMimeTypeLabel = (mimeType: string | null | undefined): string => {
+  // Handle null/undefined mime_type (e.g., for folders)
+  if (!mimeType) {
+    return 'Folder';
+  }
+  
   const types: Record<string, string> = {
     'image/jpeg': 'JPEG',
     'image/png': 'PNG',
@@ -73,9 +83,9 @@ export const filterFiles = (
     // Type filter
     if (options.type !== 'all') {
       if (options.type === 'folders' && file.type !== 'folder') return false;
-      if (options.type === 'images' && !file.mime_type.startsWith('image/')) return false;
-      if (options.type === 'videos' && !file.mime_type.startsWith('video/')) return false;
-      if (options.type === 'documents' && (file.type === 'folder' || file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/'))) return false;
+      if (options.type === 'images' && (!file.mime_type || !file.mime_type.startsWith('image/'))) return false;
+      if (options.type === 'videos' && (!file.mime_type || !file.mime_type.startsWith('video/'))) return false;
+      if (options.type === 'documents' && (file.type === 'folder' || !file.mime_type || file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/'))) return false;
     }
 
     // Date filter

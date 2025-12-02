@@ -13,7 +13,8 @@ import toast from 'react-hot-toast';
 export const useFileManager = (): FileManagerContextType => {
   const [currentPath, setCurrentPath] = useState('/');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [files, setFiles] = useState<MediaFile[]>([]);
+  const [rawFiles, setRawFiles] = useState<MediaFile[]>([]); // Cache raw data from API
+  const [files, setFiles] = useState<MediaFile[]>([]); // Filtered/sorted files for display
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,65 +35,99 @@ export const useFileManager = (): FileManagerContextType => {
     totalPages: 0
   });
 
+  // Fetch files from API (only when path changes)
   const fetchFiles = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await mediaFileService.list({
-        folder_path: currentPath === '/' ? undefined : currentPath,
-        search: searchQuery || undefined,
-        order_by: sortOptions.field === 'date' ? 'created_at' : sortOptions.field === 'name' ? 'original_name' : 'size',
-        order_direction: sortOptions.order,
-        per_page: pagination.pageSize,
-        page: pagination.page,
-        mime_type: filterOptions.type === 'all' ? undefined : 
-                   filterOptions.type === 'images' ? 'image/%' :
-                   filterOptions.type === 'videos' ? 'video/%' :
-                   filterOptions.type === 'documents' ? 'application/%' : undefined
+        folder_path: currentPath || '/'
+        // No search, sort, or filter params - get ALL files and handle on client
       });
       
-      // Laravel Resource Collection standard structure: response.data contains { data: [], meta: {}, links: {} }
-      const transformedFiles: MediaFile[] = (response.data.data || []).map((file: any) => ({
+      // Transform and cache raw data
+      const transformedFiles: MediaFile[] = (response.data || []).map((file: any) => ({
         id: String(file.id),
-        drive_id: file.google_file_id,
+        drive_id: file.id,
         name: file.original_name,
         mime_type: file.mime_type,
-        url: file.view_url || '',
-        thumbnail_url: file.mime_type?.startsWith('image/') ? file.view_url : undefined,
+        url: file.view_url || file.url || '',
+        thumbnail_url: file.mime_type?.startsWith('image/') ? (file.view_url || file.url) : undefined,
         folder_path: file.folder_path || '/',
         size: file.size,
-        owner_id: String(file.admin_mst_id),
+        owner_id: String(file.workspace_id || 0),
         created_at: file.created_at,
         updated_at: file.updated_at,
-        type: file.mime_type === 'application/vnd.google-apps.folder' ? 'folder' as const : 'file' as const
+        type: file.is_file === false ? 'folder' as const : 'file' as const
       }));
       
-      setFiles(transformedFiles);
-      
-      // Update pagination from meta
-      if (response.data.meta) {
-        setPagination(prev => ({
-          ...prev,
-          total: response.data.meta.total || 0,
-          totalPages: response.data.meta.last_page || 1
-        }));
-      }
+      setRawFiles(transformedFiles); // Cache raw data
     } catch (error) {
       toast.error('Không thể tải danh sách file');
-      console.error('Error fetching files:', error);
-      setFiles([]); // Clear files on error
+      console.error('❌ Error fetching files:', error);
+      setRawFiles([]);
     } finally {
       setIsLoading(false);
     }
-  }, [currentPath, pagination.page, pagination.pageSize, filterOptions, sortOptions, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPath]); // Empty dependencies - uses current values from closure
 
+  // Fetch files only when path changes
   useEffect(() => {
     fetchFiles();
-  }, [fetchFiles]);
+  }, [currentPath, fetchFiles]);
 
-  // Reset pagination when path or filters change
+  // Apply client-side filtering, sorting, and searching
+  useEffect(() => {
+    let processed = [...rawFiles];
+    
+    // 1. Apply search
+    if (searchQuery) {
+      processed = processed.filter(file => 
+        file.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // 2. Apply filter by type
+    if (filterOptions.type !== 'all') {
+      processed = processed.filter(file => {
+        if (filterOptions.type === 'folders') return file.type === 'folder';
+        if (filterOptions.type === 'images') return file.mime_type?.startsWith('image/');
+        if (filterOptions.type === 'videos') return file.mime_type?.startsWith('video/');
+        if (filterOptions.type === 'documents') {
+          return file.type === 'file' && 
+                 file.mime_type && 
+                 !file.mime_type.startsWith('image/') && 
+                 !file.mime_type.startsWith('video/');
+        }
+        return true;
+      });
+    }
+    
+    // 3. Apply sorting
+    processed.sort((a, b) => {
+      const multiplier = sortOptions.order === 'asc' ? 1 : -1;
+      
+      switch (sortOptions.field) {
+        case 'name':
+          return a.name.localeCompare(b.name) * multiplier;
+        case 'date':
+          return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * multiplier;
+        case 'size':
+          return (a.size - b.size) * multiplier;
+        case 'type':
+          return (a.mime_type || '').localeCompare(b.mime_type || '') * multiplier;
+        default:
+          return 0;
+      }
+    });
+    
+    setFiles(processed);
+  }, [rawFiles, searchQuery, filterOptions, sortOptions]);
+
+  // Reset pagination when filters change
   useEffect(() => {
     setPagination(prev => ({ ...prev, page: 1 }));
-  }, [currentPath, filterOptions, searchQuery]);
+  }, [searchQuery, filterOptions]);
 
   // Clear selection when path changes
   useEffect(() => {
@@ -106,8 +141,10 @@ export const useFileManager = (): FileManagerContextType => {
   const toggleFileSelection = useCallback((fileId: string, selected: boolean) => {
     setSelectedFiles(prev => {
       if (selected) {
-        return [...prev, fileId];
+        // Add to selection if not already selected
+        return prev.includes(fileId) ? prev : [...prev, fileId];
       } else {
+        // Remove from selection
         return prev.filter(id => id !== fileId);
       }
     });
@@ -115,106 +152,99 @@ export const useFileManager = (): FileManagerContextType => {
 
   const selectAllFiles = useCallback((selected: boolean) => {
     if (selected) {
+      // Select all files
       setSelectedFiles(files.map(f => f.id));
     } else {
+      // Deselect all
       setSelectedFiles([]);
     }
   }, [files]);
 
   const createFolder = useCallback(async (name: string) => {
-    setIsLoading(true);
     try {
       await mediaFileService.createFolder({
         name,
-        folder_path: currentPath === '/' ? undefined : currentPath
+        parent_path: currentPath // Send current path as parent_path
       });
       toast.success('Tạo thư mục thành công');
+      // Refresh file list to show new folder
       await fetchFiles();
     } catch (error) {
       toast.error('Không thể tạo thư mục');
       console.error('Error creating folder:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [currentPath, fetchFiles]);
 
   const uploadFiles = useCallback(async (filesToUpload: File[]) => {
-    setIsLoading(true);
     try {
       // Upload sequentially for now
       for (const file of filesToUpload) {
-        await mediaFileService.upload({ file });
+        await mediaFileService.upload({ 
+          file,
+          parent_path: currentPath // Upload to current folder
+        });
       }
       toast.success(`Đã tải lên ${filesToUpload.length} file`);
+      // Refresh file list to show uploaded files
       await fetchFiles();
     } catch (error) {
       toast.error('Không thể tải lên file');
       console.error('Error uploading files:', error);
-    } finally {
-      setIsLoading(false);
     }
-  }, [fetchFiles]);
+  }, [currentPath, fetchFiles]);
 
   const deleteFiles = useCallback(async (ids: string[]) => {
-    setIsLoading(true);
     try {
       await mediaFileService.delete({ ids: ids.map(id => Number(id)) });
       setSelectedFiles(prev => prev.filter(id => !ids.includes(id)));
       toast.success('Đã xóa file');
+      // Refresh file list
       await fetchFiles();
     } catch (error) {
       toast.error('Không thể xóa file');
       console.error('Error deleting files:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [fetchFiles]);
 
   const renameFile = useCallback(async (id: string, newName: string) => {
-    setIsLoading(true);
     try {
       await mediaFileService.rename(Number(id), { new_name: newName });
       toast.success('Đã đổi tên file');
+      // Refresh file list
       await fetchFiles();
     } catch (error) {
       toast.error('Không thể đổi tên file');
       console.error('Error renaming file:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [fetchFiles]);
 
   const moveFiles = useCallback(async (ids: string[], targetPath: string) => {
-    setIsLoading(true);
     try {
       for (const id of ids) {
         await mediaFileService.move(Number(id), { new_folder_path: targetPath });
       }
       setSelectedFiles(prev => prev.filter(id => !ids.includes(id)));
       toast.success('Đã di chuyển file');
+      // Refresh file list
       await fetchFiles();
     } catch (error) {
       toast.error('Không thể di chuyển file');
       console.error('Error moving files:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [fetchFiles]);
 
   const copyFiles = useCallback(async (ids: string[], targetPath: string) => {
-    setIsLoading(true);
     try {
       await mediaFileService.copy({
         ids: ids.map(id => Number(id)),
         target_folder_path: targetPath
       });
       toast.success('Đã sao chép file');
+      // Refresh file list
       await fetchFiles();
     } catch (error) {
       toast.error('Không thể sao chép file');
       console.error('Error copying files:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [fetchFiles]);
 

@@ -27,6 +27,7 @@ class StoreMediaMgmtRequest extends FormRequest
         $allExtensions = array_merge(
             MediaConst::ALLOWED_IMAGE_EXTENSIONS,
             MediaConst::ALLOWED_VIDEO_EXTENSIONS,
+            MediaConst::ALLOWED_AUDIO_EXTENSIONS,
             MediaConst::ALLOWED_DOCUMENT_EXTENSIONS,
             MediaConst::ALLOWED_ARCHIVE_EXTENSIONS
         );

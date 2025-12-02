@@ -4,7 +4,6 @@ import {
   Upload,
   FolderPlus,
   Delete,
-  RotateCcw,
   Grid3x3,
   List,
   Search,
@@ -42,7 +41,6 @@ interface ToolbarProps {
   onDelete: () => void;
   onMove: () => void;
   onCopy: () => void;
-  onRefresh: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
   selectedCount: number;
@@ -60,7 +58,6 @@ export const Toolbar = ({
   onDelete,
   onMove,
   onCopy,
-  onRefresh,
   onSearchChange,
   searchQuery,
   selectedCount,
@@ -145,17 +142,6 @@ export const Toolbar = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            onClick={onRefresh}
-            variant="ghost"
-            size="icon"
-            title="Làm mới"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-
-          <div className="mx-2 h-6 w-px bg-border" />
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">

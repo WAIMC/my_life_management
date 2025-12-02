@@ -6,7 +6,6 @@ import type { MediaFile } from './types';
 import { formatFileSize, getFileIcon } from './utils';
 import { format } from 'date-fns';
 import { FileContextMenu } from './context-menu';
-import { LazyImage } from '@/lib/lazy-image';
 import { Folder } from 'lucide-react';
 
 interface FileGridProps {
@@ -105,11 +104,13 @@ export const FileGrid = ({
                   <div className="flex h-full items-center justify-center bg-blue-50 dark:bg-blue-900/20">
                     <Folder className="h-16 w-16 text-blue-500" fill="currentColor" />
                   </div>
-                ) : file.mime_type.startsWith('image/') ? (
-                  <LazyImage
+                ) : file.mime_type?.startsWith('image/') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={file.url}
                     alt={file.name}
-                    className="h-full w-full"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center">
