@@ -6,7 +6,6 @@ use App\Http\Requests\Custom\Credential\LoginRequest;
 use App\Services\Custom\CredentialService;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CredentialController extends Controller

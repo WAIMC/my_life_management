@@ -130,21 +130,29 @@ fi
 echo ""
 
 # Step 5: Set proper permissions
-echo -e "${YELLOW}[5/6] Setting file permissions...${NC}"
+echo -e "${YELLOW}[5/7] Setting file permissions...${NC}"
 chmod -R 775 storage bootstrap/cache
 echo -e "${GREEN}  ✓ Permissions set${NC}"
 echo ""
 
-# Step 6: Run project setup (migrations + permissions)
-echo -e "${YELLOW}[6/6] Running project setup (migrations + permissions)...${NC}"
-echo -e "${BLUE}  -> Running: php artisan project:setup${NC}"
-
-php artisan project:setup
-
+# Step 6: Run database migrations
+echo -e "${YELLOW}[6/7] Running database migrations...${NC}"
+php artisan migrate --force
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}  ✓ Project setup completed successfully${NC}"
+    echo -e "${GREEN}  ✓ Database migrations completed successfully${NC}"
 else
-    echo -e "${YELLOW}  ⚠ Project setup completed with warnings (this might be expected)${NC}"
+    echo -e "${RED}  ✗ ERROR: Database migrations failed!${NC}"
+    exit 1
+fi
+echo ""
+
+# Step 7: Seed database
+echo -e "${YELLOW}[7/7] Seeding database...${NC}"
+php artisan db:seed --force
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}  ✓ Database seeding completed successfully${NC}"
+else
+    echo -e "${YELLOW}  ⚠ Database seeding completed with warnings (this might be expected)${NC}"
 fi
 echo ""
 

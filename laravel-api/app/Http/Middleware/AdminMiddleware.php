@@ -3,8 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use App\Constants\Messages;
 use App\Constants\CommonVal;
 use Illuminate\Http\Request;
@@ -17,135 +15,56 @@ use UnexpectedValueException;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param Closure(Request): (Response) $next
-     * @throws AuthorizationException
-     */
-    public function handle(Request $request, Closure $next): Response
-    {
-        $accessToken = $request->bearerToken();
+  /**
+   * Handle an incoming request.
+   *
+   * @param Closure(Request): (Response) $next
+   * @throws AuthorizationException
+   */
+  public function handle(Request $request, Closure $next): Response
+  {
+    $accessToken = $request->cookie('access_token');
 
-        // Check existing access token
-        if (!$accessToken) {
-            throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
-        }
+    // Check existing access token
+    if (!$accessToken) {
+      throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+    }
 
-        $payload = JsonWebToken::decode($accessToken, env('ACCESS_TOKEN_SECRET'));
-        $credentials = $payload['body'];
-        // Check request from member type admin
-        if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
-            throw new UnexpectedValueException(Messages::E0608);
-        }
-
-        /**
-         * Check access token had exited
-         */
-        $parentKey = CommonVal::ADMIN_TYPE . ":{$credentials['id']}";
-        $tokenKey = $parentKey . ":{$accessToken}";
-        if (!Redis::exists($tokenKey)) {
-            throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
-        }
-
-        $permissionTableKey = $parentKey . ":" . CommonVal::ADMIN_PERMISSION_TABLE;
-        $method = strtoupper($request->method());
-        $uri = $request->route()->uri();
-
-        // Check permission access
-        $pathsJson = Redis::hget($permissionTableKey, $method);
-        if (!$pathsJson) {
-            throw new NotFoundHttpException(Messages::E0404, null, CommonVal::HTTP_UNAUTHORIZED);
-        }
-
-        $allowedPaths = json_decode($pathsJson, true);
-        $hasPermission = false;
-        foreach ($allowedPaths as $pattern) {
-            if ($this->matchUriPattern($uri, $pattern)) {
-                $hasPermission = true;
-                break;
-            }
-        }
-
-        if (!$hasPermission) {
-            throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
-        }
-
-        return $next($request);
+    $payload = JsonWebToken::decode($accessToken, env('ACCESS_TOKEN_SECRET'));
+    $credentials = $payload['body'];
+    // Check request from member type admin
+    if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
+      throw new UnexpectedValueException(Messages::E0608);
     }
 
     /**
-     * Match the request URI with the pattern route in DB/Redis.
-     *
-     * Supports:
-     * - {id}, {slug} → match any 1 segment
-     * - {id?}, {slug?} → optional segment
-     * - * → wildcard (match all remaining segments)
-     *
-     * @param string $uri actual URI from request, e.g. "api/users/123"
-     * @param string $pattern Pattern from DB, e.g. "api/users/{id}"
-     * @return bool
+     * Check access token had exited
      */
-    private function matchUriPattern(string $uri, string $pattern): bool
-    {
-        // Standardize the removal of the terminal /
-        $uri = trim($uri, '/');
-        $pattern = trim($pattern, '/');
-
-        if ($pattern === '*') {
-            return true;
-        }
-
-        $uriParts = $uri === '' ? [] : explode('/', $uri);
-        $patternParts = $pattern === '' ? [] : explode('/', $pattern);
-
-        $uCount = count($uriParts);
-        $pCount = count($patternParts);
-
-        $i = 0;
-        $j = 0;
-
-        while ($i < $uCount && $j < $pCount) {
-            $part = $patternParts[$j];
-            $uriPart = $uriParts[$i];
-
-            // Wildcard match
-            if ($part === '*') {
-                return true;
-            }
-
-            // {id} or {slug} → accept any segment
-            if (preg_match('/^\{[^\/]+\}$/', $part)) {
-                $i++; $j++;
-                continue;
-            }
-
-            // {id?} or {slug?} → segment option
-            if (preg_match('/^\{[^\/]+\?\}$/', $part)) {
-                $i++;
-                $j++;
-                continue;
-            }
-
-            // Compare absolute
-            if ($uriPart !== $part) {
-                return false;
-            }
-
-            $i++; $j++;
-        }
-
-        // If still wildcard in pattern → OK
-        if ($j < $pCount && $patternParts[$j] === '*') {
-            return true;
-        }
-
-        // Allow pattern has param optional in last
-        while ($j < $pCount && preg_match('/^\{[^\/]+\?\}$/', $patternParts[$j])) {
-            $j++;
-        }
-
-        // Match only math 2
-        return $i === $uCount && $j === $pCount;
+    $parentKey = CommonVal::ADMIN_TYPE . ":{$credentials['id']}";
+    $tokenKey = $parentKey . ":{$accessToken}";
+    if (!Redis::exists($tokenKey)) {
+      throw new AuthorizationException(Messages::E0609, CommonVal::HTTP_UNAUTHORIZED);
     }
+
+    // Get current route pattern (already normalized by Laravel)
+    $method = strtoupper($request->method());
+    $currentRoute = trim($request->route()->uri(), '/');
+
+    // Check if this route is in the allowed list
+    $permissionTableKey = $parentKey . ":" . CommonVal::ADMIN_PERMISSION_TABLE;
+    $pathsJson = Redis::hget($permissionTableKey, $method);
+
+    if (!$pathsJson) {
+      throw new NotFoundHttpException(Messages::E0404, null, CommonVal::HTTP_UNAUTHORIZED);
+    }
+
+    $allowedRoutes = json_decode($pathsJson, true);
+
+    // Simple check: is current route in the allowed list?
+    if (!in_array($currentRoute, $allowedRoutes)) {
+      throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+    }
+
+    return $next($request);
+  }
 }

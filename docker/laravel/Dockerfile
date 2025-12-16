@@ -91,7 +91,7 @@ RUN apk add --no-cache --virtual .build-deps \
   g++ \
   make \
   linux-headers \
-  && pecl install xdebug-3.3.1 \
+  && pecl install xdebug \
   && docker-php-ext-enable xdebug \
   && apk del .build-deps
 

@@ -9,17 +9,14 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
-    {
-        CategoryMgmt::factory(10)->create();
-        // User::factory(10)->create();
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-    }
+  /**
+   * Seed the application's database.
+   */
+  public function run(): void
+  {
+    // Create root account with all permissions
+    $this->call([
+      RootAccountSeeder::class,
+    ]);
+  }
 }
