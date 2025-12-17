@@ -41,24 +41,24 @@ if [ -d "vendor" ] && [ -f "vendor/autoload.php" ]; then
     echo -e "${BLUE}  -> Vendor directory exists, checking if update needed...${NC}"
     
     # Run composer install to update only if needed (fast when no changes)
-    composer install \
+    # Run composer install to update only if needed (fast when no changes)
+    if composer install \
         --no-interaction \
         --no-progress \
         --prefer-dist \
-        --optimize-autoloader
-    
-    if [ $? -eq 0 ]; then
+        --optimize-autoloader; then
+        
         echo -e "${GREEN}  ✓ Composer packages verified/updated${NC}"
     else
         echo -e "${YELLOW}  ⚠ Composer update failed, removing vendor and reinstalling...${NC}"
         rm -rf vendor
-        composer install \
+        
+        if composer install \
             --no-interaction \
             --no-progress \
             --prefer-dist \
-            --optimize-autoloader
-        
-        if [ $? -eq 0 ]; then
+            --optimize-autoloader; then
+            
             echo -e "${GREEN}  ✓ Composer packages installed successfully${NC}"
         else
             echo -e "${RED}  ✗ ERROR: Composer install failed!${NC}"
@@ -75,13 +75,12 @@ else
         rm -rf vendor 2>/dev/null || echo -e "${BLUE}  -> Vendor is a volume mount, will be populated by composer${NC}"
     fi
     
-    composer install \
+    if composer install \
         --no-interaction \
         --no-progress \
         --prefer-dist \
-        --optimize-autoloader
-    
-    if [ $? -eq 0 ]; then
+        --optimize-autoloader; then
+        
         echo -e "${GREEN}  ✓ Composer packages installed successfully${NC}"
     else
         echo -e "${RED}  ✗ ERROR: Composer install failed!${NC}"
@@ -136,16 +135,21 @@ chmod -R 775 storage bootstrap/cache
 echo -e "${GREEN}  ✓ Permissions set${NC}"
 echo ""
 
-# Step 6: Run project setup (migrations + permissions)
-echo -e "${YELLOW}[6/6] Running project setup (migrations + permissions)...${NC}"
-echo -e "${BLUE}  -> Running: php artisan project:setup${NC}"
+# Step 6: Run project setup (migrations + seeds)
+echo -e "${YELLOW}[6/6] Running migrations and seeds...${NC}"
 
-php artisan project:setup
+# Run migrations
+echo -e "${BLUE}  -> Running: php artisan migrate${NC}"
+php artisan migrate --force
+
+# Run seeds
+echo -e "${BLUE}  -> Running: php artisan db:seed${NC}"
+php artisan db:seed --force
 
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}  ✓ Project setup completed successfully${NC}"
+    echo -e "${GREEN}  ✓ Database setup completed successfully${NC}"
 else
-    echo -e "${YELLOW}  ⚠ Project setup completed with warnings (this might be expected)${NC}"
+    echo -e "${YELLOW}  ⚠ Database setup completed with warnings${NC}"
 fi
 echo ""
 

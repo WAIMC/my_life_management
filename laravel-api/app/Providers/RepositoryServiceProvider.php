@@ -26,6 +26,7 @@ use App\Interfaces\History\Master\TranslationMstHistInterface;
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\Management\CategoryMgmtInterface;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
+use App\Interfaces\Management\MediaFileInterface;
 use App\Interfaces\Management\MediaMgmtInterface;
 use App\Interfaces\Management\ProductMgmtInterface;
 use App\Interfaces\Management\SettingLinkMgmtInterface;
@@ -71,6 +72,7 @@ use App\Repositories\History\Master\TranslationMstHistRepository;
 use App\Repositories\Management\BannerMgmtRepository;
 use App\Repositories\Management\CategoryMgmtRepository;
 use App\Repositories\Management\CategorySkillMgmtRepository;
+use App\Repositories\Management\MediaFileRepository;
 use App\Repositories\Management\MediaMgmtRepository;
 use App\Repositories\Management\ProductMgmtRepository;
 use App\Repositories\Management\SettingLinkMgmtRepository;
@@ -98,74 +100,73 @@ use Illuminate\Support\ServiceProvider;
 
 final class RepositoryServiceProvider extends ServiceProvider
 {
-    public $bindings = [
-        // Master
-        AdminDepartmentMstInterface::class => AdminDepartmentMstRepository::class,
-        AdminMstInterface::class => AdminMstRepository::class,
-        AdminRoleMstInterface::class => AdminRoleMstRepository::class,
-        ApiMstInterface::class => ApiMstRepository::class,
-        ApiRoleMstInterface::class => ApiRoleMstRepository::class,
-        DepartmentManagementMstInterface::class => DepartmentManagementMstRepository::class,
-        DepartmentMstInterface::class => DepartmentMstRepository::class,
-        FeatureMstInterface::class => FeatureMstRepository::class,
-        LanguageMstInterface::class => LanguageMstRepository::class,
-        OriginalTranslatorMstInterface::class => OriginalTranslatorMstRepository::class,
-        PolicyDepartmentMstInterface::class => PolicyDepartmentMstRepository::class,
-        RoleMstInterface::class => RoleMstRepository::class,
-        TokenMstInterface::class => TokenMstRepository::class,
-        TranslationLanguageMstInterface::class => TranslationLanguageMstRepository::class,
-        TranslationMstInterface::class => TranslationMstRepository::class,
+  public $bindings = [
+    // Master
+    AdminDepartmentMstInterface::class => AdminDepartmentMstRepository::class,
+    AdminMstInterface::class => AdminMstRepository::class,
+    AdminRoleMstInterface::class => AdminRoleMstRepository::class,
+    ApiMstInterface::class => ApiMstRepository::class,
+    ApiRoleMstInterface::class => ApiRoleMstRepository::class,
+    DepartmentManagementMstInterface::class => DepartmentManagementMstRepository::class,
+    DepartmentMstInterface::class => DepartmentMstRepository::class,
+    FeatureMstInterface::class => FeatureMstRepository::class,
+    LanguageMstInterface::class => LanguageMstRepository::class,
+    OriginalTranslatorMstInterface::class => OriginalTranslatorMstRepository::class,
+    PolicyDepartmentMstInterface::class => PolicyDepartmentMstRepository::class,
+    RoleMstInterface::class => RoleMstRepository::class,
+    TokenMstInterface::class => TokenMstRepository::class,
+    TranslationLanguageMstInterface::class => TranslationLanguageMstRepository::class,
+    TranslationMstInterface::class => TranslationMstRepository::class,
 
-        // Management
-        BannerMgmtInterface::class => BannerMgmtRepository::class,
-        CategoryMgmtInterface::class => CategoryMgmtRepository::class,
-        CategorySkillMgmtInterface::class => CategorySkillMgmtRepository::class,
-        MediaMgmtInterface::class => MediaMgmtRepository::class,
-        ProductMgmtInterface::class => ProductMgmtRepository::class,
-        SettingLinkMgmtInterface::class => SettingLinkMgmtRepository::class,
-        SkillDescriptionMgmtInterface::class => SkillDescriptionMgmtRepository::class,
-        SkillMgmtInterface::class => SkillMgmtRepository::class,
-        SliderMgmtInterface::class => SliderMgmtRepository::class,
-        SocialMgmtInterface::class => SocialMgmtRepository::class,
-        UserMgmtInterface::class => UserMgmtRepository::class,
+    // Management
+    BannerMgmtInterface::class => BannerMgmtRepository::class,
+    CategoryMgmtInterface::class => CategoryMgmtRepository::class,
+    CategorySkillMgmtInterface::class => CategorySkillMgmtRepository::class,
+    MediaMgmtInterface::class => MediaMgmtRepository::class,
+    ProductMgmtInterface::class => ProductMgmtRepository::class,
+    SettingLinkMgmtInterface::class => SettingLinkMgmtRepository::class,
+    SkillDescriptionMgmtInterface::class => SkillDescriptionMgmtRepository::class,
+    SkillMgmtInterface::class => SkillMgmtRepository::class,
+    SliderMgmtInterface::class => SliderMgmtRepository::class,
+    SocialMgmtInterface::class => SocialMgmtRepository::class,
+    UserMgmtInterface::class => UserMgmtRepository::class,
+    MediaFileInterface::class => MediaFileRepository::class,
 
-        // Master History
-        AdminMstHistInterface::class => AdminMstHistRepository::class,
-        ApiMstHistInterface::class => ApiMstHistRepository::class,
-        DepartmentMstHistInterface::class => DepartmentMstHistRepository::class,
-        FeatureMstHistInterface::class => FeatureMstHistRepository::class,
-        LanguageMstHistInterface::class => LanguageMstHistRepository::class,
-        OriginalTranslatorMstHistInterface::class => OriginalTranslatorMstHistRepository::class,
-        PolicyDepartmentMstHistInterface::class => PolicyDepartmentMstHistRepository::class,
-        RoleMstHistInterface::class => RoleMstHistRepository::class,
-        TranslationMstHistInterface::class => TranslationMstHistRepository::class,
+    // Master History
+    AdminMstHistInterface::class => AdminMstHistRepository::class,
+    ApiMstHistInterface::class => ApiMstHistRepository::class,
+    DepartmentMstHistInterface::class => DepartmentMstHistRepository::class,
+    FeatureMstHistInterface::class => FeatureMstHistRepository::class,
+    LanguageMstHistInterface::class => LanguageMstHistRepository::class,
+    OriginalTranslatorMstHistInterface::class => OriginalTranslatorMstHistRepository::class,
+    PolicyDepartmentMstHistInterface::class => PolicyDepartmentMstHistRepository::class,
+    RoleMstHistInterface::class => RoleMstHistRepository::class,
+    TranslationMstHistInterface::class => TranslationMstHistRepository::class,
 
-        // Management History
-        BannerMgmtHistInterface::class => BannerMgmtHistRepository::class,
-        CategoryMgmtHistInterface::class => CategoryMgmtHistRepository::class,
-        ProductMgmtHistInterface::class => ProductMgmtHistRepository::class,
-        SettingLinkMgmtHistInterface::class => SettingLinkMgmtHistRepository::class,
-        SkillDescriptionMgmtHistInterface::class => SkillDescriptionMgmtHistRepository::class,
-        SkillMgmtHistInterface::class => SkillMgmtHistRepository::class,
-        SliderMgmtHistInterface::class => SliderMgmtHistRepository::class,
-        SocialMgmtHistInterface::class => SocialMgmtHistRepository::class,
-        UserMgmtHistInterface::class => UserMgmtHistRepository::class,
-    ];
+    // Management History
+    BannerMgmtHistInterface::class => BannerMgmtHistRepository::class,
+    CategoryMgmtHistInterface::class => CategoryMgmtHistRepository::class,
+    ProductMgmtHistInterface::class => ProductMgmtHistRepository::class,
+    SettingLinkMgmtHistInterface::class => SettingLinkMgmtHistRepository::class,
+    SkillDescriptionMgmtHistInterface::class => SkillDescriptionMgmtHistRepository::class,
+    SkillMgmtHistInterface::class => SkillMgmtHistRepository::class,
+    SliderMgmtHistInterface::class => SliderMgmtHistRepository::class,
+    SocialMgmtHistInterface::class => SocialMgmtHistRepository::class,
+    UserMgmtHistInterface::class => UserMgmtHistRepository::class,
+  ];
 
-    /**
-     * Register services.
-     */
-    public function register(): void
-    {
-        foreach ($this->bindings as $repositoryInterface => $repository) {
-            $this->app->bind($repositoryInterface, $repository);
-        }
+  /**
+   * Register services.
+   */
+  public function register(): void
+  {
+    foreach ($this->bindings as $repositoryInterface => $repository) {
+      $this->app->bind($repositoryInterface, $repository);
     }
+  }
 
-    /**
-     * Bootstrap services.
-     */
-    public function boot(): void
-    {
-    }
+  /**
+   * Bootstrap services.
+   */
+  public function boot(): void {}
 }

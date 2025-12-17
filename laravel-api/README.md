@@ -87,22 +87,16 @@ php -r 'echo base64_encode(random_bytes(32));' # Copy kết quả vào REFRESH_T
 
 ```bash
 # Di chuyển tất cả bảng
-php artisan migrate:all
+php artisan migrate
 
 # Rollback tất cả nếu cần
-php artisan migrate:rollback-all
+php artisan migrate:rollback
 ```
 
-### 6. Đồng bộ quyền API
+### 6. Khởi tạo dữ liệu ban đầu
 
 ```bash
-php artisan app:sync-api-permission
-```
-
-### 7. Chạy migrations & Đồng bộ quyền API (thay vì chạy 5 và 6)
-
-```bash
-php artisan project:setup
+php artisan db:seed
 ```
 
 ## 📋 Quản lý quyền
@@ -120,21 +114,6 @@ Hệ thống quản lý quyền hai lớp:
 - Mỗi tài khoản thuộc về một hoặc nhiều phòng ban
 - Phòng ban được giao quản lý một số bảng và bản ghi cụ thể
 - Quyền truy cập và thao tác được xác định dựa trên phòng ban của tài khoản
-
-## 🔄 Auto Generator
-
-Dự án bao gồm hệ thống tự động tạo mã để tăng hiệu suất phát triển:
-
-- Mỗi khi có thay đổi table _mst, _mgmt, _mgmt_hist, _mst_hist. Thực hiện đồng bộ tự động
-
-```bash
-# Chạy auto generator
-cd auto_script
-./run_generator.sh
-
-# Sửa quyền sau khi chạy generator
-./fix_permissions.sh
-```
 
 ## 📂 Cấu trúc thư mục
 

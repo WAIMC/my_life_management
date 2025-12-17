@@ -74,7 +74,7 @@ services:
     volumes:
       - ../laravel-api:/var/www/laravel-api
       # Exclude vendor from host mount - let container manage it
-      - /var/www/laravel-api/vendor
+
       - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     environment:
       # Database
