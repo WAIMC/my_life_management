@@ -17,77 +17,44 @@ NC='\033[0m' # No Color
 LARAVEL_DIR="/var/www/laravel-api"
 cd "$LARAVEL_DIR"
 
-# Step 1: Check and create .env file
-echo -e "${YELLOW}[1/6] Checking .env file...${NC}"
-if [ ! -f ".env" ]; then
-    echo -e "${BLUE}  -> .env file not found. Creating from .env.example...${NC}"
-    if [ -f ".env.example" ]; then
-        cp .env.example .env
-        echo -e "${GREEN}  ✓ .env file created successfully${NC}"
-    else
-        echo -e "${RED}  ✗ ERROR: .env.example not found!${NC}"
-        exit 1
-    fi
+# Step 1: Force .env update from example
+echo -e "${YELLOW}[1/6] Update .env file...${NC}"
+if [ -f ".env" ]; then
+    echo -e "${BLUE}  -> Removing existing .env file...${NC}"
+    rm .env
+fi
+
+if [ -f ".env.example" ]; then
+    echo -e "${BLUE}  -> Creating .env from .env.example...${NC}"
+    cp .env.example .env
+    echo -e "${GREEN}  ✓ .env file created successfully${NC}"
 else
-    echo -e "${GREEN}  ✓ .env file already exists${NC}"
+    echo -e "${RED}  ✗ ERROR: .env.example not found!${NC}"
+    exit 1
 fi
 echo ""
 
-# Step 2: Handle vendor directory intelligently
+
+# Step 2: Fresh Composer Install
 echo -e "${YELLOW}[2/6] Managing Composer packages...${NC}"
 
-# Check if vendor directory exists and is valid
-if [ -d "vendor" ] && [ -f "vendor/autoload.php" ]; then
-    echo -e "${BLUE}  -> Vendor directory exists, checking if update needed...${NC}"
+echo -e "${BLUE}  -> Removing vendor directory and composer.lock...${NC}"
+rm -rf vendor composer.lock
+
+echo -e "${BLUE}  -> Installing dependencies...${NC}"
+if composer install \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader; then
     
-    # Run composer install to update only if needed (fast when no changes)
-    # Run composer install to update only if needed (fast when no changes)
-    if composer install \
-        --no-interaction \
-        --no-progress \
-        --prefer-dist \
-        --optimize-autoloader; then
-        
-        echo -e "${GREEN}  ✓ Composer packages verified/updated${NC}"
-    else
-        echo -e "${YELLOW}  ⚠ Composer update failed, removing vendor and reinstalling...${NC}"
-        rm -rf vendor
-        
-        if composer install \
-            --no-interaction \
-            --no-progress \
-            --prefer-dist \
-            --optimize-autoloader; then
-            
-            echo -e "${GREEN}  ✓ Composer packages installed successfully${NC}"
-        else
-            echo -e "${RED}  ✗ ERROR: Composer install failed!${NC}"
-            exit 1
-        fi
-    fi
+    echo -e "${GREEN}  ✓ Composer packages installed successfully${NC}"
 else
-    # Vendor doesn't exist or is invalid - fresh install
-    echo -e "${BLUE}  -> Vendor directory not found, installing packages...${NC}"
-    
-    # Try to remove vendor if it exists but is invalid (skip if it's a mount point)
-    if [ -d "vendor" ]; then
-        echo -e "${BLUE}  -> Removing invalid vendor directory...${NC}"
-        rm -rf vendor 2>/dev/null || echo -e "${BLUE}  -> Vendor is a volume mount, will be populated by composer${NC}"
-    fi
-    
-    if composer install \
-        --no-interaction \
-        --no-progress \
-        --prefer-dist \
-        --optimize-autoloader; then
-        
-        echo -e "${GREEN}  ✓ Composer packages installed successfully${NC}"
-    else
-        echo -e "${RED}  ✗ ERROR: Composer install failed!${NC}"
-        exit 1
-    fi
+    echo -e "${RED}  ✗ ERROR: Composer install failed!${NC}"
+    exit 1
 fi
 echo ""
+
 
 # Step 3: Wait for database to be ready
 echo -e "${YELLOW}[3/6] Waiting for database to be ready...${NC}"

@@ -91,8 +91,24 @@ class GenerateResponseMiddleware
 
     // Set multiple cookies if they exist
     if (!empty($cookies) && is_array($cookies)) {
-      foreach ($cookies as $cookie) {
-        $responseApi = $responseApi->withCookie($cookie);
+      foreach ($cookies as $cookieData) {
+        if (is_array($cookieData)) {
+
+          $cookie = cookie(
+            $cookieData['name'],
+            $cookieData['value'],
+            $cookieData['minutes'],
+            $cookieData['path'] ?? null,
+            $cookieData['domain'] ?? null,
+            $cookieData['secure'] ?? null,
+            $cookieData['httpOnly'] ?? true,
+            false,
+            $cookieData['sameSite'] ?? null
+          );
+          $responseApi = $responseApi->withCookie($cookie);
+        } elseif ($cookieData instanceof \Symfony\Component\HttpFoundation\Cookie) {
+          $responseApi = $responseApi->withCookie($cookieData);
+        }
       }
     }
 

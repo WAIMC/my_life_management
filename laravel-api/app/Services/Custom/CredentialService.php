@@ -49,7 +49,9 @@ class CredentialService
     $this->storeAccessTokenAndSetPermission($admin->id, $token['access_token']);
     $setAccessCookie = $this->generateAccessTokenForCookie($token['access_token']);
     $setRefreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
+
     $this->storeRefreshToken([
+
       $token['refresh_token'],
       $admin->id,
       $request,
@@ -142,49 +144,47 @@ class CredentialService
    * Generate cookie for token
    *
    * @param string|null $accessToken
-   * @return string
+   * @return array
    */
-  private function generateAccessTokenForCookie(string|null $accessToken): string
+  private function generateAccessTokenForCookie(string|null $accessToken): array
   {
     $ttl = $accessToken ? (CommonVal::MAX_ACCESS_TTL / 60) : -1;
     $tokenValue = $accessToken ?? null;
 
-    return cookie(
-      'access_token',
-      $tokenValue,
-      $ttl,
-      '/admin',
-      config('session.domain'),
-      app()->environment('production'),
-      true,
-      false,
-      'Strict'
-    );
+    return [
+      'name' => 'access_token',
+      'value' => $tokenValue,
+      'minutes' => $ttl,
+      'path' => '/api/admin',
+      'domain' => config('session.domain'),
+      'secure' => app()->environment('production'),
+      'httpOnly' => true,
+    ];
   }
+
 
   /**
    * Generate cookie for token
    *
    * @param string|null $refreshToken
-   * @return string
+   * @return array
    */
-  private function generateRefreshTokenForCookie(string|null $refreshToken): string
+  private function generateRefreshTokenForCookie(string|null $refreshToken): array
   {
     $ttl = $refreshToken ? (CommonVal::MAX_REFRESH_TTL / 60) : -1;
     $tokenValue = $refreshToken ?? null;
 
-    return cookie(
-      'refresh_token',
-      $tokenValue,
-      $ttl,
-      '/admin/credential/trust',
-      config('session.domain'),
-      app()->environment('production'),
-      true,
-      false,
-      'Strict'
-    );
+    return [
+      'name' => 'refresh_token',
+      'value' => $tokenValue,
+      'minutes' => $ttl,
+      'path' => '/api/admin/credential/trust',
+      'domain' => config('session.domain'),
+      'secure' => app()->environment('production'),
+      'httpOnly' => true,
+    ];
   }
+
 
   /**
    * Handle refresh token
@@ -197,21 +197,29 @@ class CredentialService
   {
     $refreshToken = $request->cookie('refresh_token');
 
+    if (!$refreshToken) {
+      throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+    }
+
     $adminMstId = $this->revokeToken($refreshToken, true);
     $token = $this->generateToken($adminMstId);
+
     $this->storeAccessTokenAndSetPermission($adminMstId, $token['access_token']);
+    $setAccessCookie = $this->generateAccessTokenForCookie($token['access_token']);
+    $setRefreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
+
     $this->storeRefreshToken([
       $token['refresh_token'],
       $adminMstId,
       $request,
     ]);
-    $refreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
 
     return [
-      'auth_type' => 'bearer',
       'ttl' => CommonVal::MAX_ACCESS_TTL,
-      'access_token' => $token['access_token'],
-      '_cookies' => [$refreshCookie],
+      '_cookies' => [
+        $setAccessCookie,
+        $setRefreshCookie,
+      ],
     ];
   }
 
@@ -256,6 +264,8 @@ class CredentialService
 
       $refreshTokenData->delete();
     } else {
+
+
       // Delete access token in redis
       $parentKey = CommonVal::ADMIN_TYPE . ":{$credentials['id']}";
       $tokenKey = $parentKey . ":{$token}";
@@ -274,18 +284,20 @@ class CredentialService
    */
   public function logout(Request $request): array
   {
-    $accessToken = $request->bearerToken();
+    $accessToken = $request->cookie('access_token');
     $refreshToken = $request->cookie('refresh_token');
 
     $this->revokeToken($accessToken, false);
     $this->revokeToken($refreshToken, true);
+    $setAccessCookie = $this->generateAccessTokenForCookie(null);
     $setRefreshCookie = $this->generateRefreshTokenForCookie(null);
 
     return [
-      'auth_type' => 'bearer',
-      'ttl' => CommonVal::MAX_ACCESS_TTL,
-      'access_token' => null,
-      '_cookies' => [$setRefreshCookie],
+      'ttl' => null,
+      '_cookies' => [
+        $setAccessCookie,
+        $setRefreshCookie,
+      ],
     ];
   }
 
