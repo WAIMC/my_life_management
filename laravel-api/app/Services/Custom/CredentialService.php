@@ -39,23 +39,22 @@ class CredentialService
     } else if (!Hash::check($credentials['password'], $admin->password)) {
       $admin->limit_access += 1;
       $admin->save();
-      throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+      throw new \App\Exceptions\Auth\LoginFailedException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
     } else {
       $admin->limit_access = 0;
       $admin->save();
+
+      $token = $this->generateToken($admin->id);
+      $this->storeAccessTokenAndSetPermission($admin->id, $token['access_token']);
+      $setAccessCookie = $this->generateAccessTokenForCookie($token['access_token']);
+      $setRefreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
+
+      $this->storeRefreshToken([
+        $token['refresh_token'],
+        $admin->id,
+        $request,
+      ]);
     }
-
-    $token = $this->generateToken($admin->id);
-    $this->storeAccessTokenAndSetPermission($admin->id, $token['access_token']);
-    $setAccessCookie = $this->generateAccessTokenForCookie($token['access_token']);
-    $setRefreshCookie = $this->generateRefreshTokenForCookie($token['refresh_token']);
-
-    $this->storeRefreshToken([
-
-      $token['refresh_token'],
-      $admin->id,
-      $request,
-    ]);
 
     return [
       'ttl' => CommonVal::MAX_ACCESS_TTL,
