@@ -23,14 +23,24 @@ class LogoutApiTest extends TestCase
   protected function setUp(): void
   {
     parent::setUp();
-    // Disable cookie encryption to allow passing raw tokens in tests
-    $this->disableCookieEncryption();
     Redis::flushall();
   }
 
   // Helper to get authenticated cookies
   protected function getAuthCookies(AdminMst $admin): array
   {
+    // Assign 'root' role to ensuring permissions exist
+    $rootRole = \App\Models\Master\RoleMst::where('name', 'root')->first();
+    if (!$rootRole) {
+        $rootRole = \App\Models\Master\RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
+    }
+    DB::table('admin_role_mst')->insert([
+      'admin_mst_id' => $admin->id,
+      'role_mst_id' => $rootRole->id,
+      'created_at' => now(),
+      'updated_at' => now(),
+    ]);
+
     // Simulate login flow to get valid tokens and Redis state
     $response = $this->postJson($this->loginUrl, [
       'user_name' => $admin->user_name,
@@ -134,7 +144,7 @@ class LogoutApiTest extends TestCase
     $json = $response->json();
     $errorMsg = $json['error']['messages'] ?? $json['message'] ?? '';
 
-    $this->assertEquals(Messages::E0608, $errorMsg);
+    $this->assertEquals(Messages::E0401, $errorMsg);
   }
 
   /**
@@ -277,10 +287,10 @@ class LogoutApiTest extends TestCase
 
     $response->assertStatus(CommonVal::HTTP_OK);
     $response->assertJson([
-      'success' => true,
-      'message' => 'success',
-      'data' => [
-        'ttl' => null
+      'data' => [],
+      'error' => [
+        'code' => 200,
+        'messages' => null
       ]
     ]);
 

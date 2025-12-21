@@ -294,7 +294,7 @@ class LoginApiTest extends TestCase
     ]);
 
     $response->assertStatus(CommonVal::HTTP_OK)
-      ->assertJsonStructure(['data' => ['ttl'], 'error']);
+      ->assertJsonStructure(['data' => ['expires_at'], 'error']);
 
     $admin->refresh();
     $this->assertEquals(0, $admin->limit_access);
@@ -437,7 +437,7 @@ class LoginApiTest extends TestCase
     $response->assertStatus(200)
       ->assertJsonStructure([
         'data' => [
-          'ttl'
+          'expires_at'
         ],
         'error' => [
           'code',

@@ -2,57 +2,48 @@
 
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { useAppSelector } from "@/redux/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isLoading } = useAuth();
-  const { isAuthenticated, authInitialized } = useAppSelector(
-    (state) => state.auth
-  );
+  const { login, isAuthenticated } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // DISABLED: Redirect if already authenticated
   useEffect(() => {
-    // DISABLED: Auto-redirect logic
-    return;
-
-    /* ORIGINAL CODE - COMMENTED OUT
-    if (authInitialized && isAuthenticated) {
+    if (isAuthenticated) {
       const redirectParam = searchParams.get("redirect");
       const redirectUrl =
         redirectParam && redirectParam.startsWith("/admin")
           ? redirectParam
           : "/admin";
       router.push(redirectUrl);
-    } else {
     }
-    */
-  }, [authInitialized, isAuthenticated, searchParams, router]);
+  }, [isAuthenticated, router, searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
+    setIsLoading(true);
 
     try {
-      // useAuth.login() calls syncAuthStateAcrossTabs which updates Redux
-      await login(username, password);
-
-      // DO NOT manually redirect here!
-      // The useEffect (lines 24-35) will handle redirect when isAuthenticated becomes true
-      // This prevents race condition where AdminLayout checks auth before state propagates
+      await login({
+        user_name: username,
+        password: password,
+      });
+      // Redirect handled by useEffect
     } catch (error: any) {
-      // Show error message to user
-      const errorMessage = error.response?.data?.message || "Invalid username or password";
+      // Laravel returns { error: { code, messages } }
+      const errorMessage = error.response?.data?.error?.messages || "Invalid username or password";
       setError(errorMessage);
+      setIsLoading(false);
     }
   };
 

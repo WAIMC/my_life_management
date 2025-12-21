@@ -57,7 +57,7 @@ class CredentialService
     }
 
     return [
-      'ttl' => CommonVal::MAX_ACCESS_TTL,
+      'expires_at' => $token['expires_at'], // Also return the absolute expiration timestamp
       '_cookies' => [
         $setAccessCookie,
         $setRefreshCookie,
@@ -121,19 +121,24 @@ class CredentialService
       'type' => CommonVal::ADMIN_TYPE,
     ];
 
+    $iat = time();
+    
     // Generate new access token
+    $accessPayload = JsonWebToken::JWTPayload($payload, false, $iat);
     $accessToken = JsonWebToken::encode(
-      JsonWebToken::JWTPayload($payload, false),
+      $accessPayload,
       env('ACCESS_TOKEN_SECRET')
     );
 
     // Generate new refresh token
+    $refreshPayload = JsonWebToken::JWTPayload($payload, true, $iat);
     $refreshToken = JsonWebToken::encode(
-      JsonWebToken::JWTPayload($payload, true),
+      $refreshPayload,
       env('REFRESH_TOKEN_SECRET')
     );
 
     return [
+      'expires_at' => $accessPayload['exp'], // Absolute timestamp
       'access_token' => $accessToken,
       'refresh_token' => $refreshToken
     ];
@@ -214,7 +219,7 @@ class CredentialService
     ]);
 
     return [
-      'ttl' => CommonVal::MAX_ACCESS_TTL,
+      'expires_at' => $token['expires_at'],
       '_cookies' => [
         $setAccessCookie,
         $setRefreshCookie,
@@ -231,7 +236,7 @@ class CredentialService
    * @throws \UnexpectedValueException
    * @return int
    */
-  private function revokeToken(string $token, bool $isRefresh): int
+  private function revokeToken(?string $token, bool $isRefresh): int
   {
     // Check existing access token
     if (!$token) {
@@ -292,7 +297,6 @@ class CredentialService
     $setRefreshCookie = $this->generateRefreshTokenForCookie(null);
 
     return [
-      'ttl' => null,
       '_cookies' => [
         $setAccessCookie,
         $setRefreshCookie,
@@ -333,7 +337,7 @@ class CredentialService
    */
   public function me(Request $request): array
   {
-    $accessToken = $request->bearerToken();
+    $accessToken = $request->cookie('access_token');
 
     if (!$accessToken) {
       throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
@@ -355,11 +359,9 @@ class CredentialService
     }
 
     return [
+      'expires_at' => $payload['body']['exp'],
       'id' => $admin->id,
-      'user_name' => $admin->user_name,
-      'full_name' => $admin->full_name,
       'email' => $admin->email,
-      'phone' => $admin->phone,
       'status' => $admin->status,
       'is_active' => $admin->is_active,
     ];

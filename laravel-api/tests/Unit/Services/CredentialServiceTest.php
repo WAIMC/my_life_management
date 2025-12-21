@@ -117,9 +117,9 @@ class CredentialServiceTest extends TestCase
     $result = $this->credentialService->login($request);
 
     // 1. Verify Response Structure
-    $this->assertArrayHasKey('ttl', $result);
+    $this->assertArrayHasKey('expires_at', $result);
     $this->assertArrayHasKey('_cookies', $result);
-    $this->assertEquals(CommonVal::MAX_ACCESS_TTL, $result['ttl']);
+    $this->assertEqualsWithDelta(time() + CommonVal::MAX_ACCESS_TTL, $result['expires_at'], 5);
 
     // 2. Verify DB: limit_access reset to 0
     $this->assertEquals(0, $admin->fresh()->limit_access);
@@ -261,7 +261,7 @@ class CredentialServiceTest extends TestCase
     $this->assertDatabaseMissing('token_mst', ['token_hash' => $oldTokenId]);
 
     // 2. Response Structure
-    $this->assertArrayHasKey('ttl', $result);
+    $this->assertArrayHasKey('expires_at', $result);
     $this->assertArrayHasKey('_cookies', $result);
 
     $newAccessCookie = collect($result['_cookies'])->firstWhere('name', 'access_token');
@@ -339,8 +339,6 @@ class CredentialServiceTest extends TestCase
     // 1. Response Structure
     $this->assertArrayHasKey('_cookies', $result);
     // User requested: "return response just contains ttl: null and 2 cookies to delete"
-    $this->assertNull($result['ttl'] ?? null); // User changed code to set 'ttl' => null
-
     // 2. Cookies Cleared
     $accessCookie = collect($result['_cookies'])->firstWhere('name', 'access_token');
     $refreshCookie = collect($result['_cookies'])->firstWhere('name', 'refresh_token');
@@ -366,12 +364,12 @@ class CredentialServiceTest extends TestCase
   {
     $admin = AdminMst::factory()->create();
     $accessToken = JsonWebToken::encode(
-      JsonWebToken::JWTPayload(['id' => (string)$admin->id, 'type' => CommonVal::ADMIN_TYPE], false),
+      JsonWebToken::JWTPayload(['id' => (string)$admin->id, 'type' => CommonVal::ADMIN_TYPE], false, time()),
       env('ACCESS_TOKEN_SECRET')
     );
 
     $request = Request::create('/me', 'GET');
-    $request->headers->set('Authorization', 'Bearer ' . $accessToken);
+    $request->cookies->set('access_token', $accessToken);
 
     $result = $this->credentialService->me($request);
 

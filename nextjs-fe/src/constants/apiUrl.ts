@@ -1,20 +1,11 @@
 /**
  * API Endpoints Constants
  * Auto-generated from Laravel API routes
- * All routes are prefixed with /admin
- */
-
-// ============================================
-// AUTHENTICATION ENDPOINTS
-// ============================================
-export const LOGIN = '/admin/account/login';
-export const LOGOUT = '/admin/account/logout';
-export const REFRESH_TOKEN = '/admin/account/refresh-token';
-export const ME = '/admin/account/me';
-
-// ============================================
-// MASTER DATA ENDPOINTS
-// ============================================
+// Auth Endpoints
+export const LOGIN = '/admin/credential/login';
+export const LOGOUT = '/admin/credential/trust/logout';
+export const REFRESH_TOKEN = '/admin/credential/trust/refresh-token';
+export const ME = '/admin/credential/me';
 
 // Admin Master
 export const ADMIN_MST_LIST = '/admin/admin-mst/list';

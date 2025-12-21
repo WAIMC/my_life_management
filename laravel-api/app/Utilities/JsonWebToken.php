@@ -34,13 +34,14 @@ class JsonWebToken
      * @param bool $isRefresh
      * @return array
      */
-    public static function JWTPayload(array $payload, bool $isRefresh = false): array
+    public static function JWTPayload(array $payload, bool $isRefresh = false, ?int $iat = null): array
     {
+        $iat = $iat ?? time();
         return [
             'id'   => $payload['id'] ?? '',                                        // ID of the token (member id)
             'type' => $payload['type'] ?? '',                                      // Type of the token (member type)
-            'iat'  => time(),                                                      // Time when JWT was issued.
-            'exp'  => time() + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS) // Expiration time
+            'iat'  => $iat,                                                        // Time when JWT was issued.
+            'exp'  => $iat + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS)   // Expiration time
         ];
     }
 

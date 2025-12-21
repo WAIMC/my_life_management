@@ -8,10 +8,10 @@ export const API_BASE_URL =
 
 // Authentication
 export const AUTH_ENDPOINTS = {
-  LOGIN: '/admin/account/login',
-  LOGOUT: '/admin/account/logout',
-  REFRESH: '/admin/account/refresh-token',
-  ME: '/admin/account/me',
+  LOGIN: '/admin/credential/login',
+  LOGOUT: '/admin/credential/trust/logout',
+  REFRESH: '/admin/credential/trust/refresh-token',
+  ME: '/admin/credential/me',
 } as const;
 
 // Master Data

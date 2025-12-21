@@ -1,58 +1,30 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState, useMemo, useEffect } from 'react';
-import { Menu, X, LogOut, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { NAVIGATION_MENU, type MenuItem, isRouteActive } from '@/constants/navigation';
-
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { LogOut, Menu, X, ChevronDown } from "lucide-react";
+import { NAVIGATION_MENU, isRouteActive } from "@/constants/navigation";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
-
-  // Auto-expand menu based on current pathname
-  useEffect(() => {
-    const currentMenu = NAVIGATION_MENU.find((item) => {
-      if (item.children) {
-        return item.children.some((child) => pathname.startsWith(child.href!));
-      }
-      return false;
-    });
-
-    if (currentMenu) {
-      setExpandedMenu(currentMenu.label);
-    }
-  }, [pathname]);
 
   const toggleMenu = (label: string) => {
     setExpandedMenu(expandedMenu === label ? null : label);
   };
 
-  const handleLogout = () => {
-    // DISABLED: Logout and redirect
-    return;
+  const closeSidebar = () => setIsOpen(false);
 
-    /* ORIGINAL CODE - COMMENTED OUT
-    // Call logout (clears state synchronously)
-    logout();
-    // Redirect immediately
-    router.push('/login');
-    */
+  const handleLogout = async () => {
+    await logout();
   };
 
-  const closeSidebar = () => {
-    setIsOpen(false);
-  };
-
-  // Memoize menu rendering to avoid unnecessary re-renders
   const menuContent = useMemo(
     () =>
       NAVIGATION_MENU.map((item) => (
@@ -62,10 +34,10 @@ export function Sidebar() {
               <button
                 onClick={() => toggleMenu(item.label)}
                 className={cn(
-                  'w-full flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200',
+                  "w-full flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
                   expandedMenu === item.label
-                    ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                    ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                 )}
                 aria-expanded={expandedMenu === item.label}
                 aria-label={`Toggle ${item.label} menu`}
@@ -76,15 +48,15 @@ export function Sidebar() {
                 </span>
                 <ChevronDown
                   className={cn(
-                    'h-4 w-4 transition-transform duration-200',
-                    expandedMenu === item.label && 'rotate-180'
+                    "h-4 w-4 transition-transform duration-200",
+                    expandedMenu === item.label && "rotate-180"
                   )}
                 />
               </button>
               <div
                 className={cn(
-                  'overflow-hidden transition-all duration-200',
-                  expandedMenu === item.label ? 'mt-1 max-h-96' : 'max-h-0'
+                  "overflow-hidden transition-all duration-200",
+                  expandedMenu === item.label ? "mt-1 max-h-96" : "max-h-0"
                 )}
               >
                 <div className="space-y-1 pl-8">
@@ -94,10 +66,10 @@ export function Sidebar() {
                       href={child.href!}
                       onClick={closeSidebar}
                       className={cn(
-                        'block rounded-lg px-4 py-2 text-sm transition-all duration-150',
+                        "block rounded-lg px-4 py-2 text-sm transition-all duration-150",
                         isRouteActive(pathname, child.href)
-                          ? 'bg-blue-50 font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                          ? "bg-blue-50 font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                       )}
                     >
                       {child.label}
@@ -111,10 +83,10 @@ export function Sidebar() {
               href={item.href!}
               onClick={closeSidebar}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-150',
+                "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-150",
                 isRouteActive(pathname, item.href)
-                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
               )}
             >
               <item.icon className="h-5 w-5" />
@@ -139,20 +111,16 @@ export function Sidebar() {
         size="icon"
         className="fixed left-4 top-4 z-50 lg:hidden"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
+        aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
       >
-        {isOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <Menu className="h-6 w-6" />
-        )}
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </Button>
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-800 dark:bg-slate-950 lg:z-30 lg:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          "fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-800 dark:bg-slate-950 lg:z-30 lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         role="navigation"
         aria-label="Main navigation"

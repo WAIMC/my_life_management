@@ -221,7 +221,7 @@ class RefreshTokenApiTest extends TestCase
     );
 
     $response->assertOk();
-    $response->assertJsonStructure(['data' => ['ttl']]);
+    $response->assertJsonStructure(['data' => ['expires_at']]);
     $response->assertJsonMissing(['_cookies']);
   }
 
