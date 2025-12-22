@@ -12,55 +12,53 @@ use App\Http\Resources\Management\CategorySkillMgmtResource;
 
 class CategorySkillMgmtService extends BaseJunctionService
 {
-    public function __construct(
-        protected CategorySkillMgmtInterface $categorySkillMgmt
-    )
-    {
+  public function __construct(
+    protected CategorySkillMgmtInterface $categorySkillMgmt
+  ) {}
+
+  /**
+   * Get category skill mgmt list
+   *
+   * @param array $payload
+   * @return JsonResource
+   */
+  public function list(array $payload): JsonResource
+  {
+    $list = $this->categorySkillMgmt->list($payload);
+
+    return CategorySkillMgmtResource::collection($list);
+  }
+
+  /**
+   * Update category skill mgmt
+   *
+   * @param array $payload
+   * @return bool
+   */
+  public function update(array $payload): bool
+  {
+    // Delete category skill mgmt
+    if (!empty($payload['delete'])) {
+      $this->validateExistence(
+        $payload['delete'],
+        fn($values) => $this->categorySkillMgmt->getCategorySkillMgmtId($values),
+        'category_skill_id',
+        'category_skill_mgmt'
+      );
+      $this->categorySkillMgmt->executeDelete($payload['delete']);
     }
 
-    /**
-     * Get category skill mgmt list
-     *
-     * @param array $payload
-     * @return JsonResource
-     */
-    public function list(array $payload): JsonResource
-    {
-        $list = $this->categorySkillMgmt->list($payload);
-
-        return CategorySkillMgmtResource::collection($list);
+    // Insert category skill mgmt
+    if (!empty($payload['insert'])) {
+      $this->validateNonExistence(
+        $payload['insert'],
+        fn($values) => $this->categorySkillMgmt->getCategorySkillMgmtId($values),
+        'category_skill_id',
+        'category_skill_mgmt'
+      );
+      $this->categorySkillMgmt->executeStore($payload['insert']);
     }
 
-    /**
-     * Update category skill mgmt
-     *
-     * @param array $payload
-     * @return bool
-     */
-    public function update(array $payload): bool
-    {
-        // Delete category skill mgmt
-        if ($payload['delete']) {
-            $this->validateExistence(
-                $payload['delete'],
-                fn($values) => $this->categorySkillMgmt->getCategorySkillMgmtId($values),
-                'category_skill_id',
-                'category_skill_mgmt'
-            );
-            $this->categorySkillMgmt->executeDelete($payload['delete']);
-        }
-
-        // Insert category skill mgmt
-        if ($payload['insert']) {
-            $this->validateNonExistence(
-                $payload['insert'],
-                fn($values) => $this->categorySkillMgmt->getCategorySkillMgmtId($values),
-                'category_skill_id',
-                'category_skill_mgmt'
-            );
-            $this->categorySkillMgmt->executeStore($payload['insert']);
-        }
-
-        return true;
-    }
+    return true;
+  }
 }

@@ -24,15 +24,15 @@ class AdminMstFactory extends Factory
   public function definition()
   {
     return [
-      'email' => $this->faker->unique()->safeEmail(),
-      'user_name' => substr($this->faker->unique()->userName(), 0, 20) . Str::random(2),
+      'email' => Str::random(10) . '@gmail.com',
+      'user_name' => substr($this->faker->unique()->userName(), 0, 15) . Str::random(2),
       'password' => Hash::make('password'), // password
-      'first_name' => $this->faker->firstName(),
-      'last_name' => $this->faker->lastName(),
-      'address' => $this->faker->address(),
-      'phone_number' => $this->faker->phoneNumber(),
+      'first_name' => substr($this->faker->firstName(), 0, 15),
+      'last_name' => substr($this->faker->lastName(), 0, 15),
+      'address' => substr($this->faker->address(), 0, 50),
+      'phone_number' => '0901234567',
       'birth' => $this->faker->dateTimeBetween('-50 years', '-18 years'),
-      'gender' => $this->faker->randomElement([1, 2]), // 1: male, 2: female, example
+      'gender' => $this->faker->randomElement([\App\Enums\Gender::MALE->value, \App\Enums\Gender::FEMALE->value]),
       'status' => 1,
       'is_active' => true,
       'avatar' => null,

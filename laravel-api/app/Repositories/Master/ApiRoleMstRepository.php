@@ -14,88 +14,132 @@ use Illuminate\Support\Collection;
 
 class ApiRoleMstRepository extends BaseRepository implements ApiRoleMstInterface
 {
-    public function __construct(ApiRoleMst $model)
-    {
-        parent::__construct($model);
+  public function __construct(ApiRoleMst $model)
+  {
+    parent::__construct($model);
+  }
+
+  /**
+   * Get list with pagination
+   *
+   * @param array $payload
+   * @return LengthAwarePaginator
+   */
+  public function list(array $payload): LengthAwarePaginator
+  {
+    $query = $this->model->query()
+      ->select([
+        'api_role_mst.api_mst_id',
+        'api_role_mst.role_mst_id',
+        'api_role_mst.updated_at',
+      ])
+      ->with(['apiMst:id,name,path', 'roleMst:id,name']); // Eager load
+
+    // Apply filters
+    $this->applyFilters($query, $payload, [
+      'api_mst_id',
+      'role_mst_id',
+    ]);
+
+    // Apply date range
+    $this->applyDateRange($query, $payload);
+
+    // Apply sorting
+    $this->applySorting($query, $payload, 'api_mst_id');
+
+    // Pagination
+    $perPage = $payload['per_page'] ?? 15;
+    $page = $payload['page'] ?? 1;
+
+    return $query->paginate($perPage, ['*'], 'page', $page);
+  }
+
+  /**
+   * Create new record
+   *
+   * @param array $payload
+   * @return void
+   */
+  public function executeStore(array $payload): void
+  {
+    foreach ($payload as $record) {
+      $this->model->create($record);
+    }
+  }
+
+  /**
+   * Delete record
+   *
+   * @param array $payload
+   * @return void
+   */
+  public function executeDelete(array $payload): void
+  {
+    $values = collect($payload)->map(function ($item) {
+      return '(' . (int)$item['api_mst_id'] . ', ' . (int)$item['role_mst_id'] . ')';
+    })->all();
+
+    $this->model
+      ->whereRaw("(api_mst_id, role_mst_id) IN (" . implode(", ", $values) . ")")
+      ->delete();
+  }
+
+  /**
+   * Get ids
+   *
+   * @param array $tuples
+   * @return Collection
+   */
+  public function getApiRoleMstId(array $tuples): Collection
+  {
+    $values = collect($tuples)->map(function ($item) {
+      $apiMstId = $item['api_mst_id'] ?? $item[0] ?? null;
+      $roleMstId = $item['role_mst_id'] ?? $item[1] ?? null;
+      return '(' . (int)$apiMstId . ', ' . (int)$roleMstId . ')';
+    })->all();
+
+    return $this->model
+      ->whereRaw("(api_mst_id, role_mst_id) IN (" . implode(", ", $values) . ")")
+      ->get(['api_mst_id', 'role_mst_id'])
+      ->map(function ($item) {
+        return [$item->api_mst_id, $item->role_mst_id];
+      });
+  }
+
+  /**
+   * Check if the role belongs to current user
+   *
+   * @param array $payload
+   * @return bool
+   */
+  public function isMyRole(array $payload): bool
+  {
+    $currentAdminId = (int)(request()->attributes->get('current_admin_id') ?? \Illuminate\Support\Facades\Auth::id());
+
+    if (!$currentAdminId) {
+      return false;
     }
 
-    /**
-     * Get list with pagination
-     *
-     * @param array $payload
-     * @return LengthAwarePaginator
-     */
-    public function list(array $payload): LengthAwarePaginator
-    {
-        $query = $this->model->query()
-            ->select([
-                'api_mst_id',
-                'role_mst_id',
-                'updated_at',
-            ])
-            ->with(['apiMst:id,name,endpoint', 'roleMst:id,name,code']); // Eager load
+    $roleIds = [];
+    $checkGroups = ['insert', 'delete'];
 
-        // Apply filters
-        $this->applyFilters($query, $payload, [
-            'api_mst_id',
-            'role_mst_id',
-        ]);
-
-        // Apply date range
-        $this->applyDateRange($query, $payload);
-
-        // Apply sorting
-        $this->applySorting($query, $payload, 'api_mst_id');
-
-        // Pagination
-        $perPage = $payload['per_page'] ?? 15;
-        $page = $payload['page'] ?? 1;
-
-        return $query->paginate($perPage, ['*'], 'page', $page);
+    foreach ($checkGroups as $group) {
+      if (isset($payload[$group]) && is_array($payload[$group])) {
+        foreach ($payload[$group] as $item) {
+          if (isset($item['role_mst_id'])) {
+            $roleIds[] = (int)$item['role_mst_id'];
+          }
+        }
+      }
     }
 
-    /**
-     * Create new record
-     *
-     * @param array $payload
-     * @return void
-     */
-    public function executeStore(array $payload): void
-    {
-        $this->model->create($payload);
+    if (empty($roleIds)) {
+      return false;
     }
 
-    /**
-     * Delete record
-     *
-     * @param array $payload
-     * @return void
-     */
-    public function executeDelete(array $payload): void
-    {
-        $values = collect($payload)->map(function ($item) {
-            return '(' . (int)$item['api_mst_id'] . ', ' . (int)$item['role_mst_id'] . ')';
-        })->all();
-
-        $this->model
-            ->whereRaw("(api_mst_id, role_mst_id) IN (" . implode(", ", $values) . ")")
-            ->delete();
-    }
-
-    /**
-     * Get ids
-     *
-     * @param array $tuples
-     * @return Collection
-     */
-    public function getApiRoleMstId(array $tuples): Collection
-    {
-        $values = collect($tuples)->map(function ($item) {
-            return '(' . (int)$item['api_mst_id'] . ', ' . (int)$item['role_mst_id'] . ')';
-        })->all();
-
-        return $this->model
-            ->whereRaw("(api_mst_id, role_mst_id) IN (" . implode(", ", $values) . ")")
-            ->pluck('api_mst_id', 'role_mst_id');
-    }
+    return \Illuminate\Support\Facades\DB::table('admin_role_mst')
+      ->where('admin_mst_id', $currentAdminId)
+      ->whereIn('role_mst_id', array_unique($roleIds))
+      ->exists();
+  }
 }

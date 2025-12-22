@@ -130,4 +130,19 @@ After test design is completed, wait for my instruction:
 Only then convert EACH test case into a PHPUnit Feature Test method.
 
 === API INFORMATION ===
-route: POST      api/admin/credential/logi
+route:
+DELETE    api/admin/slider-mgmt-hist/delete/{id} ......................................................... History\Management\SliderMgmtHistController@delete
+
+GET|HEAD  api/admin/slider-mgmt-hist/list .................................................................. History\Management\SliderMgmtHistController@list
+
+POST      api/admin/slider-mgmt-hist/store ................................................................ History\Management\SliderMgmtHistController@store
+
+PUT       api/admin/slider-mgmt-hist/update/{id} ......................................................... History\Management\SliderMgmtHistController@update
+
+DELETE    api/admin/slider-mgmt/delete/{id} .......................................................................... Management\SliderMgmtController@delete
+
+GET|HEAD  api/admin/slider-mgmt/list ................................................................................... Management\SliderMgmtController@list
+
+POST      api/admin/slider-mgmt/store ................................................................................. Management\SliderMgmtController@store
+
+PUT       api/admin/slider-mgmt/update/{id} .......................................................................... Management\SliderMgmtController@update

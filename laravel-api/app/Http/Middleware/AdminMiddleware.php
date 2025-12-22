@@ -65,6 +65,9 @@ class AdminMiddleware
       throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
     }
 
+    // Set current admin ID for Service consumption
+    $request->attributes->set('current_admin_id', $credentials['id']);
+
     return $next($request);
   }
 }

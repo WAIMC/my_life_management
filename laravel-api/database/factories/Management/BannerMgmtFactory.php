@@ -1,0 +1,35 @@
+<?php
+
+namespace Database\Factories\Management;
+
+use App\Models\Management\BannerMgmt;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class BannerMgmtFactory extends Factory
+{
+  /**
+   * The name of the factory's corresponding model.
+   *
+   * @var string
+   */
+  protected $model = BannerMgmt::class;
+
+  /**
+   * Define the model's default state.
+   *
+   * @return array
+   */
+  public function definition()
+  {
+    return [
+      'title' => $this->faker->text(40), // Limit to 50
+      'slug' => \Illuminate\Support\Str::limit($this->faker->slug, 45, ''),
+      'description' => $this->faker->text(200),
+      'link' => \Illuminate\Support\Str::limit($this->faker->url, 95, ''),
+      'image' => 'banner.jpg',
+      'position' => 'top',
+      'status' => 1,
+      'is_delete' => 0,
+    ];
+  }
+}

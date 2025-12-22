@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('policy_department_mst_hist', function (Blueprint $table) {
             $table->increments('id')->comment('Policy department history id');
             $table->unsignedInteger('policy_department_mst_id')->comment('Policy department id');
-            $table->unsignedInteger('table_name')->nullable()->comment('table name');
+            $table->string('table_name', 20)->nullable()->comment('table name');
             $table->unsignedInteger('row_id')->nullable()->comment('Row id');
             $table->unsignedTinyInteger('action')->comment('action');
             $table->unsignedInteger('author_id')->comment('Author id');

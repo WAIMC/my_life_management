@@ -14,88 +14,101 @@ use Illuminate\Support\Collection;
 
 class CategorySkillMgmtRepository extends BaseRepository implements CategorySkillMgmtInterface
 {
-    public function __construct(CategorySkillMgmt $model)
-    {
-        parent::__construct($model);
-    }
+  public function __construct(CategorySkillMgmt $model)
+  {
+    parent::__construct($model);
+  }
 
-    /**
-     * Get list with pagination
-     *
-     * @param array $payload
-     * @return LengthAwarePaginator
-     */
-    public function list(array $payload): LengthAwarePaginator
-    {
-        $query = $this->model->query()
-            ->select([
-                'category_mgmt_id',
-                'skill_mgmt_id',
-                'updated_at',
-            ])
-            ->with(['categoryMgmt:id,name,slug', 'skillMgmt:id,name,icon']); // Eager load
+  /**
+   * Get list with pagination
+   *
+   * @param array $payload
+   * @return LengthAwarePaginator
+   */
+  public function list(array $payload): LengthAwarePaginator
+  {
+    $query = $this->model->query()
+      ->select([
+        'category_mgmt_id',
+        'skill_mgmt_id',
+        'updated_at',
+      ])
+      ->with(['category:id,name,slug', 'skill:id,name,slug']); // Eager load
 
-        // Apply filters
-        $this->applyFilters($query, $payload, [
-            'category_mgmt_id',
-            'skill_mgmt_id',
-        ]);
+    // Apply filters
+    $this->applyFilters($query, $payload, [
+      'category_mgmt_id',
+      'skill_mgmt_id',
+    ]);
 
-        // Apply date range
-        $this->applyDateRange($query, $payload);
+    // Apply date range
+    $this->applyDateRange($query, $payload);
 
-        // Apply sorting
-        $this->applySorting($query, $payload, 'category_mgmt_id');
+    // Apply sorting
+    $this->applySorting($query, $payload, 'category_mgmt_id');
 
-        // Pagination
-        $perPage = $payload['per_page'] ?? 15;
-        $page = $payload['page'] ?? 1;
+    // Pagination
+    $perPage = $payload['per_page'] ?? 15;
+    $page = $payload['page'] ?? 1;
 
-        return $query->paginate($perPage, ['*'], 'page', $page);
-    }
+    return $query->paginate($perPage, ['*'], 'page', $page);
+  }
 
-    /**
-     * Create new record
-     *
-     * @param array $payload
-     * @return void
-     */
-    public function executeStore(array $payload): void
-    {
-        $this->model->create($payload);
-    }
+  /**
+   * Create new record
+   *
+   * @param array $payload
+   * @return void
+   */
+  public function executeStore(array $payload): void
+  {
+    $now = now();
+    $data = collect($payload)->map(function ($item) use ($now) {
+      return array_merge($item, [
+        'created_at' => $now,
+        'updated_at' => $now,
+      ]);
+    })->all();
 
-    /**
-     * Delete record
-     *
-     * @param array $payload
-     * @return void
-     */
-    public function executeDelete(array $payload): void
-    {
-        $values = collect($payload)->map(function ($item) {
-            return '(' . (int)$item['category_mgmt_id'] . ', ' . (int)$item['skill_mgmt_id'] . ')';
-        })->all();
+    $this->model->insert($data);
+  }
 
-        $this->model
-            ->whereRaw("(category_mgmt_id, skill_mgmt_id) IN (" . implode(", ", $values) . ")")
-            ->delete();
-    }
+  /**
+   * Delete record
+   *
+   * @param array $payload
+   * @return void
+   */
+  public function executeDelete(array $payload): void
+  {
+    $values = collect($payload)->map(function ($item) {
+      return '(' . (int)$item['category_mgmt_id'] . ', ' . (int)$item['skill_mgmt_id'] . ')';
+    })->all();
 
-    /**
-     * Get ids
-     *
-     * @param array $tuples
-     * @return Collection
-     */
-    public function getCategorySkillMgmtId(array $tuples): Collection
-    {
-        $values = collect($tuples)->map(function ($item) {
-            return '(' . (int)$item['category_mgmt_id'] . ', ' . (int)$item['skill_mgmt_id'] . ')';
-        })->all();
+    $this->model
+      ->whereRaw("(category_mgmt_id, skill_mgmt_id) IN (" . implode(", ", $values) . ")")
+      ->delete();
+  }
 
-        return $this->model
-            ->whereRaw("(category_mgmt_id, skill_mgmt_id) IN (" . implode(", ", $values) . ")")
-            ->pluck('category_mgmt_id', 'skill_mgmt_id');
-    }
+  /**
+   * Get ids
+   *
+   * @param array $tuples
+   * @return Collection
+   */
+  public function getCategorySkillMgmtId(array $tuples): Collection
+  {
+    $values = collect($tuples)->map(function ($item) {
+      $catId = isset($item['category_mgmt_id']) ? $item['category_mgmt_id'] : ($item[0] ?? 0);
+      $skillId = isset($item['skill_mgmt_id']) ? $item['skill_mgmt_id'] : ($item[1] ?? 0);
+      return '(' . (int)$catId . ', ' . (int)$skillId . ')';
+    })->all();
+
+    return $this->model
+      ->whereRaw("(category_mgmt_id, skill_mgmt_id) IN (" . implode(", ", $values) . ")")
+      ->get(['category_mgmt_id', 'skill_mgmt_id'])
+      ->map(function ($item) {
+        return [$item->category_mgmt_id, $item->skill_mgmt_id];
+      });
+  }
 }
