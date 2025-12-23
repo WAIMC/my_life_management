@@ -1,22 +1,22 @@
 <?php
 
-namespace Tests\Feature\Management\SliderMgmt;
+namespace Tests\Feature\Management\UserMgmt;
 
+use App\Models\Management\UserMgmt;
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Management\SliderMgmt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class UpdateSliderMgmtTest extends TestCase
+class DeleteUserMgmtTest extends TestCase
 {
   use RefreshDatabase;
 
-  private string $baseUrl = 'api/admin/slider-mgmt/update';
+  private string $baseUrl = 'api/admin/user-mgmt/delete';
 
   protected function setUp(): void
   {
@@ -31,7 +31,7 @@ class UpdateSliderMgmtTest extends TestCase
       $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'PUT', $this->baseUrl . '/{id}');
+    $this->grantAccessTo($rootRole, 'DELETE', $this->baseUrl . '/{id}');
 
     if (!DB::table('admin_role_mst')
       ->where('admin_mst_id', $admin->id)
@@ -88,49 +88,26 @@ class UpdateSliderMgmtTest extends TestCase
     ]);
   }
 
-  public function test_SLD_UPD_001_unauthenticated()
-  {
-    $response = $this->putJson($this->baseUrl . '/1', []);
-    $response->assertStatus(401);
-  }
-
-  public function test_SLD_UPD_002_validation_errors()
+  public function test_USER_DEL_S001_success()
   {
     $admin = AdminMst::factory()->create();
+    $user = UserMgmt::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create();
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, [], $cookies);
-    $response->assertStatus(422);
-  }
+    $payload = ['ids' => [$user->id]];
 
-  public function test_SLD_UPD_003_success()
-  {
-    $admin = AdminMst::factory()->create();
-    $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create(['title' => 'Old Slider']);
-
-    $payload = [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-      'slug' => 'updated-slider',
-      'link' => 'https://example.com/updated',
-      'image' => 'updated.jpg',
-      'status' => 1,
-      'is_delete' => 0,
-    ];
-
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, $payload, $cookies);
+    $response = $this->call('DELETE', $this->baseUrl . '/' . $user->id, $payload, $cookies);
     $response->assertStatus(200);
 
-    $this->assertDatabaseHas('slider_mgmt', [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
+    // Verify soft delete
+    $this->assertDatabaseHas('user_mgmt', [
+      'id' => $user->id,
+      'is_delete' => 1,
     ]);
 
-    $this->assertDatabaseHas('slider_mgmt_hist', [
-      'slider_mgmt_id' => $setting->id,
-      'action' => 2,
+    $this->assertDatabaseHas('user_mgmt_hist', [
+      'user_mgmt_id' => $user->id,
+      'action' => 3, // DELETE
     ]);
   }
 }

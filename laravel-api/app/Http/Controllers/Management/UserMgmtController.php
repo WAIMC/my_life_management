@@ -12,57 +12,56 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserMgmtController extends Controller
 {
-    public function __construct(
-        protected UserMgmtService $userMgmt
-    )
-    {
-    }
-    
-    /**
-     * UserMgmt list
-     *
-     * @param ListUserMgmtRequest $request
-     * @return JsonResource
-     */
-    public function list(ListUserMgmtRequest $request): JsonResource
-    {
-        return $this->userMgmt->list($request->all());
-    }
+  public function __construct(
+    protected UserMgmtService $userMgmt
+  ) {}
 
-    /**
-     * Store user mgmt
-     *
-     * @param StoreUserMgmtRequest $request
-     * @return int
-     */
-    public function store(StoreUserMgmtRequest $request): int
-    {
-        return $this->userMgmt->store($request->all());
-    }
+  /**
+   * UserMgmt list
+   *
+   * @param ListUserMgmtRequest $request
+   * @return JsonResource
+   */
+  public function list(ListUserMgmtRequest $request): JsonResource
+  {
+    // dump($request->all());
+    return $this->userMgmt->list($request->all());
+  }
 
-    /**
-     * Update user mgmt
-     *
-     * @param UpdateUserMgmtRequest $request
-     * @param string $id
-     * @return int
-     */
-    public function update(UpdateUserMgmtRequest $request, string $id): int
-    {
-        $payload = $request->all();
-        $payload['id'] = $id;
+  /**
+   * Store user mgmt
+   *
+   * @param StoreUserMgmtRequest $request
+   * @return int
+   */
+  public function store(StoreUserMgmtRequest $request): int
+  {
+    return $this->userMgmt->store($request->all());
+  }
 
-        return $this->userMgmt->update($payload);
-    }
+  /**
+   * Update user mgmt
+   *
+   * @param UpdateUserMgmtRequest $request
+   * @param string $id
+   * @return int
+   */
+  public function update(UpdateUserMgmtRequest $request, string $id): int
+  {
+    $payload = $request->all();
+    $payload['id'] = $id;
 
-    /**
-     * Delete user mgmt
-     *
-     * @param DeleteUserMgmtRequest $request
-     * @return void
-     */
-    public function delete(DeleteUserMgmtRequest $request): void
-    {
-        $this->userMgmt->delete($request->all());
-    }
+    return $this->userMgmt->update($payload);
+  }
+
+  /**
+   * Delete user mgmt
+   *
+   * @param DeleteUserMgmtRequest $request
+   * @return void
+   */
+  public function delete(DeleteUserMgmtRequest $request): void
+  {
+    $this->userMgmt->delete($request->all());
+  }
 }

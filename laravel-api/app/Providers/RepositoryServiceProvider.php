@@ -18,11 +18,11 @@ use App\Interfaces\History\Master\AdminMstHistInterface;
 use App\Interfaces\History\Master\ApiMstHistInterface;
 use App\Interfaces\History\Master\DepartmentMstHistInterface;
 use App\Interfaces\History\Master\FeatureMstHistInterface;
-use App\Interfaces\History\Master\LanguageMstHistInterface;
-use App\Interfaces\History\Master\OriginalTranslatorMstHistInterface;
+
+
 use App\Interfaces\History\Master\PolicyDepartmentMstHistInterface;
 use App\Interfaces\History\Master\RoleMstHistInterface;
-use App\Interfaces\History\Master\TranslationMstHistInterface;
+
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\Management\CategoryMgmtInterface;
 use App\Interfaces\Management\CategorySkillMgmtInterface;
@@ -43,13 +43,13 @@ use App\Interfaces\Master\ApiRoleMstInterface;
 use App\Interfaces\Master\DepartmentManagementMstInterface;
 use App\Interfaces\Master\DepartmentMstInterface;
 use App\Interfaces\Master\FeatureMstInterface;
-use App\Interfaces\Master\LanguageMstInterface;
-use App\Interfaces\Master\OriginalTranslatorMstInterface;
+
+
 use App\Interfaces\Master\PolicyDepartmentMstInterface;
 use App\Interfaces\Master\RoleMstInterface;
 use App\Interfaces\Master\TokenMstInterface;
-use App\Interfaces\Master\TranslationLanguageMstInterface;
-use App\Interfaces\Master\TranslationMstInterface;
+
+
 use App\Repositories\BaseRepository;
 use App\Repositories\History\Management\BannerMgmtHistRepository;
 use App\Repositories\History\Management\CategoryMgmtHistRepository;
@@ -64,11 +64,11 @@ use App\Repositories\History\Master\AdminMstHistRepository;
 use App\Repositories\History\Master\ApiMstHistRepository;
 use App\Repositories\History\Master\DepartmentMstHistRepository;
 use App\Repositories\History\Master\FeatureMstHistRepository;
-use App\Repositories\History\Master\LanguageMstHistRepository;
-use App\Repositories\History\Master\OriginalTranslatorMstHistRepository;
+
+
 use App\Repositories\History\Master\PolicyDepartmentMstHistRepository;
 use App\Repositories\History\Master\RoleMstHistRepository;
-use App\Repositories\History\Master\TranslationMstHistRepository;
+
 use App\Repositories\Management\BannerMgmtRepository;
 use App\Repositories\Management\CategoryMgmtRepository;
 use App\Repositories\Management\CategorySkillMgmtRepository;
@@ -89,13 +89,13 @@ use App\Repositories\Master\ApiRoleMstRepository;
 use App\Repositories\Master\DepartmentManagementMstRepository;
 use App\Repositories\Master\DepartmentMstRepository;
 use App\Repositories\Master\FeatureMstRepository;
-use App\Repositories\Master\LanguageMstRepository;
-use App\Repositories\Master\OriginalTranslatorMstRepository;
+
+
 use App\Repositories\Master\PolicyDepartmentMstRepository;
 use App\Repositories\Master\RoleMstRepository;
 use App\Repositories\Master\TokenMstRepository;
-use App\Repositories\Master\TranslationLanguageMstRepository;
-use App\Repositories\Master\TranslationMstRepository;
+
+
 use Illuminate\Support\ServiceProvider;
 
 final class RepositoryServiceProvider extends ServiceProvider
@@ -110,13 +110,13 @@ final class RepositoryServiceProvider extends ServiceProvider
     DepartmentManagementMstInterface::class => DepartmentManagementMstRepository::class,
     DepartmentMstInterface::class => DepartmentMstRepository::class,
     FeatureMstInterface::class => FeatureMstRepository::class,
-    LanguageMstInterface::class => LanguageMstRepository::class,
-    OriginalTranslatorMstInterface::class => OriginalTranslatorMstRepository::class,
+
+
     PolicyDepartmentMstInterface::class => PolicyDepartmentMstRepository::class,
     RoleMstInterface::class => RoleMstRepository::class,
     TokenMstInterface::class => TokenMstRepository::class,
-    TranslationLanguageMstInterface::class => TranslationLanguageMstRepository::class,
-    TranslationMstInterface::class => TranslationMstRepository::class,
+
+
 
     // Management
     BannerMgmtInterface::class => BannerMgmtRepository::class,
@@ -137,11 +137,11 @@ final class RepositoryServiceProvider extends ServiceProvider
     ApiMstHistInterface::class => ApiMstHistRepository::class,
     DepartmentMstHistInterface::class => DepartmentMstHistRepository::class,
     FeatureMstHistInterface::class => FeatureMstHistRepository::class,
-    LanguageMstHistInterface::class => LanguageMstHistRepository::class,
-    OriginalTranslatorMstHistInterface::class => OriginalTranslatorMstHistRepository::class,
+
+
     PolicyDepartmentMstHistInterface::class => PolicyDepartmentMstHistRepository::class,
     RoleMstHistInterface::class => RoleMstHistRepository::class,
-    TranslationMstHistInterface::class => TranslationMstHistRepository::class,
+
 
     // Management History
     BannerMgmtHistInterface::class => BannerMgmtHistRepository::class,

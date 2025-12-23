@@ -10,16 +10,16 @@ use App\Http\Controllers\Master\RoleMstController;
 use App\Http\Controllers\Master\DepartmentMstController;
 use App\Http\Controllers\Master\FeatureMstController;
 use App\Http\Controllers\Master\ApiMstController;
-use App\Http\Controllers\Master\LanguageMstController;
-use App\Http\Controllers\Master\TranslationMstController;
+
+
 use App\Http\Controllers\Master\TokenMstController;
 use App\Http\Controllers\Master\PolicyDepartmentMstController;
-use App\Http\Controllers\Master\OriginalTranslatorMstController;
+
 use App\Http\Controllers\Master\AdminDepartmentMstController;
 use App\Http\Controllers\Master\AdminRoleMstController;
 use App\Http\Controllers\Master\ApiRoleMstController;
 use App\Http\Controllers\Master\DepartmentManagementMstController;
-use App\Http\Controllers\Master\TranslationLanguageMstController;
+
 use App\Http\Controllers\Management\BannerMgmtController;
 use App\Http\Controllers\Management\CategoryMgmtController;
 use App\Http\Controllers\Management\CategorySkillMgmtController;
@@ -34,11 +34,11 @@ use App\Http\Controllers\History\Master\AdminMstHistController;
 use App\Http\Controllers\History\Master\ApiMstHistController;
 use App\Http\Controllers\History\Master\DepartmentMstHistController;
 use App\Http\Controllers\History\Master\FeatureMstHistController;
-use App\Http\Controllers\History\Master\LanguageMstHistController;
-use App\Http\Controllers\History\Master\OriginalTranslatorMstHistController;
+
+
 use App\Http\Controllers\History\Master\PolicyDepartmentMstHistController;
 use App\Http\Controllers\History\Master\RoleMstHistController;
-use App\Http\Controllers\History\Master\TranslationMstHistController;
+
 use App\Http\Controllers\History\Management\BannerMgmtHistController;
 use App\Http\Controllers\History\Management\CategoryMgmtHistController;
 use App\Http\Controllers\History\Management\SettingLinkMgmtHistController;
@@ -99,17 +99,9 @@ Route::prefix('admin')
         Route::put('api-mst/update/{id}', [ApiMstController::class, 'update']);
         Route::delete('api-mst/delete/{id}', [ApiMstController::class, 'delete']);
 
-        // Language Master
-        Route::get('language-mst/list', [LanguageMstController::class, 'list']);
-        Route::post('language-mst/store', [LanguageMstController::class, 'store']);
-        Route::put('language-mst/update/{id}', [LanguageMstController::class, 'update']);
-        Route::delete('language-mst/delete/{id}', [LanguageMstController::class, 'delete']);
 
-        // Translation Master
-        Route::get('translation-mst/list', [TranslationMstController::class, 'list']);
-        Route::post('translation-mst/store', [TranslationMstController::class, 'store']);
-        Route::put('translation-mst/update/{id}', [TranslationMstController::class, 'update']);
-        Route::delete('translation-mst/delete/{id}', [TranslationMstController::class, 'delete']);
+
+
 
         // Token Master
         Route::get('token-mst/list', [TokenMstController::class, 'list']);
@@ -123,11 +115,7 @@ Route::prefix('admin')
         Route::put('policy-department-mst/update/{id}', [PolicyDepartmentMstController::class, 'update']);
         Route::delete('policy-department-mst/delete/{id}', [PolicyDepartmentMstController::class, 'delete']);
 
-        // Original Translator Master
-        Route::get('original-translator-mst/list', [OriginalTranslatorMstController::class, 'list']);
-        Route::post('original-translator-mst/store', [OriginalTranslatorMstController::class, 'store']);
-        Route::put('original-translator-mst/update/{id}', [OriginalTranslatorMstController::class, 'update']);
-        Route::delete('original-translator-mst/delete/{id}', [OriginalTranslatorMstController::class, 'delete']);
+
 
         // ============================================================
         // JUNCTION TABLES (Many-to-Many Relationships)
@@ -149,9 +137,7 @@ Route::prefix('admin')
         Route::get('department-management-mst/list', [DepartmentManagementMstController::class, 'list']);
         Route::put('department-management-mst/update', [DepartmentManagementMstController::class, 'update']);
 
-        // Translation-Language Junction
-        Route::get('translation-language-mst/list', [TranslationLanguageMstController::class, 'list']);
-        Route::put('translation-language-mst/update', [TranslationLanguageMstController::class, 'update']);
+
 
         // Category-Skill Junction
         Route::get('category-skill-mgmt/list', [CategorySkillMgmtController::class, 'list']);
@@ -245,17 +231,9 @@ Route::prefix('admin')
         Route::put('feature-mst-hist/update/{id}', [FeatureMstHistController::class, 'update']);
         Route::delete('feature-mst-hist/delete/{id}', [FeatureMstHistController::class, 'delete']);
 
-        // Language Master History
-        Route::get('language-mst-hist/list', [LanguageMstHistController::class, 'list']);
-        Route::post('language-mst-hist/store', [LanguageMstHistController::class, 'store']);
-        Route::put('language-mst-hist/update/{id}', [LanguageMstHistController::class, 'update']);
-        Route::delete('language-mst-hist/delete/{id}', [LanguageMstHistController::class, 'delete']);
 
-        // Original Translator Master History
-        Route::get('original-translator-mst-hist/list', [OriginalTranslatorMstHistController::class, 'list']);
-        Route::post('original-translator-mst-hist/store', [OriginalTranslatorMstHistController::class, 'store']);
-        Route::put('original-translator-mst-hist/update/{id}', [OriginalTranslatorMstHistController::class, 'update']);
-        Route::delete('original-translator-mst-hist/delete/{id}', [OriginalTranslatorMstHistController::class, 'delete']);
+
+
 
         // Policy Department Master History
         Route::get('policy-department-mst-hist/list', [PolicyDepartmentMstHistController::class, 'list']);
@@ -269,11 +247,7 @@ Route::prefix('admin')
         Route::put('role-mst-hist/update/{id}', [RoleMstHistController::class, 'update']);
         Route::delete('role-mst-hist/delete/{id}', [RoleMstHistController::class, 'delete']);
 
-        // Translation Master History
-        Route::get('translation-mst-hist/list', [TranslationMstHistController::class, 'list']);
-        Route::post('translation-mst-hist/store', [TranslationMstHistController::class, 'store']);
-        Route::put('translation-mst-hist/update/{id}', [TranslationMstHistController::class, 'update']);
-        Route::delete('translation-mst-hist/delete/{id}', [TranslationMstHistController::class, 'delete']);
+
 
         // Banner Management History
         Route::get('banner-mgmt-hist/list', [BannerMgmtHistController::class, 'list']);

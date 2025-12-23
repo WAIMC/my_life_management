@@ -1,22 +1,22 @@
 <?php
 
-namespace Tests\Feature\Management\SliderMgmt;
+namespace Tests\Feature\Master\TokenMst;
 
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Management\SliderMgmt;
+use App\Models\Master\TokenMst;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class UpdateSliderMgmtTest extends TestCase
+class UpdateTokenMstTest extends TestCase
 {
   use RefreshDatabase;
 
-  private string $baseUrl = 'api/admin/slider-mgmt/update';
+  private string $baseUrl = 'api/admin/token-mst/update';
 
   protected function setUp(): void
   {
@@ -24,14 +24,14 @@ class UpdateSliderMgmtTest extends TestCase
     Redis::flushdb();
   }
 
-  private function getAuthCookies(AdminMst $admin): array
+  private function getAuthCookies(AdminMst $admin, string $method = 'PUT'): array
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
       $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'PUT', $this->baseUrl . '/{id}');
+    $this->grantAccessTo($rootRole, $method, $this->baseUrl . '/{id}');
 
     if (!DB::table('admin_role_mst')
       ->where('admin_mst_id', $admin->id)
@@ -88,49 +88,81 @@ class UpdateSliderMgmtTest extends TestCase
     ]);
   }
 
-  public function test_SLD_UPD_001_unauthenticated()
+  private function createToken(): TokenMst
   {
-    $response = $this->putJson($this->baseUrl . '/1', []);
+    return TokenMst::create([
+      'account_id' => 1,
+      'device_name' => 'Test Device',
+      'ip_address' => '127.0.0.1',
+      'token_hash' => 'hash123',
+    ]);
+  }
+
+  // ========== ROUTE LAYER TESTS ==========
+
+  public function test_TOK_UPD_R001_wrong_http_method()
+  {
+    $admin = AdminMst::factory()->create();
+    $token = $this->createToken();
+    $cookies = $this->getAuthCookies($admin, 'POST');
+
+    $response = $this->call('POST', $this->baseUrl . '/' . $token->id, [], $cookies);
+    $response->assertStatus(405);
+  }
+
+  public function test_TOK_UPD_R002_missing_path_parameter()
+  {
+    $admin = AdminMst::factory()->create();
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('PUT', $this->baseUrl, [], $cookies);
+    $response->assertStatus(404);
+  }
+
+  // ========== MIDDLEWARE LAYER TESTS ==========
+
+  public function test_TOK_UPD_M001_unauthenticated()
+  {
+    $token = $this->createToken();
+    $response = $this->putJson($this->baseUrl . '/' . $token->id, []);
     $response->assertStatus(401);
   }
 
-  public function test_SLD_UPD_002_validation_errors()
+  // ========== VALIDATION LAYER TESTS ===========
+
+  public function test_TOK_UPD_V001_id_not_found()
   {
     $admin = AdminMst::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create();
+    $payload = ['account_id' => 1];
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, [], $cookies);
+    $response = $this->call('PUT', $this->baseUrl . '/999999', $payload, $cookies);
     $response->assertStatus(422);
   }
 
-  public function test_SLD_UPD_003_success()
+  // ========== SERVICE / DB LAYER TESTS ==========
+
+  public function test_TOK_UPD_S001_success()
   {
     $admin = AdminMst::factory()->create();
+    $token = $this->createToken();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create(['title' => 'Old Slider']);
 
     $payload = [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-      'slug' => 'updated-slider',
-      'link' => 'https://example.com/updated',
-      'image' => 'updated.jpg',
-      'status' => 1,
-      'is_delete' => 0,
+      'id' => $token->id,
+      'account_id' => 2,
+      'device_name' => 'Updated Device',
+      'ip_address' => '1.2.3.4',
+      'expired_at' => '31/12/2025',
     ];
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, $payload, $cookies);
+    $response = $this->call('PUT', $this->baseUrl . '/' . $token->id, $payload, $cookies);
     $response->assertStatus(200);
 
-    $this->assertDatabaseHas('slider_mgmt', [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-    ]);
-
-    $this->assertDatabaseHas('slider_mgmt_hist', [
-      'slider_mgmt_id' => $setting->id,
-      'action' => 2,
+    $this->assertDatabaseHas('token_mst', [
+      'id' => $token->id,
+      'account_id' => 2,
+      'device_name' => 'Updated Device',
     ]);
   }
 }

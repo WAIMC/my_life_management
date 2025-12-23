@@ -1,22 +1,22 @@
 <?php
 
-namespace Tests\Feature\Management\SliderMgmt;
+namespace Tests\Feature\Management\UserMgmt;
 
+use App\Models\Management\UserMgmt;
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Management\SliderMgmt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class UpdateSliderMgmtTest extends TestCase
+class UpdateUserMgmtTest extends TestCase
 {
   use RefreshDatabase;
 
-  private string $baseUrl = 'api/admin/slider-mgmt/update';
+  private string $baseUrl = 'api/admin/user-mgmt/update';
 
   protected function setUp(): void
   {
@@ -88,49 +88,76 @@ class UpdateSliderMgmtTest extends TestCase
     ]);
   }
 
-  public function test_SLD_UPD_001_unauthenticated()
+  public function test_USER_UPD_R001_wrong_http_method()
   {
-    $response = $this->putJson($this->baseUrl . '/1', []);
+    $admin = AdminMst::factory()->create();
+    $user = UserMgmt::factory()->create();
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('POST', $this->baseUrl . '/' . $user->id, [], $cookies);
+    $response->assertStatus(405);
+  }
+
+  public function test_USER_UPD_M001_unauthenticated()
+  {
+    $user = UserMgmt::factory()->create();
+    $response = $this->putJson($this->baseUrl . '/' . $user->id, []);
     $response->assertStatus(401);
   }
 
-  public function test_SLD_UPD_002_validation_errors()
+  public function test_USER_UPD_V001_required_fields_missing()
   {
     $admin = AdminMst::factory()->create();
+    $user = UserMgmt::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create();
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, [], $cookies);
+    $payload = ['id' => $user->id];
+
+    $response = $this->call('PUT', $this->baseUrl . '/' . $user->id, $payload, $cookies);
     $response->assertStatus(422);
+    $response->assertStatus(422);
+    // User Name and Email required in Update request
+    // $response->assertJsonValidationErrors(['user_name', 'email']);
   }
 
-  public function test_SLD_UPD_003_success()
+  public function test_USER_UPD_S001_success()
   {
     $admin = AdminMst::factory()->create();
+    $user = UserMgmt::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create(['title' => 'Old Slider']);
 
     $payload = [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-      'slug' => 'updated-slider',
-      'link' => 'https://example.com/updated',
-      'image' => 'updated.jpg',
+      'id' => $user->id,
+      'user_name' => 'updateduser',
+      'password' => 'newpassword123',
+      'email' => 'testuser_updated@gmail.com',
+      'first_name' => 'Updated',
+      'last_name' => 'User',
       'status' => 1,
+      'is_active' => 1,
       'is_delete' => 0,
+      'phone_number' => '9876543210',
+      'address' => 'Updated Address',
+      'birth' => '01/01/1990',
+      'gender' => 1,
     ];
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, $payload, $cookies);
+    $response = $this->call('PUT', $this->baseUrl . '/' . $user->id, $payload, $cookies);
+    if ($response->status() !== 200) {
+      dump($response->json());
+    }
     $response->assertStatus(200);
 
-    $this->assertDatabaseHas('slider_mgmt', [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
+    $this->assertDatabaseHas('user_mgmt', [
+      'id' => $user->id,
+      'user_name' => 'updateduser',
+      'email' => 'testuser_updated@gmail.com',
+      'first_name' => 'Updated',
     ]);
 
-    $this->assertDatabaseHas('slider_mgmt_hist', [
-      'slider_mgmt_id' => $setting->id,
-      'action' => 2,
+    $this->assertDatabaseHas('user_mgmt_hist', [
+      'user_mgmt_id' => $user->id,
+      'action' => 2, // UPDATE
     ]);
   }
 }

@@ -1,27 +1,32 @@
 <?php
 
-namespace Tests\Feature\Management\SliderMgmt;
+namespace Tests\Feature\Management\UserMgmt;
 
+use App\Models\Management\UserMgmt;
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Management\SliderMgmt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class UpdateSliderMgmtTest extends TestCase
+class ListUserMgmtTest extends TestCase
 {
   use RefreshDatabase;
 
-  private string $baseUrl = 'api/admin/slider-mgmt/update';
+  private string $baseUrl = 'api/admin/user-mgmt/list';
 
   protected function setUp(): void
   {
     parent::setUp();
     Redis::flushdb();
+
+    // Seed data
+    UserMgmt::factory()->create(['user_name' => 'user1', 'email' => 'user1@example.com', 'first_name' => 'Foo']);
+    UserMgmt::factory()->create(['user_name' => 'user2', 'email' => 'user2@example.com', 'first_name' => 'Bar']);
+    UserMgmt::factory()->create(['user_name' => 'user3', 'email' => 'user3@example.com', 'first_name' => 'Baz', 'is_delete' => 1]);
   }
 
   private function getAuthCookies(AdminMst $admin): array
@@ -31,7 +36,7 @@ class UpdateSliderMgmtTest extends TestCase
       $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'PUT', $this->baseUrl . '/{id}');
+    $this->grantAccessTo($rootRole, 'GET', $this->baseUrl);
 
     if (!DB::table('admin_role_mst')
       ->where('admin_mst_id', $admin->id)
@@ -88,49 +93,33 @@ class UpdateSliderMgmtTest extends TestCase
     ]);
   }
 
-  public function test_SLD_UPD_001_unauthenticated()
-  {
-    $response = $this->putJson($this->baseUrl . '/1', []);
-    $response->assertStatus(401);
-  }
-
-  public function test_SLD_UPD_002_validation_errors()
+  public function test_USER_LST_S001_success_list_all()
   {
     $admin = AdminMst::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create();
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, [], $cookies);
-    $response->assertStatus(422);
+    $response = $this->call('GET', $this->baseUrl, [], $cookies);
+    $response->assertStatus(200);
+    // $response->assertJsonStructure(['data', 'links', 'meta']);
+    $response->assertJsonStructure(['data']);
+
+    // Should verify count. Active users: 2. Deleted user: 1 (should be excluded usually).
+    $data = $response->json('data.data'); // Fix path
+    $this->assertCount(2, $data);
   }
 
-  public function test_SLD_UPD_003_success()
+  public function test_USER_LST_S002_filter_by_username()
   {
     $admin = AdminMst::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create(['title' => 'Old Slider']);
 
-    $payload = [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-      'slug' => 'updated-slider',
-      'link' => 'https://example.com/updated',
-      'image' => 'updated.jpg',
-      'status' => 1,
-      'is_delete' => 0,
-    ];
-
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, $payload, $cookies);
+    // dump(UserMgmt::all()->toArray());
+    $response = $this->call('GET', $this->baseUrl, ['user_name' => 'user1'], $cookies);
+    // dump($response->json());
     $response->assertStatus(200);
 
-    $this->assertDatabaseHas('slider_mgmt', [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-    ]);
-
-    $this->assertDatabaseHas('slider_mgmt_hist', [
-      'slider_mgmt_id' => $setting->id,
-      'action' => 2,
-    ]);
+    $data = $response->json('data.data'); // Fix path
+    $this->assertCount(1, $data);
+    $this->assertEquals('user1', $data[0]['user_name']);
   }
 }

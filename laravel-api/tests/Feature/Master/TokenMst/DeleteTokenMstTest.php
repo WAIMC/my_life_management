@@ -1,22 +1,22 @@
 <?php
 
-namespace Tests\Feature\Management\SliderMgmt;
+namespace Tests\Feature\Master\TokenMst;
 
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Management\SliderMgmt;
+use App\Models\Master\TokenMst;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class UpdateSliderMgmtTest extends TestCase
+class DeleteTokenMstTest extends TestCase
 {
   use RefreshDatabase;
 
-  private string $baseUrl = 'api/admin/slider-mgmt/update';
+  private string $baseUrl = 'api/admin/token-mst/delete';
 
   protected function setUp(): void
   {
@@ -31,7 +31,7 @@ class UpdateSliderMgmtTest extends TestCase
       $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'PUT', $this->baseUrl . '/{id}');
+    $this->grantAccessTo($rootRole, 'DELETE', $this->baseUrl . '/{id}');
 
     if (!DB::table('admin_role_mst')
       ->where('admin_mst_id', $admin->id)
@@ -88,49 +88,29 @@ class UpdateSliderMgmtTest extends TestCase
     ]);
   }
 
-  public function test_SLD_UPD_001_unauthenticated()
+  private function createToken(): TokenMst
   {
-    $response = $this->putJson($this->baseUrl . '/1', []);
-    $response->assertStatus(401);
+    return TokenMst::create([
+      'account_id' => 1,
+      'device_name' => 'Device ' . uniqid(),
+      'ip_address' => '127.0.0.1',
+      'token_hash' => 'hash123',
+    ]);
   }
 
-  public function test_SLD_UPD_002_validation_errors()
+  // ========== ROUTE/VALIDATION TESTS ==========
+
+  public function test_TOK_DEL_S001_delete_single()
   {
     $admin = AdminMst::factory()->create();
+    $token = $this->createToken();
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create();
 
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, [], $cookies);
-    $response->assertStatus(422);
-  }
+    $payload = ['ids' => [$token->id]];
 
-  public function test_SLD_UPD_003_success()
-  {
-    $admin = AdminMst::factory()->create();
-    $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create(['title' => 'Old Slider']);
-
-    $payload = [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-      'slug' => 'updated-slider',
-      'link' => 'https://example.com/updated',
-      'image' => 'updated.jpg',
-      'status' => 1,
-      'is_delete' => 0,
-    ];
-
-    $response = $this->call('PUT', $this->baseUrl . '/' . $setting->id, $payload, $cookies);
+    $response = $this->call('DELETE', $this->baseUrl . '/' . $token->id, $payload, $cookies);
     $response->assertStatus(200);
 
-    $this->assertDatabaseHas('slider_mgmt', [
-      'id' => $setting->id,
-      'title' => 'Updated Slider',
-    ]);
-
-    $this->assertDatabaseHas('slider_mgmt_hist', [
-      'slider_mgmt_id' => $setting->id,
-      'action' => 2,
-    ]);
+    $this->assertDatabaseMissing('token_mst', ['id' => $token->id]);
   }
 }

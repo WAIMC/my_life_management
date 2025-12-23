@@ -14,97 +14,103 @@ use Illuminate\Support\Arr;
 
 class TokenMstRepository extends BaseRepository implements TokenMstInterface
 {
-    public function __construct(TokenMst $model)
-    {
-        parent::__construct($model);
+  public function __construct(TokenMst $model)
+  {
+    parent::__construct($model);
+  }
+
+  /**
+   * Get list with pagination
+   *
+   * @param array $payload
+   * @return LengthAwarePaginator
+   */
+  public function list(array $payload): LengthAwarePaginator
+  {
+    $query = $this->model->query()
+      ->select([
+        'id',
+        'token_hash',
+        'account_id',
+        'device_name',
+        'ip_address',
+        'expired_at',
+        'created_at',
+        'updated_at',
+      ]);
+
+    // Apply filters
+    $this->applyFilters($query, $payload, [
+      'id',
+      'account_id',
+    ], [
+      'token_hash',
+      'device_name',
+      'ip_address',
+    ]);
+
+    // Apply date range
+    $this->applyDateRange($query, $payload);
+
+    // Apply sorting
+    $this->applySorting($query, $payload);
+
+    // Pagination
+    $perPage = $payload['per_page'] ?? 15;
+    $page = $payload['page'] ?? 1;
+
+    return $query->paginate($perPage, ['*'], 'page', $page);
+  }
+
+  /**
+   * Create new record
+   *
+   * @param array $payload
+   * @return int
+   */
+  public function executeStore(array $payload): int
+  {
+    if (isset($payload['expired_at'])) {
+      $payload['expired_at'] = \Carbon\Carbon::createFromFormat(\App\Constants\CommonVal::DATE_FORMAT, $payload['expired_at'])->format('Y-m-d');
     }
 
-    /**
-     * Get list with pagination
-     *
-     * @param array $payload
-     * @return LengthAwarePaginator
-     */
-    public function list(array $payload): LengthAwarePaginator
-    {
-        $query = $this->model->query()
-            ->select([
-                'id',
-                'token',
-                'is_active',
-                'updated_at',
-            ])
-            ->notDeleted(); // No relationships for simple model
+    $model = $this->model->fill(
+      Arr::only($payload, $this->model->getFillable())
+    );
 
-        // Apply filters
-        $this->applyFilters($query, $payload, [
-            'id',
-            'is_active',
-        ], [
-            'token',
-        ]);
+    $model->save();
 
-        // Apply date range
-        $this->applyDateRange($query, $payload);
+    return $model->id;
+  }
 
-        // Apply sorting
-        $this->applySorting($query, $payload);
+  /**
+   * Update record
+   *
+   * @param array $payload
+   * @return int
+   */
+  public function executeUpdate(array $payload): int
+  {
+    $model = $this->model->findOrFail($payload['id']);
 
-        // Pagination
-        $perPage = $payload['per_page'] ?? 15;
-        $page = $payload['page'] ?? 1;
-
-        return $query->paginate($perPage, ['*'], 'page', $page);
+    if (isset($payload['expired_at'])) {
+      $payload['expired_at'] = \Carbon\Carbon::createFromFormat(\App\Constants\CommonVal::DATE_FORMAT, $payload['expired_at'])->format('Y-m-d');
     }
 
-    /**
-     * Create new record
-     *
-     * @param array $payload
-     * @return int
-     */
-    public function executeStore(array $payload): int
-    {
-        $model = $this->model->fill(
-            Arr::only($payload, $this->model->getFillable())
-        );
+    $model->fill(Arr::only($payload, $this->model->getFillable()));
+    $model->save();
 
-        $model->save();
+    return $model->id;
+  }
 
-        return $model->id;
-    }
-
-    /**
-     * Update record
-     *
-     * @param array $payload
-     * @return int
-     */
-    public function executeUpdate(array $payload): int
-    {
-        $model = $this->model->findOrFail($payload['id']);
-
-        if ($model->isDeleted()) {
-            throw new \LogicException('Cannot update deleted record');
-        }
-
-        $model->fill(Arr::only($payload, $this->model->getFillable()));
-        $model->save();
-
-        return $model->id;
-    }
-
-    /**
-     * Delete record (soft delete)
-     *
-     * @param array $ids
-     * @return void
-     */
-    public function executeDelete(array $ids): void
-    {
-        // Soft delete
-        $this->model->whereIn('id', $ids)
-            ->notDeleted()
-            ->update(['is_delete' => IsDelete::TRUE->value]);
-    }
+  /**
+   * Delete record (hard delete)
+   *
+   * @param array $ids
+   * @return void
+   */
+  public function executeDelete(array $ids): void
+  {
+    $this->model->whereIn('id', $ids)->delete();
+  }
 }

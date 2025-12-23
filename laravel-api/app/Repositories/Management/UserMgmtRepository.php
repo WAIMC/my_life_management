@@ -14,127 +14,128 @@ use Illuminate\Support\Facades\Hash;
 
 class UserMgmtRepository extends BaseRepository implements UserMgmtInterface
 {
-    public function __construct(UserMgmt $model)
-    {
-        parent::__construct($model);
+  public function __construct(UserMgmt $model)
+  {
+    parent::__construct($model);
+  }
+
+  /**
+   * Get list with pagination
+   *
+   * @param array $payload
+   * @return LengthAwarePaginator
+   */
+  public function list(array $payload): LengthAwarePaginator
+  {
+    $query = $this->model->query()
+      ->select([
+        'id',
+        'email',
+        'user_name',
+        'first_name',
+        'last_name',
+        'address',
+        'phone_number',
+        'birth',
+        'gender',
+        'status',
+        'is_active',
+        'avatar',
+        'updated_at',
+      ])
+      ->notDeleted();
+
+    // Apply filters
+    $this->applyFilters($query, $payload, [
+      'id',
+      'email',
+      'phone_number',
+      'birth',
+      'gender',
+      'status',
+      'is_active',
+      'avatar',
+    ], [
+      'user_name',
+      'first_name',
+      'last_name',
+      'address',
+    ]);
+
+    // Apply date range
+    $this->applyDateRange($query, $payload);
+
+    // Apply sorting
+    $this->applySorting($query, $payload);
+
+    // Pagination
+    $perPage = $payload['per_page'] ?? 15;
+    $page = $payload['page'] ?? 1;
+
+    // dump($query->toSql(), $query->getBindings());
+
+    return $query->paginate($perPage, ['*'], 'page', $page);
+  }
+
+  /**
+   * Create new record
+   *
+   * @param array $payload
+   * @return int
+   */
+  public function executeStore(array $payload): int
+  {
+    // Hash password if provided
+    if (isset($payload['password']) && $payload['password']) {
+      $payload['password'] = Hash::make($payload['password']);
     }
 
-    /**
-     * Get list with pagination
-     *
-     * @param array $payload
-     * @return LengthAwarePaginator
-     */
-    public function list(array $payload): LengthAwarePaginator
-    {
-        $query = $this->model->query()
-            ->select([
-                'id',
-                'email',
-                'user_name',
-                'first_name',
-                'last_name',
-                'address',
-                'phone_number',
-                'birth',
-                'gender',
-                'status',
-                'is_active',
-                'avatar',
-                'updated_at',
-            ])
-            ->notDeleted();
+    $model = $this->model->fill(
+      Arr::only($payload, $this->model->getFillable())
+    );
 
-        // Apply filters
-        $this->applyFilters($query, $payload, [
-            'id',
-            'email',
-            'phone_number',
-            'birth',
-            'gender',
-            'status',
-            'is_active',
-            'avatar',
-        ], [
-            'user_name',
-            'first_name',
-            'last_name',
-            'address',
-        ]);
+    $model->save();
 
-        // Apply date range
-        $this->applyDateRange($query, $payload);
+    return $model->id;
+  }
 
-        // Apply sorting
-        $this->applySorting($query, $payload);
 
-        // Pagination
-        $perPage = $payload['per_page'] ?? 15;
-        $page = $payload['page'] ?? 1;
+  /**
+   * Update record
+   *
+   * @param array $payload
+   * @return int
+   */
+  public function executeUpdate(array $payload): int
+  {
+    $model = $this->model->findOrFail($payload['id']);
 
-        return $query->paginate($perPage, ['*'], 'page', $page);
+    if ($model->isDeleted()) {
+      throw new \LogicException('Cannot update deleted record');
     }
 
-    /**
-     * Create new record
-     *
-     * @param array $payload
-     * @return int
-     */
-    public function executeStore(array $payload): int
-    {
-        // Hash password if provided
-        if (isset($payload['password']) && $payload['password']) {
-            $payload['password'] = Hash::make($payload['password']);
-        }
-
-        $model = $this->model->fill(
-            Arr::only($payload, $this->model->getFillable())
-        );
-
-        $model->save();
-
-        return $model->id;
+    // Hash password if provided
+    if (isset($payload['password']) && $payload['password']) {
+      $payload['password'] = Hash::make($payload['password']);
     }
 
+    $model->fill(Arr::only($payload, $this->model->getFillable()));
+    $model->save();
 
-    /**
-     * Update record
-     *
-     * @param array $payload
-     * @return int
-     */
-    public function executeUpdate(array $payload): int
-    {
-        $model = $this->model->findOrFail($payload['id']);
+    return $model->id;
+  }
 
-        if ($model->isDeleted()) {
-            throw new \LogicException('Cannot update deleted record');
-        }
-
-        // Hash password if provided
-        if (isset($payload['password']) && $payload['password']) {
-            $payload['password'] = Hash::make($payload['password']);
-        }
-
-        $model->fill(Arr::only($payload, $this->model->getFillable()));
-        $model->save();
-
-        return $model->id;
-    }
-
-    /**
-     * Delete record (soft delete)
-     *
-     * @param array $ids
-     * @return void
-     */
-    public function executeDelete(array $ids): void
-    {
-        // Soft delete
-        $this->model->whereIn('id', $ids)
-            ->notDeleted()
-            ->update(['is_delete' => IsDelete::TRUE->value]);
-    }
-
+  /**
+   * Delete record (soft delete)
+   *
+   * @param array $ids
+   * @return void
+   */
+  public function executeDelete(array $ids): void
+  {
+    // Soft delete
+    $this->model->whereIn('id', $ids)
+      ->notDeleted()
+      ->update(['is_delete' => IsDelete::TRUE->value]);
+  }
 }
