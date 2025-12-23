@@ -7,7 +7,6 @@ use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
 use App\Models\Management\SkillMgmt;
-use App\Models\Management\SkillMgmt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -111,15 +110,15 @@ class StoreSkillMgmtTest extends TestCase
     $skill = SkillMgmt::factory()->create();
 
     $payload = [
-      
+
       'parent_id' => 0,
-            'name' => 'Test Skill',
+      'name' => 'Test Skill',
       'slug' => 'test-skill',
-      
+
       'status' => 1,
       'is_display' => 1,
       'rank_order' => 1,
-      
+
       'is_delete' => 0,
     ];
 
@@ -128,7 +127,7 @@ class StoreSkillMgmtTest extends TestCase
 
     $this->assertDatabaseHas('skill_mgmt', [
       'parent_id' => 0,
-            'name' => 'Test Skill',
+      'name' => 'Test Skill',
       'slug' => 'test-skill',
     ]);
 

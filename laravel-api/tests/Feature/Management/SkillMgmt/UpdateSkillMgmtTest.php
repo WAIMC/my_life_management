@@ -108,12 +108,13 @@ class UpdateSkillMgmtTest extends TestCase
   {
     $admin = AdminMst::factory()->create();
     $cookies = $this->getAuthCookies($admin);
-    $desc = SkillMgmt::factory()->create(['title' => 'Old Title']);
+    $desc = SkillMgmt::factory()->create();
 
     $payload = [
       'id' => $desc->id,
       'parent_id' => 0,
       'name' => 'Updated Skill',
+      'slug' => 'updated-skill',
       'summary' => 'Updated Summary',
       'article' => 'Updated Article',
       'status' => 1,

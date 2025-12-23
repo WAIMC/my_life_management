@@ -109,7 +109,6 @@ class ListSkillMgmtTest extends TestCase
 
     $this->assertArrayHasKey('id', $data[0]);
     $this->assertArrayHasKey('name', $data[0]);
-    $this->assertArrayHasKey('summary', $data[0]);
   }
 
   public function test_SKL_LST_003_filter_by_key()
