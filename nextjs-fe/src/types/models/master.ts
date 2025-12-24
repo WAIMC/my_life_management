@@ -101,36 +101,7 @@ export interface FeatureMst {
 // ============================================
 // LANGUAGE MASTER
 // ============================================
-export interface LanguageMst {
-  id: number;
-  name: string;
-  code: string; // en, vi, ja, etc.
-  flag?: string;
-  status: number;
-  is_active: boolean;
-  is_delete: boolean;
-  created_at: string;
-  updated_at: string;
-  // Relations
-  translations?: TranslationMst[];
-}
 
-// ============================================
-// TRANSLATION MASTER
-// ============================================
-export interface TranslationMst {
-  id: number;
-  key: string;
-  value: string;
-  description?: string;
-  status: number;
-  is_active: boolean;
-  is_delete: boolean;
-  created_at: string;
-  updated_at: string;
-  // Relations
-  languages?: LanguageMst[];
-}
 
 // ============================================
 // TOKEN MASTER
@@ -165,17 +136,7 @@ export interface PolicyDepartmentMst {
 // ============================================
 // ORIGINAL TRANSLATOR MASTER
 // ============================================
-export interface OriginalTranslatorMst {
-  id: number;
-  name: string;
-  email?: string;
-  description?: string;
-  status: number;
-  is_active: boolean;
-  is_delete: boolean;
-  created_at: string;
-  updated_at: string;
-}
+
 
 // ============================================
 // JUNCTION TABLES
@@ -213,11 +174,4 @@ export interface DepartmentManagementMst {
   updated_at: string;
 }
 
-export interface TranslationLanguageMst {
-  id: number;
-  translation_mst_id: number;
-  language_mst_id: number;
-  translated_value: string;
-  created_at: string;
-  updated_at: string;
-}
+

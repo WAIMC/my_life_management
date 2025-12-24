@@ -122,28 +122,9 @@ export interface ApiMst {
   updated_at: string;
 }
 
-export interface LanguageMst {
-  id: number;
-  code: string; // e.g., "en", "vi", "ja"
-  name: string; // e.g., "English", "Tiếng Việt"
-  status: number;
-  is_active: boolean;
-  is_delete: boolean;
-  updated_at: string;
-}
 
-export interface TranslationMst {
-  id: number;
-  key: string;
-  original_text: string;
-  status: number;
-  is_active: boolean;
-  is_delete: boolean;
-  updated_at: string;
-  // Relationships
-  languages?: LanguageMst[];
-  translations?: TranslationLanguageMst[];
-}
+
+
 
 export interface TokenMst {
   id: number;
@@ -167,15 +148,7 @@ export interface PolicyDepartmentMst {
   updated_at: string;
 }
 
-export interface OriginalTranslatorMst {
-  id: number;
-  name: string;
-  description?: string;
-  status: number;
-  is_active: boolean;
-  is_delete: boolean;
-  updated_at: string;
-}
+
 
 /**
  * Management Data Models
@@ -313,11 +286,7 @@ export interface DepartmentManagementMst {
   policy_department_mst_id: number;
 }
 
-export interface TranslationLanguageMst {
-  translation_mst_id: number;
-  language_mst_id: number;
-  translated_text: string;
-}
+
 
 export interface CategorySkillMgmt {
   category_mgmt_id: number;

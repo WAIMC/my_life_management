@@ -16,7 +16,6 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Can } from '@/components/advanced/permission-control';
 import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 import type { DepartmentMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
@@ -122,7 +121,7 @@ export default function DepartmentListPage() {
     setPage(1);
   };
 
-  const handleImport = async (importedData: any[]) => {
+  const handleImport = async (file: File, format: string) => {
     refetch();
   };
 
@@ -136,21 +135,21 @@ export default function DepartmentListPage() {
           { label: 'Departments', isActive: true },
         ]}
         action={
-          <Can module="department" action="create">
+          
             <Button onClick={() => router.push('/admin/departments/create')}>
               Create Department
             </Button>
-          </Can>
+          
         }
       />
 
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onLoad={(f) => { setFilters(f); setPage(1); }} filterKey="department-filters" />
-          <Can module="department" action="export">
-            <ImportExport data={data} onImport={handleImport} filename="departments-export" />
-          </Can>
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="department-filters" />
+          
+            <ImportExport  onImport={handleImport}  />
+          
         </div>
         <FilterPanel
           filters={filters}
@@ -165,12 +164,12 @@ export default function DepartmentListPage() {
           fields={filterFields}
         />
 
-        <Can module="department" action="delete">
+        
           <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
-        </Can>
+        
 
-        <DataTable
-          data={data}
+        <DataTable data={data}
+          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}

@@ -37,7 +37,7 @@ export default function EditTokenPage() {
   const [activeTab, setActiveTab] = useState('details');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<TokenFormData>({
-    resolver: zodResolver(tokenSchema),
+    resolver: zodResolver(tokenSchema) as any,
   });
 
   useEffect(() => {

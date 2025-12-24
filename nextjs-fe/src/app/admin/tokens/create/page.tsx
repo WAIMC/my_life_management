@@ -30,7 +30,7 @@ export default function CreateTokenPage() {
   const { create, loading } = useCrud<TokenMst>(ENDPOINTS.MASTER.TOKEN);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<TokenFormData>({
-    resolver: zodResolver(tokenSchema),
+    resolver: zodResolver(tokenSchema) as any,
     defaultValues: { status: Status.ACTIVE, is_active: true },
   });
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ChevronRight, ChevronDown, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { DepartmentMst } from '@/types/models';
+import type { DepartmentMst } from '@/lib/types/api';
 
 interface DepartmentTreeProps {
   departments: DepartmentMst[];

@@ -15,7 +15,6 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Can } from '@/components/advanced/permission-control';
 
 interface CrudPageTemplateProps<T> {
   // Page configuration
@@ -33,7 +32,7 @@ interface CrudPageTemplateProps<T> {
   
   // Actions
   bulkActions?: BulkAction[];
-  onImport?: (data: any[]) => Promise<void>;
+  onImport?: (file: File, format: 'csv' | 'excel' | 'json') => Promise<void>;
   
   // Customization
   createPath?: string;
@@ -133,9 +132,9 @@ export function CrudPageTemplate<T extends { id: number }>({
     setPage(1);
   };
 
-  const handleImport = async (importedData: any[]) => {
+  const handleImport = async (file: File, format: 'csv' | 'excel' | 'json') => {
     if (onImport) {
-      await onImport(importedData);
+      await onImport(file, format);
       refetch();
     }
   };
@@ -156,11 +155,11 @@ export function CrudPageTemplate<T extends { id: number }>({
         action={
           headerAction || (
             !hideCreate && (
-              <Can module={module} action="create">
+              
                 <Button onClick={() => router.push(defaultCreatePath)}>
                   Create {module}
                 </Button>
-              </Can>
+              
             )
           )
         }
@@ -175,22 +174,22 @@ export function CrudPageTemplate<T extends { id: number }>({
                 <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
                 <SavedFilters
                   currentFilters={filters}
-                  onLoad={(f) => {
+                  onApplyFilter={(f) => {
                     setFilters(f);
                     setPage(1);
                   }}
-                  filterKey={`${module}-filters`}
+                  storageKey={`${module}-filters`}
                 />
               </>
             )}
             {!hideImportExport && (
-              <Can module={module} action="export">
+              
                 <ImportExport
-                  data={data}
+
                   onImport={handleImport}
-                  filename={`${module}s-export`}
+                  moduleName={module}
                 />
-              </Can>
+              
             )}
           </div>
         )}
@@ -213,14 +212,14 @@ export function CrudPageTemplate<T extends { id: number }>({
 
         {/* Bulk actions */}
         {!hideBulkActions && bulkActions.length > 0 && (
-          <Can module={module} action="delete">
+          
             <BulkActions
               selectedIds={selectedIds}
               onClearSelection={() => setSelectedIds([])}
               actions={bulkActions}
               isLoading={loading}
             />
-          </Can>
+          
         )}
 
         {/* Before table content */}

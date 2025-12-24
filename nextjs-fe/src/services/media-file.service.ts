@@ -4,6 +4,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import { ENDPOINTS } from '@/constants/api-endpoints';
 import type { PaginatedResponse } from '@/lib/types/api';
 import type {
   MediaFile,
@@ -16,7 +17,7 @@ import type {
 } from '@/types/media-file.types';
 
 class MediaFileService {
-  private baseUrl = '/admin/media-mgmt';
+  private baseUrl = ENDPOINTS.MEDIA;
 
   /**
    * Upload file to server
@@ -48,12 +49,12 @@ class MediaFileService {
   /**
    * Get list of media files
    */
-  async list(params?: ListFilesParams): Promise<import('@/types/apiType').ApiResponse<MediaFile[]>> {
-    const response = await apiClient.get<MediaFile[]>(
+  async list(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
+    const response = await apiClient.get<PaginatedResponse<MediaFile>>(
       `${this.baseUrl}/list`,
       params
     );
-    return response; // Return full ApiResponse {data: MediaFile[], error: {...}}
+    return response.data;
   }
 
   /**

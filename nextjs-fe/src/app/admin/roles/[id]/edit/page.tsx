@@ -51,7 +51,7 @@ export default function EditRolePage() {
     watch,
     reset,
   } = useForm<RoleFormData>({
-    resolver: zodResolver(roleSchema),
+    resolver: zodResolver(roleSchema) as any,
   });
 
   useEffect(() => {

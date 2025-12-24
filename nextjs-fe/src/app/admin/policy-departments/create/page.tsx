@@ -31,7 +31,7 @@ export default function CreatePolicyDepartmentPage() {
   const { create, loading } = useCrud<PolicyDepartmentMst>(ENDPOINTS.MASTER.POLICY_DEPARTMENT);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { status: Status.ACTIVE, is_active: true },
   });
 

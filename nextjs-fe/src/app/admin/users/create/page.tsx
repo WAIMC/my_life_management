@@ -42,7 +42,7 @@ export default function CreateUserPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(userSchema) as any,
     defaultValues: {
       gender: Gender.MALE,
       status: Status.ACTIVE,
@@ -79,7 +79,7 @@ export default function CreateUserPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Avatar Upload */}
             <AvatarUpload
-              value={avatarPreview}
+              value={avatarPreview ?? undefined}
               onChange={(file, preview) => {
                 setAvatarFile(file);
                 setAvatarPreview(preview);

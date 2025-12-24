@@ -2,18 +2,13 @@ import { AxiosError } from 'axios';
 import * as CLIENT_URL from '@/constants/clientUrl';
 import { ERR_MESS } from '@/constants/messages';
 import { toast } from 'react-hot-toast/headless';
-import { ApiResponse } from '@/types/apiType';
+import { ApiResponse, ApiErrorResponse } from '@/lib/types/api';
 
 // Helper to get error message from various sources
-const getErrorMessage = (error: AxiosError<ApiResponse<unknown>>): string => {
-  // Try to get message from ApiResponse.error structure (primary)
-  if (error.response?.data?.error?.messages) {
-    return error.response.data.error.messages;
-  }
-
-  // Fallback: try direct messages field (for backwards compatibility)
-  if (error.response?.data && 'messages' in error.response.data && typeof error.response.data.messages === 'string') {
-    return error.response.data.messages;
+const getErrorMessage = (error: AxiosError<any>): string => {
+  // Try to get message from ApiErrorResponse structure
+  if (error.response?.data?.message) {
+    return error.response.data.message;
   }
 
   // Fallback to axios error message
@@ -25,7 +20,7 @@ const getErrorMessage = (error: AxiosError<ApiResponse<unknown>>): string => {
 };
 
 
-export const handleCommonError = (error: AxiosError<ApiResponse<unknown>>) => {
+export const handleCommonError = (error: AxiosError<any>) => {
   // Network error - no response from server
   if (!error.response) {
     toast.error(ERR_MESS.E0004);

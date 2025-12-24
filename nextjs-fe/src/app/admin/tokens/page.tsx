@@ -15,7 +15,6 @@ import { Badge } from '@/components/ui/badge';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { Can } from '@/components/advanced/permission-control';
 import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 import type { TokenMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
@@ -104,10 +103,10 @@ export default function TokenListPage() {
           { label: 'Admin', href: '/admin' },
           { label: 'Tokens', isActive: true },
         ]}
-        action={<Can module="token" action="create"><Button onClick={() => router.push('/admin/tokens/create')}>Create Token</Button></Can>}
+        action={<Button onClick={() => router.push('/admin/tokens/create')}>Create Token</Button>}
       />
 
-      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onLoad={(f) => { setFilters(f); setPage(1); }} filterKey="token-filters" /></div><FilterPanel
+      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="token-filters" /></div><FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
@@ -120,10 +119,10 @@ export default function TokenListPage() {
           fields={filterFields}
         />
 
-        <Can module="token" action="delete"><BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} /></Can>
+        <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
-        <DataTable
-          data={data}
+        <DataTable data={data}
+          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}

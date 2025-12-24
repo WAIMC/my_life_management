@@ -38,7 +38,7 @@ export default function EditPolicyDepartmentPage() {
   const [activeTab, setActiveTab] = useState('details');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
   });
 
   useEffect(() => {

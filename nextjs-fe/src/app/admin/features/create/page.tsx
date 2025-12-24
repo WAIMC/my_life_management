@@ -31,7 +31,7 @@ export default function CreateFeaturePage() {
   const { create, loading } = useCrud<FeatureMst>(ENDPOINTS.MASTER.FEATURE);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FeatureFormData>({
-    resolver: zodResolver(featureSchema),
+    resolver: zodResolver(featureSchema) as any,
     defaultValues: { status: Status.ACTIVE, is_active: true },
   });
 

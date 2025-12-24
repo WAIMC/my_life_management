@@ -40,7 +40,7 @@ export default function CreateBannerPage() {
   const { create, loading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
 
   const form = useForm<BannerFormData>({
-    resolver: zodResolver(bannerSchema),
+    resolver: zodResolver(bannerSchema) as any,
     defaultValues: {
       title: '',
       description: '',

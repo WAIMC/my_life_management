@@ -4,9 +4,9 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { handleCommonError } from "./apiErrorHandle";
-import { ApiResponse } from "@/types/apiType";
+import { ApiResponse } from "@/lib/types/api";
 import { authLock } from "@/lib/auth-lock";
-import { REFRESH_TOKEN, LOGIN } from "@/constants/auth-urls";
+import { ENDPOINTS, API_BASE_URL } from "@/constants/api-endpoints";
 
 /**
  * Unified API Client
@@ -19,7 +19,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:81/api",
+      baseURL: API_BASE_URL,
       timeout: 30000, // 30 seconds
       headers: {
         "Content-Type": "application/json",
@@ -64,8 +64,8 @@ class ApiClient {
         ) {
           // Skip if it's already a refresh request or login request
           if (
-            originalRequest.url?.includes(REFRESH_TOKEN) ||
-            originalRequest.url?.includes(LOGIN)
+            originalRequest.url?.includes(ENDPOINTS.AUTH.REFRESH) ||
+            originalRequest.url?.includes(ENDPOINTS.AUTH.LOGIN)
           ) {
             return Promise.reject(error);
           }
@@ -84,7 +84,7 @@ class ApiClient {
               try {
                 // Call Refresh API directly using a fresh axios instance to avoid interceptors
                 await axios.post(
-                  `${this.client.defaults.baseURL}${REFRESH_TOKEN}`,
+                  `${this.client.defaults.baseURL}${ENDPOINTS.AUTH.REFRESH}`,
                   {},
                   { withCredentials: true }
                 );

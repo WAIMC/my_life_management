@@ -4,16 +4,16 @@
  */
 
 import { createCrudService } from '@/services/crud-service';
-import { DEPARTMENT_MST_LIST } from '@/constants/apiUrl';
+import { ENDPOINTS } from '@/constants/api-endpoints';
 import type { DepartmentMst } from '@/types/models';
 
 export const departmentService = createCrudService<DepartmentMst>({
-  baseUrl: '/admin/department-mst',
+  baseUrl: ENDPOINTS.MASTER.DEPARTMENT,
   endpoints: {
-    list: '/list',
-    create: '/store',
-    update: '/update',
-    delete: '/delete',
+    list: '',
+    create: '',
+    update: '',
+    delete: '',
   },
 });
 

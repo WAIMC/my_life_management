@@ -7,7 +7,7 @@ export const userService = {
     return apiClient.get<PaginatedResponse<UserMgmt>>(ENDPOINTS.MANAGEMENT.USER, params);
   },
   async getById(id: number) {
-    const response = await this.list({ id, per_page: 1 });
+    const response = await this.list({ id, per_page: 1 } as any);
     return response.data.data[0] || null;
   },
   async create(data: Omit<UserMgmt, 'id' | 'updated_at' | 'created_at'>) {

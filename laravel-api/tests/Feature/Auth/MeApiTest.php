@@ -60,7 +60,7 @@ class MeApiTest extends TestCase
     // Force populate Redis Permissions if missing (Fix for Legacy Test Regression)
     $permissionTableKey = CommonVal::ADMIN_TYPE . ":{$admin->id}:" . CommonVal::ADMIN_PERMISSION_TABLE;
     if (!Redis::exists($permissionTableKey)) {
-      $paths = [$this->meUrl];
+      $paths = [ltrim($this->meUrl, '/')];
       Redis::hset($permissionTableKey, 'GET', json_encode($paths));
     }
 

@@ -1,6 +1,6 @@
 import { authLock } from "@/lib/auth-lock";
 import { apiClient } from "@/lib/api-client";
-import { LOGIN, LOGOUT, REFRESH_TOKEN, ME } from "@/constants/auth-urls";
+import { ENDPOINTS } from "@/constants/api-endpoints";
 
 export interface AuthResponse {
   expires_at: number;
@@ -10,21 +10,21 @@ export interface AuthResponse {
 export const authService = {
   // ... (keep API methods)
   async login(credentials: any): Promise<AuthResponse> {
-    const response = await apiClient.post<any>(LOGIN, credentials);
+    const response = await apiClient.post<any>(ENDPOINTS.AUTH.LOGIN, credentials);
     return response.data;
   },
 
   async logout(): Promise<void> {
-    await apiClient.post(LOGOUT);
+    await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
   },
 
   async refreshToken(): Promise<AuthResponse> {
-    const response = await apiClient.post<any>(REFRESH_TOKEN);
+    const response = await apiClient.post<any>(ENDPOINTS.AUTH.REFRESH);
     return response.data;
   },
 
   async getMe(): Promise<AuthResponse & { [key: string]: any }> {
-    const response = await apiClient.get<any>(ME);
+    const response = await apiClient.get<any>(ENDPOINTS.AUTH.ME);
     return response.data;
   },
 

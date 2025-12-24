@@ -48,7 +48,7 @@ export default function EditUserPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(userSchema) as any,
   });
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export default function EditUserPage() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Avatar Upload */}
                 <AvatarUpload
-                  value={avatarPreview}
+                  value={avatarPreview ?? undefined}
                   onChange={(file, preview) => {
                     setAvatarFile(file);
                     setAvatarPreview(preview);

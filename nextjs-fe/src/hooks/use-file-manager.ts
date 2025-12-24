@@ -40,7 +40,7 @@ export const useFileManager = (): FileManagerContextType => {
     setIsLoading(true);
     try {
       const response = await mediaFileService.list({
-        folder_path: currentPath || '/'
+        parent_path: currentPath || '/'
         // No search, sort, or filter params - get ALL files and handle on client
       });
       
@@ -208,7 +208,7 @@ export const useFileManager = (): FileManagerContextType => {
 
   const renameFile = useCallback(async (id: string, newName: string) => {
     try {
-      await mediaFileService.rename(Number(id), { new_name: newName });
+      await mediaFileService.rename(Number(id), { name: newName });
       toast.success('Đã đổi tên file');
       // Refresh file list
       await fetchFiles();
@@ -221,7 +221,7 @@ export const useFileManager = (): FileManagerContextType => {
   const moveFiles = useCallback(async (ids: string[], targetPath: string) => {
     try {
       for (const id of ids) {
-        await mediaFileService.move(Number(id), { new_folder_path: targetPath });
+        await mediaFileService.move(Number(id), { new_parent_path: targetPath });
       }
       setSelectedFiles(prev => prev.filter(id => !ids.includes(id)));
       toast.success('Đã di chuyển file');
@@ -275,6 +275,10 @@ export const useFileManager = (): FileManagerContextType => {
     deleteFiles,
     renameFile,
     moveFiles,
+    filterType: filterOptions.type,
+    setFilterType: (type: string) => setFilterOptions(prev => ({ ...prev, type: type as any })),
+    sortBy: sortOptions.field,
+    setSortBy: (field: any) => setSortOptions(prev => ({ ...prev, field })),
     copyFiles
   };
 };

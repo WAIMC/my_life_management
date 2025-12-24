@@ -51,7 +51,7 @@ export default function EditCategoryPage() {
   );
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(categorySchema) as any,
   });
 
   useEffect(() => {

@@ -49,22 +49,22 @@ export default function AdminFormPageEnhanced({ adminId }: AdminFormPageProps) {
     layout: 'tabs',
     sections: [
       {
-        label: 'Basic Information',
+        title: 'Basic Information',
         fields: [
-          { name: 'email', label: 'Email', type: 'email', required: true },
-          { name: 'user_name', label: 'Username', type: 'text', required: true },
+          { name: 'email', label: 'Email', type: 'email' as const, required: true },
+          { name: 'user_name', label: 'Username', type: 'text' as const, required: true },
           ...(adminId ? [] : [
-            { name: 'password', label: 'Password', type: 'password', required: true },
+            { name: 'password', label: 'Password', type: 'password' as const, required: true },
           ]),
-          { name: 'first_name', label: 'First Name', type: 'text', required: true },
-          { name: 'last_name', label: 'Last Name', type: 'text', required: true },
-          { name: 'address', label: 'Address', type: 'textarea' },
-          { name: 'phone_number', label: 'Phone', type: 'text' },
-          { name: 'birth', label: 'Birth Date', type: 'date' },
+          { name: 'first_name', label: 'First Name', type: 'text' as const, required: true },
+          { name: 'last_name', label: 'Last Name', type: 'text' as const, required: true },
+          { name: 'address', label: 'Address', type: 'textarea' as const },
+          { name: 'phone_number', label: 'Phone', type: 'text' as const },
+          { name: 'birth', label: 'Birth Date', type: 'date' as const },
           {
             name: 'gender',
             label: 'Gender',
-            type: 'select',
+            type: 'select' as const,
             required: true,
             options: [
               { value: '1', label: 'Male' },
@@ -72,7 +72,7 @@ export default function AdminFormPageEnhanced({ adminId }: AdminFormPageProps) {
               { value: '3', label: 'Other' },
             ],
           },
-          { name: 'is_active', label: 'Active', type: 'checkbox' },
+          { name: 'is_active', label: 'Active', type: 'checkbox' as const },
         ],
       },
     ],
@@ -94,10 +94,10 @@ export default function AdminFormPageEnhanced({ adminId }: AdminFormPageProps) {
       }
 
       if (adminId) {
-        await adminService.update(adminId, formData);
+        await adminService.update(adminId, formData as any);
         toast.success('Admin updated successfully');
       } else {
-        await adminService.create(formData);
+        await adminService.create(formData as any);
         toast.success('Admin created successfully');
       }
 
@@ -141,7 +141,7 @@ export default function AdminFormPageEnhanced({ adminId }: AdminFormPageProps) {
               { value: 3, label: 'Editor' },
             ]}
             value={selectedRoles}
-            onChange={setSelectedRoles}
+            onChange={(vals) => setSelectedRoles(vals.map((v) => Number(v)))}
           />
 
           {/* Department Assignment */}
@@ -154,7 +154,7 @@ export default function AdminFormPageEnhanced({ adminId }: AdminFormPageProps) {
               { value: 3, label: 'Finance' },
             ]}
             value={selectedDepartments}
-            onChange={setSelectedDepartments}
+            onChange={(vals) => setSelectedDepartments(vals.map((v) => Number(v)))}
           />
         </TabsContent>
 

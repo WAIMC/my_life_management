@@ -26,6 +26,12 @@ export const FileManagerProvider = ({ children }: { children: ReactNode }) => {
     setSelectedFiles,
     isLoading,
     setIsLoading,
+    pagination: {
+        page: 1,
+        pageSize: 20,
+        total: files.length,
+        totalPages: 1
+    },
     searchQuery,
     setSearchQuery,
     filterType,

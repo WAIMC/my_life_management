@@ -78,7 +78,7 @@ export function useApiData<T>(
     if (to_date) params.to_date = to_date;
 
     const response = await apiClient.get<PaginatedResponse<T>>(
-      endpoint,
+      `${endpoint}/list`,
       params
     );
 

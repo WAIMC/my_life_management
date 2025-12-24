@@ -40,7 +40,7 @@ export default function CreateSliderPage() {
   const { create, loading } = useCrud<SliderMgmt>(ENDPOINTS.MANAGEMENT.SLIDER);
 
   const form = useForm<SliderFormData>({
-    resolver: zodResolver(sliderSchema),
+    resolver: zodResolver(sliderSchema) as any,
     defaultValues: {
       title: '',
       description: '',

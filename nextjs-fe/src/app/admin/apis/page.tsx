@@ -16,7 +16,6 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Can } from '@/components/advanced/permission-control';
 import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 import type { ApiMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
@@ -95,7 +94,7 @@ export default function ApiListPage() {
   const searchFields: SearchField[] = [{ key: 'name', label: 'Name', type: 'text' }, { key: 'description', label: 'Description', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
   const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} API(s)?`, confirmTitle: 'Delete APIs' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (importedData: any[]) => { refetch(); };
+  const handleImport = async (file: File, format: string) => { refetch(); };
 
   return (
     <AdminLayout>
@@ -106,10 +105,10 @@ export default function ApiListPage() {
           { label: 'Admin', href: '/admin' },
           { label: 'APIs', isActive: true },
         ]}
-        action={<Can module="api" action="create"><Button onClick={() => router.push('/admin/apis/create')}>Create API</Button></Can>}
+        action={<Button onClick={() => router.push('/admin/apis/create')}>Create API</Button>}
       />
 
-      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onLoad={(f) => { setFilters(f); setPage(1); }} filterKey="api-filters" /><Can module="api" action="export"><ImportExport data={data} onImport={handleImport} filename="apis-export" /></Can></div><FilterPanel
+      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="api-filters" /><ImportExport  onImport={handleImport}  /></div><FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
@@ -122,10 +121,10 @@ export default function ApiListPage() {
           fields={filterFields}
         />
 
-        <Can module="api" action="delete"><BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} /></Can>
+        <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
-        <DataTable
-          data={data}
+        <DataTable data={data}
+          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}

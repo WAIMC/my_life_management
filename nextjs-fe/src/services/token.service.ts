@@ -12,7 +12,7 @@ export interface TokenListParams extends ListQueryParams {
 
 export const tokenService = {
   async list(params: TokenListParams = {}) {
-    return apiClient.get<PaginatedResponse<TokenMst>>(ENDPOINTS.MASTER.TOKEN, params);
+    return apiClient.get<PaginatedResponse<TokenMst>>(`${ENDPOINTS.MASTER.TOKEN}/list`, params);
   },
 
   async getById(id: number) {
@@ -21,14 +21,14 @@ export const tokenService = {
   },
 
   async create(data: Omit<TokenMst, 'id' | 'updated_at' | 'created_at'>) {
-    return apiClient.post<number>(ENDPOINTS.MASTER.TOKEN, data);
+    return apiClient.post<number>(`${ENDPOINTS.MASTER.TOKEN}/store`, data);
   },
 
   async update(id: number, data: Partial<TokenMst>) {
-    return apiClient.put<number>(`${ENDPOINTS.MASTER.TOKEN}/${id}`, { id, ...data });
+    return apiClient.put<number>(`${ENDPOINTS.MASTER.TOKEN}/update/${id}`, { id, ...data });
   },
 
   async delete(ids: number[]) {
-    await apiClient.delete(ENDPOINTS.MASTER.TOKEN, { ids });
+    await apiClient.delete(`${ENDPOINTS.MASTER.TOKEN}/delete`, { ids });
   },
 };

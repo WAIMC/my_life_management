@@ -33,8 +33,8 @@ const adminSchema = z.object({
   address: z.string().optional(),
   phone_number: z.string().optional(),
   birth: z.string().optional(),
-  gender: z.coerce.number().min(1).max(3),
-  status: z.coerce.number().min(1).max(2),
+  gender: z.number(),
+  status: z.number(),
   is_active: z.boolean(),
 });
 
@@ -53,7 +53,7 @@ export default function CreateAdminPage() {
     setValue,
     watch,
   } = useForm<AdminFormData>({
-    resolver: zodResolver(adminSchema),
+    resolver: zodResolver(adminSchema) as any as any,
     defaultValues: {
       gender: Gender.MALE,
       status: Status.ACTIVE,
@@ -94,7 +94,7 @@ export default function CreateAdminPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Avatar Upload */}
             <AvatarUpload
-              value={avatarPreview}
+              value={avatarPreview ?? undefined}
               onChange={(file, preview) => {
                 setAvatarFile(file);
                 setAvatarPreview(preview);

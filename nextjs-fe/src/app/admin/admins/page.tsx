@@ -19,7 +19,6 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Can } from '@/components/advanced/permission-control';
 import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 export default function AdminListPage() {
@@ -130,8 +129,14 @@ export default function AdminListPage() {
     setPage(1);
   };
 
-  const handleImport = async (importedData: any[]) => {
+  const handleImport = async (file: File, format: string) => {
+    // TODO: Implement import logic
     refetch();
+  };
+
+  const handleExport = async (format: string) => {
+    // TODO: Implement export logic
+    console.log('Exporting as', format);
   };
 
   return (
@@ -144,21 +149,21 @@ export default function AdminListPage() {
           { label: 'Admins', isActive: true },
         ]}
         action={
-          <Can module="admin" action="create">
+          
             <Button onClick={() => router.push('/admin/admins/create')}>
               Create Admin
             </Button>
-          </Can>
+          
         }
       />
 
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onLoad={(f) => { setFilters(f); setPage(1); }} filterKey="admin-filters" />
-          <Can module="admin" action="export">
-            <ImportExport data={data} onImport={handleImport} filename="admins-export" />
-          </Can>
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="admin-filters" />
+          
+            <ImportExport onExport={handleExport} onImport={handleImport} moduleName="Admins" />
+          
         </div>
 
         <FilterPanel
@@ -174,17 +179,17 @@ export default function AdminListPage() {
           fields={filterFields}
         />
 
-        <Can module="admin" action="delete">
+        
           <BulkActions
             selectedIds={selectedIds}
             onClearSelection={() => setSelectedIds([])}
             actions={bulkActions}
             isLoading={loading}
           />
-        </Can>
+        
 
-        <DataTable
-          data={data}
+        <DataTable data={data}
+          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}

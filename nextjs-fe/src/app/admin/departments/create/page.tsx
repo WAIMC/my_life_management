@@ -43,7 +43,7 @@ export default function CreateDepartmentPage() {
     setValue,
     watch,
   } = useForm<DepartmentFormData>({
-    resolver: zodResolver(departmentSchema),
+    resolver: zodResolver(departmentSchema) as any,
     defaultValues: {
       status: Status.ACTIVE,
       is_active: true,

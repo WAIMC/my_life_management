@@ -3,14 +3,15 @@
  */
 
 import { createCrudService } from '@/services/crud-service';
+import { ENDPOINTS } from '@/constants/api-endpoints';
 import type { FeatureMst } from '@/types/models';
 
 export const featureService = createCrudService<FeatureMst>({
-  baseUrl: '/admin/feature-mst',
+  baseUrl: ENDPOINTS.MASTER.FEATURE,
   endpoints: {
-    list: '/list',
-    create: '/store',
-    update: '/update',
-    delete: '/delete',
+    list: '',
+    create: '',
+    update: '',
+    delete: '',
   },
 });

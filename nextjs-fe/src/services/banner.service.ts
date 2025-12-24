@@ -7,7 +7,7 @@ export const bannerService = {
     return apiClient.get<PaginatedResponse<BannerMgmt>>(ENDPOINTS.MANAGEMENT.BANNER, params);
   },
   async getById(id: number) {
-    const response = await this.list({ id, per_page: 1 });
+    const response = await this.list({ id, per_page: 1 } as any);
     return response.data.data[0] || null;
   },
   async create(data: Omit<BannerMgmt, 'id' | 'updated_at' | 'created_at'>) {

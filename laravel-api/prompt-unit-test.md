@@ -131,18 +131,3 @@ Only then convert EACH test case into a PHPUnit Feature Test method.
 
 === API INFORMATION ===
 route:
-DELETE    api/admin/user-mgmt-hist/delete/{id} ............................................................. History\Management\UserMgmtHistController@delete
-
-GET|HEAD  api/admin/user-mgmt-hist/list ...................................................................... History\Management\UserMgmtHistController@list
-
-POST      api/admin/user-mgmt-hist/store .................................................................... History\Management\UserMgmtHistController@store
-
-PUT       api/admin/user-mgmt-hist/update/{id} ............................................................. History\Management\UserMgmtHistController@update
-
-DELETE    api/admin/user-mgmt/delete/{id} .............................................................................. Management\UserMgmtController@delete
-
-GET|HEAD  api/admin/user-mgmt/list ....................................................................................... Management\UserMgmtController@list
-
-POST      api/admin/user-mgmt/store ..................................................................................... Management\UserMgmtController@store
-
-PUT       api/admin/user-mgmt/update/{id} .............................................................................. Management\UserMgmtController@update

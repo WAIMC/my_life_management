@@ -32,6 +32,7 @@ export interface UploadFileParams {
   file: File;
   parent_path?: string;
   workspace_id?: number;
+  is_public?: boolean;
 }
 
 export interface ListFilesParams {
@@ -43,6 +44,7 @@ export interface ListFilesParams {
   order_direction?: 'asc' | 'desc';
   per_page?: number;
   page?: number;
+  file_type?: string;
 }
 
 export interface RenameFileParams {

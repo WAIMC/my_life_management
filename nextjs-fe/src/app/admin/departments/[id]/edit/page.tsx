@@ -66,7 +66,7 @@ export default function EditDepartmentPage() {
     watch,
     reset,
   } = useForm<DepartmentFormData>({
-    resolver: zodResolver(departmentSchema),
+    resolver: zodResolver(departmentSchema) as any,
   });
 
   useEffect(() => {
@@ -95,7 +95,8 @@ export default function EditDepartmentPage() {
   }, [departmentId, reset]);
 
   const onSubmit = async (data: DepartmentFormData) => {
-    await update(departmentId, data);
+    const updateData = { ...data, parent_id: data.parent_id ?? undefined };
+    await update(departmentId, updateData);
     router.push('/admin/departments');
   };
 

@@ -38,7 +38,7 @@ export default function EditFeaturePage() {
   const [activeTab, setActiveTab] = useState('details');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<FeatureFormData>({
-    resolver: zodResolver(featureSchema),
+    resolver: zodResolver(featureSchema) as any,
   });
 
   useEffect(() => {

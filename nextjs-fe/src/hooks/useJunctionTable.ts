@@ -45,7 +45,8 @@ export function useJunctionTable<T>(
       const allItemsResponse = await apiClient.get(allItemsEndpoint, {
         per_page: 100,
       });
-      setAllItems(allItemsResponse.data.data || allItemsResponse.data);
+      const data = allItemsResponse.data as any;
+      setAllItems(data.data || data);
 
       // Fetch assigned relationships
       const assignedResponse = await apiClient.get(junctionEndpoint, {
@@ -53,7 +54,8 @@ export function useJunctionTable<T>(
         per_page: 100,
       });
 
-      const assigned = assignedResponse.data.data || assignedResponse.data;
+      const assignedData = assignedResponse.data as any;
+      const assigned = assignedData.data || assignedData;
       const assignedItemIds = assigned.map((item: any) => item[childIdKey]);
 
       setAssignedIds(assignedItemIds);

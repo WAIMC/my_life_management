@@ -24,11 +24,11 @@ export class CrudService<T = any> {
   constructor(config: CrudServiceConfig) {
     this.baseUrl = config.baseUrl;
     this.endpoints = {
-      list: config.endpoints?.list || '/list',
-      get: config.endpoints?.get || '',
-      create: config.endpoints?.create || '/store',
-      update: config.endpoints?.update || '/update',
-      delete: config.endpoints?.delete || '/delete',
+      list: config.endpoints?.list ?? '/list',
+      get: config.endpoints?.get ?? '',
+      create: config.endpoints?.create ?? '/store',
+      update: config.endpoints?.update ?? '/update',
+      delete: config.endpoints?.delete ?? '/delete',
     };
   }
 
@@ -36,7 +36,7 @@ export class CrudService<T = any> {
    * Get list of items with pagination
    */
   async list(params?: ListQueryParams): Promise<PaginatedResponse<T>> {
-    const url = `${this.baseUrl}${this.endpoints.list}`;
+    const url = `${this.baseUrl}${this.endpoints!.list}`;
     const response = await apiClient.get<PaginatedResponse<T>>(url, params);
     return response.data;
   }
@@ -44,8 +44,16 @@ export class CrudService<T = any> {
   /**
    * Get single item by ID
    */
+  async getById(id: string | number): Promise<T | null> {
+    const response = await this.list({ id, per_page: 1 } as any);
+    return response.data[0] || null;
+  }
+
+  /**
+   * Get single item by ID (alternative method using dedicated endpoint)
+   */
   async get(id: string | number): Promise<T> {
-    const url = `${this.baseUrl}${this.endpoints.get}/${id}`;
+    const url = `${this.baseUrl}${this.endpoints!.get}/${id}`;
     const response = await apiClient.get<T>(url);
     return response.data;
   }
@@ -54,7 +62,7 @@ export class CrudService<T = any> {
    * Create new item
    */
   async create(data: Partial<T>): Promise<number> {
-    const url = `${this.baseUrl}${this.endpoints.create}`;
+    const url = `${this.baseUrl}${this.endpoints!.create}`;
     const response = await apiClient.post<number>(url, data);
     return response.data;
   }
@@ -63,7 +71,7 @@ export class CrudService<T = any> {
    * Update existing item
    */
   async update(id: string | number, data: Partial<T>): Promise<number> {
-    const url = `${this.baseUrl}${this.endpoints.update}/${id}`;
+    const url = `${this.baseUrl}${this.endpoints!.update}/${id}`;
     const response = await apiClient.put<number>(url, data);
     return response.data;
   }
@@ -72,7 +80,7 @@ export class CrudService<T = any> {
    * Delete item by ID
    */
   async delete(id: string | number): Promise<void> {
-    const url = `${this.baseUrl}${this.endpoints.delete}/${id}`;
+    const url = `${this.baseUrl}${this.endpoints!.delete}/${id}`;
     await apiClient.delete(url);
   }
 
@@ -80,7 +88,7 @@ export class CrudService<T = any> {
    * Bulk delete items
    */
   async bulkDelete(ids: number[]): Promise<void> {
-    const url = `${this.baseUrl}${this.endpoints.delete}`;
+    const url = `${this.baseUrl}${this.endpoints!.delete}`;
     await apiClient.delete(url, { ids });
   }
 

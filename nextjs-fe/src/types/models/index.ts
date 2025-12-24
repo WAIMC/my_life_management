@@ -37,6 +37,6 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 export type LinkTarget = '_self' | '_blank' | '_parent' | '_top';
 
 // Re-export model types
-export * from './models/master';
-export * from './models/management';
-export * from './models/history';
+export * from './master';
+export * from './management';
+export * from './history';

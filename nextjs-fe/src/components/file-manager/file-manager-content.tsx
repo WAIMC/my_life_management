@@ -25,15 +25,15 @@ export function FileManagerContent() {
     selectedFiles,
     isLoading,
     searchQuery,
-    filterOptions,
-    sortOptions,
+    filterType,
+    sortBy,
     setCurrentPath,
     setViewMode,
     toggleFileSelection,
     selectAllFiles,
     setSearchQuery,
-    setFilterOptions,
-    setSortOptions,
+    setFilterType,
+    setSortBy,
     refreshFiles,
     createFolder,
     uploadFiles,
@@ -72,8 +72,12 @@ export function FileManagerContent() {
 
   const handleUpload = async (filesToUpload: File[]) => {
     try {
-      await uploadFiles(filesToUpload);
-      toast.success('Upload thành công');
+      if (uploadFiles) {
+        await uploadFiles(filesToUpload);
+        toast.success('Upload thành công');
+      } else {
+        toast.error('Upload feature not available');
+      }
     } catch (error) {
       toast.error('Upload thất bại');
     }
@@ -81,8 +85,12 @@ export function FileManagerContent() {
 
   const handleCreateFolder = async (name: string) => {
     try {
-      await createFolder(name);
-      toast.success('Tạo thư mục thành công');
+      if (createFolder) {
+        await createFolder(name);
+        toast.success('Tạo thư mục thành công');
+      } else {
+        toast.error('feature unavailable');
+      }
     } catch (error) {
       toast.error('Tạo thư mục thất bại');
     }
@@ -95,8 +103,12 @@ export function FileManagerContent() {
 
   const handleRenameSubmit = async (file: MediaFile, newName: string) => {
     try {
-      await renameFile(file.id, newName);
-      toast.success('Đổi tên thành công');
+      if (renameFile) {
+        await renameFile(file.id, newName);
+        toast.success('Đổi tên thành công');
+      } else {
+        toast.error('feature unavailable');
+      }
     } catch (error) {
       toast.error('Đổi tên thất bại');
     }
@@ -114,8 +126,12 @@ export function FileManagerContent() {
   const handleDeleteConfirm = async () => {
     try {
       const idsToDelete = targetFile ? [targetFile.id] : selectedFiles;
-      await deleteFiles(idsToDelete);
-      toast.success('Xóa thành công');
+      if (deleteFiles) {
+        await deleteFiles(idsToDelete);
+        toast.success('Xóa thành công');
+      } else {
+        toast.error('feature unavailable');
+      }
       setTargetFile(null);
     } catch (error) {
       toast.error('Xóa thất bại');
@@ -140,11 +156,19 @@ export function FileManagerContent() {
     try {
       const idsToProcess = targetFile ? [targetFile.id] : selectedFiles;
       if (moveCopyMode === 'move') {
-        await moveFiles(idsToProcess, targetPath);
-        toast.success('Di chuyển thành công');
+        if (moveFiles) {
+          await moveFiles(idsToProcess, targetPath);
+          toast.success('Di chuyển thành công');
+        } else {
+          toast.error('feature unavailable');
+        }
       } else {
-        await copyFiles(idsToProcess, targetPath);
-        toast.success('Sao chép thành công');
+        if (copyFiles) {
+          await copyFiles(idsToProcess, targetPath);
+          toast.success('Sao chép thành công');
+        } else {
+          toast.error('feature unavailable');
+        }
       }
       setTargetFile(null);
     } catch (error) {
@@ -200,10 +224,10 @@ export function FileManagerContent() {
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         selectedCount={selectedFiles.length}
-        filterOptions={filterOptions}
-        onFilterChange={setFilterOptions}
-        sortOptions={sortOptions}
-        onSortChange={setSortOptions}
+        filterOptions={{ type: (filterType as any) || 'all' }}
+        onFilterChange={(opts) => setFilterType(opts.type)}
+        sortOptions={{ field: (sortBy as any) || 'name', order: 'asc' }}
+        onSortChange={(opts) => setSortBy(opts.field)}
       />
 
       <div className="flex-1 overflow-auto p-4">
@@ -211,7 +235,7 @@ export function FileManagerContent() {
           <FileGrid
             files={files}
             selectedFiles={selectedFiles}
-            onSelect={toggleFileSelection}
+            onSelect={(id, val) => toggleFileSelection?.(id, val)}
             onFileClick={handleFileClick}
             onNavigate={handleNavigate}
             isLoading={isLoading}
@@ -226,17 +250,14 @@ export function FileManagerContent() {
           <FileList
             files={files}
             selectedFiles={selectedFiles}
-            onSelect={toggleFileSelection}
-            onSelectAll={selectAllFiles}
+            onSelect={(id, val) => toggleFileSelection?.(id, val)}
+            onSelectAll={(val) => selectAllFiles?.(val)}
             onFileClick={handleFileClick}
             onNavigate={handleNavigate}
             isLoading={isLoading}
-            sortField={sortOptions.field}
-            sortOrder={sortOptions.order}
-            onSort={(field) => setSortOptions({
-              field,
-              order: sortOptions.field === field && sortOptions.order === 'asc' ? 'desc' : 'asc'
-            })}
+            sortField={(sortBy as any) || 'name'}
+            sortOrder="asc"
+            onSort={(field) => setSortBy(field as any)}
             onPreview={setPreviewFile}
             onRename={handleRename}
             onMove={handleMove}

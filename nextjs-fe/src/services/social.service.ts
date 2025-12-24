@@ -7,7 +7,7 @@ export const socialService = {
     return apiClient.get<PaginatedResponse<SocialMgmt>>(ENDPOINTS.MANAGEMENT.SOCIAL, params);
   },
   async getById(id: number) {
-    const response = await this.list({ id, per_page: 1 });
+    const response = await this.list({ id, per_page: 1 } as any);
     return response.data.data[0] || null;
   },
   async create(data: Omit<SocialMgmt, 'id' | 'updated_at' | 'created_at'>) {

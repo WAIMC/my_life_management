@@ -16,48 +16,71 @@ export const AUTH_ENDPOINTS = {
 
 // Master Data
 export const MASTER_ENDPOINTS = {
-  ADMIN: '/admin-mst',
-  ROLE: '/role-mst',
-  DEPARTMENT: '/department-mst',
-  FEATURE: '/feature-mst',
-  API: '/api-mst',
-  LANGUAGE: '/language-mst',
-  TRANSLATION: '/translation-mst',
-  TOKEN: '/token-mst',
-  POLICY_DEPARTMENT: '/policy-department-mst',
-  ORIGINAL_TRANSLATOR: '/original-translator-mst',
+  ADMIN: '/admin/admin-mst',
+  ROLE: '/admin/role-mst',
+  DEPARTMENT: '/admin/department-mst',
+  FEATURE: '/admin/feature-mst',
+  API: '/admin/api-mst',
+  TOKEN: '/admin/token-mst',
+  POLICY_DEPARTMENT: '/admin/policy-department-mst',
 } as const;
 
 // Management Data
 export const MANAGEMENT_ENDPOINTS = {
-  BANNER: '/banner-mgmt',
-  CATEGORY: '/category-mgmt',
-  SKILL: '/skill-mgmt',
-  SKILL_DESCRIPTION: '/skill-description-mgmt',
-  SLIDER: '/slider-mgmt',
-  SOCIAL: '/social-mgmt',
-  USER: '/user-mgmt',
-  SETTING_LINK: '/setting-link-mgmt',
+  BANNER: '/admin/banner-mgmt',
+  CATEGORY: '/admin/category-mgmt',
+  SKILL: '/admin/skill-mgmt',
+  SKILL_DESCRIPTION: '/admin/skill-description-mgmt',
+  SLIDER: '/admin/slider-mgmt',
+  SOCIAL: '/admin/social-mgmt',
+  USER: '/admin/user-mgmt',
+  SETTING_LINK: '/admin/setting-link-mgmt',
 } as const;
 
 // Junction Tables
 export const JUNCTION_ENDPOINTS = {
-  ADMIN_ROLE: '/admin-role-mst',
-  ADMIN_DEPARTMENT: '/admin-department-mst',
-  API_ROLE: '/api-role-mst',
-  DEPARTMENT_MANAGEMENT: '/department-management-mst',
-  TRANSLATION_LANGUAGE: '/translation-language-mst',
-  CATEGORY_SKILL: '/category-skill-mgmt',
+  ADMIN_ROLE: '/admin/admin-role-mst',
+  ADMIN_DEPARTMENT: '/admin/admin-department-mst',
+  API_ROLE: '/admin/api-role-mst',
+  DEPARTMENT_MANAGEMENT: '/admin/department-management-mst',
+  CATEGORY_SKILL: '/admin/category-skill-mgmt',
 } as const;
 
 // File Upload
 export const UPLOAD_ENDPOINT = '/upload';
+
+
+
+// History Endpoints
+export const HISTORY_ENDPOINTS = {
+  // Master History
+  ADMIN: '/admin/admin-mst-hist',
+  API: '/admin/api-mst-hist',
+  DEPARTMENT: '/admin/department-mst-hist',
+  FEATURE: '/admin/feature-mst-hist',
+  POLICY_DEPARTMENT: '/admin/policy-department-mst-hist',
+  ROLE: '/admin/role-mst-hist',
+
+  // Management History
+  BANNER: '/admin/banner-mgmt-hist',
+  CATEGORY: '/admin/category-mgmt-hist',
+  SETTING_LINK: '/admin/setting-link-mgmt-hist',
+  SKILL: '/admin/skill-mgmt-hist',
+  SKILL_DESCRIPTION: '/admin/skill-description-mgmt-hist',
+  SLIDER: '/admin/slider-mgmt-hist',
+  SOCIAL: '/admin/social-mgmt-hist',
+  USER: '/admin/user-mgmt-hist',
+} as const;
 
 // All endpoints combined
 export const ENDPOINTS = {
   AUTH: AUTH_ENDPOINTS,
   MASTER: MASTER_ENDPOINTS,
   MANAGEMENT: MANAGEMENT_ENDPOINTS,
+  HISTORY: HISTORY_ENDPOINTS,
   JUNCTION: JUNCTION_ENDPOINTS,
   UPLOAD: UPLOAD_ENDPOINT,
+
+  // Media Management
+  MEDIA: '/admin/media-mgmt',
 } as const;

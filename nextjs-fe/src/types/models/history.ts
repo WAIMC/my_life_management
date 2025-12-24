@@ -39,21 +39,7 @@ export interface FeatureMstHist extends BaseHistory {
   feature_mst_id: number;
 }
 
-export interface LanguageMstHist extends BaseHistory {
-  language_mst_id: number;
-}
 
-export interface TranslationMstHist extends BaseHistory {
-  translation_mst_id: number;
-}
-
-export interface PolicyDepartmentMstHist extends BaseHistory {
-  policy_department_mst_id: number;
-}
-
-export interface OriginalTranslatorMstHist extends BaseHistory {
-  original_translator_mst_id: number;
-}
 
 // ============================================
 // MANAGEMENT HISTORY MODELS

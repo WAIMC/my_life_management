@@ -4,16 +4,16 @@
  */
 
 import { createCrudService } from '@/services/crud-service';
-import { ADMIN_MST_LIST, ADMIN_MST_STORE, ADMIN_MST_UPDATE, ADMIN_MST_DELETE } from '@/constants/apiUrl';
+import { ENDPOINTS } from '@/constants/api-endpoints';
 import type { AdminMst } from '@/types/models';
 
 export const adminService = createCrudService<AdminMst>({
-  baseUrl: '/admin/admin-mst',
+  baseUrl: ENDPOINTS.MASTER.ADMIN,
   endpoints: {
-    list: '/list',
-    create: '/store',
-    update: '/update',
-    delete: '/delete',
+    list: '',
+    create: '',
+    update: '',
+    delete: '',
   },
 });
 

@@ -22,7 +22,7 @@ import {
   type SearchField,
 } from '@/components/advanced';
 import { adminService } from '@/services/modules';
-import { ADMIN_MST_LIST } from '@/constants/apiUrl';
+import { ENDPOINTS } from '@/constants/api-endpoints';
 import type { AdminMst } from '@/types/models';
 import toast from 'react-hot-toast';
 
@@ -30,21 +30,25 @@ export default function AdminsPageEnhanced() {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+  const [filters, setFilters] = useState({});
+
   const {
     data: admins,
-    isLoading,
+    loading: isLoading,
     pagination,
-    filters,
-    setFilters,
-    setPagination,
     refetch,
-  } = useApiData<AdminMst>({
-    url: ADMIN_MST_LIST,
-    initialFilters: {
-      page: 1,
-      per_page: 20,
-    },
+  } = useApiData<AdminMst>(`${ENDPOINTS.MASTER.ADMIN}/list`, {
+    page,
+    per_page: perPage,
+    filters,
   });
+
+  const setPagination = (newPagination: any) => {
+    setPage(newPagination.page);
+    if (newPagination.perPage) setPerPage(newPagination.perPage);
+  };
 
   // Search fields configuration
   const searchFields: SearchField[] = [
@@ -97,7 +101,7 @@ export default function AdminsPageEnhanced() {
     },
   ];
 
-  const handleExport = async (format: 'csv' | 'excel') => {
+  const handleExport = async (format: 'csv' | 'excel' | 'json') => {
     try {
       const blob = await adminService.export(filters);
       const url = window.URL.createObjectURL(blob);
@@ -275,24 +279,24 @@ export default function AdminsPageEnhanced() {
           {pagination.total > 0 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.perPage + 1} to{' '}
-                {Math.min(pagination.page * pagination.perPage, pagination.total)} of{' '}
+                Showing {(pagination.currentPage - 1) * pagination.perPage + 1} to{' '}
+                {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} of{' '}
                 {pagination.total} results
               </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-                  disabled={pagination.page === 1}
+                  onClick={() => setPagination({ page: pagination.currentPage - 1 })}
+                  disabled={pagination.currentPage === 1}
                 >
                   Previous
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                  disabled={pagination.page * pagination.perPage >= pagination.total}
+                  onClick={() => setPagination({ page: pagination.currentPage + 1 })}
+                  disabled={pagination.currentPage * pagination.perPage >= pagination.total}
                 >
                   Next
                 </Button>

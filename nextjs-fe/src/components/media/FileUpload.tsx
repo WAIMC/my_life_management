@@ -5,7 +5,7 @@ import { mediaFileService } from '@/services/media-file.service';
 import type { UploadFileResponse } from '@/types/media-file.types';
 
 interface FileUploadProps {
-  onUploadSuccess?: (file: UploadFileResponse) => void;
+  onUploadSuccess?: (file: UploadFileResponse | number) => void;
   onUploadError?: (error: Error) => void;
   accept?: string;
   maxSize?: number; // in bytes

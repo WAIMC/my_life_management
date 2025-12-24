@@ -33,7 +33,7 @@ export default function CreateSkillPage() {
   const { create, loading } = useCrud<SkillMgmt>(ENDPOINTS.MANAGEMENT.SKILL);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { rank_order: 0, status: Status.ACTIVE, is_active: true },
   });
 

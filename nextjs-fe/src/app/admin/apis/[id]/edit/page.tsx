@@ -24,7 +24,8 @@ import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status } from '@/lib/types/enums';
 
 const apiSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  uri: z.string().min(1, 'URI is required'),
+  method: z.string().min(1, 'Method is required'),
   description: z.string().optional(),
   status: z.coerce.number().min(1).max(2),
   is_active: z.boolean(),
@@ -49,7 +50,7 @@ export default function EditApiPage() {
   );
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<ApiFormData>({
-    resolver: zodResolver(apiSchema),
+    resolver: zodResolver(apiSchema) as any,
   });
 
   useEffect(() => {
@@ -57,7 +58,8 @@ export default function EditApiPage() {
       const api = await apiService.getById(apiId);
       if (api) {
         reset({
-          name: api.name,
+          uri: api.uri,
+          method: api.method,
           description: api.description || '',
           status: api.status,
           is_active: api.is_active,
@@ -97,9 +99,23 @@ export default function EditApiPage() {
             <Card className="p-6">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
-                  <Input id="name" {...register('name')} className={errors.name ? 'border-red-500' : ''} />
-                  {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                  <Label htmlFor="uri">URI <span className="text-red-500">*</span></Label>
+                  <Input id="uri" {...register('uri')} className={errors.uri ? 'border-red-500' : ''} />
+                  {errors.uri && <p className="text-sm text-red-500">{errors.uri.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="method">Method <span className="text-red-500">*</span></Label>
+                  <Select value={watch('method')} onValueChange={(value) => setValue('method', value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GET">GET</SelectItem>
+                      <SelectItem value="POST">POST</SelectItem>
+                      <SelectItem value="PUT">PUT</SelectItem>
+                      <SelectItem value="DELETE">DELETE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.method && <p className="text-sm text-red-500">{errors.method.message}</p>}
                 </div>
 
                 <div className="space-y-2">

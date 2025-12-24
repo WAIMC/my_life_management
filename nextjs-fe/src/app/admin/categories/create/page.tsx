@@ -33,7 +33,7 @@ export default function CreateCategoryPage() {
   const { create, loading } = useCrud<CategoryMgmt>(ENDPOINTS.MANAGEMENT.CATEGORY);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(categorySchema) as any,
     defaultValues: {
       rank_order: 0,
       status: Status.ACTIVE,

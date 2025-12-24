@@ -169,15 +169,15 @@ export function MediaManager() {
 
                 {/* File Preview */}
                 <div className="flex h-48 items-center justify-center overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  {file.mime_type.startsWith('image/') ? (
+                  {file.mime_type && file.mime_type.startsWith('image/') ? (
                     <img
-                      src={file.view_url}
+                      src={file.url || ''}
                       alt={file.original_name}
                       className="h-full w-full object-cover"
                     />
                   ) : (
                     <div className="text-6xl">
-                      {mediaFileService.getFileTypeIcon(file.mime_type)}
+                      {mediaFileService.getFileTypeIcon(file.mime_type || '')}
                     </div>
                   )}
                 </div>
@@ -191,14 +191,14 @@ export function MediaManager() {
                     {file.original_name}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {file.human_size} • {new Date(file.created_at).toLocaleDateString()}
+                    {mediaFileService.formatFileSize(file.size || 0)} • {new Date(file.created_at).toLocaleDateString()}
                   </p>
                 </div>
 
                 {/* File Actions */}
                 <div className="flex justify-center gap-2 border-t border-slate-200 p-3 dark:border-slate-700">
                   <Button
-                    onClick={() => window.open(file.view_url, '_blank')}
+                    onClick={() => window.open(file.url || '', '_blank')}
                     variant="ghost"
                     size="sm"
                     title="View"

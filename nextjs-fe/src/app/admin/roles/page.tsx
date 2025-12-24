@@ -16,7 +16,6 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Can } from '@/components/advanced/permission-control';
 import { Trash2, CheckCircle, XCircle } from 'lucide-react';
 import type { RoleMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
@@ -129,7 +128,7 @@ export default function RoleListPage() {
     setPage(1);
   };
 
-  const handleImport = async (importedData: any[]) => {
+  const handleImport = async (file: File, format: string) => {
     refetch();
   };
 
@@ -143,21 +142,21 @@ export default function RoleListPage() {
           { label: 'Roles', isActive: true },
         ]}
         action={
-          <Can module="role" action="create">
+          
             <Button onClick={() => router.push('/admin/roles/create')}>
               Create Role
             </Button>
-          </Can>
+          
         }
       />
 
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onLoad={(f) => { setFilters(f); setPage(1); }} filterKey="role-filters" />
-          <Can module="role" action="export">
-            <ImportExport data={data} onImport={handleImport} filename="roles-export" />
-          </Can>
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="role-filters" />
+          
+            <ImportExport  onImport={handleImport}  />
+          
         </div>
         <FilterPanel
           filters={filters}
@@ -172,17 +171,17 @@ export default function RoleListPage() {
           fields={filterFields}
         />
 
-        <Can module="role" action="delete">
+        
           <BulkActions
             selectedIds={selectedIds}
             onClearSelection={() => setSelectedIds([])}
             actions={bulkActions}
             isLoading={loading}
           />
-        </Can>
+        
 
-        <DataTable
-          data={data}
+        <DataTable data={data}
+          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}

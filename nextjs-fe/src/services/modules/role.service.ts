@@ -4,16 +4,16 @@
  */
 
 import { createCrudService } from '@/services/crud-service';
-import { ROLE_MST_LIST } from '@/constants/apiUrl';
+import { ENDPOINTS } from '@/constants/api-endpoints';
 import type { RoleMst } from '@/types/models';
 
 export const roleService = createCrudService<RoleMst>({
-  baseUrl: '/admin/role-mst',
+  baseUrl: ENDPOINTS.MASTER.ROLE,
   endpoints: {
-    list: '/list',
-    create: '/store',
-    update: '/update',
-    delete: '/delete',
+    list: '',
+    create: '',
+    update: '',
+    delete: '',
   },
 });
 

@@ -41,11 +41,11 @@ export default function CreateSkillDescriptionPage() {
   // Fetch all skills for the dropdown
   const { data: skills, loading: skillsLoading } = useApiData<SkillMgmt>(
     ENDPOINTS.MANAGEMENT.SKILL,
-    { per_page: 100, is_active: true }
+    { per_page: 100, filters: { is_active: true } }
   );
 
   const form = useForm<SkillDescriptionFormData>({
-    resolver: zodResolver(skillDescriptionSchema),
+    resolver: zodResolver(skillDescriptionSchema) as any,
     defaultValues: {
       skill_mgmt_id: 0,
       description: '',

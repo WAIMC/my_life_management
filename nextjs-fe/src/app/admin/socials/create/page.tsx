@@ -32,7 +32,7 @@ export default function CreateSocialPage() {
   const { create, loading } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { rank_order: 0, status: Status.ACTIVE, is_active: true },
   });
 

@@ -51,7 +51,7 @@ export function useCrud<T>(
    */
   const createMutation = useMutation({
     mutationFn: async (data: Partial<T>): Promise<number> => {
-      const response = await apiClient.post<number>(endpoint, data);
+      const response = await apiClient.post<number>(`${endpoint}/store`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -72,7 +72,7 @@ export function useCrud<T>(
    */
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<T> }): Promise<number> => {
-      const response = await apiClient.put<number>(`${endpoint}/${id}`, {
+      const response = await apiClient.put<number>(`${endpoint}/update/${id}`, {
         id,
         ...data,
       });
@@ -96,7 +96,7 @@ export function useCrud<T>(
    */
   const deleteMutation = useMutation({
     mutationFn: async (ids: number[]): Promise<void> => {
-      await apiClient.delete(endpoint, { ids });
+      await apiClient.delete(`${endpoint}/delete`, { ids });
     },
     onSuccess: (_, ids) => {
       notification.success(

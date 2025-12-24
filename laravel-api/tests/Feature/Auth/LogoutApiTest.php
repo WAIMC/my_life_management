@@ -59,7 +59,7 @@ class LogoutApiTest extends TestCase
     // Force populate Redis Permissions if missing (Fix for Legacy Test Regression)
     $permissionTableKey = CommonVal::ADMIN_TYPE . ":{$admin->id}:" . CommonVal::ADMIN_PERMISSION_TABLE;
     if (!Redis::exists($permissionTableKey)) {
-      $paths = [$this->logoutUrl];
+      $paths = [ltrim($this->logoutUrl, '/')];
       Redis::hset($permissionTableKey, 'POST', json_encode($paths));
     }
 

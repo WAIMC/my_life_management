@@ -91,22 +91,28 @@ export interface FileManagerContextType {
   setSelectedFiles: (ids: string[]) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  pagination?: PaginationState;
+  setPagination?: (pagination: PaginationState) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  filterOptions: FilterOptions;
-  setFilterOptions: (options: FilterOptions) => void;
-  sortOptions: SortOptions;
-  setSortOptions: (options: SortOptions) => void;
+  filterType: string;
+  setFilterType: (type: string) => void;
+  sortBy: string;
+  setSortBy: (sort: 'name' | 'date' | 'size' | 'type') => void;
+  filterOptions?: FilterOptions;
+  setFilterOptions?: (options: FilterOptions) => void;
+  sortOptions?: SortOptions;
+  setSortOptions?: (options: SortOptions) => void;
   
   // Actions
-  refreshFiles: () => Promise<void>;
-  toggleFileSelection: (fileId: string, selected: boolean) => void;
-  selectAllFiles: (selected: boolean) => void;
-  createFolder: (name: string) => Promise<void>;
-  uploadFiles: (files: File[]) => Promise<void>;
-  deleteFiles: (ids: string[]) => Promise<void>;
-  renameFile: (id: string, newName: string) => Promise<void>;
-  moveFiles: (ids: string[], targetPath: string) => Promise<void>;
-  copyFiles: (ids: string[], targetPath: string) => Promise<void>;
+  refreshFiles?: () => Promise<void>;
+  toggleFileSelection?: (fileId: string, selected: boolean) => void;
+  selectAllFiles?: (selected: boolean) => void;
+  createFolder?: (name: string) => Promise<void>;
+  uploadFiles?: (files: File[]) => Promise<void>;
+  deleteFiles?: (ids: string[]) => Promise<void>;
+  renameFile?: (id: string, newName: string) => Promise<void>;
+  moveFiles?: (ids: string[], targetPath: string) => Promise<void>;
+  copyFiles?: (ids: string[], targetPath: string) => Promise<void>;
 }
 

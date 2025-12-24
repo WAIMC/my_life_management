@@ -33,7 +33,7 @@ export default function CreateSettingLinkPage() {
   const { create, loading } = useCrud<SettingLinkMgmt>(ENDPOINTS.MANAGEMENT.SETTING_LINK);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { rank_order: 0, status: Status.ACTIVE, is_active: true },
   });
 

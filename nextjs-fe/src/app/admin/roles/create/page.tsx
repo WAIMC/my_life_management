@@ -43,7 +43,7 @@ export default function CreateRolePage() {
     setValue,
     watch,
   } = useForm<RoleFormData>({
-    resolver: zodResolver(roleSchema),
+    resolver: zodResolver(roleSchema) as any,
     defaultValues: {
       status: Status.ACTIVE,
       is_active: true,
