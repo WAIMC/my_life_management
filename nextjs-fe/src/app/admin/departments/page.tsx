@@ -90,15 +90,15 @@ export default function DepartmentListPage() {
 
   const columns: Column<DepartmentMst>[] = [
     { key: 'id', label: 'ID', sortable: true },
+    { key: 'code', label: 'Code', sortable: true },
     { key: 'name', label: 'Name', sortable: true },
-    { key: 'description', label: 'Description' },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
       render: (dept) => (
-        <Badge variant={dept.is_active ? 'default' : 'secondary'}>
-          {dept.is_active ? 'Active' : 'Inactive'}
+        <Badge variant={dept.status === Status.PUBLISHED ? 'default' : 'secondary'}>
+          {StatusLabels[dept.status]}
         </Badge>
       ),
     },
@@ -107,22 +107,32 @@ export default function DepartmentListPage() {
 
   const filterFields: FilterField[] = [
     { key: 'name', label: 'Name', type: 'text', placeholder: 'Search by name...' },
+    { key: 'code', label: 'Code', type: 'text', placeholder: 'Search by code...' },
     {
       key: 'status',
       label: 'Status',
       type: 'select',
       options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
+        { value: Status.DRAFT, label: StatusLabels[Status.DRAFT] },
+        { value: Status.PUBLISHED, label: StatusLabels[Status.PUBLISHED] },
+        { value: Status.ARCHIVED, label: StatusLabels[Status.ARCHIVED] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
   ];
 
   const searchFields: SearchField[] = [
     { key: 'name', label: 'Name', type: 'text' },
-    { key: 'description', label: 'Description', type: 'text' },
-    { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] },
+    { key: 'code', label: 'Code', type: 'text' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: Status.DRAFT.toString(), label: StatusLabels[Status.DRAFT] },
+        { value: Status.PUBLISHED.toString(), label: StatusLabels[Status.PUBLISHED] },
+        { value: Status.ARCHIVED.toString(), label: StatusLabels[Status.ARCHIVED] },
+      ],
+    },
     { key: 'created_at', label: 'Created Date', type: 'date' },
   ];
 

@@ -90,11 +90,19 @@ export default function ApiListPage() {
 
   const columns: Column<ApiMst>[] = [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'uri', label: 'URI', sortable: true },
-    { key: 'method', label: 'Method', sortable: true },
-    { key: 'description', label: 'Description' },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'path', label: 'Path', sortable: true },
+    { 
+      key: 'type', 
+      label: 'Method', 
+      sortable: true,
+      render: (item) => {
+        const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+        return methods[item.type] || 'UNKNOWN';
+      }
+    },
     {
-      key: 'status',
+      key: 'is_active',
       label: 'Status',
       sortable: true,
       render: (item) => (
@@ -107,19 +115,16 @@ export default function ApiListPage() {
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'uri', label: 'URI', type: 'text', placeholder: 'Search URI...' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
-      ],
-    },
+    { key: 'name', label: 'Name', type: 'text', placeholder: 'Search Name...' },
+    { key: 'path', label: 'Path', type: 'text', placeholder: 'Search Path...' },
     { key: 'is_active', label: 'Active', type: 'boolean' },
   ];
-  const searchFields: SearchField[] = [{ key: 'uri', label: 'URI', type: 'text' }, { key: 'method', label: 'Method', type: 'select', options: [{ value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' }, { value: 'PUT', label: 'PUT' }, { value: 'DELETE', label: 'DELETE' }] }, { key: 'description', label: 'Description', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
+  const searchFields: SearchField[] = [
+    { key: 'name', label: 'Name', type: 'text' },
+    { key: 'path', label: 'Path', type: 'text' },
+    { key: 'type', label: 'Method', type: 'select', options: [{ value: '0', label: 'GET' }, { value: '1', label: 'POST' }, { value: '2', label: 'PUT' }, { value: '3', label: 'PATCH' }, { value: '4', label: 'DELETE' }] },
+    { key: 'created_at', label: 'Created Date', type: 'date' }
+  ];
   const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} API(s)?`, confirmTitle: 'Delete APIs' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
   const handleImport = async (file: File, format: string) => { refetch(); };
@@ -134,7 +139,7 @@ export default function ApiListPage() {
           { label: 'APIs', isActive: true },
         ]}
         action={
-          <Button onClick={handleCreate}>
+          <Button onClick={handleCreate} type="button">
             <Plus className="mr-2 h-4 w-4" /> Create API
           </Button>
         }

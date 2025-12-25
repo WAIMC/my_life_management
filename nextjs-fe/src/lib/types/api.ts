@@ -92,12 +92,11 @@ export interface RoleMst {
 
 export interface DepartmentMst {
   id: number;
+  code: string;
   name: string;
-  description?: string;
-  parent_id?: number; // For hierarchical departments
   status: number;
-  is_active: boolean;
   is_delete: boolean;
+  created_at: string;
   updated_at: string;
 }
 
@@ -113,13 +112,15 @@ export interface FeatureMst {
 
 export interface ApiMst {
   id: number;
-  uri: string; // e.g., "/api/admin-mst"
-  method: string; // GET, POST, PUT, DELETE
-  description?: string;
-  status: number;
+  name: string;
+  path: string; // Was uri
+  type: number; // Was method (string) -> now int (0=GET, etc)
+  feature_mst_id: number;
   is_active: boolean;
   is_delete: boolean;
   updated_at: string;
+  // Relationships
+  feature?: FeatureMst;
 }
 
 

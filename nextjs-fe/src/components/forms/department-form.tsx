@@ -11,7 +11,6 @@ import { handleBindErrors } from '@/lib/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -22,17 +21,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JunctionManager } from '@/components/junction/junction-manager';
 import { HistoryViewer } from '@/components/history';
-import { DepartmentTree } from '@/components/crud/department-tree';
 import type { DepartmentMst, PolicyDepartmentMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
 import { Status, IsActive, IsDelete } from '@/lib/types/enums';
 
 const departmentSchema = z.object({
+  code: z.string().min(1, 'Code is required').max(50, 'Code must be at most 50 characters'),
   name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  parent_id: z.coerce.number().optional().nullable(),
-  status: z.coerce.number().min(0).max(3),
-  is_active: z.coerce.number().min(0).max(1),
+  status: z.coerce.number().min(0).max(2),
 });
 
 
@@ -47,8 +43,6 @@ interface DepartmentFormProps {
 export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentFormProps) {
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
-  const [allDepartments, setAllDepartments] = useState<DepartmentMst[]>([]);
-  const [selectedParentId, setSelectedParentId] = useState<number | undefined | null>();
 
   // Junction table for Department-PolicyDepartment (Only in Edit mode)
   const policyDepartmentJunction = useJunctionTable<PolicyDepartmentMst>(
@@ -66,56 +60,41 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
     setValue,
     watch,
     reset,
+    setError,
   } = useForm<DepartmentFormData>({
     resolver: zodResolver(departmentSchema),
     defaultValues: {
-      status: Status.ACTIVE,
-      is_active: IsActive.ACTIVE,
+      status: Status.PUBLISHED,
     },
   });
 
-  useEffect(() => {
-    const loadDepartments = async () => {
-      const response = await departmentService.list({ per_page: 1000 });
-      if (response?.data?.data) {
-        // Filter out current department to prevent circular reference
-        const filtered = isEdit
-          ? response.data.data.filter((d: DepartmentMst) => d.id !== initialData.id)
-          : response.data.data;
-        setAllDepartments(filtered);
-      }
-    };
-    loadDepartments();
-  }, [isEdit, initialData]);
 
   useEffect(() => {
     if (initialData) {
       reset({
+        code: initialData.code || '',
         name: initialData.name,
-        description: initialData.description || '',
-        parent_id: initialData.parent_id,
         status: initialData.status,
-        is_active: initialData.is_active ? IsActive.ACTIVE : IsActive.INACTIVE,
       });
-      setSelectedParentId(initialData.parent_id);
     } else {
       reset({
+        code: '',
         name: '',
-        description: '',
-        parent_id: null,
-        status: Status.ACTIVE,
-        is_active: IsActive.ACTIVE,
+        status: Status.PUBLISHED,
       });
-      setSelectedParentId(undefined);
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: DepartmentFormData) => {
     try {
-      const payload = { ...data, parent_id: data.parent_id ?? undefined };
+      const payload = { ...data };
       
       if (isEdit && initialData) {
-        await update(initialData.id, payload);
+        if (!initialData) return;
+        await update(initialData.id, {
+          ...payload,
+          is_delete: initialData.is_delete || IsDelete.FALSE,
+        });
       } else {
         await create({
           ...payload,
@@ -131,91 +110,54 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
 
   const FormContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="name"
-          {...register('name')}
-          className={errors.name ? 'border-red-500' : ''}
-        />
-        {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" {...register('description')} rows={3} />
-      </div>
-
-      {/* Parent Department Selection */}
-      <div className="space-y-2">
-        <Label>Parent Department</Label>
-        <div className="rounded-md border p-4 max-h-64 overflow-y-auto">
-          <DepartmentTree
-            departments={allDepartments}
-            selectedId={selectedParentId}
-            onSelect={(dept) => {
-              setSelectedParentId(dept.id);
-              setValue('parent_id', dept.id);
-            }}
-          />
-          {selectedParentId && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                setSelectedParentId(undefined);
-                setValue('parent_id', null as any);
-              }}
-            >
-              Clear Selection
-            </Button>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Select a parent department to create a hierarchy. Leave empty for root level.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+          <Label htmlFor="code">
+            Code <span className="text-red-500">*</span>
           </Label>
-          <Select
-            value={watch('status')?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input
+            id="code"
+            {...register('code')}
+            className={errors.code ? 'border-red-500' : ''}
+            disabled={isEdit}
+          />
+          {errors.code && (
+            <p className="text-sm text-red-500">{errors.code.message}</p>
+          )}
         </div>
 
-        <div className="space-y-2 mt-0">
-          <Label htmlFor="is_active">Is Active</Label>
-          <Select
-            value={watch('is_active')?.toString()}
-            onValueChange={(value) => setValue('is_active', Number(value))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select activity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={IsActive.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={IsActive.INACTIVE.toString()}>Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-2">
+          <Label htmlFor="name">
+            Name <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="name"
+            {...register('name')}
+            className={errors.name ? 'border-red-500' : ''}
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="status">
+          Status <span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={watch('status')?.toString()}
+          onValueChange={(value) => setValue('status', Number(value) as any)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={Status.DRAFT.toString()}>Draft</SelectItem>
+            <SelectItem value={Status.PUBLISHED.toString()}>Published</SelectItem>
+            <SelectItem value={Status.ARCHIVED.toString()}>Archived</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

@@ -38,4 +38,13 @@ class DepartmentMstHist extends Model
     'author_id' => 'integer',
     'created_at' => 'datetime',
   ];
+  public function departmentMst()
+  {
+    return $this->belongsTo(\App\Models\Master\DepartmentMst::class, 'department_mst_id');
+  }
+
+  public function author()
+  {
+    return $this->belongsTo(\App\Models\Master\AdminMst::class, 'author_id');
+  }
 }

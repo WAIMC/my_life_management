@@ -119,9 +119,9 @@ class JsonWebToken
       throw new \UnexpectedValueException(Messages::E0603);
     }
 
-    if (!Tmp::areSameKeysAndType($payload, self::JWTPayload([]))) {
-      throw new \UnexpectedValueException(Messages::E0604);
-    }
+    // if (!Tmp::areSameKeysAndType($payload, self::JWTPayload([]))) {
+    //   throw new \UnexpectedValueException(Messages::E0604);
+    // }
 
     // Check expiration time
     if (

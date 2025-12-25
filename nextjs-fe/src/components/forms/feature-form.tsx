@@ -50,6 +50,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
     setValue,
     watch,
     reset,
+    setError,
   } = useForm<FeatureFormData>({
     resolver: zodResolver(featureSchema),
     defaultValues: {
@@ -78,11 +79,17 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
 
   const onSubmit = async (data: FeatureFormData) => {
     try {
+      const payload = { ...data };
+
       if (isEdit && initialData) {
-        await update(initialData.id, data);
+        if (!initialData) return;
+        await update(initialData.id, {
+          ...payload,
+          is_delete: initialData.is_delete || false,
+        });
       } else {
         await create({
-          ...data,
+          ...payload,
           is_delete: false,
         });
       }
@@ -134,15 +141,6 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
           </Select>
         </div>
 
-        <div className="flex items-center gap-2 mt-8">
-          <input
-            type="checkbox"
-            id="is_active"
-            {...register('is_active')}
-            className="rounded"
-          />
-          <Label htmlFor="is_active">Is Active</Label>
-        </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

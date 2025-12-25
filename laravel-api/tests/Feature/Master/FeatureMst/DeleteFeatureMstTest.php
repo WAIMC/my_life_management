@@ -1,42 +1,42 @@
 <?php
 
-namespace Tests\Feature\Master\ApiMst;
+namespace Tests\Feature\Master\FeatureMst;
 
-use App\Constants\CommonVal;
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
-use App\Models\Master\RoleMst;
 use App\Models\Master\FeatureMst;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Models\Master\RoleMst;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class DeleteApiMstTest extends TestCase
+class DeleteFeatureMstTest extends TestCase
 {
-  use DatabaseTransactions;
+  use RefreshDatabase;
 
-  protected string $deleteUrl = '/api/admin/api-mst/delete';
-  protected string $loginUrl = '/api/admin/credential/login';
+  private string $baseUrl = 'api/admin/feature-mst/delete';
 
   protected function setUp(): void
   {
     parent::setUp();
-    Redis::flushall();
+    Redis::flushdb();
   }
 
-  protected function getAuthCookies(AdminMst $admin): array
+  private function getAuthCookies(AdminMst $admin): array
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
       $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    // Grant access to DELETE route
-    $this->grantAccessTo($rootRole, 'DELETE', 'api/admin/api-mst/delete/{id}');
+    // Grant DELETE access BEFORE login
+    $this->grantAccessTo($rootRole, 'DELETE', $this->baseUrl . '/{id}');
 
-    if (!DB::table('admin_role_mst')->where('admin_mst_id', $admin->id)->where('role_mst_id', $rootRole->id)->exists()) {
+    if (!DB::table('admin_role_mst')
+      ->where('admin_mst_id', $admin->id)
+      ->where('role_mst_id', $rootRole->id)
+      ->exists()) {
       DB::table('admin_role_mst')->insert([
         'admin_mst_id' => $admin->id,
         'role_mst_id' => $rootRole->id,
@@ -45,7 +45,7 @@ class DeleteApiMstTest extends TestCase
       ]);
     }
 
-    $response = $this->postJson($this->loginUrl, [
+    $response = $this->postJson('/api/admin/credential/login', [
       'user_name' => $admin->user_name,
       'password' => 'password',
     ]);
@@ -88,20 +88,26 @@ class DeleteApiMstTest extends TestCase
     ]);
   }
 
-  public function test_API_DEL_001_success()
+  public function test_FEA_MST_DEL_001_success()
   {
-    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $features = FeatureMst::factory()->count(3)->create();
+    $ids = $features->pluck('id')->toArray();
+    $admin = AdminMst::factory()->create();
     $cookies = $this->getAuthCookies($admin);
 
-    $feature = FeatureMst::factory()->create();
-    $api = ApiMst::factory()->create(['feature_mst_id' => $feature->id]);
+    foreach ($ids as $id) {
+      $response = $this->call('DELETE', $this->baseUrl . '/' . $id, ['ids' => [$id]], $cookies);
+      $response->assertStatus(200);
 
-    $response = $this->call('DELETE', $this->deleteUrl . '/' . $api->id, ['ids' => [$api->id]], $cookies);
+      $this->assertDatabaseHas('feature_mst', [
+        'id' => $id,
+        'is_delete' => 1,
+      ]);
 
-    $response->assertStatus(CommonVal::HTTP_OK);
-    $this->assertDatabaseHas('api_mst', [
-      'id' => $api->id,
-      'is_delete' => 1,
-    ]);
+      $this->assertDatabaseHas('feature_mst_hist', [
+        'feature_mst_id' => $id,
+        'action' => 3, // DELETE
+      ]);
+    }
   }
 }

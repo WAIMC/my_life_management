@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/hooks/useApiData';
 import { handleBindErrors } from '@/lib/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,16 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ApiMst } from '@/lib/types/api';
+import type { ApiMst, FeatureMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status } from '@/lib/types/enums';
 
 const apiSchema = z.object({
-  uri: z.string().min(1, 'URI is required'),
+  name: z.string().min(1, 'Name is required'),
+  path: z.string().min(1, 'Path is required'),
   method: z.string().min(1, 'Method is required'),
   description: z.string().optional(),
-  status: z.coerce.number().min(1).max(2),
   is_active: z.boolean(),
+  feature_mst_id: z.coerce.number().min(1, 'Feature is required'),
 });
 
 type ApiFormData = z.infer<typeof apiSchema>;
@@ -40,6 +41,16 @@ interface ApiFormProps {
 export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<ApiMst>(ENDPOINTS.MASTER.API);
+  
+  // Fetch features for dropdown
+  const { data: features } = useApiData<FeatureMst>(ENDPOINTS.MASTER.FEATURE, {
+    per_page: 100, // Fetch enough features
+    sort_by: 'name',
+    sort_order: 'asc',
+    filters: {
+        status: 1 // Only Active/Published features
+    } 
+  });
 
   const {
     register,
@@ -48,30 +59,33 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
     setValue,
     watch,
     reset,
+    setError,
   } = useForm<ApiFormData>({
     resolver: zodResolver(apiSchema),
     defaultValues: {
+      name: '',
       method: 'GET',
-      status: Status.ACTIVE,
       is_active: true,
     },
   });
 
   useEffect(() => {
     if (initialData) {
+      const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
       reset({
-        uri: initialData.uri,
-        method: initialData.method,
-        description: initialData.description || '',
-        status: initialData.status,
+        name: initialData.name,
+        path: initialData.path,
+        method: methods[initialData.type] || 'GET',
+        description: '', // Not in backend
         is_active: initialData.is_active,
+        feature_mst_id: initialData.feature_mst_id,
       });
     } else {
       reset({
-        uri: '',
+        name: '',
+        path: '',
         method: 'GET',
         description: '',
-        status: Status.ACTIVE,
         is_active: true,
       });
     }
@@ -79,13 +93,24 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
   const onSubmit = async (data: ApiFormData) => {
     try {
+      const methodMap: Record<string, number> = {
+        'GET': 0, 'POST': 1, 'PUT': 2, 'PATCH': 3, 'DELETE': 4
+      };
+      
+      const payload = { 
+        ...data,
+        type: methodMap[data.method] ?? 0,
+        is_delete: false 
+      };
+
       if (isEdit && initialData) {
-        await update(initialData.id, data);
-      } else {
-        await create({
-          ...data,
-          is_delete: false,
+        if (!initialData) return;
+        await update(initialData.id, {
+            ...payload,
+            is_delete: initialData.is_delete || false
         });
+      } else {
+        await create(payload);
       }
       onSuccess();
     } catch (error: any) {
@@ -97,17 +122,56 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="uri">
-          URI <span className="text-red-500">*</span>
+        <Label htmlFor="feature_mst_id">
+          Feature <span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={watch('feature_mst_id')?.toString()}
+          onValueChange={(value) => setValue('feature_mst_id', Number(value))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select Feature" />
+          </SelectTrigger>
+          <SelectContent>
+            {features.map((feature) => (
+              <SelectItem key={feature.id} value={feature.id.toString()}>
+                {feature.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.feature_mst_id && (
+          <p className="text-sm text-red-500">{errors.feature_mst_id.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="name">
+          Name <span className="text-red-500">*</span>
         </Label>
         <Input
-          id="uri"
-          {...register('uri')}
-          className={errors.uri ? 'border-red-500' : ''}
+          id="name"
+          {...register('name')}
+          className={errors.name ? 'border-red-500' : ''}
+          placeholder="API Name"
+        />
+        {errors.name && (
+          <p className="text-sm text-red-500">{errors.name.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="path">
+          Path / URI <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="path"
+          {...register('path')}
+          className={errors.path ? 'border-red-500' : ''}
           placeholder="/api/v1/..."
         />
-        {errors.uri && (
-          <p className="text-sm text-red-500">{errors.uri.message}</p>
+        {errors.path && (
+          <p className="text-sm text-red-500">{errors.path.message}</p>
         )}
       </div>
 
@@ -136,37 +200,28 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description (Optional)</Label>
         <Textarea id="description" {...register('description')} rows={3} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="status">
+        <Label htmlFor="is_active">
           Status <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={watch('status')?.toString()}
-          onValueChange={(value) => setValue('status', Number(value) as any)}
+          value={watch('is_active') ? '1' : '0'}
+          onValueChange={(value) => setValue('is_active', value === '1')}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-            <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+            <SelectItem value="1">Active</SelectItem>
+            <SelectItem value="0">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="flex items-center gap-2 mt-4">
-        <input
-          type="checkbox"
-          id="is_active"
-          {...register('is_active')}
-          className="rounded"
-        />
-        <Label htmlFor="is_active">Is Active</Label>
-      </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>

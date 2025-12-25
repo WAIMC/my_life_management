@@ -2,15 +2,17 @@
  * Common Enums matching Laravel backend
  */
 
-// Generic Status (Base for most tables)
+// Generic Status (Base for most tables) - Updated for Department
 export enum Status {
-  INACTIVE = 0,
-  ACTIVE = 1,
+  DRAFT = 0,
+  PUBLISHED = 1,
+  ARCHIVED = 2,
 }
 
 export const StatusLabels: Record<Status, string> = {
-  [Status.INACTIVE]: 'Inactive',
-  [Status.ACTIVE]: 'Active',
+  [Status.DRAFT]: 'Draft',
+  [Status.PUBLISHED]: 'Published',
+  [Status.ARCHIVED]: 'Archived',
 };
 
 // Gender
