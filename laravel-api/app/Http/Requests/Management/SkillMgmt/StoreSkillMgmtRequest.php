@@ -28,7 +28,7 @@ class StoreSkillMgmtRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'parent_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
+      'parent_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
       'name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'slug' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'status' => ['required', new Enum(StatusEnum::class),],

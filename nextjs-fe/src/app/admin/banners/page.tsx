@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApiData } from '@/hooks/useApiData';
 import { useCrud } from '@/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
@@ -20,18 +19,30 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { BannerForm } from '@/components/forms/banner-form';
 
 export default function BannerListPage() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('rank_order');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<BannerMgmt | null>(null);
+
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<BannerMgmt>(
@@ -39,7 +50,22 @@ export default function BannerListPage() {
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
+  const { remove } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
+
+  const handleCreate = () => {
+    setEditingBanner(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (banner: BannerMgmt) => {
+    setEditingBanner(banner);
+    setFormDialogOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setFormDialogOpen(false);
+    refetch();
+  };
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -50,6 +76,7 @@ export default function BannerListPage() {
     await remove(deleteIds);
     setSelectedIds([]);
     setDeleteIds([]);
+    setDeleteDialogOpen(false);
     refetch();
   };
 
@@ -154,10 +181,21 @@ export default function BannerListPage() {
           { label: 'Admin', href: '/admin' },
           { label: 'Banners', isActive: true },
         ]}
-        action={<Button onClick={() => router.push('/admin/banners/create')}>Create Banner</Button>}
+        action={
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" /> Create Banner
+          </Button>
+        }
       />
 
-      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="banner-filters" /><ImportExport  onImport={handleImport}  /></div><FilterPanel
+      <div className="mt-6 space-y-4">
+        <div className="flex gap-2">
+          <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="banner-filters" />
+          <ImportExport onImport={handleImport} />
+        </div>
+
+        <FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
@@ -173,7 +211,6 @@ export default function BannerListPage() {
         <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
         <DataTable data={data}
-          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}
@@ -181,7 +218,10 @@ export default function BannerListPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/banners/${id}/edit`)}
+          onEdit={(id) => {
+            const banner = data.find(b => b.id === id);
+            if (banner) handleEdit(banner);
+          }}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -196,6 +236,23 @@ export default function BannerListPage() {
           }}
         />
       </div>
+
+      {/* Create/Edit Banner Modal */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingBanner ? 'Edit Banner' : 'Create Banner'}</DialogTitle>
+            <DialogDescription>
+              {editingBanner ? 'Update banner details and image.' : 'Fill in the details to create a new banner.'}
+            </DialogDescription>
+          </DialogHeader>
+          <BannerForm
+            initialData={editingBanner}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setFormDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}

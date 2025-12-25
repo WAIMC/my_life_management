@@ -31,18 +31,18 @@ class UpdateAdminMstRequest extends FormRequest
   {
     return [
       'id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER, Rule::exists(AdminMst::class, 'id')],
-      'email' => ['required', 'email:rfc,dns', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_EMAIL, Rule::unique('admin_mst')->ignore($this->route('id')),],
+      'email' => ['required', 'email:rfc,dns', 'min:' . CommonVal::MIN_VARCHAR, 'max:30', Rule::unique('admin_mst')->ignore($this->route('id')),],
       'user_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'password' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
       'first_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:20',],
       'last_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:20',],
-      'address' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
-      'phone_number' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_PHONE_NUMBER,],
-      'birth' => ['date_format:' . CommonVal::DATE_FORMAT, 'after_or_equal:' . CommonVal::MIN_DATE, 'before_or_equal:' . CommonVal::MAX_DATE,],
+      'address' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
+      'phone_number' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_PHONE_NUMBER,],
+      'birth' => ['nullable', 'date_format:' . CommonVal::DATE_FORMAT, 'after_or_equal:' . CommonVal::MIN_DATE, 'before_or_equal:' . CommonVal::MAX_DATE,],
       'gender' => ['required', new Enum(Gender::class),],
       'status' => ['required', new Enum(StatusEnum::class),],
       'is_active' => ['required', new Enum(IsActive::class),],
-      'avatar' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:30',],
+      'avatar' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:30',],
       'is_delete' => ['required', new Enum(IsDelete::class),],
     ];
   }

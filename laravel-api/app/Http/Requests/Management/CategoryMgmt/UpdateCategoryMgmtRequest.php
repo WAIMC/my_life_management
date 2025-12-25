@@ -33,7 +33,7 @@ class UpdateCategoryMgmtRequest extends FormRequest
       'parent_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
       'name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'slug' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
-      'description' => ['string', 'min:' . CommonVal::MIN_VARCHAR, 'max:150',],
+      'description' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:150',],
       'status' => ['required', new Enum(StatusEnum::class),],
       'is_display' => ['required', new Enum(IsActive::class),],
       'rank_order' => ['required',],

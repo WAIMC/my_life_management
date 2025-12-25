@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApiData } from '@/hooks/useApiData';
 import { useCrud } from '@/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
@@ -19,18 +18,30 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { UserForm } from '@/components/forms/user-form';
 
 export default function UsersPage() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserMgmt | null>(null);
+
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<UserMgmt>(
@@ -38,7 +49,22 @@ export default function UsersPage() {
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+  const { remove } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+
+  const handleCreate = () => {
+    setEditingUser(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (user: UserMgmt) => {
+    setEditingUser(user);
+    setFormDialogOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setFormDialogOpen(false);
+    refetch();
+  };
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -49,6 +75,7 @@ export default function UsersPage() {
     await remove(deleteIds);
     setSelectedIds([]);
     setDeleteIds([]);
+    setDeleteDialogOpen(false);
     refetch();
   };
 
@@ -128,10 +155,21 @@ export default function UsersPage() {
           { label: 'Admin', href: '/admin' },
           { label: 'Users', isActive: true },
         ]}
-        action={<Button onClick={() => router.push('/admin/users/create')}>Create User</Button>}
+        action={
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" /> Create User
+          </Button>
+        }
       />
 
-      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="user-filters" /><ImportExport  onImport={handleImport}  /></div><FilterPanel
+      <div className="mt-6 space-y-4">
+        <div className="flex gap-2">
+          <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="user-filters" />
+          <ImportExport onImport={handleImport} />
+        </div>
+
+        <FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
@@ -147,7 +185,6 @@ export default function UsersPage() {
         <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
         <DataTable data={data}
-          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}
@@ -155,7 +192,10 @@ export default function UsersPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/users/${id}/edit`)}
+          onEdit={(id) => {
+            const user = data.find(u => u.id === id);
+            if (user) handleEdit(user);
+          }}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -170,6 +210,23 @@ export default function UsersPage() {
           }}
         />
       </div>
+
+      {/* Create/Edit User Modal */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
+            <DialogDescription>
+              {editingUser ? 'Update user profile and settings.' : 'Fill in the details to create a new user.'}
+            </DialogDescription>
+          </DialogHeader>
+          <UserForm
+            initialData={editingUser}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setFormDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}

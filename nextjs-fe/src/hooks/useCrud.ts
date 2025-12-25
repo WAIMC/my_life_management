@@ -3,13 +3,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { notification } from '@/lib/notification';
+import { AxiosError } from 'axios';
 
 interface UseCrudReturn<T> {
   create: (data: Partial<T>) => Promise<number>;
   update: (id: number, data: Partial<T>) => Promise<number>;
   remove: (ids: number[]) => Promise<void>;
   loading: boolean;
-  error: Error | null;
+  error: Error | AxiosError | null;
 }
 
 interface UseCrudOptions {
@@ -62,8 +63,12 @@ export function useCrud<T>(
       });
     },
     onError: (err: any) => {
-      const message = err.response?.data?.message || 'Failed to create';
-      notification.error(message);
+      // If it's a validation error (422), we don't show a generic toast, 
+      // because the form will handle showing specific field errors.
+      if (err.response?.status !== 422) {
+         const message = err.response?.data?.message || 'Failed to create';
+         notification.error(message);
+      }
     },
   });
 
@@ -86,8 +91,11 @@ export function useCrud<T>(
       });
     },
     onError: (err: any) => {
-      const message = err.response?.data?.message || 'Failed to update';
-      notification.error(message);
+      // If it's a validation error (422), we don't show a generic toast
+      if (err.response?.status !== 422) {
+        const message = err.response?.data?.message || 'Failed to update';
+        notification.error(message);
+      }
     },
   });
 
@@ -130,7 +138,7 @@ export function useCrud<T>(
   const loading = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   
   // Combine errors (return the first error if any)
-  const error = (createMutation.error || updateMutation.error || deleteMutation.error) as Error | null;
+  const error = (createMutation.error || updateMutation.error || deleteMutation.error) as Error | AxiosError | null;
 
   return {
     create,

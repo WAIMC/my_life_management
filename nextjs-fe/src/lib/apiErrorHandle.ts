@@ -53,6 +53,10 @@ export const handleCommonError = (error: AxiosError<any>) => {
       toast.error(errorMessage || ERR_MESS.E0500);
       break;
 
+    case 422:
+      // Validation errors are handled by the form components
+      return Promise.reject(error);
+
     case 502:
     case 503:
     case 504: // Server errors

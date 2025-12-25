@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApiData } from '@/hooks/useApiData';
 import { useCrud } from '@/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
@@ -19,18 +18,30 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { AdminForm } from '@/components/forms/admin-form';
 
 export default function AdminListPage() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<AdminMst | null>(null);
+
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<AdminMst>(
@@ -38,7 +49,22 @@ export default function AdminListPage() {
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
+  const { remove } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
+
+  const handleCreate = () => {
+    setEditingAdmin(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (admin: AdminMst) => {
+    setEditingAdmin(admin);
+    setFormDialogOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setFormDialogOpen(false);
+    refetch();
+  };
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -64,21 +90,16 @@ export default function AdminListPage() {
 
   const columns: Column<AdminMst>[] = [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'user_name', label: 'Username', sortable: true },
-    {
-      key: 'first_name',
-      label: 'Name',
-      sortable: true,
-      render: (admin) => `${admin.first_name} ${admin.last_name}`,
-    },
+    { key: 'first_name', label: 'First Name', sortable: true },
+    { key: 'last_name', label: 'Last Name', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (admin) => (
-        <Badge variant={admin.is_active ? 'default' : 'secondary'}>
-          {admin.is_active ? 'Active' : 'Inactive'}
+      render: (item) => (
+        <Badge variant={item.is_active ? 'default' : 'secondary'}>
+          {item.is_active ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
@@ -86,9 +107,8 @@ export default function AdminListPage() {
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'user_name', label: 'Username', type: 'text', placeholder: 'Search by username...' },
-    { key: 'email', label: 'Email', type: 'text', placeholder: 'Search by email...' },
-    { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'Search by first name...' },
+    { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'Search...' },
+    { key: 'email', label: 'Email', type: 'text', placeholder: 'Search email...' },
     {
       key: 'status',
       label: 'Status',
@@ -100,39 +120,10 @@ export default function AdminListPage() {
     },
     { key: 'is_active', label: 'Active', type: 'boolean' },
   ];
-
-  const searchFields: SearchField[] = [
-    { key: 'user_name', label: 'Username', type: 'text' },
-    { key: 'email', label: 'Email', type: 'text' },
-    { key: 'first_name', label: 'Name', type: 'text' },
-    { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] },
-    { key: 'created_at', label: 'Created Date', type: 'date' },
-  ];
-
-  const bulkActions: BulkAction[] = [
-    {
-      label: 'Delete Selected',
-      icon: <Trash2 className="h-4 w-4" />,
-      variant: 'destructive',
-      onClick: async (ids) => { await remove(ids); refetch(); },
-      confirmMessage: `Delete ${selectedIds.length} admin(s)?`,
-      confirmTitle: 'Delete Admins',
-    },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
-  ];
-
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
-    setAdvancedCriteria(criteria);
-    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
-    setFilters(newFilters);
-    setPage(1);
-  };
-
-  const handleImport = async (file: File, format: string) => {
-    // TODO: Implement import logic
-    refetch();
-  };
+  const searchFields: SearchField[] = [{ key: 'first_name', label: 'First Name', type: 'text' }, { key: 'email', label: 'Email', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
+  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} admin(s)?`, confirmTitle: 'Delete Admins' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
+  const handleImport = async (file: File, format: string) => { refetch(); };
 
   const handleExport = async (format: string) => {
     // TODO: Implement export logic
@@ -143,17 +134,15 @@ export default function AdminListPage() {
     <AdminLayout>
       <PageHeader
         title="Admin Management"
-        description="Manage system administrators"
+        description="Manage administrators"
         breadcrumbs={[
           { label: 'Admin', href: '/admin' },
           { label: 'Admins', isActive: true },
         ]}
         action={
-          
-            <Button onClick={() => router.push('/admin/admins/create')}>
-              Create Admin
-            </Button>
-          
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" /> Create Admin
+          </Button>
         }
       />
 
@@ -161,9 +150,7 @@ export default function AdminListPage() {
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
           <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="admin-filters" />
-          
-            <ImportExport onExport={handleExport} onImport={handleImport} moduleName="Admins" />
-          
+          <ImportExport onExport={handleExport} onImport={handleImport} moduleName="Admins" />
         </div>
 
         <FilterPanel
@@ -179,17 +166,9 @@ export default function AdminListPage() {
           fields={filterFields}
         />
 
-        
-          <BulkActions
-            selectedIds={selectedIds}
-            onClearSelection={() => setSelectedIds([])}
-            actions={bulkActions}
-            isLoading={loading}
-          />
-        
+        <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
         <DataTable data={data}
-          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}
@@ -197,7 +176,10 @@ export default function AdminListPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/admins/${id}/edit`)}
+          onEdit={(id) => {
+            const admin = data.find(a => a.id === id);
+            if (admin) handleEdit(admin);
+          }}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -212,6 +194,23 @@ export default function AdminListPage() {
           }}
         />
       </div>
+
+      {/* Create/Edit Admin Modal */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingAdmin ? 'Edit Admin' : 'Create Admin'}</DialogTitle>
+            <DialogDescription>
+              {editingAdmin ? 'Update admin details.' : 'Fill in the details to create a new admin.'}
+            </DialogDescription>
+          </DialogHeader>
+          <AdminForm
+            initialData={editingAdmin}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setFormDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}

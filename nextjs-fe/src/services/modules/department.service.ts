@@ -10,10 +10,10 @@ import type { DepartmentMst } from '@/types/models';
 export const departmentService = createCrudService<DepartmentMst>({
   baseUrl: ENDPOINTS.MASTER.DEPARTMENT,
   endpoints: {
-    list: '',
-    create: '',
-    update: '',
-    delete: '',
+    list: '/list',
+    create: '/store',
+    update: '/update',
+    delete: '/delete',
   },
 });
 

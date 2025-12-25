@@ -119,7 +119,16 @@ export function HistoryViewer({
                       {getActionLabel(item.action)}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(item.changed_at), { addSuffix: true })}
+                      {(() => {
+                        try {
+                          const date = item.changed_at ? new Date(item.changed_at) : null;
+                          return date && !isNaN(date.getTime()) 
+                            ? formatDistanceToNow(date, { addSuffix: true })
+                            : 'Unknown time';
+                        } catch (e) {
+                          return 'Invalid date';
+                        }
+                      })()}
                     </span>
                   </div>
                   
@@ -130,7 +139,18 @@ export function HistoryViewer({
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(item.changed_at).toLocaleString()}</span>
+                      <span>
+                        {(() => {
+                           try {
+                             const date = item.changed_at ? new Date(item.changed_at) : null;
+                             return date && !isNaN(date.getTime())
+                               ? date.toLocaleString()
+                               : 'Unknown date';
+                           } catch (e) {
+                             return 'Invalid date';
+                           }
+                        })()}
+                      </span>
                     </div>
                   </div>
 

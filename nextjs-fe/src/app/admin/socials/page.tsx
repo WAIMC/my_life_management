@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApiData } from '@/hooks/useApiData';
 import { useCrud } from '@/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
@@ -19,18 +18,30 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { SocialForm } from '@/components/forms/social-form';
 
 export default function SocialListPage() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('rank_order');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingSocial, setEditingSocial] = useState<SocialMgmt | null>(null);
+
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<SocialMgmt>(
@@ -38,7 +49,22 @@ export default function SocialListPage() {
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
+  const { remove } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
+
+  const handleCreate = () => {
+    setEditingSocial(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (social: SocialMgmt) => {
+    setEditingSocial(social);
+    setFormDialogOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setFormDialogOpen(false);
+    refetch();
+  };
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -49,6 +75,7 @@ export default function SocialListPage() {
     await remove(deleteIds);
     setSelectedIds([]);
     setDeleteIds([]);
+    setDeleteDialogOpen(false);
     refetch();
   };
 
@@ -107,10 +134,21 @@ export default function SocialListPage() {
           { label: 'Admin', href: '/admin' },
           { label: 'Socials', isActive: true },
         ]}
-        action={<Button onClick={() => router.push('/admin/socials/create')}>Create Social Link</Button>}
+        action={
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" /> Create Social Link
+          </Button>
+        }
       />
 
-      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="social-filters" /><ImportExport  onImport={handleImport}  /></div><FilterPanel
+      <div className="mt-6 space-y-4">
+        <div className="flex gap-2">
+          <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="social-filters" />
+          <ImportExport onImport={handleImport} />
+        </div>
+
+        <FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
@@ -126,7 +164,6 @@ export default function SocialListPage() {
         <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
         <DataTable data={data}
-          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}
@@ -134,7 +171,10 @@ export default function SocialListPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/socials/${id}/edit`)}
+          onEdit={(id) => {
+            const social = data.find(s => s.id === id);
+            if (social) handleEdit(social);
+          }}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -149,6 +189,23 @@ export default function SocialListPage() {
           }}
         />
       </div>
+
+      {/* Create/Edit Social Modal */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingSocial ? 'Edit Social Link' : 'Create Social Link'}</DialogTitle>
+            <DialogDescription>
+              {editingSocial ? 'Update social link details.' : 'Fill in the details to create a new social link.'}
+            </DialogDescription>
+          </DialogHeader>
+          <SocialForm
+            initialData={editingSocial}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setFormDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}

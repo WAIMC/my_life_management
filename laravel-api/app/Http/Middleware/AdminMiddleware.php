@@ -30,11 +30,16 @@ class AdminMiddleware
       throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
     }
 
-    $payload = JsonWebToken::decode($accessToken, env('ACCESS_TOKEN_SECRET'));
+    try {
+      $payload = JsonWebToken::decode($accessToken, env('ACCESS_TOKEN_SECRET'));
+    } catch (UnexpectedValueException $e) {
+      throw new AuthorizationException(Messages::E0401, CommonVal::HTTP_UNAUTHORIZED);
+    }
+
     $credentials = $payload['body'];
     // Check request from member type admin
     if ($credentials['type'] !== CommonVal::ADMIN_TYPE) {
-      throw new UnexpectedValueException(Messages::E0608);
+      throw new AuthorizationException(Messages::E0608, CommonVal::HTTP_UNAUTHORIZED);
     }
 
     /**

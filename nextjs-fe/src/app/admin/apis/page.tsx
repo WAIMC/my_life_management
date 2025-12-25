@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApiData } from '@/hooks/useApiData';
 import { useCrud } from '@/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
@@ -12,25 +11,37 @@ import { FilterPanel, type FilterField } from '@/components/data-table/filter-pa
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import type { ApiMst } from '@/lib/types/api';
+import { ENDPOINTS } from '@/constants/api-endpoints';
+import { Status, StatusLabels } from '@/lib/types/enums';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
 import { SavedFilters } from '@/components/advanced/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
 import { ImportExport } from '@/components/crud/import-export';
-import { Trash2, CheckCircle, XCircle } from 'lucide-react';
-import type { ApiMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
+import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ApiForm } from '@/components/forms/api-form';
 
 export default function ApiListPage() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingApi, setEditingApi] = useState<ApiMst | null>(null);
+
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const { data, loading, pagination, refetch } = useApiData<ApiMst>(
@@ -38,7 +49,22 @@ export default function ApiListPage() {
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove, loading: deleteLoading } = useCrud<ApiMst>(ENDPOINTS.MASTER.API);
+  const { remove } = useCrud<ApiMst>(ENDPOINTS.MASTER.API);
+
+  const handleCreate = () => {
+    setEditingApi(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (api: ApiMst) => {
+    setEditingApi(api);
+    setFormDialogOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setFormDialogOpen(false);
+    refetch();
+  };
 
   const handleDelete = async (ids: number[]) => {
     setDeleteIds(ids);
@@ -49,6 +75,7 @@ export default function ApiListPage() {
     await remove(deleteIds);
     setSelectedIds([]);
     setDeleteIds([]);
+    setDeleteDialogOpen(false);
     refetch();
   };
 
@@ -63,15 +90,16 @@ export default function ApiListPage() {
 
   const columns: Column<ApiMst>[] = [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'name', label: 'Name', sortable: true },
+    { key: 'uri', label: 'URI', sortable: true },
+    { key: 'method', label: 'Method', sortable: true },
     { key: 'description', label: 'Description' },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (api) => (
-        <Badge variant={api.is_active ? 'default' : 'secondary'}>
-          {api.is_active ? 'Active' : 'Inactive'}
+      render: (item) => (
+        <Badge variant={item.is_active ? 'default' : 'secondary'}>
+          {item.is_active ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
@@ -79,7 +107,7 @@ export default function ApiListPage() {
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'name', label: 'Name', type: 'text', placeholder: 'Search by name...' },
+    { key: 'uri', label: 'URI', type: 'text', placeholder: 'Search URI...' },
     {
       key: 'status',
       label: 'Status',
@@ -91,7 +119,7 @@ export default function ApiListPage() {
     },
     { key: 'is_active', label: 'Active', type: 'boolean' },
   ];
-  const searchFields: SearchField[] = [{ key: 'name', label: 'Name', type: 'text' }, { key: 'description', label: 'Description', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
+  const searchFields: SearchField[] = [{ key: 'uri', label: 'URI', type: 'text' }, { key: 'method', label: 'Method', type: 'select', options: [{ value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' }, { value: 'PUT', label: 'PUT' }, { value: 'DELETE', label: 'DELETE' }] }, { key: 'description', label: 'Description', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
   const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} API(s)?`, confirmTitle: 'Delete APIs' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
   const handleImport = async (file: File, format: string) => { refetch(); };
@@ -100,15 +128,26 @@ export default function ApiListPage() {
     <AdminLayout>
       <PageHeader
         title="API Management"
-        description="Manage system APIs and endpoints"
+        description="Manage system APIs"
         breadcrumbs={[
           { label: 'Admin', href: '/admin' },
           { label: 'APIs', isActive: true },
         ]}
-        action={<Button onClick={() => router.push('/admin/apis/create')}>Create API</Button>}
+        action={
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" /> Create API
+          </Button>
+        }
       />
 
-      <div className="mt-6 space-y-4"><div className="flex gap-2"><AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} /><SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="api-filters" /><ImportExport  onImport={handleImport}  /></div><FilterPanel
+      <div className="mt-6 space-y-4">
+        <div className="flex gap-2">
+          <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="api-filters" />
+          <ImportExport onImport={handleImport} />
+        </div>
+
+        <FilterPanel
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
@@ -124,7 +163,6 @@ export default function ApiListPage() {
         <BulkActions selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} actions={bulkActions} isLoading={loading} />
 
         <DataTable data={data}
-          
           columns={columns}
           loading={loading}
           selectedIds={selectedIds}
@@ -132,7 +170,10 @@ export default function ApiListPage() {
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onEdit={(id) => router.push(`/admin/apis/${id}/edit`)}
+          onEdit={(id) => {
+            const api = data.find(a => a.id === id);
+            if (api) handleEdit(api);
+          }}
           onDelete={(id) => handleDelete([id])}
         />
 
@@ -147,6 +188,23 @@ export default function ApiListPage() {
           }}
         />
       </div>
+
+      {/* Create/Edit API Modal */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingApi ? 'Edit API' : 'Create API'}</DialogTitle>
+            <DialogDescription>
+              {editingApi ? 'Update API details.' : 'Fill in the details to create a new API.'}
+            </DialogDescription>
+          </DialogHeader>
+          <ApiForm
+            initialData={editingApi}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setFormDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}

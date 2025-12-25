@@ -42,14 +42,14 @@ export function useJunctionTable<T>(
       setLoading(true);
 
       // Fetch all available items (e.g., all roles)
-      const allItemsResponse = await apiClient.get(allItemsEndpoint, {
+      const allItemsResponse = await apiClient.get(`${allItemsEndpoint}/list`, {
         per_page: 100,
       });
       const data = allItemsResponse.data as any;
       setAllItems(data.data || data);
 
       // Fetch assigned relationships
-      const assignedResponse = await apiClient.get(junctionEndpoint, {
+      const assignedResponse = await apiClient.get(`${junctionEndpoint}/list`, {
         [parentIdKey]: parentId,
         per_page: 100,
       });
@@ -116,7 +116,7 @@ export function useJunctionTable<T>(
       if (toDelete.length > 0) updateData.delete = toDelete;
       if (toInsert.length > 0) updateData.insert = toInsert;
 
-      await apiClient.put(junctionEndpoint, updateData);
+      await apiClient.put(`${junctionEndpoint}/update`, updateData);
 
       setAssignedIds(selectedIds);
       notification.success('Relationships updated successfully');

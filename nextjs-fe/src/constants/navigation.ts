@@ -75,16 +75,6 @@ export const NAVIGATION_MENU: MenuItem[] = [
         href: '/admin/features',
       },
       {
-        label: 'Languages',
-        icon: Languages,
-        href: '/admin/languages',
-      },
-      {
-        label: 'Translations',
-        icon: MessageSquare,
-        href: '/admin/translations',
-      },
-      {
         label: 'Tokens',
         icon: Key,
         href: '/admin/tokens',
@@ -93,11 +83,6 @@ export const NAVIGATION_MENU: MenuItem[] = [
         label: 'Policy Departments',
         icon: FileCheck,
         href: '/admin/policy-departments',
-      },
-      {
-        label: 'Original Translators',
-        icon: UserCog,
-        href: '/admin/original-translators',
       },
     ],
   },
