@@ -44,12 +44,9 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   
   // Fetch features for dropdown
   const { data: features } = useApiData<FeatureMst>(ENDPOINTS.MASTER.FEATURE, {
-    per_page: 100, // Fetch enough features
+    per_page: 1000,
     sort_by: 'name',
     sort_order: 'asc',
-    filters: {
-        status: 1 // Only Active/Published features
-    } 
   });
 
   const {
@@ -64,18 +61,23 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
     resolver: zodResolver(apiSchema),
     defaultValues: {
       name: '',
+      path: '',
       method: 'GET',
       is_active: true,
+      feature_mst_id: 0,
     },
   });
 
   useEffect(() => {
     if (initialData) {
       const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+      const typeIndex = typeof initialData.type === 'string' ? parseInt(initialData.type) : initialData.type;
+      const mappedMethod = methods[typeIndex] || 'GET';
+      
       reset({
         name: initialData.name,
         path: initialData.path,
-        method: methods[initialData.type] || 'GET',
+        method: mappedMethod,
         description: '', // Not in backend
         is_active: initialData.is_active,
         feature_mst_id: initialData.feature_mst_id,
@@ -87,6 +89,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         method: 'GET',
         description: '',
         is_active: true,
+        feature_mst_id: 0,
       });
     }
   }, [initialData, reset]);
@@ -119,6 +122,8 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
     }
   };
 
+  const currentFeatureId = watch('feature_mst_id');
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
@@ -126,8 +131,12 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           Feature <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={watch('feature_mst_id')?.toString()}
-          onValueChange={(value) => setValue('feature_mst_id', Number(value))}
+          value={currentFeatureId.toString()}
+          onValueChange={(value) => {
+            if (value && value.trim() !== '') {
+              setValue('feature_mst_id', Number(value));
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select Feature" />
@@ -181,7 +190,11 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         </Label>
         <Select
           value={watch('method')}
-          onValueChange={(value) => setValue('method', value)}
+          onValueChange={(value) => {
+            if (value && value.trim() !== '') {
+              setValue('method', value);
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue />
