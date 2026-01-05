@@ -333,7 +333,7 @@ class StoreAdminMstTest extends TestCase
   }
 
   /**
-   * MST_STR_017: Phone Number Max Length (12)
+   * MST_STR_017: Phone Number Max Length (20)
    */
   public function test_MST_STR_017_phone_number_max_length()
   {
@@ -341,7 +341,7 @@ class StoreAdminMstTest extends TestCase
     $cookies = $this->getAuthCookies($admin);
 
     $payload = $this->getValidPayload();
-    $payload['phone_number'] = str_repeat('1', 13);
+    $payload['phone_number'] = str_repeat('1', 21);
 
     $response = $this->call('POST', $this->storeUrl, $payload, $cookies);
     $this->assertCustomValidationErrors($response, ['phone_number']);
@@ -441,5 +441,34 @@ class StoreAdminMstTest extends TestCase
       'address' => '123 Test St',
       'phone_number' => '0901234567',
     ];
+  }
+
+  /**
+   * MST_STR_020: Success with Empty String Birth (Regression Test)
+   */
+  public function test_MST_STR_020_success_empty_string_birth()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $payload = $this->getValidPayload();
+    $payload['birth'] = '';
+
+    $response = $this->call('POST', $this->storeUrl, $payload, $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
+
+    $newId = $response->json('data');
+    $this->assertDatabaseHas('admin_mst', [
+      'id' => $newId,
+      'user_name' => $payload['user_name'],
+      'birth' => null, // Should be null in DB
+    ]);
+
+    // History verification
+    $this->assertDatabaseHas('admin_mst_hist', [
+      'admin_mst_id' => $newId,
+      'birth' => null, // Should be null in History DB
+    ]);
   }
 }

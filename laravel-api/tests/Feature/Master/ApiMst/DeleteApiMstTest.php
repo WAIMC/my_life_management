@@ -5,8 +5,8 @@ namespace Tests\Feature\Master\ApiMst;
 use App\Constants\CommonVal;
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
-use App\Models\Master\RoleMst;
 use App\Models\Master\FeatureMst;
+use App\Models\Master\RoleMst;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -17,8 +17,8 @@ class DeleteApiMstTest extends TestCase
 {
   use DatabaseTransactions;
 
-  protected string $deleteUrl = '/api/admin/api-mst/delete';
   protected string $loginUrl = '/api/admin/credential/login';
+  protected string $deleteUrl = '/api/admin/api-mst/delete';
 
   protected function setUp(): void
   {
@@ -30,11 +30,11 @@ class DeleteApiMstTest extends TestCase
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
-      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
+      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'status' => 1, 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    // Grant access to DELETE route
-    $this->grantAccessTo($rootRole, 'DELETE', 'api/admin/api-mst/delete/{id}');
+    // Grant access to POST .../delete
+    $this->grantAccessTo($rootRole, 'POST', ltrim($this->deleteUrl, '/'));
 
     if (!DB::table('admin_role_mst')->where('admin_mst_id', $admin->id)->where('role_mst_id', $rootRole->id)->exists()) {
       DB::table('admin_role_mst')->insert([
@@ -65,7 +65,7 @@ class DeleteApiMstTest extends TestCase
     $feature = FeatureMst::firstOrCreate([
       'name' => 'System Features',
       'group_name' => 'System',
-      'description' => 'Auto generated',
+      'description' => 'Auto',
       'status' => 1,
       'is_delete' => 0
     ]);
@@ -88,20 +88,76 @@ class DeleteApiMstTest extends TestCase
     ]);
   }
 
-  public function test_API_DEL_001_success()
+  /**
+   * Helper to assert custom validation errors
+   */
+  protected function assertCustomValidationErrors($response, $keys)
+  {
+    $response->assertStatus(CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    $json = $response->json();
+    $this->assertArrayHasKey('error', $json);
+    $this->assertArrayHasKey('messages', $json['error']);
+
+    foreach ((array)$keys as $key) {
+      $this->assertArrayHasKey($key, $json['error']['messages']);
+    }
+  }
+
+  /**
+   * Test delete single API success via batch route (POST)
+   */
+  public function test_delete_single_success()
   {
     $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
 
-    $feature = FeatureMst::factory()->create();
-    $api = ApiMst::factory()->create(['feature_mst_id' => $feature->id]);
+    $apiToDelete = ApiMst::factory()->create();
 
-    $response = $this->call('DELETE', $this->deleteUrl . '/' . $api->id, ['ids' => [$api->id]], $cookies);
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$apiToDelete->id]], $cookies);
 
     $response->assertStatus(CommonVal::HTTP_OK);
+
     $this->assertDatabaseHas('api_mst', [
-      'id' => $api->id,
-      'is_delete' => 1,
+      'id' => $apiToDelete->id,
+      'is_delete' => 1
     ]);
+  }
+
+  /**
+   * Test delete multiple APIs success
+   */
+  public function test_delete_multiple_success()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $api1 = ApiMst::factory()->create();
+    $api2 = ApiMst::factory()->create();
+
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$api1->id, $api2->id]], $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
+
+    $this->assertDatabaseHas('api_mst', [
+      'id' => $api1->id,
+      'is_delete' => 1
+    ]);
+    $this->assertDatabaseHas('api_mst', [
+      'id' => $api2->id,
+      'is_delete' => 1
+    ]);
+  }
+
+  /**
+   * Test missing ids payload
+   */
+  public function test_missing_ids_payload()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('POST', $this->deleteUrl, [], $cookies);
+
+    $this->assertCustomValidationErrors($response, ['ids']);
   }
 }

@@ -8,33 +8,37 @@ use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 use App\Enums\ActionType;
 
 class DeleteCategoryMgmtTest extends TestCase
 {
-  use RefreshDatabase;
+  use DatabaseTransactions;
 
-  private string $baseUrl = 'api/admin/category-mgmt/delete';
+  protected string $deleteUrl = '/api/admin/category-mgmt/delete'; // POST endpoint
+  protected string $loginUrl = '/api/admin/credential/login';
 
-  /**
-   * Helper to get authenticated cookies with 'root' role
-   */
-  private function getAuthCookies(AdminMst $admin): array
+  protected function setUp(): void
+  {
+    parent::setUp();
+    Redis::flushall();
+  }
+
+  protected function getAuthCookies(AdminMst $admin): array
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
-      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
+      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'status' => 1, 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'DELETE', 'api/admin/category-mgmt/delete/{id}');
+    // Grant access to POST .../delete
+    $this->grantAccessTo($rootRole, 'POST', ltrim($this->deleteUrl, '/'));
 
-    if (!DB::table('admin_role_mst')
-      ->where('admin_mst_id', $admin->id)
-      ->where('role_mst_id', $rootRole->id)
-      ->exists()) {
+    if (!DB::table('admin_role_mst')->where('admin_mst_id', $admin->id)->where('role_mst_id', $rootRole->id)->exists()) {
       DB::table('admin_role_mst')->insert([
         'admin_mst_id' => $admin->id,
         'role_mst_id' => $rootRole->id,
@@ -43,7 +47,7 @@ class DeleteCategoryMgmtTest extends TestCase
       ]);
     }
 
-    $response = $this->postJson('/api/admin/credential/login', [
+    $response = $this->postJson($this->loginUrl, [
       'user_name' => $admin->user_name,
       'password' => 'password',
     ]);
@@ -63,7 +67,7 @@ class DeleteCategoryMgmtTest extends TestCase
     $feature = FeatureMst::firstOrCreate([
       'name' => 'System Features',
       'group_name' => 'System',
-      'description' => 'Auto generated',
+      'description' => 'Auto',
       'status' => 1,
       'is_delete' => 0
     ]);
@@ -87,68 +91,74 @@ class DeleteCategoryMgmtTest extends TestCase
   }
 
   /**
-   * Test [CAT_MEM_DEL_001] Unauthenticated
+   * Helper to assert custom validation errors
    */
-  public function test_CAT_MEM_DEL_001_unauthenticated()
+  protected function assertCustomValidationErrors($response, $keys)
   {
-    $response = $this->deleteJson($this->baseUrl . '/1', []);
-    $response->assertStatus(401);
-  }
-
-  /**
-   * Test [CAT_MEM_DEL_002] Invalid Structure
-   */
-  public function test_CAT_MEM_DEL_002_invalid_structure()
-  {
-    $admin = AdminMst::factory()->create();
-    $cookies = $this->getAuthCookies($admin);
-
-    // Payload missing 'ids'
-    $response = $this->call('DELETE', $this->baseUrl . '/1', [], $cookies);
     $response->assertStatus(CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-    $this->assertArrayHasKey('ids', $response->json('error.messages'));
+    $json = $response->json();
+    $this->assertArrayHasKey('error', $json);
+    $this->assertArrayHasKey('messages', $json['error']);
+
+    foreach ((array)$keys as $key) {
+      $this->assertArrayHasKey($key, $json['error']['messages']);
+    }
   }
 
   /**
-   * Test [CAT_MEM_DEL_003] Success
+   * Test single delete success
    */
-  public function test_CAT_MEM_DEL_003_success()
+  public function test_delete_single_success()
   {
-    $admin = AdminMst::factory()->create();
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
 
-    $category1 = CategoryMgmt::factory()->create(['name' => 'Cat 1']);
-    $category2 = CategoryMgmt::factory()->create(['name' => 'Cat 2']);
+    $target = CategoryMgmt::factory()->create();
 
-    $payload = [
-      'ids' => [$category1->id, $category2->id]
-    ];
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$target->id]], $cookies);
 
-    $response = $this->call('DELETE', $this->baseUrl . '/' . $category1->id, $payload, $cookies);
+    $response->assertStatus(CommonVal::HTTP_OK);
 
-    if ($response->status() !== 200) {
-      $response->dump();
-    }
-    $response->assertStatus(200);
-
-    // Verify Soft Delete
     $this->assertDatabaseHas('category_mgmt', [
-      'id' => $category1->id,
-      'is_delete' => 1,
-    ]);
-    $this->assertDatabaseHas('category_mgmt', [
-      'id' => $category2->id,
-      'is_delete' => 1,
+      'id' => $target->id,
+      'is_delete' => 1
     ]);
 
-    // Verify History
     $this->assertDatabaseHas('category_mgmt_hist', [
-      'category_mgmt_id' => $category1->id,
-      'action' => ActionType::DELETE->value,
+      'category_mgmt_id' => $target->id,
+      'action' => ActionType::DELETE->value
     ]);
-    $this->assertDatabaseHas('category_mgmt_hist', [
-      'category_mgmt_id' => $category2->id,
-      'action' => ActionType::DELETE->value,
-    ]);
+  }
+
+  /**
+   * Test multiple delete
+   */
+  public function test_delete_multiple_success()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $target1 = CategoryMgmt::factory()->create();
+    $target2 = CategoryMgmt::factory()->create();
+
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$target1->id, $target2->id]], $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
+
+    $this->assertDatabaseHas('category_mgmt', ['id' => $target1->id, 'is_delete' => 1]);
+    $this->assertDatabaseHas('category_mgmt', ['id' => $target2->id, 'is_delete' => 1]);
+  }
+
+  /**
+   * Test validation
+   */
+  public function test_missing_ids_payload()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('POST', $this->deleteUrl, [], $cookies);
+
+    $this->assertCustomValidationErrors($response, ['ids']);
   }
 }

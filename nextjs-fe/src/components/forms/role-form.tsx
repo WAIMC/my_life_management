@@ -26,7 +26,7 @@ import { IsActive, IsDelete } from '@/lib/types/enums';
 const roleSchema = z.object({
   name: z.string().min(1, 'Name is required').max(30),
   permission: z.string().min(1, 'Permission is required').max(50),
-  is_active: z.coerce.number().refine((val) => val === IsActive.ACTIVE || val === IsActive.INACTIVE, {
+  is_active: z.coerce.number().refine((val) => val === IsActive.TRUE || val === IsActive.FALSE, {
     message: 'Invalid status',
   }),
 });
@@ -54,7 +54,7 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
   } = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
     defaultValues: {
-      is_active: IsActive.ACTIVE,
+      is_active: IsActive.TRUE,
     },
   });
 
@@ -63,13 +63,13 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
       reset({
         name: initialData.name,
         permission: initialData.permission,
-        is_active: initialData.is_active ? IsActive.ACTIVE : IsActive.INACTIVE,
+        is_active: initialData.is_active ? IsActive.TRUE : IsActive.FALSE,
       });
     } else {
       reset({
         name: '',
         permission: '',
-        is_active: IsActive.ACTIVE,
+        is_active: IsActive.TRUE,
       });
     }
   }, [initialData, reset]);
@@ -137,8 +137,8 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={IsActive.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
+              <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
             </SelectContent>
           </Select>
           {errors.is_active && (

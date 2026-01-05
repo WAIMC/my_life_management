@@ -12,9 +12,16 @@ export const CommonVal = {
   HTTP_UNPROCESSABLE_CONTENT: 422,
   HTTP_INTERNAL_SERVER_ERROR: 500,
 
-  // Date Formats
-  DATE_FORMAT: 'dd/MM/yyyy', // frontend uses date-fns format tokens
-  BACKEND_DATE_FORMAT: 'Y-m-d', // generic reference
+  // Date Formats (matching backend d/m/Y format)
+  DATE_FORMAT: 'dd/MM/yyyy', // Display format - matches Laravel d/m/Y
+  DATE_INPUT_FORMAT: 'yyyy-MM-dd', // HTML input[type="date"] format
+  DATETIME_FORMAT: 'dd/MM/yyyy HH:mm:ss', // Full datetime display
+  DATETIME_INPUT_FORMAT: 'yyyy-MM-dd HH:mm:ss', // Backend datetime format
+  TIME_FORMAT: 'HH:mm:ss', // Time only format
+  
+  // Backend compatibility formats
+  BACKEND_DATE_FORMAT: 'd/m/Y', // Laravel format for reference
+  BACKEND_DATETIME_FORMAT: 'd/m/Y H:i:s', // Laravel full datetime
   
   // Validation Limits
   MIN_INTEGER: 0,

@@ -89,7 +89,7 @@ export class CrudService<T = any> {
    */
   async bulkDelete(ids: number[]): Promise<void> {
     const url = `${this.baseUrl}${this.endpoints!.delete}`;
-    await apiClient.delete(url, { ids });
+    await apiClient.post(url, { ids });
   }
 
   /**

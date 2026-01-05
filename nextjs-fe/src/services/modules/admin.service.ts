@@ -10,10 +10,7 @@ import type { AdminMst } from '@/types/models';
 export const adminService = createCrudService<AdminMst>({
   baseUrl: ENDPOINTS.MASTER.ADMIN,
   endpoints: {
-    list: '',
-    create: '',
-    update: '',
-    delete: '',
+    delete: '/delete',
   },
 });
 

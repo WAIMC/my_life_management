@@ -10,7 +10,7 @@ use App\Models\Master\AdminMst;
 use App\Enums\Gender;
 use App\Enums\IsActive;
 use App\Enums\IsDelete;
-use App\Enums\StatusEnum;
+use App\Enums\AdminStatus;
 
 class StoreAdminMstRequest extends FormRequest
 {
@@ -39,7 +39,7 @@ class StoreAdminMstRequest extends FormRequest
       'phone_number' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_PHONE_NUMBER,],
       'birth' => ['nullable', 'date_format:' . CommonVal::DATE_FORMAT, 'after_or_equal:' . CommonVal::MIN_DATE, 'before_or_equal:' . CommonVal::MAX_DATE,],
       'gender' => ['required', new Enum(Gender::class),],
-      'status' => ['required', new Enum(StatusEnum::class),],
+      'status' => ['required', new Enum(AdminStatus::class),],
       'is_active' => ['required', new Enum(IsActive::class),],
       'avatar' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:30',],
       'is_delete' => ['required', new Enum(IsDelete::class),],

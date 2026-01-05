@@ -30,7 +30,7 @@ class DeleteApiMstRequest extends FormRequest
   {
     return [
       'ids' => ['required', 'array'],
-      'ids.*' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER, Rule::exists(ApiMst::class, 'id')],
+      'ids.*' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_BIG_INTEGER, Rule::exists(ApiMst::class, 'id')],
     ];
   }
 

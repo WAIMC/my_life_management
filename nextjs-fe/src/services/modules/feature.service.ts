@@ -9,9 +9,6 @@ import type { FeatureMst } from '@/types/models';
 export const featureService = createCrudService<FeatureMst>({
   baseUrl: ENDPOINTS.MASTER.FEATURE,
   endpoints: {
-    list: '',
-    create: '',
-    update: '',
-    delete: '',
+    delete: '/delete',
   },
 });

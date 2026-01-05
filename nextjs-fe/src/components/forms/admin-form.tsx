@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCrud } from '@/hooks/useCrud';
 import { handleBindErrors } from '@/lib/utils/error-handler';
-import { format } from 'date-fns';
+import { formatDateForBackend, formatDateForInput } from '@/lib/utils/date-formatter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,7 @@ import {
 import { AvatarUpload } from '@/components/crud/avatar-upload';
 import type { AdminMst } from '@/lib/types/api';
 import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, Gender } from '@/lib/types/enums';
+import { AdminStatus, Gender } from '@/lib/types/enums';
 
 const adminSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -32,7 +32,7 @@ const adminSchema = z.object({
   phone_number: z.string().optional(),
   birth: z.string().optional(),
   gender: z.coerce.number(),
-  status: z.coerce.number().min(1).max(2),
+  status: z.coerce.number().min(0),
   is_active: z.boolean(),
   avatar: z.string().optional(),
 }).refine((data) => {
@@ -71,7 +71,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
     resolver: zodResolver(adminSchema),
     defaultValues: {
       gender: Gender.MALE,
-      status: Status.ACTIVE,
+      status: AdminStatus.ACTIVE,
       is_active: true,
     },
   });
@@ -85,7 +85,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         last_name: initialData.last_name,
         address: initialData.address || '',
         phone_number: initialData.phone_number || '',
-        birth: initialData.birth ? new Date(initialData.birth).toISOString().split('T')[0] : '', // Format date YYYY-MM-DD
+        birth: formatDateForInput(initialData.birth),
         gender: initialData.gender,
         status: initialData.status,
         is_active: initialData.is_active,
@@ -103,7 +103,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         phone_number: '',
         birth: '',
         gender: Gender.MALE,
-        status: Status.ACTIVE,
+        status: AdminStatus.ACTIVE,
         is_active: true,
         avatar: '',
       });
@@ -128,7 +128,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
       const payload: any = { ...data };
 
       if (data.birth) {
-        payload.birth = format(new Date(data.birth), 'dd/MM/yyyy');
+        payload.birth = formatDateForBackend(data.birth);
       }
 
       if (isEdit && initialData) {
@@ -282,7 +282,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             Gender <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('gender')?.toString()}
+            value={watch('gender')?.toString() ?? ''}
             onValueChange={(value) => setValue('gender', Number(value) as any)}
           >
             <SelectTrigger>
@@ -294,23 +294,31 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
               <SelectItem value={Gender.OTHER.toString()}>Other</SelectItem>
             </SelectContent>
           </Select>
+          {errors.gender && (
+            <p className="text-sm text-red-500">{errors.gender.message}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="status">
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString()}
+            value={watch('status')?.toString() ?? ''}
             onValueChange={(value) => setValue('status', Number(value) as any)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={AdminStatus.ACTIVE.toString()}>Active</SelectItem>
+              <SelectItem value={AdminStatus.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={AdminStatus.WAITING.toString()}>Waiting</SelectItem>
+              <SelectItem value={AdminStatus.SUSPENDED.toString()}>Suspended</SelectItem>
             </SelectContent>
           </Select>
+          {errors.status && (
+            <p className="text-sm text-red-500">{errors.status.message}</p>
+          )}
         </div>
       </div>
 

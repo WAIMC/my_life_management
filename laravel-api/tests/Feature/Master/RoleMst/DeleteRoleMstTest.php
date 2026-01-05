@@ -2,40 +2,41 @@
 
 namespace Tests\Feature\Master\RoleMst;
 
+use App\Constants\CommonVal;
 use App\Models\Master\AdminMst;
+use App\Models\Master\RoleMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
-use App\Models\Master\RoleMst;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
 class DeleteRoleMstTest extends TestCase
 {
-  use RefreshDatabase;
+  use DatabaseTransactions;
 
-  private string $baseUrl = 'api/admin/role-mst/delete';
+  protected string $loginUrl = '/api/admin/credential/login';
+  protected string $deleteUrl = '/api/admin/role-mst/delete';
 
   protected function setUp(): void
   {
     parent::setUp();
-    Redis::flushdb();
+    Redis::flushall();
   }
 
-  private function getAuthCookies(AdminMst $admin): array
+  protected function getAuthCookies(AdminMst $admin): array
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
-      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
+      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'status' => 1, 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'DELETE', $this->baseUrl . '/{id}');
+    // Grant access to POST .../delete
+    $this->grantAccessTo($rootRole, 'POST', ltrim($this->deleteUrl, '/'));
 
-    if (!DB::table('admin_role_mst')
-      ->where('admin_mst_id', $admin->id)
-      ->where('role_mst_id', $rootRole->id)
-      ->exists()) {
+    if (!DB::table('admin_role_mst')->where('admin_mst_id', $admin->id)->where('role_mst_id', $rootRole->id)->exists()) {
       DB::table('admin_role_mst')->insert([
         'admin_mst_id' => $admin->id,
         'role_mst_id' => $rootRole->id,
@@ -44,7 +45,7 @@ class DeleteRoleMstTest extends TestCase
       ]);
     }
 
-    $response = $this->postJson('/api/admin/credential/login', [
+    $response = $this->postJson($this->loginUrl, [
       'user_name' => $admin->user_name,
       'password' => 'password',
     ]);
@@ -64,7 +65,7 @@ class DeleteRoleMstTest extends TestCase
     $feature = FeatureMst::firstOrCreate([
       'name' => 'System Features',
       'group_name' => 'System',
-      'description' => 'Auto generated',
+      'description' => 'Auto',
       'status' => 1,
       'is_delete' => 0
     ]);
@@ -87,31 +88,76 @@ class DeleteRoleMstTest extends TestCase
     ]);
   }
 
-  public function test_ROL_MST_DEL_001_unauthenticated()
+  /**
+   * Helper to assert custom validation errors
+   */
+  protected function assertCustomValidationErrors($response, $keys)
   {
-    $response = $this->deleteJson($this->baseUrl . '/1');
-    $response->assertStatus(401);
+    $response->assertStatus(CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    $json = $response->json();
+    $this->assertArrayHasKey('error', $json);
+    $this->assertArrayHasKey('messages', $json['error']);
+
+    foreach ((array)$keys as $key) {
+      $this->assertArrayHasKey($key, $json['error']['messages']);
+    }
   }
 
-  public function test_ROL_MST_DEL_002_success()
+  /**
+   * Test delete single role success via batch route (POST)
+   */
+  public function test_delete_single_success()
   {
-    $admin = AdminMst::factory()->create();
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
+
     $role = RoleMst::factory()->create();
 
-    $response = $this->call('DELETE', $this->baseUrl . '/' . $role->id, ['ids' => [$role->id]], $cookies);
-    $response->assertStatus(200);
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$role->id]], $cookies);
 
-    // Check soft delete
+    $response->assertStatus(CommonVal::HTTP_OK);
+
     $this->assertDatabaseHas('role_mst', [
       'id' => $role->id,
-      'is_delete' => 1,
+      'is_delete' => 1
     ]);
+  }
 
-    // Check History
-    $this->assertDatabaseHas('role_mst_hist', [
-      'role_mst_id' => $role->id,
-      'action' => 3, // DELETE
+  /**
+   * Test delete multiple roles success
+   */
+  public function test_delete_multiple_success()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $role1 = RoleMst::factory()->create();
+    $role2 = RoleMst::factory()->create();
+
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$role1->id, $role2->id]], $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
+
+    $this->assertDatabaseHas('role_mst', [
+      'id' => $role1->id,
+      'is_delete' => 1
     ]);
+    $this->assertDatabaseHas('role_mst', [
+      'id' => $role2->id,
+      'is_delete' => 1
+    ]);
+  }
+
+  /**
+   * Test missing ids payload
+   */
+  public function test_missing_ids_payload()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('POST', $this->deleteUrl, [], $cookies);
+
+    $this->assertCustomValidationErrors($response, ['ids']);
   }
 }

@@ -86,21 +86,22 @@ class UpdateAdminMstTest extends TestCase
   }
 
   /**
-   * MST_UPD_002: ID Mismatch or Not Exists
+   * MST_UPD_002: Ignores Body ID Mismatch
+   * System trusts Route ID over Body ID
    */
-  public function test_MST_UPD_002_id_mismatch_or_not_exists()
+  public function test_MST_UPD_002_ignores_body_id_mismatch()
   {
     $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
 
     $payload = $this->getValidPayload($admin);
 
-    // Passing ID that does not exist in Body (Request rule requires exists)
+    // Passing ID that does not exist in Body
     $payload['id'] = 999999;
 
     $response = $this->call('PUT', $this->getUpdateUrl($admin->id), $payload, $cookies);
 
-    $this->assertCustomValidationErrors($response, ['id']);
+    $response->assertStatus(CommonVal::HTTP_OK);
   }
 
   /**

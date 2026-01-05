@@ -30,14 +30,14 @@ export const GenderLabels: Record<Gender, string> = {
 
 // Application Logic Enums
 export enum ActionType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
+  CREATE = 1,
+  UPDATE = 2,
+  DELETE = 3,
 }
 
 export enum IsActive {
-  INACTIVE = 0,
-  ACTIVE = 1,
+  FALSE = 0,
+  TRUE = 1,
 }
 
 export enum IsDelete {
@@ -46,12 +46,20 @@ export enum IsDelete {
 }
 
 export enum TypeOfMethod {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  PATCH = 'PATCH',
-  DELETE = 'DELETE',
+  GET = 0,
+  POST = 1,
+  PUT = 2,
+  PATCH = 3,
+  DELETE = 4,
 }
+
+export const TypeOfMethodLabels: Record<TypeOfMethod, string> = {
+  [TypeOfMethod.GET]: 'GET',
+  [TypeOfMethod.POST]: 'POST',
+  [TypeOfMethod.PUT]: 'PUT',
+  [TypeOfMethod.PATCH]: 'PATCH',
+  [TypeOfMethod.DELETE]: 'DELETE',
+};
 
 // Module Specific Statuses
 

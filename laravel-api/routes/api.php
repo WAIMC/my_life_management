@@ -73,31 +73,31 @@ Route::prefix('admin')
         Route::get('admin-mst/list', [AdminMstController::class, 'list']);
         Route::post('admin-mst/store', [AdminMstController::class, 'store']);
         Route::put('admin-mst/update/{id}', [AdminMstController::class, 'update']);
-        Route::delete('admin-mst/delete/{id}', [AdminMstController::class, 'delete']);
+        Route::post('admin-mst/delete', [AdminMstController::class, 'delete']);
 
         // Role Master
         Route::get('role-mst/list', [RoleMstController::class, 'list']);
         Route::post('role-mst/store', [RoleMstController::class, 'store']);
         Route::put('role-mst/update/{id}', [RoleMstController::class, 'update']);
-        Route::delete('role-mst/delete/{id}', [RoleMstController::class, 'delete']);
+        Route::post('role-mst/delete', [RoleMstController::class, 'delete']);
 
         // Department Master
         Route::get('department-mst/list', [DepartmentMstController::class, 'list']);
         Route::post('department-mst/store', [DepartmentMstController::class, 'store']);
         Route::put('department-mst/update/{id}', [DepartmentMstController::class, 'update']);
-        Route::delete('department-mst/delete/{id}', [DepartmentMstController::class, 'delete']);
+        Route::post('department-mst/delete', [DepartmentMstController::class, 'delete']);
 
         // Feature Master
         Route::get('feature-mst/list', [FeatureMstController::class, 'list']);
         Route::post('feature-mst/store', [FeatureMstController::class, 'store']);
         Route::put('feature-mst/update/{id}', [FeatureMstController::class, 'update']);
-        Route::delete('feature-mst/delete/{id}', [FeatureMstController::class, 'delete']);
+        Route::post('feature-mst/delete', [FeatureMstController::class, 'delete']);
 
         // API Master
         Route::get('api-mst/list', [ApiMstController::class, 'list']);
         Route::post('api-mst/store', [ApiMstController::class, 'store']);
         Route::put('api-mst/update/{id}', [ApiMstController::class, 'update']);
-        Route::delete('api-mst/delete/{id}', [ApiMstController::class, 'delete']);
+        Route::post('api-mst/delete', [ApiMstController::class, 'delete']);
 
 
 
@@ -107,13 +107,13 @@ Route::prefix('admin')
         Route::get('token-mst/list', [TokenMstController::class, 'list']);
         Route::post('token-mst/store', [TokenMstController::class, 'store']);
         Route::put('token-mst/update/{id}', [TokenMstController::class, 'update']);
-        Route::delete('token-mst/delete/{id}', [TokenMstController::class, 'delete']);
+        Route::post('token-mst/delete', [TokenMstController::class, 'delete']);
 
         // Policy Department Master
         Route::get('policy-department-mst/list', [PolicyDepartmentMstController::class, 'list']);
         Route::post('policy-department-mst/store', [PolicyDepartmentMstController::class, 'store']);
         Route::put('policy-department-mst/update/{id}', [PolicyDepartmentMstController::class, 'update']);
-        Route::delete('policy-department-mst/delete/{id}', [PolicyDepartmentMstController::class, 'delete']);
+        Route::post('policy-department-mst/delete', [PolicyDepartmentMstController::class, 'delete']);
 
 
 
@@ -151,49 +151,49 @@ Route::prefix('admin')
         Route::get('banner-mgmt/list', [BannerMgmtController::class, 'list']);
         Route::post('banner-mgmt/store', [BannerMgmtController::class, 'store']);
         Route::put('banner-mgmt/update/{id}', [BannerMgmtController::class, 'update']);
-        Route::delete('banner-mgmt/delete/{id}', [BannerMgmtController::class, 'delete']);
+        Route::post('banner-mgmt/delete', [BannerMgmtController::class, 'delete']);
 
         // Category Management
         Route::get('category-mgmt/list', [CategoryMgmtController::class, 'list']);
         Route::post('category-mgmt/store', [CategoryMgmtController::class, 'store']);
         Route::put('category-mgmt/update/{id}', [CategoryMgmtController::class, 'update']);
-        Route::delete('category-mgmt/delete/{id}', [CategoryMgmtController::class, 'delete']);
+        Route::post('category-mgmt/delete', [CategoryMgmtController::class, 'delete']);
 
         // Skill Management
         Route::get('skill-mgmt/list', [SkillMgmtController::class, 'list']);
         Route::post('skill-mgmt/store', [SkillMgmtController::class, 'store']);
         Route::put('skill-mgmt/update/{id}', [SkillMgmtController::class, 'update']);
-        Route::delete('skill-mgmt/delete/{id}', [SkillMgmtController::class, 'delete']);
+        Route::post('skill-mgmt/delete', [SkillMgmtController::class, 'delete']);
 
         // Skill Description Management
         Route::get('skill-description-mgmt/list', [SkillDescriptionMgmtController::class, 'list']);
         Route::post('skill-description-mgmt/store', [SkillDescriptionMgmtController::class, 'store']);
         Route::put('skill-description-mgmt/update/{id}', [SkillDescriptionMgmtController::class, 'update']);
-        Route::delete('skill-description-mgmt/delete/{id}', [SkillDescriptionMgmtController::class, 'delete']);
+        Route::post('skill-description-mgmt/delete', [SkillDescriptionMgmtController::class, 'delete']);
 
         // Slider Management
         Route::get('slider-mgmt/list', [SliderMgmtController::class, 'list']);
         Route::post('slider-mgmt/store', [SliderMgmtController::class, 'store']);
         Route::put('slider-mgmt/update/{id}', [SliderMgmtController::class, 'update']);
-        Route::delete('slider-mgmt/delete/{id}', [SliderMgmtController::class, 'delete']);
+        Route::post('slider-mgmt/delete', [SliderMgmtController::class, 'delete']);
 
         // Social Management
         Route::get('social-mgmt/list', [SocialMgmtController::class, 'list']);
         Route::post('social-mgmt/store', [SocialMgmtController::class, 'store']);
         Route::put('social-mgmt/update/{id}', [SocialMgmtController::class, 'update']);
-        Route::delete('social-mgmt/delete/{id}', [SocialMgmtController::class, 'delete']);
+        Route::post('social-mgmt/delete', [SocialMgmtController::class, 'delete']);
 
         // User Management
         Route::get('user-mgmt/list', [UserMgmtController::class, 'list']);
         Route::post('user-mgmt/store', [UserMgmtController::class, 'store']);
         Route::put('user-mgmt/update/{id}', [UserMgmtController::class, 'update']);
-        Route::delete('user-mgmt/delete/{id}', [UserMgmtController::class, 'delete']);
+        Route::post('user-mgmt/delete', [UserMgmtController::class, 'delete']);
 
         // Setting Link Management
         Route::get('setting-link-mgmt/list', [SettingLinkMgmtController::class, 'list']);
         Route::post('setting-link-mgmt/store', [SettingLinkMgmtController::class, 'store']);
         Route::put('setting-link-mgmt/update/{id}', [SettingLinkMgmtController::class, 'update']);
-        Route::delete('setting-link-mgmt/delete/{id}', [SettingLinkMgmtController::class, 'delete']);
+        Route::post('setting-link-mgmt/delete', [SettingLinkMgmtController::class, 'delete']);
 
         // Media Management (MinIO-based File Manager)
         Route::get('media-mgmt/list', [MediaMgmtController::class, 'list']);
@@ -211,25 +211,25 @@ Route::prefix('admin')
         Route::get('admin-mst-hist/list', [AdminMstHistController::class, 'list']);
         Route::post('admin-mst-hist/store', [AdminMstHistController::class, 'store']);
         Route::put('admin-mst-hist/update/{id}', [AdminMstHistController::class, 'update']);
-        Route::delete('admin-mst-hist/delete/{id}', [AdminMstHistController::class, 'delete']);
+        Route::post('admin-mst-hist/delete', [AdminMstHistController::class, 'delete']);
 
         // API Master History
         Route::get('api-mst-hist/list', [ApiMstHistController::class, 'list']);
         Route::post('api-mst-hist/store', [ApiMstHistController::class, 'store']);
         Route::put('api-mst-hist/update/{id}', [ApiMstHistController::class, 'update']);
-        Route::delete('api-mst-hist/delete/{id}', [ApiMstHistController::class, 'delete']);
+        Route::post('api-mst-hist/delete', [ApiMstHistController::class, 'delete']);
 
         // Department Master History
         Route::get('department-mst-hist/list', [DepartmentMstHistController::class, 'list']);
         Route::post('department-mst-hist/store', [DepartmentMstHistController::class, 'store']);
         Route::put('department-mst-hist/update/{id}', [DepartmentMstHistController::class, 'update']);
-        Route::delete('department-mst-hist/delete/{id}', [DepartmentMstHistController::class, 'delete']);
+        Route::post('department-mst-hist/delete', [DepartmentMstHistController::class, 'delete']);
 
         // Feature Master History
         Route::get('feature-mst-hist/list', [FeatureMstHistController::class, 'list']);
         Route::post('feature-mst-hist/store', [FeatureMstHistController::class, 'store']);
         Route::put('feature-mst-hist/update/{id}', [FeatureMstHistController::class, 'update']);
-        Route::delete('feature-mst-hist/delete/{id}', [FeatureMstHistController::class, 'delete']);
+        Route::post('feature-mst-hist/delete', [FeatureMstHistController::class, 'delete']);
 
 
 
@@ -239,13 +239,13 @@ Route::prefix('admin')
         Route::get('policy-department-mst-hist/list', [PolicyDepartmentMstHistController::class, 'list']);
         Route::post('policy-department-mst-hist/store', [PolicyDepartmentMstHistController::class, 'store']);
         Route::put('policy-department-mst-hist/update/{id}', [PolicyDepartmentMstHistController::class, 'update']);
-        Route::delete('policy-department-mst-hist/delete/{id}', [PolicyDepartmentMstHistController::class, 'delete']);
+        Route::post('policy-department-mst-hist/delete', [PolicyDepartmentMstHistController::class, 'delete']);
 
         // Role Master History
         Route::get('role-mst-hist/list', [RoleMstHistController::class, 'list']);
         Route::post('role-mst-hist/store', [RoleMstHistController::class, 'store']);
         Route::put('role-mst-hist/update/{id}', [RoleMstHistController::class, 'update']);
-        Route::delete('role-mst-hist/delete/{id}', [RoleMstHistController::class, 'delete']);
+        Route::post('role-mst-hist/delete', [RoleMstHistController::class, 'delete']);
 
 
 
@@ -253,48 +253,48 @@ Route::prefix('admin')
         Route::get('banner-mgmt-hist/list', [BannerMgmtHistController::class, 'list']);
         Route::post('banner-mgmt-hist/store', [BannerMgmtHistController::class, 'store']);
         Route::put('banner-mgmt-hist/update/{id}', [BannerMgmtHistController::class, 'update']);
-        Route::delete('banner-mgmt-hist/delete/{id}', [BannerMgmtHistController::class, 'delete']);
+        Route::post('banner-mgmt-hist/delete', [BannerMgmtHistController::class, 'delete']);
 
         // Category Management History
         Route::get('category-mgmt-hist/list', [CategoryMgmtHistController::class, 'list']);
         Route::post('category-mgmt-hist/store', [CategoryMgmtHistController::class, 'store']);
         Route::put('category-mgmt-hist/update/{id}', [CategoryMgmtHistController::class, 'update']);
-        Route::delete('category-mgmt-hist/delete/{id}', [CategoryMgmtHistController::class, 'delete']);
+        Route::post('category-mgmt-hist/delete', [CategoryMgmtHistController::class, 'delete']);
 
         // Setting Link Management History
         Route::get('setting-link-mgmt-hist/list', [SettingLinkMgmtHistController::class, 'list']);
         Route::post('setting-link-mgmt-hist/store', [SettingLinkMgmtHistController::class, 'store']);
         Route::put('setting-link-mgmt-hist/update/{id}', [SettingLinkMgmtHistController::class, 'update']);
-        Route::delete('setting-link-mgmt-hist/delete/{id}', [SettingLinkMgmtHistController::class, 'delete']);
+        Route::post('setting-link-mgmt-hist/delete', [SettingLinkMgmtHistController::class, 'delete']);
 
         // Skill Description Management History
         Route::get('skill-description-mgmt-hist/list', [SkillDescriptionMgmtHistController::class, 'list']);
         Route::post('skill-description-mgmt-hist/store', [SkillDescriptionMgmtHistController::class, 'store']);
         Route::put('skill-description-mgmt-hist/update/{id}', [SkillDescriptionMgmtHistController::class, 'update']);
-        Route::delete('skill-description-mgmt-hist/delete/{id}', [SkillDescriptionMgmtHistController::class, 'delete']);
+        Route::post('skill-description-mgmt-hist/delete', [SkillDescriptionMgmtHistController::class, 'delete']);
 
         // Skill Management History
         Route::get('skill-mgmt-hist/list', [SkillMgmtHistController::class, 'list']);
         Route::post('skill-mgmt-hist/store', [SkillMgmtHistController::class, 'store']);
         Route::put('skill-mgmt-hist/update/{id}', [SkillMgmtHistController::class, 'update']);
-        Route::delete('skill-mgmt-hist/delete/{id}', [SkillMgmtHistController::class, 'delete']);
+        Route::post('skill-mgmt-hist/delete', [SkillMgmtHistController::class, 'delete']);
 
         // Slider Management History
         Route::get('slider-mgmt-hist/list', [SliderMgmtHistController::class, 'list']);
         Route::post('slider-mgmt-hist/store', [SliderMgmtHistController::class, 'store']);
         Route::put('slider-mgmt-hist/update/{id}', [SliderMgmtHistController::class, 'update']);
-        Route::delete('slider-mgmt-hist/delete/{id}', [SliderMgmtHistController::class, 'delete']);
+        Route::post('slider-mgmt-hist/delete', [SliderMgmtHistController::class, 'delete']);
 
         // Social Management History
         Route::get('social-mgmt-hist/list', [SocialMgmtHistController::class, 'list']);
         Route::post('social-mgmt-hist/store', [SocialMgmtHistController::class, 'store']);
         Route::put('social-mgmt-hist/update/{id}', [SocialMgmtHistController::class, 'update']);
-        Route::delete('social-mgmt-hist/delete/{id}', [SocialMgmtHistController::class, 'delete']);
+        Route::post('social-mgmt-hist/delete', [SocialMgmtHistController::class, 'delete']);
 
         // User Management History
         Route::get('user-mgmt-hist/list', [UserMgmtHistController::class, 'list']);
         Route::post('user-mgmt-hist/store', [UserMgmtHistController::class, 'store']);
         Route::put('user-mgmt-hist/update/{id}', [UserMgmtHistController::class, 'update']);
-        Route::delete('user-mgmt-hist/delete/{id}', [UserMgmtHistController::class, 'delete']);
+        Route::post('user-mgmt-hist/delete', [UserMgmtHistController::class, 'delete']);
       });
   });

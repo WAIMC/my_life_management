@@ -103,12 +103,12 @@ export function useCrud<T>(
    * Delete mutation
    */
   const deleteMutation = useMutation({
-    mutationFn: async (ids: number[]): Promise<void> => {
-      // Delete each ID individually since route requires {id} parameter
-      // And Controller requires 'ids' in body (DeleteApiMstRequest)
-      await Promise.all(
-        ids.map(id => apiClient.delete(`${endpoint}/delete/${id}`, { ids: [id] }))
-      );
+    mutationFn: async (ids: number[]) => {
+      /*
+       * Refactored to support Batch Delete via POST Payload
+       * Sends { ids: number[] } to the {endpoint}/delete endpoint
+       */
+      await apiClient.post(`${endpoint}/delete`, { ids });
     },
     onSuccess: (_, ids) => {
       notification.success(

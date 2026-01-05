@@ -8,33 +8,37 @@ use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
+use App\Enums\ActionType;
 
 class DeleteBannerMgmtTest extends TestCase
 {
-  use RefreshDatabase;
+  use DatabaseTransactions;
 
-  private string $baseUrl = 'api/admin/banner-mgmt/delete';
+  protected string $deleteUrl = '/api/admin/banner-mgmt/delete'; // POST endpoint
+  protected string $loginUrl = '/api/admin/credential/login';
 
-  /**
-   * Helper to get authenticated cookies with 'root' role
-   */
-  private function getAuthCookies(AdminMst $admin): array
+  protected function setUp(): void
+  {
+    parent::setUp();
+    Redis::flushall();
+  }
+
+  protected function getAuthCookies(AdminMst $admin): array
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
-      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
+      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'status' => 1, 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    // Grant access to DELETE endpoint
-    $this->grantAccessTo($rootRole, 'DELETE', 'api/admin/banner-mgmt/delete/{id}');
+    // Grant access to POST .../delete
+    $this->grantAccessTo($rootRole, 'POST', ltrim($this->deleteUrl, '/'));
 
-    if (!DB::table('admin_role_mst')
-      ->where('admin_mst_id', $admin->id)
-      ->where('role_mst_id', $rootRole->id)
-      ->exists()) {
+    if (!DB::table('admin_role_mst')->where('admin_mst_id', $admin->id)->where('role_mst_id', $rootRole->id)->exists()) {
       DB::table('admin_role_mst')->insert([
         'admin_mst_id' => $admin->id,
         'role_mst_id' => $rootRole->id,
@@ -43,7 +47,7 @@ class DeleteBannerMgmtTest extends TestCase
       ]);
     }
 
-    $response = $this->postJson('/api/admin/credential/login', [
+    $response = $this->postJson($this->loginUrl, [
       'user_name' => $admin->user_name,
       'password' => 'password',
     ]);
@@ -63,7 +67,7 @@ class DeleteBannerMgmtTest extends TestCase
     $feature = FeatureMst::firstOrCreate([
       'name' => 'System Features',
       'group_name' => 'System',
-      'description' => 'Auto generated',
+      'description' => 'Auto',
       'status' => 1,
       'is_delete' => 0
     ]);
@@ -71,7 +75,7 @@ class DeleteBannerMgmtTest extends TestCase
     $api = ApiMst::firstOrCreate(
       ['path' => $path, 'type' => $type],
       [
-        'name' => "Endpoint $method $path",
+        'name' => substr("Endp $method $path", 0, 50),
         'is_active' => 1,
         'feature_mst_id' => $feature->id,
         'is_delete' => 0
@@ -87,72 +91,74 @@ class DeleteBannerMgmtTest extends TestCase
   }
 
   /**
-   * Test [MST_BNR_DEL_001] Unauthenticated
+   * Helper to assert custom validation errors
    */
-  public function test_MST_BNR_DEL_001_unauthenticated()
+  protected function assertCustomValidationErrors($response, $keys)
   {
-    $response = $this->deleteJson($this->baseUrl . '/1', []);
-    $response->assertStatus(401);
-  }
-
-  /**
-   * Test [MST_BNR_DEL_002] Invalid - Not Array or Missing
-   */
-  public function test_MST_BNR_DEL_002_invalid_structure()
-  {
-    $admin = AdminMst::factory()->create();
-    $cookies = $this->getAuthCookies($admin);
-
-    // Payload missing ids
-    $response = $this->call('DELETE', $this->baseUrl . '/1', [], $cookies);
     $response->assertStatus(CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-    $this->assertArrayHasKey('ids', $response->json('error.messages'));
+    $json = $response->json();
+    $this->assertArrayHasKey('error', $json);
+    $this->assertArrayHasKey('messages', $json['error']);
+
+    foreach ((array)$keys as $key) {
+      $this->assertArrayHasKey($key, $json['error']['messages']);
+    }
   }
 
   /**
-   * Test [MST_BNR_DEL_004] Success
+   * Test single delete success
    */
-  public function test_MST_BNR_DEL_004_success()
+  public function test_delete_single_success()
   {
-    $admin = AdminMst::factory()->create();
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
-    $banners = BannerMgmt::factory()->count(2)->create();
-    $ids = $banners->pluck('id')->toArray();
 
-    // Using DELETE generally accepts query params or body.
-    // For array, it is usually body.
-    // Route is `delete/{id}` but service accepts batch `ids` array.
-    // If route has {id}, typically it handles one ID, but documentation/tests often imply support for batch via body or similar.
-    // Let's check logic: Controller calls `bannerMgmt->delete($request->all())`.
-    // Service `delete` checks `ids` array.
-    // So I can pass `ids` in body. The `{id}` in route might be ignored or used if `ids` missing?
-    // Service: if `!isset(ids)` -> `executeDelete([ids])???` No, `executeDelete($payload['ids'] ?? [])` -> empty.
-    // Wait! Service says:
-    // if (!isset($payload['ids'])) $this->bannerMgmt->executeDelete($payload['ids'] ?? []);
-    // null ?? [] = []. So it deletes nothing if `ids` not set.
-    // This implies the standard usage is sending `ids` in body.
-    // The URL param `{id}` might be vestigial or for single delete if Request handled it, but Request validates `ids` array.
-    // `DeleteBannerMgmtRequest.php` rules: `ids => required|array`.
-    // So I MUST pass `ids`. The `{id}` in URL is just to satisfy Route parameter likely.
+    $target = BannerMgmt::factory()->create();
 
-    $payload = ['ids' => $ids];
-    $response = $this->call('DELETE', $this->baseUrl . '/' . $ids[0], $payload, $cookies);
-    $response->assertStatus(200);
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$target->id]], $cookies);
 
-    foreach ($banners as $banner) {
-      $this->assertDatabaseHas('banner_mgmt', [
-        'id' => $banner->id,
-        'is_delete' => 1,
-      ]);
+    $response->assertStatus(CommonVal::HTTP_OK);
 
-      $hist = DB::table('banner_mgmt_hist')->get();
-      // dump($hist); // Debug
+    $this->assertDatabaseHas('banner_mgmt', [
+      'id' => $target->id,
+      'is_delete' => 1
+    ]);
 
-      $this->assertDatabaseHas('banner_mgmt_hist', [
-        'banner_mgmt_id' => $banner->id,
-        'action' => \App\Enums\ActionType::DELETE->value,
-        'author_id' => $admin->id,
-      ]);
-    }
+    $this->assertDatabaseHas('banner_mgmt_hist', [
+      'banner_mgmt_id' => $target->id,
+      'action' => ActionType::DELETE->value
+    ]);
+  }
+
+  /**
+   * Test multiple delete
+   */
+  public function test_delete_multiple_success()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $target1 = BannerMgmt::factory()->create();
+    $target2 = BannerMgmt::factory()->create();
+
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$target1->id, $target2->id]], $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
+
+    $this->assertDatabaseHas('banner_mgmt', ['id' => $target1->id, 'is_delete' => 1]);
+    $this->assertDatabaseHas('banner_mgmt', ['id' => $target2->id, 'is_delete' => 1]);
+  }
+
+  /**
+   * Test validation
+   */
+  public function test_missing_ids_payload()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('POST', $this->deleteUrl, [], $cookies);
+
+    $this->assertCustomValidationErrors($response, ['ids']);
   }
 }

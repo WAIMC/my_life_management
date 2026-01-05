@@ -1,25 +1,25 @@
 <?php
 
-namespace Tests\Feature\Master\TokenMst;
+namespace Tests\Feature\Master\DepartmentMst;
 
 use App\Constants\CommonVal;
 use App\Models\Master\AdminMst;
+use App\Models\Master\DepartmentMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Master\TokenMst;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
-class DeleteTokenMstTest extends TestCase
+class DeleteDepartmentMstTest extends TestCase
 {
   use DatabaseTransactions;
 
   protected string $loginUrl = '/api/admin/credential/login';
-  protected string $deleteUrl = '/api/admin/token-mst/delete';
+  protected string $deleteUrl = '/api/admin/department-mst/delete';
 
   protected function setUp(): void
   {
@@ -105,44 +105,47 @@ class DeleteTokenMstTest extends TestCase
   }
 
   /**
-   * Test delete single token success (Hard Delete)
+   * Test delete single department success via batch route (POST)
    */
   public function test_delete_single_success()
   {
     $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
 
-    $token = TokenMst::factory()->create();
+    $department = DepartmentMst::factory()->create();
 
-    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$token->id]], $cookies);
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$department->id]], $cookies);
 
     $response->assertStatus(CommonVal::HTTP_OK);
 
-    $this->assertDatabaseMissing('token_mst', [
-      'id' => $token->id,
+    $this->assertDatabaseHas('department_mst', [
+      'id' => $department->id,
+      'is_delete' => 1
     ]);
   }
 
   /**
-   * Test delete multiple tokens success
+   * Test delete multiple departments success
    */
   public function test_delete_multiple_success()
   {
     $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
 
-    $token1 = TokenMst::factory()->create();
-    $token2 = TokenMst::factory()->create();
+    $dept1 = DepartmentMst::factory()->create();
+    $dept2 = DepartmentMst::factory()->create();
 
-    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$token1->id, $token2->id]], $cookies);
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$dept1->id, $dept2->id]], $cookies);
 
     $response->assertStatus(CommonVal::HTTP_OK);
 
-    $this->assertDatabaseMissing('token_mst', [
-      'id' => $token1->id,
+    $this->assertDatabaseHas('department_mst', [
+      'id' => $dept1->id,
+      'is_delete' => 1
     ]);
-    $this->assertDatabaseMissing('token_mst', [
-      'id' => $token2->id,
+    $this->assertDatabaseHas('department_mst', [
+      'id' => $dept2->id,
+      'is_delete' => 1
     ]);
   }
 

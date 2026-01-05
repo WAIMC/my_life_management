@@ -2,41 +2,43 @@
 
 namespace Tests\Feature\Management\SliderMgmt;
 
+use App\Constants\CommonVal;
+use App\Models\Management\SliderMgmt;
 use App\Models\Master\AdminMst;
 use App\Models\Master\ApiMst;
 use App\Models\Master\FeatureMst;
 use App\Models\Master\RoleMst;
-use App\Models\Management\SliderMgmt;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
+use App\Enums\ActionType;
 
 class DeleteSliderMgmtTest extends TestCase
 {
-  use RefreshDatabase;
+  use DatabaseTransactions;
 
-  private string $baseUrl = 'api/admin/slider-mgmt/delete';
+  protected string $deleteUrl = '/api/admin/slider-mgmt/delete'; // POST endpoint
+  protected string $loginUrl = '/api/admin/credential/login';
 
   protected function setUp(): void
   {
     parent::setUp();
-    Redis::flushdb();
+    Redis::flushall();
   }
 
-  private function getAuthCookies(AdminMst $admin): array
+  protected function getAuthCookies(AdminMst $admin): array
   {
     $rootRole = RoleMst::where('name', 'root')->first();
     if (!$rootRole) {
-      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'is_active' => 1, 'is_delete' => 0]);
+      $rootRole = RoleMst::create(['name' => 'root', 'permission' => '{}', 'status' => 1, 'is_active' => 1, 'is_delete' => 0]);
     }
 
-    $this->grantAccessTo($rootRole, 'DELETE', $this->baseUrl . '/{id}');
+    // Grant access to POST .../delete
+    $this->grantAccessTo($rootRole, 'POST', ltrim($this->deleteUrl, '/'));
 
-    if (!DB::table('admin_role_mst')
-      ->where('admin_mst_id', $admin->id)
-      ->where('role_mst_id', $rootRole->id)
-      ->exists()) {
+    if (!DB::table('admin_role_mst')->where('admin_mst_id', $admin->id)->where('role_mst_id', $rootRole->id)->exists()) {
       DB::table('admin_role_mst')->insert([
         'admin_mst_id' => $admin->id,
         'role_mst_id' => $rootRole->id,
@@ -45,7 +47,7 @@ class DeleteSliderMgmtTest extends TestCase
       ]);
     }
 
-    $response = $this->postJson('/api/admin/credential/login', [
+    $response = $this->postJson($this->loginUrl, [
       'user_name' => $admin->user_name,
       'password' => 'password',
     ]);
@@ -65,7 +67,7 @@ class DeleteSliderMgmtTest extends TestCase
     $feature = FeatureMst::firstOrCreate([
       'name' => 'System Features',
       'group_name' => 'System',
-      'description' => 'Auto generated',
+      'description' => 'Auto',
       'status' => 1,
       'is_delete' => 0
     ]);
@@ -88,29 +90,75 @@ class DeleteSliderMgmtTest extends TestCase
     ]);
   }
 
-  public function test_SLD_DEL_001_unauthenticated()
+  /**
+   * Helper to assert custom validation errors
+   */
+  protected function assertCustomValidationErrors($response, $keys)
   {
-    $response = $this->deleteJson($this->baseUrl . '/1');
-    $response->assertStatus(401);
+    $response->assertStatus(CommonVal::HTTP_UNPROCESSABLE_CONTENT);
+    $json = $response->json();
+    $this->assertArrayHasKey('error', $json);
+    $this->assertArrayHasKey('messages', $json['error']);
+
+    foreach ((array)$keys as $key) {
+      $this->assertArrayHasKey($key, $json['error']['messages']);
+    }
   }
 
-  public function test_SLD_DEL_002_success()
+  /**
+   * Test single delete success
+   */
+  public function test_delete_single_success()
   {
-    $admin = AdminMst::factory()->create();
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
     $cookies = $this->getAuthCookies($admin);
-    $setting = SliderMgmt::factory()->create();
 
-    $response = $this->call('DELETE', $this->baseUrl . '/' . $setting->id, ['ids' => [$setting->id]], $cookies);
-    $response->assertStatus(200);
+    $target = SliderMgmt::factory()->create();
+
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$target->id]], $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
 
     $this->assertDatabaseHas('slider_mgmt', [
-      'id' => $setting->id,
-      'is_delete' => 1,
+      'id' => $target->id,
+      'is_delete' => 1
     ]);
 
     $this->assertDatabaseHas('slider_mgmt_hist', [
-      'slider_mgmt_id' => $setting->id,
-      'action' => 3,
+      'slider_mgmt_id' => $target->id,
+      'action' => ActionType::DELETE->value
     ]);
+  }
+
+  /**
+   * Test multiple delete
+   */
+  public function test_delete_multiple_success()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $target1 = SliderMgmt::factory()->create();
+    $target2 = SliderMgmt::factory()->create();
+
+    $response = $this->call('POST', $this->deleteUrl, ['ids' => [$target1->id, $target2->id]], $cookies);
+
+    $response->assertStatus(CommonVal::HTTP_OK);
+
+    $this->assertDatabaseHas('slider_mgmt', ['id' => $target1->id, 'is_delete' => 1]);
+    $this->assertDatabaseHas('slider_mgmt', ['id' => $target2->id, 'is_delete' => 1]);
+  }
+
+  /**
+   * Test validation
+   */
+  public function test_missing_ids_payload()
+  {
+    $admin = AdminMst::factory()->create(['password' => Hash::make('password')]);
+    $cookies = $this->getAuthCookies($admin);
+
+    $response = $this->call('POST', $this->deleteUrl, [], $cookies);
+
+    $this->assertCustomValidationErrors($response, ['ids']);
   }
 }

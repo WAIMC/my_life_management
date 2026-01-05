@@ -10,10 +10,7 @@ import type { RoleMst } from '@/types/models';
 export const roleService = createCrudService<RoleMst>({
   baseUrl: ENDPOINTS.MASTER.ROLE,
   endpoints: {
-    list: '',
-    create: '',
-    update: '',
-    delete: '',
+    delete: '/delete',
   },
 });
 

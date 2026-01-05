@@ -9,9 +9,6 @@ import type { ApiMst } from '@/types/models';
 export const apiService = createCrudService<ApiMst>({
   baseUrl: ENDPOINTS.MASTER.API,
   endpoints: {
-    list: '',
-    create: '',
-    update: '',
-    delete: '',
+    delete: '/delete',
   },
 });
