@@ -16,8 +16,8 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { NAVIGATION_MENU, type MenuItem } from '@/constants/navigation';
-import { cn } from '@/lib/utils';
+import { NAVIGATION_MENU, type MenuItem } from '@/shared/config/navigation';
+import { cn } from "@/shared/utils";
 
 interface AdminNavDropdownProps {
   currentLabel?: string;

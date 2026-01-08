@@ -1,24 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus, Edit } from 'lucide-react';
-import type { FeatureMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
+import type { FeatureMst } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  SORT_FIELDS, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +34,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FeatureForm } from '@/components/forms/feature-form';
+import { useTranslations } from 'next-intl';
 
 export default function FeatureListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -44,12 +52,19 @@ export default function FeatureListPage() {
 
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
+
   const { data, loading, pagination, refetch } = useApiData<FeatureMst>(
-    ENDPOINTS.MASTER.FEATURE,
+    API_ENDPOINTS.MASTER.FEATURE,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<FeatureMst>(ENDPOINTS.MASTER.FEATURE);
+  const { remove } = useCrud<FeatureMst>(API_ENDPOINTS.MASTER.FEATURE);
 
   const handleCreate = () => {
     setEditingFeature(null);
@@ -81,55 +96,78 @@ export default function FeatureListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<FeatureMst>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'description', label: 'Description' },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'name', label: tFields('name'), sortable: true },
+    { key: 'description', label: tFields('description') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (feature) => (
         <Badge variant={feature.is_active ? 'default' : 'secondary'}>
-          {feature.is_active ? 'Active' : 'Inactive'}
+          {feature.is_active ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'name', label: 'Name', type: 'text', placeholder: 'Search by name...' },
+    { key: 'name', label: tFields('name'), type: 'text', placeholder: tCommon('search') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
         { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
         { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
+    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
   ];
 
   const searchFields: SearchField[] = [
-    { key: 'name', label: 'Name', type: 'text' },
-    { key: 'description', label: 'Description', type: 'text' },
-    { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] },
-    { key: 'created_at', label: 'Created Date', type: 'date' },
+    { key: 'name', label: tFields('name'), type: 'text' },
+    { key: 'description', label: tFields('description'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(StatusLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' },
   ];
 
   const bulkActions: BulkAction[] = [
-    { label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} feature(s)?`, confirmTitle: 'Delete Features' },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { await remove(ids); refetch(); }, 
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('feature').toLowerCase() }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('features') }) 
+    },
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    },
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
@@ -146,15 +184,15 @@ export default function FeatureListPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Feature Management"
-        description="Manage system features and permissions"
+        title={tManagement('title', { entity: tEntities('features') })}
+        description={tManagement('description', { entity: tEntities('features').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Features', isActive: true },
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('features'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Feature
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('feature') })}
           </Button>
         }
       />
@@ -162,7 +200,14 @@ export default function FeatureListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="feature-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="feature-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -170,11 +215,11 @@ export default function FeatureListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -203,7 +248,7 @@ export default function FeatureListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -212,9 +257,9 @@ export default function FeatureListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingFeature ? 'Edit Feature' : 'Create Feature'}</DialogTitle>
+            <DialogTitle>{editingFeature ? tCrud('editEntity', { entity: tEntities('feature') }) : tCrud('createEntity', { entity: tEntities('feature') })}</DialogTitle>
             <DialogDescription>
-              {editingFeature ? 'Update feature details and history.' : 'Fill in the details to create a new feature.'}
+              {editingFeature ? tCrud('editDescription', { entity: tEntities('feature').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('feature').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <FeatureForm
@@ -229,10 +274,10 @@ export default function FeatureListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Feature(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} feature(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('feature') })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('feature').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

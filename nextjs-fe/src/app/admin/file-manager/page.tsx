@@ -2,18 +2,23 @@
 
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { FileManagerContent } from '@/components/file-manager/file-manager-content';
+import { FileManagerContent } from '@/components/common/file-manager/file-manager-content';
+import { useTranslations } from 'next-intl';
 
 export default function FileManagerPage() {
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tManagement = useTranslations('management');
+
   return (
     <AdminLayout>
       {/* Page Header */}
       <PageHeader
-        title="File Manager"
-        description="Quản lý và tổ chức tệp tin và thư mục của bạn"
+        title={tManagement('title', { entity: tEntities('fileManager') })}
+        description={tManagement('description', { entity: tEntities('fileManager').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'File Manager', isActive: true }
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('fileManager'), isActive: true }
         ]}
       />
 

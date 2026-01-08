@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,21 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ImageUpload } from '@/components/crud/image-upload';
-import type { SliderMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status } from '@/lib/types/enums';
-
-const sliderSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  image_url: z.string().optional(),
-  link_url: z.string().optional(),
-  rank_order: z.coerce.number().min(0),
-  status: z.coerce.number().min(1).max(2),
-  is_active: z.boolean(),
-});
-
-type SliderFormData = z.infer<typeof sliderSchema>;
+import { ImageUpload } from '@/components/common/image-upload';
+import type { SliderMgmt } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { Status } from '@/shared/enums';
+import { sliderSchema, type SliderFormData } from '@/shared/validation/validation';
 
 interface SliderFormProps {
   initialData?: SliderMgmt | null;

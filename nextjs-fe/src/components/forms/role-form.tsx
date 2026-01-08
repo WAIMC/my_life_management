@@ -3,9 +3,8 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,20 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HistoryViewer } from '@/components/history';
-import type { RoleMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { IsActive, IsDelete } from '@/lib/types/enums';
-
-const roleSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(30),
-  permission: z.string().min(1, 'Permission is required').max(50),
-  is_active: z.coerce.number().refine((val) => val === IsActive.TRUE || val === IsActive.FALSE, {
-    message: 'Invalid status',
-  }),
-});
-
-type RoleFormData = z.infer<typeof roleSchema>;
+import { HistoryViewer } from '@/components/features/history/history-viewer';
+import type { RoleMst } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { IsActive, IsDelete } from '@/shared/enums';
+import { roleSchema, type RoleFormData } from '@/shared/validation/validation';
 
 interface RoleFormProps {
   initialData?: RoleMst | null;

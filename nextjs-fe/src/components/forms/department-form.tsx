@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { useJunctionTable } from '@/hooks/useJunctionTable';
-import { departmentService } from '@/services/department.service';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { useJunctionTable } from '@/shared/hooks/useJunctionTable';
+import { departmentService } from '@/shared/services/modules/department.service';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,20 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { JunctionManager } from '@/components/junction/junction-manager';
-import { HistoryViewer } from '@/components/history';
-import type { DepartmentMst, PolicyDepartmentMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, IsActive, IsDelete } from '@/lib/types/enums';
-
-const departmentSchema = z.object({
-  code: z.string().min(1, 'Code is required').max(50, 'Code must be at most 50 characters'),
-  name: z.string().min(1, 'Name is required'),
-  status: z.coerce.number().min(0).max(2),
-});
-
-
-type DepartmentFormData = z.infer<typeof departmentSchema>;
+// import { JunctionManager } from '@/components/features/junction/junction-manager';
+import { HistoryViewer } from '@/components/features/history/history-viewer';
+import type { DepartmentMst, PolicyDepartmentMst } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { Status, IsActive, IsDelete } from '@/shared/enums';
+import { departmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
 
 interface DepartmentFormProps {
   initialData?: DepartmentMst | null;

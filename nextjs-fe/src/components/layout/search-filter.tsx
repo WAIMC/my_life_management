@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Search, X, Filter } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/shared/utils";
 
 interface SearchFilterProps {
   placeholder?: string;

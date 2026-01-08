@@ -1,23 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { CategoryMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import type { CategoryMgmt } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -27,13 +33,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CategoryForm } from '@/components/forms/category-form';
+import { useTranslations } from 'next-intl';
 
 export default function CategoryListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('rank_order');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -42,14 +49,19 @@ export default function CategoryListPage() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryMgmt | null>(null);
 
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
 
   const { data, loading, pagination, refetch } = useApiData<CategoryMgmt>(
-    ENDPOINTS.MANAGEMENT.CATEGORY,
+    API_ENDPOINTS.MANAGEMENT.CATEGORY,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<CategoryMgmt>(ENDPOINTS.MANAGEMENT.CATEGORY);
+  const { remove } = useCrud<CategoryMgmt>(API_ENDPOINTS.MANAGEMENT.CATEGORY);
 
   const handleCreate = () => {
     setEditingCategory(null);
@@ -81,62 +93,115 @@ export default function CategoryListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<CategoryMgmt>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'rank_order', label: 'Order', sortable: true },
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'description', label: 'Description' },
-    { key: 'icon', label: 'Icon' },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'rank_order', label: tFields('order'), sortable: true },
+    { key: 'name', label: tFields('name'), sortable: true },
+    { key: 'description', label: tFields('description') },
+    { key: 'icon', label: tFields('icon') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (category) => (
-        <Badge variant={category.is_active ? 'default' : 'secondary'}>
-          {category.is_active ? 'Active' : 'Inactive'}
+        <Badge variant={category.status === IsActive.TRUE ? 'default' : 'secondary'}>
+          {IsActiveLabels[category.status as IsActive]}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'name', label: 'Name', type: 'text', placeholder: 'Search by name...' },
+    { key: 'name', label: tFields('name'), type: 'text', placeholder: tCommon('search') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
+        { value: IsActive.TRUE, label: IsActiveLabels[IsActive.TRUE] },
+        { value: IsActive.FALSE, label: IsActiveLabels[IsActive.FALSE] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
+    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
   ];
-  const searchFields: SearchField[] = [{ key: 'name', label: 'Name', type: 'text' }, { key: 'description', label: 'Description', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} category(ies)?`, confirmTitle: 'Delete Categories' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (file: File, format: string) => { refetch(); };
+  const searchFields: SearchField[] = [
+    { key: 'name', label: tFields('name'), type: 'text' },
+    { key: 'description', label: tFields('description'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(IsActiveLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' }
+  ];
+  const bulkActions: BulkAction[] = [
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { 
+        await remove(ids); 
+        refetch(); 
+      }, 
+      confirmMessage: tCrud('deleteConfirm', { 
+        count: selectedIds.length, 
+        entity: tEntities('category').toLowerCase() 
+      }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('categories') }) 
+    }, 
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async () => { 
+        refetch(); 
+      } 
+    }, 
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async () => { 
+        refetch(); 
+      } 
+    }
+  ];
+
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce(
+      (acc, c) => ({ ...acc, [c.field]: c.value }), 
+      {}
+    );
+    setFilters(newFilters);
+    setPage(PAGINATION.DEFAULT_PAGE);
+  };
+
+  const handleImport = async () => {
+    refetch();
+  };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Category Management"
-        description="Manage skill categories"
+        title={tManagement('title', { entity: tEntities('categories') })}
+        description={tManagement('description', { entity: tEntities('categories').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Categories', isActive: true },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
+          { label: tEntities('categories'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Category
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('category') })}
           </Button>
         }
       />
@@ -144,7 +209,14 @@ export default function CategoryListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="category-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="category-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
         
@@ -152,11 +224,11 @@ export default function CategoryListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -185,7 +257,7 @@ export default function CategoryListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -194,9 +266,9 @@ export default function CategoryListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
+            <DialogTitle>{editingCategory ? tCrud('editEntity', { entity: tEntities('category') }) : tCrud('createEntity', { entity: tEntities('category') })}</DialogTitle>
             <DialogDescription>
-              {editingCategory ? 'Update category details and associated skills.' : 'Fill in the details to create a new category.'}
+              {editingCategory ? tCrud('editDescription', { entity: tEntities('category').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('category').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <CategoryForm
@@ -210,10 +282,10 @@ export default function CategoryListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Category(ies)"
-        description={`Are you sure you want to delete ${deleteIds.length} category(ies)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('category') })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('category').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

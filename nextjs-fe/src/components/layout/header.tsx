@@ -20,11 +20,11 @@ import {
   Moon, 
   User,
   Settings,
-  LogOut,
-  Check
+  LogOut
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 interface Notification {
   id: string;
@@ -37,6 +37,8 @@ interface Notification {
 export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations('header');
+  const tCommon = useTranslations('common');
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 3600000);
   const twoDaysAgo = new Date(now.getTime() - 172800000);
@@ -67,7 +69,10 @@ export function Header() {
 
   // Prevent hydration mismatch for theme
   useEffect(() => {
-    setMounted(true);
+    const timer = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(timer);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -103,7 +108,7 @@ export function Header() {
             <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
-                placeholder="Search... (⌘K)"
+                placeholder={t('searchPlaceholder')}
                 className="pl-10"
                 type="search"
               />
@@ -147,7 +152,7 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="relative"
-                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                aria-label={`${t('notifications')}${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -162,7 +167,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <div className="flex items-center justify-between p-4">
-                <h3 className="font-semibold">Notifications</h3>
+                <h3 className="font-semibold">{t('notifications')}</h3>
                 {unreadCount > 0 && (
                   <Button
                     variant="ghost"
@@ -170,7 +175,7 @@ export function Header() {
                     className="h-auto p-0 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     onClick={handleMarkAllAsRead}
                   >
-                    Mark all as read
+                    {t('markAllAsRead')}
                   </Button>
                 )}
               </div>
@@ -210,7 +215,7 @@ export function Header() {
                   <div className="p-8 text-center">
                     <Bell className="mx-auto mb-2 h-12 w-12 text-slate-300 dark:text-slate-700" />
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      No notifications
+                      {t('noNotifications')}
                     </p>
                   </div>
                 )}
@@ -236,20 +241,20 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('myAccount')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
-                Profile
+                {tCommon('profile')}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {tCommon('settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600 focus:text-red-600 dark:text-red-400">
                 <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                {tCommon('logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,23 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { SkillDescriptionMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import type { SkillDescriptionMgmt } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  SORT_FIELDS, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -27,13 +34,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { SkillDescriptionForm } from '@/components/forms/skill-description-form';
+import { useTranslations } from 'next-intl';
 
 export default function SkillDescriptionListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('rank_order');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -44,12 +52,19 @@ export default function SkillDescriptionListPage() {
 
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
+
   const { data, loading, pagination, refetch } = useApiData<SkillDescriptionMgmt>(
-    ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION,
+    API_ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<SkillDescriptionMgmt>(ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
+  const { remove } = useCrud<SkillDescriptionMgmt>(API_ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
 
   const handleCreate = () => {
     setEditingDescription(null);
@@ -81,53 +96,53 @@ export default function SkillDescriptionListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<SkillDescriptionMgmt>[] = [
-    { key: 'id', label: 'ID', sortable: true },
+    { key: 'id', label: tFields('id'), sortable: true },
     { 
       key: 'skill_mgmt_id', 
-      label: 'Skill ID', 
+      label: tFields('skillId'), 
       sortable: true 
     },
     { 
       key: 'description', 
-      label: 'Description',
+      label: tFields('description'),
       render: (item) => (
         <div className="max-w-md truncate" title={item.description}>
           {item.description}
         </div>
       ),
     },
-    { key: 'rank_order', label: 'Order', sortable: true },
+    { key: 'rank_order', label: tFields('order'), sortable: true },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (item) => (
         <Badge variant={item.is_active ? 'default' : 'secondary'}>
-          {item.is_active ? 'Active' : 'Inactive'}
+          {item.is_active ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
     {
       key: 'skill_mgmt_id',
-      label: 'Skill ID',
+      label: tFields('skillId'),
       type: 'text',
-      placeholder: 'Filter by skill ID...',
+      placeholder: tCommon('search'),
     },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
         { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
@@ -136,27 +151,59 @@ export default function SkillDescriptionListPage() {
     },
     {
       key: 'is_active',
-      label: 'Active',
+      label: tCommon('active'),
       type: 'boolean',
     },
   ];
-  const searchFields: SearchField[] = [{ key: 'skill_mgmt_id', label: 'Skill ID', type: 'text' }, { key: 'description', label: 'Description', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} skill description(s)?`, confirmTitle: 'Delete Skill Descriptions' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
+  const searchFields: SearchField[] = [
+    { key: 'skill_mgmt_id', label: tFields('skillId'), type: 'text' },
+    { key: 'description', label: tFields('description'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(StatusLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' }
+  ];
+  const bulkActions: BulkAction[] = [
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { await remove(ids); refetch(); }, 
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('skillDescription').toLowerCase() }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('skillDescriptions') }) 
+    }, 
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    }, 
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    }
+  ];
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
   const handleImport = async (file: File, format: string) => { refetch(); };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Skill Description Management"
-        description="Manage skill descriptions and details"
+        title={tManagement('title', { entity: tEntities('skillDescriptions') })}
+        description={tManagement('description', { entity: tEntities('skillDescriptions').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Skill Descriptions', isActive: true },
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('skillDescriptions'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Skill Description
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('skillDescription') })}
           </Button>
         }
       />
@@ -164,7 +211,14 @@ export default function SkillDescriptionListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="skill-description-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="skill-description-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -172,11 +226,11 @@ export default function SkillDescriptionListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -205,7 +259,7 @@ export default function SkillDescriptionListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -214,9 +268,9 @@ export default function SkillDescriptionListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingDescription ? 'Edit Skill Description' : 'Create Skill Description'}</DialogTitle>
+            <DialogTitle>{editingDescription ? tCrud('editEntity', { entity: tEntities('skillDescription') }) : tCrud('createEntity', { entity: tEntities('skillDescription') })}</DialogTitle>
             <DialogDescription>
-              {editingDescription ? 'Update skill description details.' : 'Fill in the details to create a new skill description.'}
+              {editingDescription ? tCrud('editDescription', { entity: tEntities('skillDescription').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('skillDescription').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <SkillDescriptionForm
@@ -230,10 +284,10 @@ export default function SkillDescriptionListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Skill Description(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} skill description(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('skillDescriptions') })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('skillDescription').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

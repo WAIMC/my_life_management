@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/shared/hooks/use-auth";
+import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const t = useTranslations('auth');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -39,9 +41,10 @@ export default function LoginPage() {
         password: password,
       });
       // Redirect handled by useEffect
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Laravel returns { error: { code, messages } }
-      const errorMessage = error.response?.data?.error?.messages || "Invalid username or password";
+      const axiosError = error as { response?: { data?: { error?: { messages?: string } } } };
+      const errorMessage = axiosError.response?.data?.error?.messages || t('invalidCredentials');
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -52,21 +55,21 @@ export default function LoginPage() {
       <Card className="w-full max-w-md p-8 shadow-lg">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            Welcome Back
+            {t('welcomeBack')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Sign in to your account to continue
+            {t('signInDescription')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Username Field */}
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">{t('username')}</Label>
             <Input
               id="username"
               type="text"
-              placeholder="admin"
+              placeholder={t('usernamePlaceholder')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -78,11 +81,11 @@ export default function LoginPage() {
 
           {/* Password Field */}
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder={t('passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -109,17 +112,17 @@ export default function LoginPage() {
             {isLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Signing in...
+                {t('signingIn')}
               </>
             ) : (
-              "Sign In"
+              t('signIn')
             )}
           </Button>
         </form>
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-          <p>Forgot your password? Contact your administrator.</p>
+          <p>{t('forgotPassword')}</p>
         </div>
       </Card>
     </div>

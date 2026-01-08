@@ -1,0 +1,20 @@
+/**
+ * Service Modules Barrel Export
+ */
+export * from './admin.service';
+export * from './user.service';
+export * from './category.service';
+export * from './skill.service';
+export * from './banner.service';
+export * from './slider.service';
+export * from './social.service';
+export * from './feature.service';
+export * from './api.service';
+export * from './role.service';
+export * from './department.service';
+export * from './token.service';
+export * from './policy-department.service';
+export * from './setting-link.service';
+export * from './skill-description.service';
+export * from './media-file.service';
+export * from './auth.service';

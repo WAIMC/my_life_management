@@ -1,23 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { TokenMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import type { TokenMst } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  SORT_FIELDS, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -27,13 +34,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { TokenForm } from '@/components/forms/token-form';
+import { useTranslations } from 'next-intl';
 
 export default function TokenListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -44,12 +52,19 @@ export default function TokenListPage() {
 
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
+
   const { data, loading, pagination, refetch } = useApiData<TokenMst>(
-    ENDPOINTS.MASTER.TOKEN,
+    API_ENDPOINTS.MASTER.TOKEN,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<TokenMst>(ENDPOINTS.MASTER.TOKEN);
+  const { remove } = useCrud<TokenMst>(API_ENDPOINTS.MASTER.TOKEN);
 
   const handleCreate = () => {
     setEditingToken(null);
@@ -81,60 +96,96 @@ export default function TokenListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<TokenMst>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'admin_mst_id', label: 'Admin ID', sortable: true },
-    { key: 'token', label: 'Token' },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'admin_mst_id', label: tFields('adminId'), sortable: true },
+    { key: 'token', label: tFields('token') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (item) => (
         <Badge variant={item.is_active ? 'default' : 'secondary'}>
-          {item.is_active ? 'Active' : 'Inactive'}
+          {item.is_active ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'admin_mst_id', label: 'Admin ID', type: 'text', placeholder: 'Admin ID...' },
+    { key: 'admin_mst_id', label: tFields('adminId'), type: 'text', placeholder: tCommon('search') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
         { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
         { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
+    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
   ];
-  const searchFields: SearchField[] = [{ key: 'admin_mst_id', label: 'Admin ID', type: 'text' }, { key: 'token', label: 'Token', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} token(s)?`, confirmTitle: 'Delete Tokens' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
+  const searchFields: SearchField[] = [
+    { key: 'admin_mst_id', label: tFields('adminId'), type: 'text' },
+    { key: 'token', label: tFields('token'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(StatusLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' }
+  ];
+  const bulkActions: BulkAction[] = [
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { await remove(ids); refetch(); }, 
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('token').toLowerCase() }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('tokens') }) 
+    }, 
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    }, 
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    }
+  ];
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { 
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); 
+    setFilters(newFilters); 
+    setPage(PAGINATION.DEFAULT_PAGE); 
+  };
   const handleImport = async (file: File, format: string) => { refetch(); };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Token Management"
-        description="Manage system tokens"
+        title={tManagement('title', { entity: tEntities('tokens') })}
+        description={tManagement('description', { entity: tEntities('tokens').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Tokens', isActive: true },
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('tokens'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Token
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('token') })}
           </Button>
         }
       />
@@ -142,7 +193,14 @@ export default function TokenListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="token-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="token-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -150,11 +208,11 @@ export default function TokenListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -183,7 +241,7 @@ export default function TokenListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -192,9 +250,9 @@ export default function TokenListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingToken ? 'Edit Token' : 'Create Token'}</DialogTitle>
+            <DialogTitle>{editingToken ? tCrud('editEntity', { entity: tEntities('token') }) : tCrud('createEntity', { entity: tEntities('token') })}</DialogTitle>
             <DialogDescription>
-              {editingToken ? 'Update token details.' : 'Fill in the details to create a new token.'}
+              {editingToken ? tCrud('editDescription', { entity: tEntities('token').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('token').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <TokenForm
@@ -208,10 +266,10 @@ export default function TokenListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Token(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} token(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('token') })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('token').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

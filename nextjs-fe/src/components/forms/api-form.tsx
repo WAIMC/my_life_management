@@ -3,10 +3,9 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { useApiData } from '@/hooks/useApiData';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,19 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ApiMst, FeatureMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-
-const apiSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  path: z.string().min(1, 'Path is required'),
-  method: z.string().min(1, 'Method is required'),
-  description: z.string().optional(),
-  is_active: z.boolean(),
-  feature_mst_id: z.coerce.number().min(1, 'Feature is required'),
-});
-
-type ApiFormData = z.infer<typeof apiSchema>;
+import type { ApiMst, FeatureMst } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { apiSchema, type ApiFormData } from '@/shared/validation/validation';
 
 interface ApiFormProps {
   initialData?: ApiMst | null;

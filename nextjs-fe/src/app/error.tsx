@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, RotateCcw, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -13,6 +14,8 @@ interface ErrorProps {
 export default function Error({ error, reset }: ErrorProps) {
   const [showDetails, setShowDetails] = useState(false);
   const isDev = process.env.NODE_ENV === 'development';
+  const t = useTranslations('errors');
+  const tCommon = useTranslations('common');
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
@@ -31,19 +34,18 @@ export default function Error({ error, reset }: ErrorProps) {
 
         {/* Title */}
         <h2 className="mb-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Internal Server Error
+          {t('internalServerError')}
         </h2>
 
         {/* Description */}
         <p className="mb-6 text-slate-600 dark:text-slate-400">
-          Something went wrong on our end. We&apos;re working to fix the issue.
-          Please try again later or contact support if the problem persists.
+          {t('internalServerErrorDescription')}
         </p>
 
         {/* Error Message (Production) */}
         {error.message && !isDev && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
-            <p className="font-medium">Error: {error.message}</p>
+            <p className="font-medium">{t('error')}: {error.message}</p>
           </div>
         )}
 
@@ -57,7 +59,7 @@ export default function Error({ error, reset }: ErrorProps) {
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${showDetails ? 'rotate-180' : ''}`}
               />
-              {showDetails ? 'Hide' : 'Show'} Error Details (Dev Mode)
+              {showDetails ? t('hideErrorDetails') : t('showErrorDetails')}
             </button>
             {showDetails && (
               <div className="rounded-lg bg-slate-100 p-4 text-left dark:bg-slate-800">
@@ -83,24 +85,24 @@ export default function Error({ error, reset }: ErrorProps) {
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button onClick={reset} size="lg" className="gap-2">
             <RotateCcw className="h-4 w-4" />
-            Try Again
+            {tCommon('tryAgain')}
           </Button>
           <Button variant="outline" asChild size="lg" className="gap-2">
             <Link href="/admin">
               <Home className="h-4 w-4" />
-              Back to Dashboard
+              {tCommon('backToDashboard')}
             </Link>
           </Button>
         </div>
 
         {/* Support Link */}
         <div className="mt-12 text-sm text-slate-500 dark:text-slate-500">
-          Still experiencing issues?{' '}
+          {t('stillExperiencingIssues')}{' '}
           <a
             href="mailto:support@example.com"
             className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
-            Contact support
+            {tCommon('contactSupport')}
           </a>
         </div>
       </div>

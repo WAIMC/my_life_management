@@ -1,7 +1,7 @@
 'use client';
 
 import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/rootReducer';
+import { RootState } from '@/store/rootReducer';
 
 export default function Loading() {
   const isLoading = useSelector((state: RootState) => state.common.isLoading);

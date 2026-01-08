@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,27 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HistoryViewer } from '@/components/history';
-import { AvatarUpload } from '@/components/crud/avatar-upload';
-import type { UserMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, Gender } from '@/lib/types/enums';
-
-const userSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  user_name: z.string().min(3, 'Username must be at least 3 characters'),
-  password: z.string().optional(),
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  address: z.string().optional(),
-  phone_number: z.string().optional(),
-  birth: z.string().optional(),
-  gender: z.coerce.number().min(1).max(3),
-  status: z.coerce.number().min(1).max(2),
-  is_active: z.boolean(),
-});
-
-type UserFormData = z.infer<typeof userSchema>;
+import { HistoryViewer } from '@/components/features/history/history-viewer';
+import { AvatarUpload } from '@/components/common/avatar-upload';
+import type { UserMgmt } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { Status, Gender } from '@/shared/enums';
+import { userSchema, type UserFormData } from '@/shared/validation/validation';
 
 interface UserFormProps {
   initialData?: UserMgmt | null;

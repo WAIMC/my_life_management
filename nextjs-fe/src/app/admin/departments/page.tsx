@@ -1,24 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
-import type { DepartmentMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
+import type { DepartmentMst } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  SORT_FIELDS, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { DepartmentStatus, DepartmentStatusLabels } from '@/shared/enums/enums';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +34,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { DepartmentForm } from '@/components/forms/department-form';
+import { useTranslations } from 'next-intl';
 
 export default function DepartmentListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -42,14 +50,19 @@ export default function DepartmentListPage() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<DepartmentMst | null>(null);
 
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
 
   const { data, loading, pagination, refetch } = useApiData<DepartmentMst>(
-    ENDPOINTS.MASTER.DEPARTMENT,
+    API_ENDPOINTS.MASTER.DEPARTMENT,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
+  const { remove } = useCrud<DepartmentMst>(API_ENDPOINTS.MASTER.DEPARTMENT);
 
   const handleCreate = () => {
     setEditingDepartment(null);
@@ -81,90 +94,113 @@ export default function DepartmentListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<DepartmentMst>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'code', label: 'Code', sortable: true },
-    { key: 'name', label: 'Name', sortable: true },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'code', label: tFields('code'), sortable: true },
+    { key: 'name', label: tFields('name'), sortable: true },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (dept) => (
-        <Badge variant={dept.status === Status.PUBLISHED ? 'default' : 'secondary'}>
-          {StatusLabels[dept.status]}
+        <Badge variant={dept.status === DepartmentStatus.ACTIVE ? 'default' : 'secondary'}>
+          {DepartmentStatusLabels[dept.status as DepartmentStatus]}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'name', label: 'Name', type: 'text', placeholder: 'Search by name...' },
-    { key: 'code', label: 'Code', type: 'text', placeholder: 'Search by code...' },
+    { key: 'name', label: tFields('name'), type: 'text', placeholder: tCommon('search') },
+    { key: 'code', label: tFields('code'), type: 'text', placeholder: tCommon('search') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
-        { value: Status.DRAFT, label: StatusLabels[Status.DRAFT] },
-        { value: Status.PUBLISHED, label: StatusLabels[Status.PUBLISHED] },
-        { value: Status.ARCHIVED, label: StatusLabels[Status.ARCHIVED] },
+        { value: DepartmentStatus.ACTIVE.toString(), label: DepartmentStatusLabels[DepartmentStatus.ACTIVE] },
+        { value: DepartmentStatus.INACTIVE.toString(), label: DepartmentStatusLabels[DepartmentStatus.INACTIVE] },
+        { value: DepartmentStatus.DRAFT.toString(), label: DepartmentStatusLabels[DepartmentStatus.DRAFT] },
+        { value: DepartmentStatus.ARCHIVED.toString(), label: DepartmentStatusLabels[DepartmentStatus.ARCHIVED] },
       ],
     },
   ];
 
   const searchFields: SearchField[] = [
-    { key: 'name', label: 'Name', type: 'text' },
-    { key: 'code', label: 'Code', type: 'text' },
+    { key: 'name', label: tFields('name'), type: 'text' },
+    { key: 'code', label: tFields('code'), type: 'text' },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
-      options: [
-        { value: Status.DRAFT.toString(), label: StatusLabels[Status.DRAFT] },
-        { value: Status.PUBLISHED.toString(), label: StatusLabels[Status.PUBLISHED] },
-        { value: Status.ARCHIVED.toString(), label: StatusLabels[Status.ARCHIVED] },
-      ],
+      options: Object.entries(DepartmentStatusLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
     },
-    { key: 'created_at', label: 'Created Date', type: 'date' },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' },
   ];
 
   const bulkActions: BulkAction[] = [
-    { label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} department(s)?`, confirmTitle: 'Delete Departments' },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { 
+        await remove(ids); 
+        refetch(); 
+      }, 
+      confirmMessage: tCrud('deleteConfirm', { 
+        count: selectedIds.length, 
+        entity: tEntities('department').toLowerCase() 
+      }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('departments') }) 
+    },
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async () => { refetch(); } 
+    },
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async () => { refetch(); } 
+    },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
-    setAdvancedCriteria(criteria);
-    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    const newFilters = criteria.reduce(
+      (acc, c) => ({ ...acc, [c.field]: c.value }), 
+      {}
+    );
     setFilters(newFilters);
-    setPage(1);
+    setPage(PAGINATION.DEFAULT_PAGE);
   };
 
-  const handleImport = async (file: File, format: string) => {
+  const handleImport = async () => {
     refetch();
   };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Department Management"
-        description="Manage organizational departments"
+        title={tManagement('title', { entity: tEntities('departments') })}
+        description={tManagement('description', { entity: tEntities('departments').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Departments', isActive: true },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
+          { label: tEntities('departments'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate} type="button">
-            <Plus className="mr-2 h-4 w-4" /> Create New Department
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('department') })}
           </Button>
         }
       />
@@ -172,7 +208,14 @@ export default function DepartmentListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="department-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="department-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -180,11 +223,11 @@ export default function DepartmentListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -213,7 +256,7 @@ export default function DepartmentListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -222,9 +265,17 @@ export default function DepartmentListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingDepartment ? 'Edit Department' : 'Create Department'}</DialogTitle>
+            <DialogTitle>
+              {editingDepartment 
+                ? tCrud('editEntity', { entity: tEntities('department') }) 
+                : tCrud('createEntity', { entity: tEntities('department') })
+              }
+            </DialogTitle>
             <DialogDescription>
-              {editingDepartment ? 'Update department details, hierarchy, and policies.' : 'Fill in the details to create a new department.'}
+              {editingDepartment 
+                ? tCrud('editDescription', { entity: tEntities('department').toLowerCase() }) 
+                : tCrud('createDescription', { entity: tEntities('department').toLowerCase() })
+              }
             </DialogDescription>
           </DialogHeader>
           <DepartmentForm
@@ -239,10 +290,13 @@ export default function DepartmentListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Department(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} department(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('department') })}
+        description={tCrud('deleteConfirm', { 
+          count: deleteIds.length, 
+          entity: tEntities('department').toLowerCase() 
+        })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

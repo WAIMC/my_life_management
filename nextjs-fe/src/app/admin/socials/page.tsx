@@ -1,23 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { SocialMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import type { SocialMgmt } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  SORT_FIELDS, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -27,13 +34,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { SocialForm } from '@/components/forms/social-form';
+import { useTranslations } from 'next-intl';
 
 export default function SocialListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('rank_order');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -44,12 +52,19 @@ export default function SocialListPage() {
 
   const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
+
   const { data, loading, pagination, refetch } = useApiData<SocialMgmt>(
-    ENDPOINTS.MANAGEMENT.SOCIAL,
+    API_ENDPOINTS.MANAGEMENT.SOCIAL,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
+  const { remove } = useCrud<SocialMgmt>(API_ENDPOINTS.MANAGEMENT.SOCIAL);
 
   const handleCreate = () => {
     setEditingSocial(null);
@@ -81,62 +96,98 @@ export default function SocialListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<SocialMgmt>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'rank_order', label: 'Order', sortable: true },
-    { key: 'platform', label: 'Platform', sortable: true },
-    { key: 'url', label: 'URL' },
-    { key: 'icon', label: 'Icon' },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'rank_order', label: tFields('order'), sortable: true },
+    { key: 'platform', label: tFields('platform'), sortable: true },
+    { key: 'url', label: tFields('url') },
+    { key: 'icon', label: tFields('icon') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (item) => (
         <Badge variant={item.is_active ? 'default' : 'secondary'}>
-          {item.is_active ? 'Active' : 'Inactive'}
+          {item.is_active ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'platform', label: 'Platform', type: 'text', placeholder: 'Search by platform...' },
+    { key: 'platform', label: 'Platform', type: 'text', placeholder: tCommon('search') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
         { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
         { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
+    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
   ];
-  const searchFields: SearchField[] = [{ key: 'platform', label: 'Platform', type: 'text' }, { key: 'url', label: 'URL', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} social link(s)?`, confirmTitle: 'Delete Social Links' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
+  const searchFields: SearchField[] = [
+    { key: 'platform', label: 'Platform', type: 'text' },
+    { key: 'url', label: tFields('url'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(StatusLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' }
+  ];
+  const bulkActions: BulkAction[] = [
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { await remove(ids); refetch(); }, 
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('social').toLowerCase() }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('socials') }) 
+    }, 
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    }, 
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async (ids) => { refetch(); } 
+    }
+  ];
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { 
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); 
+    setFilters(newFilters); 
+    setPage(PAGINATION.DEFAULT_PAGE); 
+  };
   const handleImport = async (file: File, format: string) => { refetch(); };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Social Management"
-        description="Manage social media links"
+        title={tManagement('title', { entity: tEntities('socials') })}
+        description={tManagement('description', { entity: tEntities('socials').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Socials', isActive: true },
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('socials'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Social Link
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('social') })}
           </Button>
         }
       />
@@ -144,7 +195,14 @@ export default function SocialListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="social-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="social-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -152,11 +210,11 @@ export default function SocialListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -185,7 +243,7 @@ export default function SocialListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -194,9 +252,9 @@ export default function SocialListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingSocial ? 'Edit Social Link' : 'Create Social Link'}</DialogTitle>
+            <DialogTitle>{editingSocial ? tCrud('editEntity', { entity: tEntities('social') }) : tCrud('createEntity', { entity: tEntities('social') })}</DialogTitle>
             <DialogDescription>
-              {editingSocial ? 'Update social link details.' : 'Fill in the details to create a new social link.'}
+              {editingSocial ? tCrud('editDescription', { entity: tEntities('social').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('social').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <SocialForm
@@ -210,10 +268,10 @@ export default function SocialListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Social Link(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} social link(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('social') })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('social').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

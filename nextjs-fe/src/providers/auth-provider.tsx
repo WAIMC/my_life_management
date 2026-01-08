@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { AuthContext } from "@/contexts/auth-context";
-import { authService } from "@/services/auth.service";
+import { AuthContext } from "@/providers/auth-context";
+import { authService } from "@/shared/services/modules/auth.service";
 import {
   AUTH_CHANNEL_NAME,
   AuthMessage,
   LoginSuccessPayload,
   RefreshSuccessPayload,
-} from "@/lib/broadcast";
+} from "@/shared/utils/notification";
 import { useRouter } from "next/navigation";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

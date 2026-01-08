@@ -1,24 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { BannerMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
+import type { BannerMgmt } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { 
+  SORT_ORDER, 
+  type SortOrder, 
+  PAGINATION, 
+  ADMIN_ROUTES 
+} from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import Image from 'next/image';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -28,13 +34,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { BannerForm } from '@/components/forms/banner-form';
+import { useTranslations } from 'next-intl';
 
 export default function BannerListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('rank_order');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -43,14 +50,19 @@ export default function BannerListPage() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<BannerMgmt | null>(null);
 
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
 
   const { data, loading, pagination, refetch } = useApiData<BannerMgmt>(
-    ENDPOINTS.MANAGEMENT.BANNER,
+    API_ENDPOINTS.MANAGEMENT.BANNER,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
+  const { remove } = useCrud<BannerMgmt>(API_ENDPOINTS.MANAGEMENT.BANNER);
 
   const handleCreate = () => {
     setEditingBanner(null);
@@ -82,23 +94,23 @@ export default function BannerListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<BannerMgmt>[] = [
-    { key: 'id', label: 'ID', sortable: true },
+    { key: 'id', label: tFields('id'), sortable: true },
     {
-      key: 'image_url',
-      label: 'Image',
+      key: 'image',
+      label: tFields('image'),
       render: (banner) => (
         <div className="relative w-20 h-12 rounded overflow-hidden">
-          {banner.image_url ? (
+          {banner.image ? (
             <Image
-              src={banner.image_url}
+              src={banner.image}
               alt={banner.title}
               fill
               className="object-cover"
@@ -106,84 +118,129 @@ export default function BannerListPage() {
             />
           ) : (
             <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-400">
-              No image
+              {tCommon('noImage')}
             </div>
           )}
         </div>
       ),
     },
-    { key: 'title', label: 'Title', sortable: true },
+    { key: 'title', label: tFields('title'), sortable: true },
     { 
-      key: 'link_url', 
-      label: 'Link',
-      render: (banner) => (
-        banner.link_url ? (
+      key: 'link', 
+      label: tFields('link'),
+      render: (banner) => {
+        if (!banner.link) {
+          return <span className="text-gray-400">-</span>;
+        }
+        return (
           <a 
-            href={banner.link_url} 
+            href={banner.link} 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline truncate max-w-xs block"
           >
-            {banner.link_url}
+            {banner.link}
           </a>
-        ) : (
-          <span className="text-gray-400">-</span>
-        )
-      ),
+        );
+      },
     },
-    { key: 'rank_order', label: 'Order', sortable: true },
+    { key: 'rank_order', label: tFields('order'), sortable: true },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (banner) => (
-        <Badge variant={banner.is_active ? 'default' : 'secondary'}>
-          {banner.is_active ? 'Active' : 'Inactive'}
+        <Badge variant={banner.status === IsActive.TRUE ? 'default' : 'secondary'}>
+          {banner.status === IsActive.TRUE ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
     {
       key: 'title',
-      label: 'Title',
+      label: tFields('title'),
       type: 'text',
-      placeholder: 'Search by title...',
+      placeholder: tCommon('search'),
     },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
+        { value: IsActive.TRUE.toString(), label: IsActiveLabels[IsActive.TRUE] },
+        { value: IsActive.FALSE.toString(), label: IsActiveLabels[IsActive.FALSE] },
       ],
     },
-    {
-      key: 'is_active',
-      label: 'Active',
-      type: 'boolean',
-    },
   ];
-  const searchFields: SearchField[] = [{ key: 'title', label: 'Title', type: 'text' }, { key: 'link_url', label: 'Link', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} banner(s)?`, confirmTitle: 'Delete Banners' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (file: File, format: string) => { refetch(); };
+  const searchFields: SearchField[] = [
+    { key: 'title', label: tFields('title'), type: 'text' },
+    { key: 'link', label: tFields('link'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(IsActiveLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' }
+  ];
+  const bulkActions: BulkAction[] = [
+    { 
+      label: tBulkActions('deleteSelected'), 
+      icon: <Trash2 className="h-4 w-4" />, 
+      variant: 'destructive', 
+      onClick: async (ids) => { 
+        await remove(ids); 
+        refetch(); 
+      }, 
+      confirmMessage: tCrud('deleteConfirm', { 
+        count: selectedIds.length, 
+        entity: tEntities('banner').toLowerCase() 
+      }), 
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('banners') }) 
+    }, 
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async () => { refetch(); } 
+    }, 
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async () => { refetch(); } 
+    }
+  ];
+
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce(
+      (acc, c) => ({ ...acc, [c.field]: c.value }), 
+      {}
+    );
+    setFilters(newFilters);
+    setPage(PAGINATION.DEFAULT_PAGE);
+  };
+
+  const handleImport = async () => { 
+    refetch(); 
+  };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Banner Management"
-        description="Manage website banners and promotional images"
+        title={tManagement('title', { entity: tEntities('banners') })}
+        description={tManagement('description', { entity: tEntities('banners').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Banners', isActive: true },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
+          { label: tEntities('banners'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Banner
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('banner') })}
           </Button>
         }
       />
@@ -191,7 +248,14 @@ export default function BannerListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="banner-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="banner-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -199,11 +263,11 @@ export default function BannerListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -232,7 +296,7 @@ export default function BannerListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
@@ -241,9 +305,17 @@ export default function BannerListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingBanner ? 'Edit Banner' : 'Create Banner'}</DialogTitle>
+            <DialogTitle>
+              {editingBanner 
+                ? tCrud('editEntity', { entity: tEntities('banner') }) 
+                : tCrud('createEntity', { entity: tEntities('banner') })
+              }
+            </DialogTitle>
             <DialogDescription>
-              {editingBanner ? 'Update banner details and image.' : 'Fill in the details to create a new banner.'}
+              {editingBanner 
+                ? tCrud('editDescription', { entity: tEntities('banner').toLowerCase() }) 
+                : tCrud('createDescription', { entity: tEntities('banner').toLowerCase() })
+              }
             </DialogDescription>
           </DialogHeader>
           <BannerForm
@@ -257,10 +329,13 @@ export default function BannerListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Banner(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} banner(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('banner') })}
+        description={tCrud('deleteConfirm', { 
+          count: deleteIds.length, 
+          entity: tEntities('banner').toLowerCase() 
+        })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

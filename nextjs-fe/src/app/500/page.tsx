@@ -1,10 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ServerCrash, Home, RotateCcw } from 'lucide-react';
+import { SUPPORT_EMAIL } from '@/shared/constants';
 
 export default function ServerErrorPage() {
+  const t = useTranslations('errors');
+  const tCommon = useTranslations('common');
+
   const handleRetry = () => {
     window.location.reload();
   };
@@ -26,36 +31,36 @@ export default function ServerErrorPage() {
 
         {/* Title */}
         <h2 className="mb-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Internal Server Error
+          {t('internalServerError')}
         </h2>
 
         {/* Description */}
         <p className="mb-6 text-slate-600 dark:text-slate-400">
-          Đã xảy ra lỗi từ phía server. Vui lòng thử lại sau hoặc liên hệ hỗ trợ nếu vấn đề vẫn tiếp diễn.
+          {t('internalServerErrorDescription')}
         </p>
 
         {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button onClick={handleRetry} size="lg" className="gap-2">
             <RotateCcw className="h-4 w-4" />
-            Thử lại
+            {tCommon('tryAgain')}
           </Button>
           <Button variant="outline" asChild size="lg" className="gap-2">
             <Link href="/admin">
               <Home className="h-4 w-4" />
-              Về trang chủ
+              {tCommon('backToDashboard')}
             </Link>
           </Button>
         </div>
 
         {/* Support Link */}
         <div className="mt-12 text-sm text-slate-500 dark:text-slate-500">
-          Vẫn gặp vấn đề?{' '}
+          {t('stillExperiencingIssues')}{' '}
           <a
-            href="mailto:support@example.com"
+            href={`mailto:${SUPPORT_EMAIL}`}
             className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
-            Liên hệ hỗ trợ
+            {tCommon('contactSupport')}
           </a>
         </div>
       </div>

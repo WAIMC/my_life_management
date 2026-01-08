@@ -3,8 +3,12 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function NotFound() {
+  const t = useTranslations('errors');
+  const tCommon = useTranslations('common');
+
   const handleGoBack = () => {
     if (typeof window !== 'undefined') {
       window.history.back();
@@ -28,13 +32,12 @@ export default function NotFound() {
 
         {/* Title */}
         <h2 className="mb-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Page Not Found
+          {t('pageNotFound')}
         </h2>
 
         {/* Description */}
         <p className="mb-8 text-slate-600 dark:text-slate-400">
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
-          Please check the URL or return to the homepage.
+          {t('pageNotFoundDescription')}
         </p>
 
         {/* Actions */}
@@ -42,7 +45,7 @@ export default function NotFound() {
           <Button asChild size="lg" className="gap-2">
             <Link href="/admin">
               <Home className="h-4 w-4" />
-              Back to Dashboard
+              {tCommon('backToDashboard')}
             </Link>
           </Button>
           <Button 
@@ -52,18 +55,18 @@ export default function NotFound() {
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Go Back
+            {tCommon('goBack')}
           </Button>
         </div>
 
         {/* Helpful Links */}
         <div className="mt-12 text-sm text-slate-500 dark:text-slate-500">
-          Need help? Contact{' '}
+          {t('needHelp')}{' '}
           <a
             href="mailto:support@example.com"
             className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
-            support
+            {tCommon('support')}
           </a>
         </div>
       </div>

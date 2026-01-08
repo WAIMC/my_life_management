@@ -3,15 +3,13 @@
 import { useEffect } from 'react';
 import "./globals.css";
 import { Providers } from './providers';
+import { useTranslations } from 'next-intl';
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  // Client-side metadata management
+function MetadataManager() {
+  const t = useTranslations('metadata');
+
   useEffect(() => {
-    document.title = "Admin Dashboard";
+    document.title = t('title');
     
     // Add or update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
@@ -20,13 +18,24 @@ export default function RootLayout({
       metaDescription.setAttribute('name', 'description');
       document.head.appendChild(metaDescription);
     }
-    metaDescription.setAttribute('content', 'My Personal Blog Admin Dashboard');
-  }, []);
+    metaDescription.setAttribute('content', t('description'));
+  }, [t]);
 
+  return null;
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <MetadataManager />
+          {children}
+        </Providers>
       </body>
     </html>
   );

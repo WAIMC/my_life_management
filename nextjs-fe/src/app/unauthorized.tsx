@@ -3,8 +3,13 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Lock, Home, LogIn } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function Unauthorized() {
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
       <div className="mx-auto max-w-md px-4 text-center">
@@ -17,18 +22,17 @@ export default function Unauthorized() {
 
         {/* Error Code */}
         <h1 className="mb-4 text-8xl font-bold text-slate-900 dark:text-white">
-          401
+          {tErrors('errorCode')}
         </h1>
 
         {/* Title */}
         <h2 className="mb-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Unauthorized Access
+          {t('unauthorized')}
         </h2>
 
         {/* Description */}
         <p className="mb-8 text-slate-600 dark:text-slate-400">
-          You don&apos;t have permission to access this resource. Please sign in
-          with an authorized account or contact your administrator for access.
+          {t('unauthorizedDescription')}
         </p>
 
         {/* Actions */}
@@ -36,13 +40,13 @@ export default function Unauthorized() {
           <Button asChild size="lg" className="gap-2">
             <Link href="/login">
               <LogIn className="h-4 w-4" />
-              Sign In
+              {tCommon('signIn')}
             </Link>
           </Button>
           <Button variant="outline" asChild size="lg" className="gap-2">
             <Link href="/">
               <Home className="h-4 w-4" />
-              Go Home
+              {tCommon('goHome')}
             </Link>
           </Button>
         </div>
@@ -51,15 +55,15 @@ export default function Unauthorized() {
         <div className="mt-12 rounded-lg bg-slate-100 p-4 dark:bg-slate-800">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             <strong className="font-semibold text-slate-900 dark:text-slate-200">
-              Need access?
+              {tCommon('needAccess')}
             </strong>
             <br />
-            Contact your system administrator or{' '}
+            {t('contactAdmin')}{' '}
             <a
               href="mailto:admin@example.com"
               className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              request permissions
+              {tCommon('requestPermissions')}
             </a>
           </p>
         </div>

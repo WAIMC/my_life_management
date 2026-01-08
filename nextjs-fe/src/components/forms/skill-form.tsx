@@ -3,9 +3,8 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,21 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HistoryViewer } from '@/components/history';
-import type { SkillMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status } from '@/lib/types/enums';
-
-const skillSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
-  status: z.coerce.number().min(1).max(2),
-  is_active: z.boolean(),
-});
-
-type SkillFormData = z.infer<typeof skillSchema>;
+import { HistoryViewer } from '@/components/features/history/history-viewer';
+import type { SkillMgmt } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { Status } from '@/shared/enums';
+import { skillSchema, type SkillFormData } from '@/shared/validation/validation';
 
 interface SkillFormProps {
   initialData?: SkillMgmt | null;

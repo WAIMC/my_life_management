@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { useJunctionTable } from '@/hooks/useJunctionTable';
-import { handleBindErrors } from '@/lib/utils/error-handler';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { useJunctionTable } from '@/shared/hooks/useJunctionTable';
+import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,21 +19,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { JunctionManager } from '@/components/junction/junction-manager';
-import type { CategoryMgmt, SkillMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status } from '@/lib/types/enums';
-
-const categorySchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
-  status: z.coerce.number().min(1).max(2),
-  is_active: z.boolean(),
-});
-
-type CategoryFormData = z.infer<typeof categorySchema>;
+// import { JunctionManager } from '@/components/features/junction/junction-manager';
+import type { CategoryMgmt, SkillMgmt } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { CategoryStatus, CategoryStatusLabels } from '@/shared/enums';
+import { categorySchema, type CategoryFormData } from '@/shared/validation/validation';
 
 interface CategoryFormProps {
   initialData?: CategoryMgmt | null;
@@ -66,7 +56,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
     resolver: zodResolver(categorySchema),
     defaultValues: {
       rank_order: 0,
-      status: Status.ACTIVE,
+      status: CategoryStatus.ACTIVE,
       is_active: true,
     },
   });
@@ -87,7 +77,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         description: '',
         icon: '',
         rank_order: 0,
-        status: Status.ACTIVE,
+        status: CategoryStatus.ACTIVE,
         is_active: true,
       });
     }
@@ -214,7 +204,9 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       </TabsContent>
 
       <TabsContent value="skills" className="mt-4">
-        <JunctionManager
+        {/* TODO: Restore JunctionManager when component is available */}
+        <div className="text-muted-foreground">Skills management will be available soon.</div>
+        {/* <JunctionManager
           allItems={skillJunction.allItems}
           selectedIds={skillJunction.selectedIds}
           onSelectionChange={skillJunction.setSelectedIds}
@@ -224,7 +216,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
           title="Manage Category Skills"
           itemLabel="skills"
           searchPlaceholder="Search skills..."
-        />
+        /> */}
       </TabsContent>
     </Tabs>
   );

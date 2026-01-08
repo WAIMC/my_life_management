@@ -1,23 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { UserMgmt } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels, Gender, GenderLabels } from '@/lib/types/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import type { UserMgmt } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder } from '@/shared/constants';
+import { IsActive, IsActiveLabels, Gender, GenderLabels } from '@/shared/enums';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -27,13 +28,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { UserForm } from '@/components/forms/user-form';
+import { useTranslations } from 'next-intl';
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -42,14 +44,19 @@ export default function UsersPage() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserMgmt | null>(null);
 
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
 
   const { data, loading, pagination, refetch } = useApiData<UserMgmt>(
-    ENDPOINTS.MANAGEMENT.USER,
+    API_ENDPOINTS.MANAGEMENT.USER,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+  const { remove } = useCrud<UserMgmt>(API_ENDPOINTS.MANAGEMENT.USER);
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -81,48 +88,48 @@ export default function UsersPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<UserMgmt>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'user_name', label: 'Username', sortable: true },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'user_name', label: tFields('username'), sortable: true },
     {
       key: 'first_name',
-      label: 'Name',
+      label: tFields('name'),
       sortable: true,
       render: (user) => `${user.first_name} ${user.last_name}`,
     },
-    { key: 'email', label: 'Email', sortable: true },
+    { key: 'email', label: tFields('email'), sortable: true },
     {
       key: 'gender',
-      label: 'Gender',
-      render: (user) => GenderLabels[user.gender as Gender] || 'Unknown',
+      label: tFields('gender'),
+      render: (user) => GenderLabels[user.gender as Gender] || tCommon('unknown'),
     },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (user) => (
         <Badge variant={user.is_active ? 'default' : 'secondary'}>
-          {user.is_active ? 'Active' : 'Inactive'}
+          {user.is_active ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'user_name', label: 'Username', type: 'text', placeholder: 'Search by username...' },
-    { key: 'email', label: 'Email', type: 'text', placeholder: 'Search by email...' },
-    { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'Search by first name...' },
+    { key: 'user_name', label: tFields('username'), type: 'text' },
+    { key: 'email', label: tFields('email'), type: 'text' },
+    { key: 'first_name', label: tFields('firstName'), type: 'text' },
     {
       key: 'gender',
-      label: 'Gender',
+      label: tFields('gender'),
       type: 'select',
       options: [
         { value: Gender.MALE, label: GenderLabels[Gender.MALE] },
@@ -132,32 +139,74 @@ export default function UsersPage() {
     },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       type: 'select',
       options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
+        { value: IsActive.TRUE, label: IsActiveLabels[IsActive.TRUE] },
+        { value: IsActive.FALSE, label: IsActiveLabels[IsActive.FALSE] },
       ],
     },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
   ];
-  const searchFields: SearchField[] = [{ key: 'user_name', label: 'Username', type: 'text' }, { key: 'email', label: 'Email', type: 'text' }, { key: 'first_name', label: 'Name', type: 'text' }, { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] }, { key: 'created_at', label: 'Created Date', type: 'date' }];
-  const bulkActions: BulkAction[] = [{ label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} user(s)?`, confirmTitle: 'Delete Users' }, { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }, { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } }];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (file: File, format: string) => { refetch(); };
+
+  const searchFields: SearchField[] = [
+    { key: 'user_name', label: tFields('username'), type: 'text' },
+    { key: 'email', label: tFields('email'), type: 'text' },
+    { key: 'first_name', label: tFields('name'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(IsActiveLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' },
+  ];
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: tBulkActions('deleteSelected'),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive',
+      onClick: async (_ids) => { await remove(_ids); refetch(); },
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('user').toLowerCase() }),
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('users') }),
+    },
+    {
+      label: tBulkActions('activateSelected'),
+      icon: <CheckCircle className="h-4 w-4" />,
+      onClick: async (_ids) => { refetch(); },
+    },
+    {
+      label: tBulkActions('deactivateSelected'),
+      icon: <XCircle className="h-4 w-4" />,
+      onClick: async (_ids) => { refetch(); },
+    },
+  ];
+
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    setFilters(newFilters);
+    setPage(1);
+  };
+
+  const handleImport = async (_file: File, _format: string) => {
+    refetch();
+  };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Users Management"
-        description="Manage all users in your system"
+        title={tManagement('title', { entity: tEntities('users') })}
+        description={tManagement('description', { entity: tEntities('users').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Users', isActive: true },
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('users'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create User
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('user') })}
           </Button>
         }
       />
@@ -215,9 +264,9 @@ export default function UsersPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
+            <DialogTitle>{editingUser ? tCrud('editEntity', { entity: tEntities('user') }) : tCrud('createEntity', { entity: tEntities('user') })}</DialogTitle>
             <DialogDescription>
-              {editingUser ? 'Update user profile and settings.' : 'Fill in the details to create a new user.'}
+              {editingUser ? tCrud('editDescription', { entity: tEntities('user').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('user').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <UserForm
@@ -231,10 +280,10 @@ export default function UsersPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete User(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} user(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('user') + '(s)' })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('user').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

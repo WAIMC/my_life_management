@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useCrud } from '@/hooks/useCrud';
-import { handleBindErrors } from '@/lib/utils/error-handler';
-import { formatDateForBackend, formatDateForInput } from '@/lib/utils/date-formatter';
+import { useCrud } from '@/shared/hooks/useCrud';
+import { handleBindErrors } from '@/shared/utils/error-handler';
+import { formatDateForBackend, formatDateForInput } from '@/shared/utils/date-formatter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,35 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AvatarUpload } from '@/components/crud/avatar-upload';
-import type { AdminMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { AdminStatus, Gender } from '@/lib/types/enums';
-
-const adminSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  user_name: z.string().min(3, 'Username must be at least 3 characters'),
-  password: z.string().optional(),
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  address: z.string().optional(),
-  phone_number: z.string().optional(),
-  birth: z.string().optional(),
-  gender: z.coerce.number(),
-  status: z.coerce.number().min(0),
-  is_active: z.boolean(),
-  avatar: z.string().optional(),
-}).refine((data) => {
-  // Password is required for new users
-  if (!data.password && !data.avatar) { // Checking if it's new (no ID available in schema, but passed in props)
-    // We can't easily check for "isNew" inside refine without context.
-    // For now, let's handle password validation in the component or assume optional is fine for update and we'll manually check create.
-    return true; 
-  }
-  return true;
-});
-
-type AdminFormData = z.infer<typeof adminSchema>;
+import { AvatarUpload } from '@/components/common/avatar-upload';
+import type { AdminMst } from '@/shared/types/api';
+import { ENDPOINTS } from '@/shared/api';
+import { AdminStatus, Gender } from '@/shared/enums';
+import { adminSchema, type AdminFormData } from '@/shared/validation/validation';
 
 interface AdminFormProps {
   initialData?: AdminMst | null;

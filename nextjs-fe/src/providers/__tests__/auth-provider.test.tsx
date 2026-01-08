@@ -1,7 +1,7 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { AuthProvider } from "../auth-provider";
-import { authService } from "@/services/auth.service";
-import { useAuth } from "@/hooks/use-auth";
+import { authService } from "@/shared/services/modules/auth.service";
+import { useAuth } from "@/shared/hooks/use-auth";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import React from "react";
 

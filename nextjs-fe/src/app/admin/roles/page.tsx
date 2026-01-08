@@ -1,24 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiData } from '@/hooks/useApiData';
-import { useCrud } from '@/hooks/useCrud';
+import { useApiData } from '@/shared/hooks/useApiData';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
-import { DataTable, type Column } from '@/components/data-table/data-table';
-import { Pagination } from '@/components/data-table/pagination';
-import { FilterPanel, type FilterField } from '@/components/data-table/filter-panel';
+import { DataTable, type Column } from '@/components/common/data-table/data-table';
+import { Pagination } from '@/components/common/data-table/pagination';
+import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/advanced/advanced-search';
-import { SavedFilters } from '@/components/advanced/saved-filters';
-import { BulkActions, type BulkAction } from '@/components/crud/bulk-actions';
-import { ImportExport } from '@/components/crud/import-export';
+import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { SavedFilters } from '@/components/common/saved-filters';
+import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
+import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
-import type { RoleMst } from '@/lib/types/api';
-import { ENDPOINTS } from '@/constants/api-endpoints';
-import { Status, StatusLabels } from '@/lib/types/enums';
+import type { RoleMst } from '@/shared/types/api';
+import { API_ENDPOINTS } from '@/shared/api';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder } from '@/shared/constants';
+import { IsActive, IsActiveLabels } from '@/shared/enums';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +28,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RoleForm } from '@/components/forms/role-form';
+import { useTranslations } from 'next-intl';
 
 export default function RoleListPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Dialog states
@@ -42,14 +44,19 @@ export default function RoleListPage() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<RoleMst | null>(null);
 
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
+  const tCommon = useTranslations('common');
+  const tEntities = useTranslations('entities');
+  const tFields = useTranslations('fields');
+  const tManagement = useTranslations('management');
+  const tCrud = useTranslations('crud');
+  const tBulkActions = useTranslations('bulkActions');
 
   const { data, loading, pagination, refetch } = useApiData<RoleMst>(
-    ENDPOINTS.MASTER.ROLE,
+    API_ENDPOINTS.MASTER.ROLE,
     { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
   );
 
-  const { remove } = useCrud<RoleMst>(ENDPOINTS.MASTER.ROLE);
+  const { remove } = useCrud<RoleMst>(API_ENDPOINTS.MASTER.ROLE);
 
   const handleCreate = () => {
     setEditingRole(null);
@@ -81,80 +88,85 @@ export default function RoleListPage() {
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC);
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder(SORT_ORDER.ASC);
     }
   };
 
   const columns: Column<RoleMst>[] = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'description', label: 'Description' },
+    { key: 'id', label: tFields('id'), sortable: true },
+    { key: 'name', label: tFields('name'), sortable: true },
+    { key: 'description', label: tFields('description') },
     {
       key: 'status',
-      label: 'Status',
+      label: tFields('status'),
       sortable: true,
       render: (role) => (
         <Badge variant={role.is_active ? 'default' : 'secondary'}>
-          {role.is_active ? 'Active' : 'Inactive'}
+          {role.is_active ? tCommon('active') : tCommon('inactive')}
         </Badge>
       ),
     },
-    { key: 'updated_at', label: 'Updated', sortable: true },
+    { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'name', label: 'Name', type: 'text', placeholder: 'Search by name...' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
-      ],
-    },
-    { key: 'is_active', label: 'Active', type: 'boolean' },
+    { key: 'name', label: tFields('name'), type: 'text' },
+    { key: 'is_active', label: tFields('status'), type: 'boolean' },
   ];
 
   const searchFields: SearchField[] = [
-    { key: 'name', label: 'Name', type: 'text' },
-    { key: 'description', label: 'Description', type: 'text' },
-    { key: 'status', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '2', label: 'Inactive' }] },
-    { key: 'created_at', label: 'Created Date', type: 'date' },
+    { key: 'name', label: tFields('name'), type: 'text' },
+    { key: 'description', label: tFields('description'), type: 'text' },
+    {
+      key: 'status',
+      label: tFields('status'),
+      type: 'select',
+      options: Object.entries(IsActiveLabels).map(([value, label]) => ({
+        value: value.toString(),
+        label
+      }))
+    },
+    { key: 'created_at', label: tFields('createdAt'), type: 'date' },
   ];
 
   const bulkActions: BulkAction[] = [
-    { label: 'Delete Selected', icon: <Trash2 className="h-4 w-4" />, variant: 'destructive', onClick: async (ids) => { await remove(ids); refetch(); }, confirmMessage: `Delete ${selectedIds.length} role(s)?`, confirmTitle: 'Delete Roles' },
-    { label: 'Activate Selected', icon: <CheckCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
-    { label: 'Deactivate Selected', icon: <XCircle className="h-4 w-4" />, onClick: async (ids) => { refetch(); } },
+    {
+      label: tBulkActions('deleteSelected'),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive',
+      onClick: async (_ids) => { await remove(_ids); refetch(); },
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('role').toLowerCase() }),
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('roles') }),
+    },
+    { label: tBulkActions('activateSelected'), icon: <CheckCircle className="h-4 w-4" />, onClick: async (_ids) => { refetch(); } },
+    { label: tBulkActions('deactivateSelected'), icon: <XCircle className="h-4 w-4" />, onClick: async (_ids) => { refetch(); } },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
-    setAdvancedCriteria(criteria);
     const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
     setFilters(newFilters);
     setPage(1);
   };
 
-  const handleImport = async (file: File, format: string) => {
+  const handleImport = async (_file: File, _format: string) => {
     refetch();
   };
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Role Management"
-        description="Manage user roles and permissions"
+        title={tManagement('title', { entity: tEntities('roles') })}
+        description={tManagement('description', { entity: tEntities('roles').toLowerCase() })}
         breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Roles', isActive: true },
+          { label: tCommon('admin'), href: '/admin' },
+          { label: tEntities('roles'), isActive: true },
         ]}
         action={
           <Button onClick={handleCreate} type="button">
-            <Plus className="mr-2 h-4 w-4" /> Create New Role
+            <Plus className="mr-2 h-4 w-4" /> {tCrud('createEntity', { entity: tEntities('role') })}
           </Button>
         }
       />
@@ -212,9 +224,9 @@ export default function RoleListPage() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingRole ? 'Edit Role' : 'Create Role'}</DialogTitle>
+            <DialogTitle>{editingRole ? tCrud('editEntity', { entity: tEntities('role') }) : tCrud('createEntity', { entity: tEntities('role') })}</DialogTitle>
             <DialogDescription>
-              {editingRole ? 'Update role details and history.' : 'Fill in the details to create a new role.'}
+              {editingRole ? tCrud('editDescription', { entity: tEntities('role').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('role').toLowerCase() })}
             </DialogDescription>
           </DialogHeader>
           <RoleForm
@@ -229,10 +241,10 @@ export default function RoleListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Role(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} role(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('role') + '(s)' })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('role').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

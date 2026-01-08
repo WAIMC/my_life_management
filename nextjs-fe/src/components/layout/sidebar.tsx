@@ -1,23 +1,25 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/shared/hooks/use-auth";
 import { LogOut, Menu, X, ChevronDown } from "lucide-react";
-import { NAVIGATION_MENU, isRouteActive } from "@/constants/navigation";
+import { NAVIGATION_MENU, isRouteActive } from "@/shared/config/navigation";
+import { useTranslations } from 'next-intl';
 
 export function Sidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const tCommon = useTranslations('common');
 
-  const toggleMenu = (label: string) => {
-    setExpandedMenu(expandedMenu === label ? null : label);
-  };
+  const toggleMenu = useCallback((label: string) => {
+    setExpandedMenu((prev) => prev === label ? null : label);
+  }, []);
 
   const closeSidebar = () => setIsOpen(false);
 
@@ -100,7 +102,7 @@ export function Sidebar() {
           )}
         </div>
       )),
-    [pathname, expandedMenu]
+    [pathname, expandedMenu, toggleMenu]
   );
 
   return (
@@ -128,7 +130,7 @@ export function Sidebar() {
         {/* Logo/Brand */}
         <div className="flex items-center justify-center border-b border-slate-200 px-6 py-6 dark:border-slate-800">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Admin
+            {tCommon('admin')}
           </h1>
         </div>
 
@@ -145,7 +147,7 @@ export function Sidebar() {
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
-            Logout
+            {tCommon('logout')}
           </Button>
         </div>
       </aside>
