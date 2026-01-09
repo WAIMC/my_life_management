@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { FileManagerContent } from '@/components/common/file-manager/file-manager-content';
 import { useTranslations } from 'next-intl';
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 export default function FileManagerPage() {
   const tCommon = useTranslations('common');
@@ -17,7 +18,7 @@ export default function FileManagerPage() {
         title={tManagement('title', { entity: tEntities('fileManager') })}
         description={tManagement('description', { entity: tEntities('fileManager').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('fileManager'), isActive: true }
         ]}
       />

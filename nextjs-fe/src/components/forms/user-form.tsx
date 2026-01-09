@@ -1,8 +1,10 @@
 'use client';
+'use no memo';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { format } from 'date-fns';
@@ -22,33 +24,31 @@ import { HistoryViewer } from '@/components/features/history/history-viewer';
 import { AvatarUpload } from '@/components/common/avatar-upload';
 import type { UserMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status, Gender } from '@/shared/enums';
+import { IsActive, Gender } from '@/shared/enums';
 import { userSchema, type UserFormData } from '@/shared/validation/validation';
-
-interface UserFormProps {
-  initialData?: UserMgmt | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { UserFormProps } from './types';
 
 export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
+  const tCommon = useTranslations('common');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(() => initialData?.avatar || null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
+    setError,
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       gender: Gender.MALE,
-      status: Status.ACTIVE,
+      status: IsActive.TRUE,
       is_active: true,
     },
   });
@@ -68,9 +68,6 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         is_active: initialData.is_active,
         password: '',
       });
-      if (initialData.avatar) {
-        setAvatarPreview(initialData.avatar);
-      }
     } else {
       reset({
         email: '',
@@ -81,18 +78,16 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         phone_number: '',
         birth: '',
         gender: Gender.MALE,
-        status: Status.ACTIVE,
+        status: IsActive.TRUE,
         is_active: true,
         password: '',
       });
-      setAvatarPreview(null);
-      setAvatarFile(null);
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: UserFormData) => {
     try {
-      const payload: any = { ...data };
+      const payload = { ...data };
       
       if (isEdit && (!data.password || data.password === '')) {
         delete payload.password;
@@ -115,11 +110,15 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const genderValue = useWatch({ control, name: 'gender' });
+  const statusValue = useWatch({ control, name: 'status' });
 
   const FormContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -251,8 +250,8 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         <div className="space-y-2">
           <Label htmlFor="gender">Gender <span className="text-red-500">*</span></Label>
           <Select
-            value={watch('gender')?.toString()}
-            onValueChange={(value) => setValue('gender', Number(value) as any)}
+            value={genderValue?.toString()}
+            onValueChange={(value) => setValue('gender', Number(value) as Gender)}
           >
             <SelectTrigger>
               <SelectValue />
@@ -270,15 +269,15 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
+            value={statusValue?.toString()}
+            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
+              <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -296,10 +295,10 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

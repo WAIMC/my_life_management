@@ -1,53 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { FieldRenderer, type FieldConfig } from './field-renderer';
+import { FieldRenderer } from './field-renderer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { useTranslations } from 'next-intl';
+import type { FormBuilderProps, FieldConfig } from '@/shared/types/data-table.types';
 
-export type FormLayout = 'single' | 'two-column' | 'tabs';
-
-export interface FormSection {
-  title: string;
-  description?: string;
-  fields: FieldConfig[];
-}
-
-export interface FormSchema {
-  title?: string;
-  description?: string;
-  layout?: FormLayout;
-  sections?: FormSection[]; // For tabs layout
-  fields?: FieldConfig[]; // For single/two-column layout
-}
-
-interface FormBuilderProps {
-  schema: FormSchema;
-  initialValues?: Record<string, any>;
-  onSubmit: (values: Record<string, any>) => void | Promise<void>;
-  onCancel?: () => void;
-  submitLabel?: string;
-  cancelLabel?: string;
-  isLoading?: boolean;
-  className?: string;
-}
+export type { FormLayout, FormSection, FormSchema } from '@/shared/types/data-table.types';
 
 export function FormBuilder({
   schema,
   initialValues = {},
   onSubmit,
   onCancel,
-  submitLabel = 'Save',
-  cancelLabel = 'Cancel',
+  submitLabel,
+  cancelLabel,
   isLoading = false,
   className,
 }: FormBuilderProps) {
-  const [values, setValues] = useState<Record<string, any>>(initialValues);
+  const t = useTranslations('validation');
+  const tCommon = useTranslations('common');
+  const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleFieldChange = (fieldName: string, value: any) => {
+  const handleFieldChange = (fieldName: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [fieldName]: value }));
     // Clear error when user starts typing
     if (errors[fieldName]) {
@@ -65,14 +44,15 @@ export function FormBuilder({
 
     allFields.forEach((field) => {
       if (field.required && !values[field.name]) {
-        newErrors[field.name] = `${field.label} is required`;
+        newErrors[field.name] = t('required', { field: field.label });
       }
 
       // Email validation
       if (field.type === 'email' && values[field.name]) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(values[field.name])) {
-          newErrors[field.name] = 'Invalid email address';
+        const emailValue = values[field.name] as string;
+        if (!emailRegex.test(emailValue)) {
+          newErrors[field.name] = t('invalidEmail');
         }
       }
 
@@ -80,10 +60,10 @@ export function FormBuilder({
       if (field.type === 'number' && values[field.name]) {
         const numValue = Number(values[field.name]);
         if (field.min !== undefined && numValue < field.min) {
-          newErrors[field.name] = `Minimum value is ${field.min}`;
+          newErrors[field.name] = t('minValue', { min: field.min });
         }
         if (field.max !== undefined && numValue > field.max) {
-          newErrors[field.name] = `Maximum value is ${field.max}`;
+          newErrors[field.name] = t('maxValue', { max: field.max });
         }
       }
     });
@@ -101,7 +81,9 @@ export function FormBuilder({
 
     try {
       await onSubmit(values);
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
+      // Handle error silently
     }
   };
 
@@ -194,11 +176,11 @@ export function FormBuilder({
               onClick={onCancel}
               disabled={isLoading}
             >
-              {cancelLabel}
+              {cancelLabel || tCommon('cancel')}
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : submitLabel}
+            {isLoading ? t('saving') : (submitLabel || tCommon('save'))}
           </Button>
         </CardFooter>
       </Card>

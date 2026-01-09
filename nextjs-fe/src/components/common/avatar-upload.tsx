@@ -3,22 +3,17 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { X, Image as ImageIcon } from 'lucide-react';
 import { cn } from "@/shared/utils";
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
-
-interface AvatarUploadProps {
-  value?: string; // Current avatar URL
-  onChange: (file: File | null, previewUrl: string | null) => void;
-  maxSize?: number; // in MB
-  className?: string;
-}
+import { UPLOAD_CONFIG } from '@/shared/constants/media';
+import type { AvatarUploadProps } from '@/shared/types/data-table.types';
 
 export function AvatarUpload({
   value,
   onChange,
-  maxSize = 5,
+  maxSize = UPLOAD_CONFIG.DEFAULT_AVATAR_MAX_SIZE,
   className,
 }: AvatarUploadProps) {
   const t = useTranslations();
@@ -86,7 +81,7 @@ export function AvatarUpload({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label>Avatar</Label>
+      <Label>{t('upload.avatar')}</Label>
       
       <div
         className={cn(
@@ -109,6 +104,7 @@ export function AvatarUpload({
 
         {preview ? (
           <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt={t('media.avatarPreview')}
@@ -135,7 +131,7 @@ export function AvatarUpload({
               <br />
               {t('media.orDragAndDrop')}
             </div>
-            <p className="text-xs text-gray-400">PNG, JPG up to {maxSize}MB</p>
+            <p className="text-xs text-gray-400">{t('upload.imageFormats', { maxSize })}</p>
           </div>
         )}
       </div>

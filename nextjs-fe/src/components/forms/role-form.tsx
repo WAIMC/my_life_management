@@ -1,14 +1,15 @@
 'use client';
+'use no memo';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -20,16 +21,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { RoleMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, IsDelete } from '@/shared/enums';
+import { IsActive } from '@/shared/enums';
 import { roleSchema, type RoleFormData } from '@/shared/validation/validation';
-
-interface RoleFormProps {
-  initialData?: RoleMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { RoleFormProps } from './types';
 
 export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
+  const tCommon = useTranslations('common');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<RoleMst>(ENDPOINTS.MASTER.ROLE);
 
@@ -38,13 +35,13 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
     setError,
   } = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
     defaultValues: {
-      is_active: IsActive.TRUE,
+      is_active: true,
     },
   });
 
@@ -53,13 +50,13 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
       reset({
         name: initialData.name,
         permission: initialData.permission,
-        is_active: initialData.is_active ? IsActive.TRUE : IsActive.FALSE,
+        is_active: initialData.is_active,
       });
     } else {
       reset({
         name: '',
         permission: '',
-        is_active: IsActive.TRUE,
+        is_active: true,
       });
     }
   }, [initialData, reset]);
@@ -69,20 +66,23 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
       if (isEdit && initialData) {
         await update(initialData.id, {
           ...data,
-          is_delete: IsDelete.FALSE,
+          is_delete: false,
         });
       } else {
         await create({
           ...data,
-          is_delete: IsDelete.FALSE,
+          is_delete: false,
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const isActiveValue = useWatch({ control, name: 'is_active' });
 
   const FormContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -120,8 +120,8 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('is_active')?.toString()}
-            onValueChange={(value) => setValue('is_active', Number(value))}
+            value={isActiveValue?.toString()}
+            onValueChange={(value) => setValue('is_active', value === 'true')}
           >
             <SelectTrigger>
               <SelectValue />
@@ -139,10 +139,10 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

@@ -41,6 +41,7 @@ export type HttpMethod = typeof HTTP_METHODS[keyof typeof HTTP_METHODS];
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_PER_PAGE: 20,
+  DEFAULT_TOTAL_PAGES: 1,
   PER_PAGE_OPTIONS: [10, 20, 50, 100] as const,
 } as const;
 

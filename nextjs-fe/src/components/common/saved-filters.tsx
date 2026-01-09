@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -23,20 +22,9 @@ import { Save, Filter, Trash2, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
+import type { SavedFilter, SavedFiltersProps } from '@/shared/types/data-table.types';
 
-export interface SavedFilter {
-  id: string;
-  name: string;
-  filters: Record<string, any>;
-  isDefault?: boolean;
-}
-
-interface SavedFiltersProps {
-  currentFilters: Record<string, any>;
-  onApplyFilter: (filters: Record<string, any>) => void;
-  storageKey?: string;
-  className?: string;
-}
+export type { SavedFilter } from '@/shared/types/data-table.types';
 
 export function SavedFilters({
   currentFilters,
@@ -45,13 +33,10 @@ export function SavedFilters({
   className,
 }: SavedFiltersProps) {
   const t = useTranslations();
+  const tCommon = useTranslations('common');
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [filterName, setFilterName] = useState('');
-
-  useEffect(() => {
-    loadFilters();
-  }, []);
 
   const loadFilters = () => {
     try {
@@ -59,15 +44,23 @@ export function SavedFilters({
       if (stored) {
         setSavedFilters(JSON.parse(stored));
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
+      // Handle error silently
     }
   };
+
+  useEffect(() => {
+    loadFilters();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveFilters = (filters: SavedFilter[]) => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(filters));
       setSavedFilters(filters);
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast.error(t('savedFilters.failedToSaveFilter'));
     }
   };
@@ -192,9 +185,9 @@ export function SavedFilters({
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
-            <Button onClick={handleSaveFilter}>Save</Button>
+            <Button onClick={handleSaveFilter}>{tCommon('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import {
   Table,
   TableBody,
@@ -13,28 +13,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, Edit, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Column, DataTableProps } from '@/shared/types';
 
-export interface Column<T> {
-  key: string;
-  label: string;
-  sortable?: boolean;
-  render?: (item: T) => ReactNode;
-}
-
-interface DataTableProps<T> {
-  data: T[];
-  columns: Column<T>[];
-  loading?: boolean;
-  selectedIds?: number[];
-  onSelectionChange?: (ids: number[]) => void;
-  onSort?: (column: string) => void;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  showActions?: boolean;
-  idKey?: keyof T;
-}
+export type { Column };
 
 export function DataTable<T>({
   data,
@@ -44,7 +25,6 @@ export function DataTable<T>({
   onSelectionChange,
   onSort,
   sortBy,
-  sortOrder = 'asc',
   onEdit,
   onDelete,
   showActions = true,
@@ -145,7 +125,7 @@ export function DataTable<T>({
                   <TableCell key={column.key}>
                     {column.render
                       ? column.render(item)
-                      : (item[column.key] as ReactNode)}
+                      : (item[column.key as keyof T] as ReactNode)}
                   </TableCell>
                 ))}
                 {showActions && (

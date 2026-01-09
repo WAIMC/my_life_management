@@ -191,7 +191,7 @@ export default function AdminListPage() {
         title={tManagement('title', { entity: tEntities('admins') })}
         description={tManagement('description', { entity: tEntities('admins').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('admins'), isActive: true },
         ]}
         action={

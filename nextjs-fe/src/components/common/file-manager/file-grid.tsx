@@ -2,26 +2,14 @@
 
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { MediaFile } from './types';
+import type { MediaFile } from '@/shared/types/file-manager.types';
 import { formatFileSize, getFileIcon } from './utils';
 import { format } from 'date-fns';
 import { FileContextMenu } from './context-menu';
 import { Folder } from 'lucide-react';
-
-interface FileGridProps {
-  files: MediaFile[];
-  selectedFiles: string[];
-  onSelect: (fileId: string, selected: boolean) => void;
-  onFileClick: (file: MediaFile) => void;
-  onNavigate: (path: string) => void;
-  isLoading?: boolean;
-  onPreview: (file: MediaFile) => void;
-  onRename: (file: MediaFile) => void;
-  onMove: (file: MediaFile) => void;
-  onCopy: (file: MediaFile) => void;
-  onDelete: (file: MediaFile) => void;
-  onDownload?: (file: MediaFile) => void;
-}
+import { useTranslations } from 'next-intl';
+import type { FileGridProps } from '@/shared/types/file-manager.types';
+import { FILE_TYPE, DATE_FORMAT, UI_CONFIG } from '@/shared/constants/file-manager';
 
 export const FileGrid = ({
   files,
@@ -37,10 +25,12 @@ export const FileGrid = ({
   onDelete,
   onDownload,
 }: FileGridProps) => {
+  const t = useTranslations('fileManager');
+  
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: UI_CONFIG.LOADING_SKELETON_COUNT }).map((_, i) => (
           <Card key={i} className="h-40 animate-pulse bg-muted" />
         ))}
       </div>
@@ -50,13 +40,13 @@ export const FileGrid = ({
   if (files.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-lg text-muted-foreground">Không có file nào</p>
+        <p className="text-lg text-muted-foreground">{t('noFiles')}</p>
       </div>
     );
   }
 
   const handleDoubleClick = (file: MediaFile) => {
-    if (file.type === 'folder') {
+    if (file.type === FILE_TYPE.FOLDER) {
       onNavigate(file.folder_path === '/' ? `/${file.name}` : `${file.folder_path}/${file.name}`);
     } else {
       onPreview(file);
@@ -100,7 +90,7 @@ export const FileGrid = ({
 
               {/* Preview/Icon Area */}
               <div className="relative h-32 w-full overflow-hidden bg-muted">
-                {file.type === 'folder' ? (
+                {file.type === FILE_TYPE.FOLDER ? (
                   <div className="flex h-full items-center justify-center bg-blue-50 dark:bg-blue-900/20">
                     <Folder className="h-16 w-16 text-blue-500" fill="currentColor" />
                   </div>
@@ -126,7 +116,7 @@ export const FileGrid = ({
                 </p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{formatFileSize(file.size)}</span>
-                  <span>{format(new Date(file.created_at), 'dd/MM/yy')}</span>
+                  <span>{format(new Date(file.created_at), DATE_FORMAT.SHORT)}</span>
                 </div>
               </div>
             </Card>

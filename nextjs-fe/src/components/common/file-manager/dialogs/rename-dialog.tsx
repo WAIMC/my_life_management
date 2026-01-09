@@ -12,15 +12,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from 'next-intl';
+import type { RenameDialogProps } from '../types';
 import { isValidFileName } from '../utils';
-import type { MediaFile } from '../types';
-
-interface RenameDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  file: MediaFile | null;
-  onRename: (file: MediaFile, newName: string) => Promise<void>;
-}
 
 export const RenameDialog = ({
   open,
@@ -28,6 +22,7 @@ export const RenameDialog = ({
   file,
   onRename,
 }: RenameDialogProps) => {
+  const t = useTranslations('fileManager.dialogs');
   const [newName, setNewName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,12 +39,12 @@ export const RenameDialog = ({
     if (!file) return;
     
     if (!newName.trim()) {
-      setError('Tên không được để trống');
+      setError(t('rename.emptyNameError'));
       return;
     }
 
     if (!isValidFileName(newName)) {
-      setError('Tên chứa ký tự không hợp lệ');
+      setError(t('rename.invalidNameError'));
       return;
     }
 
@@ -62,8 +57,8 @@ export const RenameDialog = ({
     try {
       await onRename(file, newName);
       onOpenChange(false);
-    } catch (err) {
-      setError('Không thể đổi tên');
+    } catch {
+      setError(t('rename.renameError'));
     } finally {
       setIsLoading(false);
     }
@@ -73,16 +68,16 @@ export const RenameDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Đổi tên</DialogTitle>
+          <DialogTitle>{t('rename.title')}</DialogTitle>
           <DialogDescription>
-            Nhập tên mới cho <span className="font-medium">{file?.name}</span>
+            {t('rename.description')} <span className="font-medium">{file?.name}</span>
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Tên mới
+                {t('rename.newNameLabel')}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -105,10 +100,10 @@ export const RenameDialog = ({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={isLoading || !newName.trim()}>
-              {isLoading ? 'Đang xử lý...' : 'Lưu thay đổi'}
+              {isLoading ? t('processing') : t('rename.saveButton')}
             </Button>
           </DialogFooter>
         </form>

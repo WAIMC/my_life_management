@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { SliderMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, type SortOrder } from '@/shared/constants';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/constants';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import Image from 'next/image';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
@@ -32,10 +32,10 @@ import { SliderForm } from '@/components/forms/slider-form';
 import { useTranslations } from 'next-intl';
 
 export default function SliderListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('rank_order');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.ORDER);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
@@ -113,7 +113,7 @@ export default function SliderListPage() {
             />
           ) : (
             <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-400">
-              No image
+              {tCommon('noImage')}
             </div>
           )}
         </div>
@@ -203,8 +203,15 @@ export default function SliderListPage() {
       onClick: async () => { refetch(); } 
     }
   ];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async () => { refetch(); };
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    setFilters(newFilters);
+    setPage(PAGINATION.DEFAULT_PAGE);
+  };
+
+  const handleImport = async () => {
+    refetch();
+  };
 
   return (
     <AdminLayout>
@@ -212,7 +219,7 @@ export default function SliderListPage() {
         title={tManagement('title', { entity: tEntities('sliders') })}
         description={tManagement('description', { entity: tEntities('sliders').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('sliders'), isActive: true },
         ]}
         action={
@@ -225,7 +232,14 @@ export default function SliderListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="slider-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="slider-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -233,11 +247,11 @@ export default function SliderListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -266,7 +280,7 @@ export default function SliderListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>

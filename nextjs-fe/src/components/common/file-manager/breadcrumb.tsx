@@ -2,18 +2,12 @@
 
 import { ChevronRight, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface BreadcrumbItem {
-  label: string;
-  path: string;
-}
-
-interface BreadcrumbProps {
-  items: BreadcrumbItem[];
-  onNavigate: (path: string) => void;
-}
+import { useTranslations } from 'next-intl';
+import type { BreadcrumbProps } from '@/shared/types/file-manager.types';
 
 export const Breadcrumb = ({ items, onNavigate }: BreadcrumbProps) => {
+  const t = useTranslations('fileManager');
+  
   return (
     <nav className="flex items-center space-x-1 border-b border-border bg-background px-4 py-3 overflow-x-auto">
       <div className="flex items-center space-x-1 min-w-0">
@@ -22,7 +16,7 @@ export const Breadcrumb = ({ items, onNavigate }: BreadcrumbProps) => {
           size="sm"
           onClick={() => onNavigate('/')}
           className="h-8 w-8 p-0"
-          title="Trang chủ"
+          title={t('home')}
         >
           <Home className="h-4 w-4" />
         </Button>

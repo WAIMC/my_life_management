@@ -6,50 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from "@/shared/utils";
+import { useTranslations } from 'next-intl';
+import type { FieldRendererProps } from '@/shared/types/data-table.types';
 
-export type FieldType = 
-  | 'text' 
-  | 'email' 
-  | 'password' 
-  | 'number'
-  | 'textarea' 
-  | 'select' 
-  | 'checkbox'
-  | 'date'
-  | 'datetime'
-  | 'file'
-  | 'image';
-
-export interface SelectOption {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
-}
-
-export interface FieldConfig {
-  name: string;
-  label: string;
-  type: FieldType;
-  placeholder?: string;
-  required?: boolean;
-  disabled?: boolean;
-  options?: SelectOption[]; // For select fields
-  accept?: string; // For file/image fields
-  min?: number; // For number fields
-  max?: number; // For number fields
-  rows?: number; // For textarea
-  className?: string;
-  description?: string;
-}
-
-interface FieldRendererProps {
-  field: FieldConfig;
-  value: any;
-  onChange: (value: any) => void;
-  error?: string;
-}
+export type { FieldType, FieldConfig } from '@/shared/types/data-table.types';
 
 export function FieldRenderer({ field, value, onChange, error }: FieldRendererProps) {
+  const t = useTranslations('common');
+  
   const renderField = () => {
     switch (field.type) {
       case 'text':
@@ -61,7 +25,7 @@ export function FieldRenderer({ field, value, onChange, error }: FieldRendererPr
             type={field.type}
             name={field.name}
             placeholder={field.placeholder}
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={field.disabled}
             required={field.required}
@@ -76,7 +40,7 @@ export function FieldRenderer({ field, value, onChange, error }: FieldRendererPr
           <Textarea
             name={field.name}
             placeholder={field.placeholder}
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={field.disabled}
             required={field.required}
@@ -135,7 +99,7 @@ export function FieldRenderer({ field, value, onChange, error }: FieldRendererPr
           <Input
             type={field.type === 'datetime' ? 'datetime-local' : 'date'}
             name={field.name}
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={field.disabled}
             required={field.required}
@@ -153,21 +117,22 @@ export function FieldRenderer({ field, value, onChange, error }: FieldRendererPr
               accept={field.accept || (field.type === 'image' ? 'image/*' : undefined)}
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                onChange(file);
+                onChange(file || null);
               }}
               disabled={field.disabled}
               required={field.required}
               className={cn(error && 'border-red-500', field.className)}
             />
-            {value && typeof value === 'string' && field.type === 'image' && (
+            {value && typeof value === 'string' && field.type === 'image' ? (
               <div className="mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={value}
-                  alt="Preview"
+                  alt={t('preview')}
                   className="h-32 w-32 object-cover rounded-md border"
                 />
               </div>
-            )}
+            ) : null}
           </div>
         );
 
@@ -177,7 +142,7 @@ export function FieldRenderer({ field, value, onChange, error }: FieldRendererPr
             type="text"
             name={field.name}
             placeholder={field.placeholder}
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={field.disabled}
             required={field.required}

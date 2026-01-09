@@ -3,27 +3,13 @@
 import { useState } from 'react';
 import { ChevronRight, ChevronDown, Building2 } from 'lucide-react';
 import { cn } from "@/shared/utils";
-import { Button } from '@/components/ui/button';
-import type { DepartmentMst } from '@/shared/types/api';
+import { useTranslations } from 'next-intl';
+import type { DepartmentMst } from '@/shared/types/models/master';
+import type { DepartmentTreeProps, TreeNodeProps } from '@/shared/types/data-table.types';
 
-interface DepartmentTreeProps {
-  departments: DepartmentMst[];
-  onSelect?: (department: DepartmentMst) => void;
-  selectedId?: number;
-  className?: string;
-}
-
-interface TreeNodeProps {
-  department: DepartmentMst;
-  children: DepartmentMst[];
-  level: number;
-  onSelect?: (department: DepartmentMst) => void;
-  selectedId?: number;
-}
-
-function TreeNode({ department, children, level, onSelect, selectedId }: TreeNodeProps) {
+function TreeNode({ department, childNodes, level, onSelect, selectedId }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const hasChildren = children.length > 0;
+  const hasChildren = childNodes.length > 0;
   const isSelected = selectedId === department.id;
 
   return (
@@ -67,13 +53,13 @@ function TreeNode({ department, children, level, onSelect, selectedId }: TreeNod
 
       {hasChildren && isExpanded && (
         <div>
-          {children.map((child) => {
-            const grandChildren = buildTree([child], department.id);
+          {childNodes.map((child) => {
+            const grandChildren = buildTree(child.children || []);
             return (
               <TreeNode
                 key={child.id}
                 department={child}
-                children={grandChildren}
+                childNodes={grandChildren}
                 level={level + 1}
                 onSelect={onSelect}
                 selectedId={selectedId}
@@ -86,8 +72,8 @@ function TreeNode({ department, children, level, onSelect, selectedId }: TreeNod
   );
 }
 
-function buildTree(departments: DepartmentMst[], parentId?: number): DepartmentMst[] {
-  return departments.filter((dept) => dept.parent_id === parentId);
+function buildTree(departments: DepartmentMst[]): DepartmentMst[] {
+  return departments;
 }
 
 export function DepartmentTree({
@@ -96,12 +82,13 @@ export function DepartmentTree({
   selectedId,
   className,
 }: DepartmentTreeProps) {
-  const rootDepartments = buildTree(departments, undefined);
+  const t = useTranslations('common');
+  const rootDepartments = departments.filter((dept) => !dept.parent_id);
 
   if (departments.length === 0) {
     return (
       <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-        No departments found
+        {t('noData')}
       </div>
     );
   }
@@ -109,12 +96,12 @@ export function DepartmentTree({
   return (
     <div className={cn('space-y-1', className)}>
       {rootDepartments.map((dept) => {
-        const children = buildTree(departments, dept.id);
+        const childNodes = dept.children || [];
         return (
           <TreeNode
             key={dept.id}
             department={dept}
-            children={children}
+            childNodes={childNodes}
             level={0}
             onSelect={onSelect}
             selectedId={selectedId}

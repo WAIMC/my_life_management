@@ -1,8 +1,10 @@
 'use client';
+'use no memo';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { handleBindErrors } from '@/shared/utils/error-handler';
@@ -20,14 +22,11 @@ import {
 import type { ApiMst, FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { apiSchema, type ApiFormData } from '@/shared/validation/validation';
-
-interface ApiFormProps {
-  initialData?: ApiMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { ApiFormProps } from './types';
 
 export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<ApiMst>(ENDPOINTS.MASTER.API);
   
@@ -43,7 +42,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
     setError,
   } = useForm<ApiFormData>({
@@ -59,13 +58,14 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
   useEffect(() => {
     if (initialData) {
-      const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+      const methods: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
       const typeIndex = typeof initialData.type === 'string' ? parseInt(initialData.type) : initialData.type;
       const mappedMethod = methods[typeIndex] || 'GET';
       
       reset({
         name: initialData.name,
         path: initialData.path,
+        type: initialData.type,
         method: mappedMethod,
         description: '', // Not in backend
         is_active: initialData.is_active,
@@ -75,6 +75,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       reset({
         name: '',
         path: '',
+        type: 0,
         method: 'GET',
         description: '',
         is_active: true,
@@ -91,7 +92,8 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       
       const payload = { 
         ...data,
-        type: methodMap[data.method] ?? 0,
+        type: Number(data.method ? (methodMap[data.method] ?? 0) : 0),
+        feature_mst_id: Number(data.feature_mst_id),
         is_delete: false 
       };
 
@@ -105,13 +107,16 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         await create(payload);
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
 
-  const currentFeatureId = watch('feature_mst_id');
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const currentFeatureId = useWatch({ control, name: 'feature_mst_id' });
+  const methodValue = useWatch({ control, name: 'method' });
+  const isActiveValue = useWatch({ control, name: 'is_active' });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -151,7 +156,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           id="name"
           {...register('name')}
           className={errors.name ? 'border-red-500' : ''}
-          placeholder="API Name"
+          placeholder={tForms('apiName')}
         />
         {errors.name && (
           <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -166,7 +171,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           id="path"
           {...register('path')}
           className={errors.path ? 'border-red-500' : ''}
-          placeholder="/api/v1/..."
+          placeholder={tForms('apiPath')}
         />
         {errors.path && (
           <p className="text-sm text-red-500">{errors.path.message}</p>
@@ -178,10 +183,11 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           Method <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={watch('method')}
+          value={methodValue}
           onValueChange={(value) => {
-            if (value && value.trim() !== '') {
-              setValue('method', value);
+            const validMethods: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+            if (value && validMethods.includes(value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE')) {
+              setValue('method', value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE');
             }
           }}
         >
@@ -211,7 +217,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           Status <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={watch('is_active') ? '1' : '0'}
+          value={isActiveValue ? '1' : '0'}
           onValueChange={(value) => setValue('is_active', value === '1')}
         >
           <SelectTrigger>
@@ -227,10 +233,10 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

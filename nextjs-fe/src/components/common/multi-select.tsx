@@ -18,27 +18,12 @@ import {
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-
-export interface MultiSelectOption {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
-}
-
-interface MultiSelectProps {
-  label?: string;
-  placeholder?: string;
-  options: MultiSelectOption[];
-  value: (string | number)[];
-  onChange: (value: (string | number)[]) => void;
-  required?: boolean;
-  disabled?: boolean;
-  className?: string;
-}
+import { useTranslations } from 'next-intl';
+import type { MultiSelectProps } from '@/shared/types/data-table.types';
 
 export function MultiSelect({
   label,
-  placeholder = 'Select items...',
+  placeholder,
   options,
   value = [],
   onChange,
@@ -46,6 +31,7 @@ export function MultiSelect({
   disabled = false,
   className,
 }: MultiSelectProps) {
+  const t = useTranslations('multiSelect');
   const [open, setOpen] = useState(false);
   const [selectedValues, setSelectedValues] = useState<(string | number)[]>(value);
 
@@ -92,16 +78,16 @@ export function MultiSelect({
           >
             <span className="truncate">
               {selectedValues.length > 0
-                ? `${selectedValues.length} selected`
-                : placeholder}
+                ? t('selected', { count: selectedValues.length })
+                : (placeholder || t('placeholder'))}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0">
           <Command>
-            <CommandInput placeholder="Search..." />
-            <CommandEmpty>No items found.</CommandEmpty>
+            <CommandInput placeholder={t('search')} />
+            <CommandEmpty>{t('noItems')}</CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
               {options.map((option) => (
                 <CommandItem

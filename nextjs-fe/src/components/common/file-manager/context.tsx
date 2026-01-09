@@ -1,19 +1,21 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState } from 'react';
-import { FileManagerContextType, ViewMode, MediaFile } from './types';
+import { useState, createContext, useContext, ReactNode } from 'react';
+import type { MediaFile, ViewMode, SortField, FilterType, FileManagerContextType } from '@/shared/types/file-manager.types';
+import { SORT_FIELD, VIEW_MODE, FILTER_TYPE } from '@/shared/constants/file-manager';
+import { PAGINATION } from '@/shared/constants/app';
 
 const FileManagerContext = createContext<FileManagerContextType | undefined>(undefined);
 
 export const FileManagerProvider = ({ children }: { children: ReactNode }) => {
   const [currentPath, setCurrentPath] = useState<string>('/');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>(VIEW_MODE.GRID);
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'date' | 'size' | 'type'>('name');
+  const [filterType, setFilterType] = useState<FilterType>(FILTER_TYPE.ALL);
+  const [sortBy, setSortBy] = useState<SortField>(SORT_FIELD.NAME);
 
   const value: FileManagerContextType = {
     currentPath,
@@ -27,15 +29,15 @@ export const FileManagerProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     setIsLoading,
     pagination: {
-        page: 1,
-        pageSize: 20,
+        page: PAGINATION.DEFAULT_PAGE,
+        pageSize: PAGINATION.DEFAULT_PER_PAGE,
         total: files.length,
-        totalPages: 1
+        totalPages: PAGINATION.DEFAULT_TOTAL_PAGES
     },
     searchQuery,
     setSearchQuery,
     filterType,
-    setFilterType,
+    setFilterType: (type: string) => setFilterType(type as FilterType),
     sortBy,
     setSortBy,
   };
@@ -50,7 +52,7 @@ export const FileManagerProvider = ({ children }: { children: ReactNode }) => {
 export const useFileManager = () => {
   const context = useContext(FileManagerContext);
   if (context === undefined) {
-    throw new Error('useFileManager must be used within FileManagerProvider');
+    throw new Error('hooks.useFileManagerError');
   }
   return context;
 };

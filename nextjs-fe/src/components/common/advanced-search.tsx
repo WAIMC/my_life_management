@@ -22,54 +22,39 @@ import {
 } from '@/components/ui/dialog';
 import { Search, Plus, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-export interface SearchField {
-  key: string;
-  label: string;
-  type: 'text' | 'number' | 'date' | 'select';
-  options?: { value: string; label: string }[];
-}
-
-export interface SearchCriteria {
-  field: string;
-  operator: string;
-  value: string;
-}
-
-interface AdvancedSearchProps {
-  fields: SearchField[];
-  onSearch: (criteria: SearchCriteria[]) => void;
-  className?: string;
-}
-
-const OPERATORS = {
-  text: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'equals', label: 'Equals' },
-    { value: 'starts_with', label: 'Starts with' },
-    { value: 'ends_with', label: 'Ends with' },
-  ],
-  number: [
-    { value: 'equals', label: 'Equals' },
-    { value: 'greater_than', label: 'Greater than' },
-    { value: 'less_than', label: 'Less than' },
-    { value: 'between', label: 'Between' },
-  ],
-  date: [
-    { value: 'equals', label: 'On' },
-    { value: 'before', label: 'Before' },
-    { value: 'after', label: 'After' },
-    { value: 'between', label: 'Between' },
-  ],
-  select: [
-    { value: 'equals', label: 'Equals' },
-    { value: 'not_equals', label: 'Not equals' },
-  ],
-};
+import { useTranslations } from 'next-intl';
+import type { AdvancedSearchProps, SearchCriteria } from '@/shared/types/data-table.types';
 
 export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchProps) {
+  const t = useTranslations('advancedSearch');
+  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
   const [criteria, setCriteria] = useState<SearchCriteria[]>([]);
+
+  const OPERATORS = {
+    text: [
+      { value: 'contains', label: t('contains') },
+      { value: 'equals', label: t('equals') },
+      { value: 'starts_with', label: t('startsWith') },
+      { value: 'ends_with', label: t('endsWith') },
+    ],
+    number: [
+      { value: 'equals', label: t('equals') },
+      { value: 'greater_than', label: t('greaterThan') },
+      { value: 'less_than', label: t('lessThan') },
+      { value: 'between', label: t('between') },
+    ],
+    date: [
+      { value: 'equals', label: t('on') },
+      { value: 'before', label: t('before') },
+      { value: 'after', label: t('after') },
+      { value: 'between', label: t('between') },
+    ],
+    select: [
+      { value: 'equals', label: t('equals') },
+      { value: 'not_equals', label: t('notEquals') },
+    ],
+  };
 
   const addCriteria = () => {
     setCriteria([
@@ -108,7 +93,7 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
       <DialogTrigger asChild>
         <Button variant="outline" className={className}>
           <Search className="mr-2 h-4 w-4" />
-          Advanced Search
+          {t('title')}
           {criteria.length > 0 && (
             <Badge variant="secondary" className="ml-2">
               {criteria.length}
@@ -118,9 +103,9 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Advanced Search</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Add multiple search criteria to filter results
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,7 +115,7 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
             return (
               <div key={index} className="flex gap-2">
                 <div className="flex-1 space-y-2">
-                  <Label>Field</Label>
+                  <Label>{t('field')}</Label>
                   <Select
                     value={criterion.field}
                     onValueChange={(value) =>
@@ -151,7 +136,7 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
                 </div>
 
                 <div className="flex-1 space-y-2">
-                  <Label>Operator</Label>
+                  <Label>{t('operator')}</Label>
                   <Select
                     value={criterion.operator}
                     onValueChange={(value) =>
@@ -172,7 +157,7 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
                 </div>
 
                 <div className="flex-1 space-y-2">
-                  <Label>Value</Label>
+                  <Label>{t('value')}</Label>
                   {field?.type === 'select' ? (
                     <Select
                       value={criterion.value}
@@ -185,7 +170,7 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
                       </SelectTrigger>
                       <SelectContent>
                         {field.options?.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
+                          <SelectItem key={opt.value} value={String(opt.value)}>
                             {opt.label}
                           </SelectItem>
                         ))}
@@ -220,15 +205,15 @@ export function AdvancedSearch({ fields, onSearch, className }: AdvancedSearchPr
             className="w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Criteria
+            {t('addCriteria')}
           </Button>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleReset}>
-            Reset
+            {tCommon('reset')}
           </Button>
-          <Button onClick={handleSearch}>Search</Button>
+          <Button onClick={handleSearch}>{tCommon('search')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

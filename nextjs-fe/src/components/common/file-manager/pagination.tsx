@@ -2,15 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { PaginationState } from './types';
-
-interface PaginationProps {
-  pagination: PaginationState;
-  onPageChange: (page: number) => void;
-}
+import { useTranslations } from 'next-intl';
+import type { PaginationProps } from '@/shared/types/file-manager.types';
 
 export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
   const { page, totalPages, total, pageSize } = pagination;
+  const t = useTranslations('fileManager');
 
   if (totalPages <= 1) return null;
 
@@ -20,7 +17,7 @@ export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
   return (
     <div className="flex items-center justify-between border-t border-border px-4 py-2">
       <div className="text-sm text-muted-foreground">
-        Hiển thị {startItem}-{endItem} trong tổng số {total} mục
+        {t('showingItems', { start: startItem, end: endItem, total })}
       </div>
       <div className="flex items-center space-x-2">
         <Button
@@ -42,7 +39,7 @@ export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="text-sm font-medium">
-          Trang {page} / {totalPages}
+          {t('page', { current: page, total: totalPages })}
         </div>
         <Button
           variant="outline"

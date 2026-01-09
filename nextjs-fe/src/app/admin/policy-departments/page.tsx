@@ -10,7 +10,6 @@ import { Pagination } from '@/components/common/data-table/pagination';
 import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import type { PolicyDepartmentMst } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { 
@@ -20,7 +19,6 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/constants';
-import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
@@ -49,8 +47,6 @@ export default function PolicyDepartmentListPage() {
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<PolicyDepartmentMst | null>(null);
-
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const tCommon = useTranslations('common');
   const tEntities = useTranslations('entities');
@@ -105,46 +101,17 @@ export default function PolicyDepartmentListPage() {
 
   const columns: Column<PolicyDepartmentMst>[] = [
     { key: 'id', label: tFields('id'), sortable: true },
-    { key: 'name', label: tFields('name'), sortable: true },
-    { key: 'description', label: tFields('description') },
-    {
-      key: 'status',
-      label: tFields('status'),
-      sortable: true,
-      render: (item) => (
-        <Badge variant={item.is_active ? 'default' : 'secondary'}>
-          {item.is_active ? tCommon('active') : tCommon('inactive')}
-        </Badge>
-      ),
-    },
+    { key: 'table_name', label: tFields('tableName'), sortable: true },
+    { key: 'row_id', label: tFields('rowId'), sortable: true },
     { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'name', label: tFields('name'), type: 'text', placeholder: tCommon('search') },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
-      ],
-    },
-    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
+    { key: 'table_name', label: tFields('tableName'), type: 'text', placeholder: tCommon('search') },
   ];
   const searchFields: SearchField[] = [
-    { key: 'name', label: tFields('name'), type: 'text' },
-    { key: 'description', label: tFields('description'), type: 'text' },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: Object.entries(StatusLabels).map(([value, label]) => ({
-        value: value.toString(),
-        label
-      }))
-    },
+    { key: 'table_name', label: tFields('tableName'), type: 'text' },
+    { key: 'row_id', label: tFields('rowId'), type: 'number' },
     { key: 'created_at', label: tFields('createdAt'), type: 'date' }
   ];
   const bulkActions: BulkAction[] = [
@@ -159,16 +126,23 @@ export default function PolicyDepartmentListPage() {
     { 
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     }, 
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     }
   ];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (file: File, format: string) => { refetch(); };
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    setFilters(newFilters);
+    setPage(PAGINATION.DEFAULT_PAGE);
+  };
+
+  const handleImport = async () => {
+    refetch();
+  };
 
   return (
     <AdminLayout>
@@ -176,7 +150,7 @@ export default function PolicyDepartmentListPage() {
         title={tManagement('title', { entity: tEntities('policyDepartments') })}
         description={tManagement('description', { entity: tEntities('policyDepartments').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('policyDepartments'), isActive: true },
         ]}
         action={
@@ -266,13 +240,6 @@ export default function PolicyDepartmentListPage() {
         description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('policyDepartment').toLowerCase() })}
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
-        variant="destructive"
-      />
-        onOpenChange={setDeleteDialogOpen}
-        title="Delete Policy Department(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} policy department(s)? This action cannot be undone.`}
-        onConfirm={confirmDelete}
-        confirmText="Delete"
         variant="destructive"
       />
     </AdminLayout>

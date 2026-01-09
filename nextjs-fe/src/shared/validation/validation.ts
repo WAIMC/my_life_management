@@ -82,7 +82,7 @@ export const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   slug: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, 'Order must be 0 or greater'),
   status: categoryStatusValidation,
   is_display: z.boolean().optional(),
 });
@@ -93,7 +93,7 @@ export type CategoryFormData = z.infer<typeof categorySchema>;
 export const skillSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, 'Order must be 0 or greater'),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
@@ -158,7 +158,7 @@ export const socialSchema = z.object({
   slug: z.string().optional(),
   link: z.string().url('Must be a valid URL'),
   image: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, 'Order must be 0 or greater'),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
@@ -167,11 +167,11 @@ export type SocialFormData = z.infer<typeof socialSchema>;
 
 // Skill Description schema
 export const skillDescriptionSchema = z.object({
-  skill_mgmt_id: z.coerce.number().min(1, 'Skill is required'),
+  skill_mgmt_id: z.number().min(1, 'Skill is required'),
   title: z.string().min(1, 'Title is required'),
   summary: z.string().optional(),
   article: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, 'Order must be 0 or greater'),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
@@ -182,8 +182,10 @@ export type SkillDescriptionFormData = z.infer<typeof skillDescriptionSchema>;
 export const apiSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   path: z.string().min(1, 'Path is required'),
-  type: z.coerce.number().min(0, 'Type is required'),
-  feature_mst_id: z.coerce.number().min(1, 'Feature is required'),
+  type: z.number().min(0, 'Type is required'),
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
+  description: z.string().optional(),
+  feature_mst_id: z.number().min(1, 'Feature is required'),
   is_active: z.boolean(),
 });
 
@@ -191,7 +193,7 @@ export type ApiFormData = z.infer<typeof apiSchema>;
 
 // Token schema
 export const tokenSchema = z.object({
-  account_id: z.coerce.number().min(1, 'Account is required'),
+  account_id: z.number().min(1, 'Account is required'),
   device_name: z.string().min(1, 'Device name is required'),
   ip_address: z.string().optional(),
   expired_at: z.string().optional(),
@@ -204,7 +206,7 @@ export const settingLinkSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   url: z.string().url('Must be a valid URL'),
   description: z.string().optional(),
-  rank_order: z.coerce.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, 'Order must be 0 or greater'),
   status: statusValidation,
   is_active: z.boolean(),
 });
@@ -214,7 +216,7 @@ export type SettingLinkFormData = z.infer<typeof settingLinkSchema>;
 // Policy Department schema
 export const policyDepartmentSchema = z.object({
   table_name: z.string().min(1, 'Table name is required'),
-  row_id: z.coerce.number().min(1, 'Row ID is required'),
+  row_id: z.number().min(1, 'Row ID is required'),
 });
 
 export type PolicyDepartmentFormData = z.infer<typeof policyDepartmentSchema>;

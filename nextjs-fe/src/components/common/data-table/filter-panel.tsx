@@ -14,21 +14,9 @@ import {
 import { Card } from '@/components/ui/card';
 import { Search, X, Filter } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { FilterField, FilterPanelProps } from '@/shared/types';
 
-interface FilterPanelProps {
-  filters: Record<string, unknown>;
-  onFilterChange: (filters: Record<string, unknown>) => void;
-  onReset: () => void;
-  fields?: FilterField[];
-}
-
-export interface FilterField {
-  key: string;
-  label: string;
-  type: 'text' | 'select' | 'date' | 'boolean';
-  options?: { value: string | number; label: string }[];
-  placeholder?: string;
-}
+export type { FilterField };
 
 export function FilterPanel({
   filters,
@@ -94,13 +82,13 @@ export function FilterPanel({
                     id={field.key}
                     type="text"
                     placeholder={field.placeholder || `${t('searchPlaceholder').replace('{field}', field.label.toLowerCase())}`}
-                    value={localFilters[field.key] || ''}
+                    value={(localFilters[field.key] as string) || ''}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                   />
                 )}
                 {field.type === 'select' && field.options && (
                   <Select
-                    value={localFilters[field.key]?.toString() || ''}
+                    value={(localFilters[field.key] as string | number)?.toString() || ''}
                     onValueChange={(value) => handleChange(field.key, value)}
                   >
                     <SelectTrigger>
@@ -123,13 +111,13 @@ export function FilterPanel({
                   <Input
                     id={field.key}
                     type="date"
-                    value={localFilters[field.key] || ''}
+                    value={(localFilters[field.key] as string) || ''}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                   />
                 )}
                 {field.type === 'boolean' && (
                   <Select
-                    value={localFilters[field.key]?.toString() || ''}
+                    value={(localFilters[field.key] as boolean)?.toString() || ''}
                     onValueChange={(value) =>
                       handleChange(field.key, value === 'true')
                     }

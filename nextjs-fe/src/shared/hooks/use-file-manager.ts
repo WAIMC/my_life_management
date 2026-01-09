@@ -6,7 +6,7 @@ import {
   SortOptions, 
   PaginationState,
   FileManagerContextType 
-} from '@/components/common/file-manager/types';
+} from '@/shared/types/file-manager.types';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import toast from 'react-hot-toast';
 

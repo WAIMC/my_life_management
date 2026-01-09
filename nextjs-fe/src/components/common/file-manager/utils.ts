@@ -8,16 +8,17 @@ import {
   FileCode,
   Folder,
 } from 'lucide-react';
-import type { MediaFile, FilterOptions, SortOptions } from './types';
+import { SORT_ORDER } from '@/shared/constants/app';
+import { FILTER_TYPE, FILE_TYPE, FILE_SIZE_UNITS, MIME_TYPE_LABELS } from '@/shared/constants/file-manager';
+import type { MediaFile, FilterOptions, SortOptions } from '@/shared/types/file-manager.types';
 
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';
 
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + FILE_SIZE_UNITS[i];
 };
 
 export const getFileIcon = (mimeType: string | null | undefined) => {
@@ -52,21 +53,7 @@ export const getMimeTypeLabel = (mimeType: string | null | undefined): string =>
     return 'Folder';
   }
   
-  const types: Record<string, string> = {
-    'image/jpeg': 'JPEG',
-    'image/png': 'PNG',
-    'image/gif': 'GIF',
-    'image/webp': 'WebP',
-    'video/mp4': 'MP4',
-    'video/webm': 'WebM',
-    'audio/mpeg': 'MP3',
-    'application/pdf': 'PDF',
-    'application/zip': 'ZIP',
-    'application/vnd.google-apps.folder': 'Folder',
-    'folder': 'Folder',
-  };
-
-  return types[mimeType] || mimeType.split('/')[1]?.toUpperCase() || 'File';
+  return MIME_TYPE_LABELS[mimeType] || mimeType.split('/')[1]?.toUpperCase() || 'File';
 };
 
 export const filterFiles = (
@@ -81,11 +68,11 @@ export const filterFiles = (
     }
 
     // Type filter
-    if (options.type !== 'all') {
-      if (options.type === 'folders' && file.type !== 'folder') return false;
-      if (options.type === 'images' && (!file.mime_type || !file.mime_type.startsWith('image/'))) return false;
-      if (options.type === 'videos' && (!file.mime_type || !file.mime_type.startsWith('video/'))) return false;
-      if (options.type === 'documents' && (file.type === 'folder' || !file.mime_type || file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/'))) return false;
+    if (options.type !== FILTER_TYPE.ALL) {
+      if (options.type === FILTER_TYPE.FOLDERS && file.type !== FILE_TYPE.FOLDER) return false;
+      if (options.type === FILTER_TYPE.IMAGES && (file.type === FILE_TYPE.FOLDER || !file.mime_type || !file.mime_type.startsWith('image/'))) return false;
+      if (options.type === FILTER_TYPE.VIDEOS && (file.type === FILE_TYPE.FOLDER || !file.mime_type || !file.mime_type.startsWith('video/'))) return false;
+      if (options.type === FILTER_TYPE.DOCUMENTS && (file.type === FILE_TYPE.FOLDER || !file.mime_type || file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/'))) return false;
     }
 
     // Date filter
@@ -106,7 +93,7 @@ export const sortFiles = (
 ) => {
   const sorted = [...files];
   const { field, order } = options;
-  const multiplier = order === 'asc' ? 1 : -1;
+  const multiplier = order === SORT_ORDER.ASC ? 1 : -1;
 
   sorted.sort((a, b) => {
     switch (field) {

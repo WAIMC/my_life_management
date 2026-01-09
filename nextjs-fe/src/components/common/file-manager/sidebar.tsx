@@ -2,28 +2,9 @@
 
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface Folder {
-  id: string;
-  name: string;
-  path: string;
-}
-
-const MOCK_FOLDERS: Folder[] = [
-  { id: '1', name: 'Hình ảnh 2025', path: '/images/2025' },
-  { id: '2', name: 'Video', path: '/videos' },
-  { id: '3', name: 'Tài liệu', path: '/documents' },
-  { id: '4', name: 'Tải lên gần đây', path: '/recent' },
-  { id: '5', name: 'Được chia sẻ', path: '/shared' },
-];
-
-interface SidebarProps {
-  currentPath: string;
-  onPathChange: (path: string) => void;
-  isOpen?: boolean;
-  onToggle?: () => void;
-  className?: string;
-}
+import { useTranslations } from 'next-intl';
+import type { SidebarFolder, SidebarProps } from '@/shared/types/file-manager.types';
+import { DEFAULT_SIDEBAR_FOLDERS } from '@/shared/constants/file-manager';
 
 export const Sidebar = ({
   currentPath,
@@ -32,6 +13,13 @@ export const Sidebar = ({
   onToggle,
   className,
 }: SidebarProps) => {
+  const t = useTranslations('fileManager');
+  
+  const FOLDERS: SidebarFolder[] = DEFAULT_SIDEBAR_FOLDERS.map(folder => ({
+    id: folder.id,
+    name: t(folder.nameKey),
+    path: folder.path,
+  }));
 
   if (!isOpen) return null;
 
@@ -39,7 +27,7 @@ export const Sidebar = ({
     <aside className={`w-64 border-r border-border bg-background ${className || ''}`}>
       <div className="space-y-2 p-4">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Quản lý Media</h2>
+          <h2 className="text-lg font-semibold">{t('sidebar.title')}</h2>
           {onToggle && (
             <Button
               variant="ghost"
@@ -53,7 +41,7 @@ export const Sidebar = ({
         </div>
 
         <nav className="space-y-1">
-          {MOCK_FOLDERS.map((folder) => (
+          {FOLDERS.map((folder) => (
             <div key={folder.id}>
               <Button
                 variant={currentPath === folder.path ? 'secondary' : 'ghost'}
@@ -68,10 +56,10 @@ export const Sidebar = ({
 
         <div className="border-t border-border pt-4 mt-4">
           <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-            Danh sách thư mục
+            {t('sidebar.foldersList')}
           </h3>
           <div className="space-y-1">
-            {MOCK_FOLDERS.slice(0, 3).map((folder) => (
+            {FOLDERS.slice(0, 3).map((folder) => (
               <button
                 key={folder.id}
                 className="flex w-full items-center rounded-md px-2 py-1.5 text-sm hover:bg-accent"

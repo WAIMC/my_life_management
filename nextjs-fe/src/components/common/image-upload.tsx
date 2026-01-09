@@ -1,40 +1,28 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { X, Image as ImageIcon } from 'lucide-react';
 import { cn } from "@/shared/utils";
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
-
-interface ImageUploadProps {
-  value?: string; // Current image URL
-  onChange: (file: File | null, previewUrl: string | null) => void;
-  maxSize?: number; // in MB
-  className?: string;
-  label?: string;
-  shape?: 'square' | 'rectangle' | 'circle';
-  aspectRatio?: string; // e.g., 'aspect-video' or custom class
-}
+import { UPLOAD_CONFIG, IMAGE_SHAPES, type ImageShape } from '@/shared/constants/media';
+import type { ImageUploadProps } from '@/shared/types/data-table.types';
 
 export function ImageUpload({
   value,
   onChange,
-  maxSize = 5,
+  maxSize = UPLOAD_CONFIG.DEFAULT_IMAGE_MAX_SIZE,
   className,
-  label = 'Image',
-  shape = 'rectangle',
+  label,
+  shape = IMAGE_SHAPES.RECTANGLE,
   aspectRatio
 }: ImageUploadProps) {
   const t = useTranslations();
   const [preview, setPreview] = useState<string | null>(value || null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-     setPreview(value || null);
-  }, [value]);
 
   const handleFileChange = (file: File | null) => {
     if (!file) {
@@ -94,15 +82,15 @@ export function ImageUpload({
     }
   };
 
-  const shapeClasses = {
-      square: 'w-48 h-48 rounded-lg',
-      rectangle: 'w-full h-48 rounded-lg',
-      circle: 'w-40 h-40 rounded-full'
+  const shapeClasses: Record<ImageShape, string> = {
+      [IMAGE_SHAPES.SQUARE]: 'w-48 h-48 rounded-lg',
+      [IMAGE_SHAPES.RECTANGLE]: 'w-full h-48 rounded-lg',
+      [IMAGE_SHAPES.CIRCLE]: 'w-40 h-40 rounded-full'
   };
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label>{label}</Label>
+      <Label>{label || t('upload.image')}</Label>
       
       <div
         className={cn(
@@ -127,12 +115,13 @@ export function ImageUpload({
 
         {preview ? (
           <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
-              alt="Preview"
+              alt={t('media.preview')}
               className={cn(
                 "h-full w-full object-cover",
-                 shape === 'circle' ? 'rounded-full' : 'rounded-lg'
+                shape === IMAGE_SHAPES.CIRCLE ? 'rounded-full' : 'rounded-lg'
               )}
             />
             <Button
@@ -152,11 +141,11 @@ export function ImageUpload({
           <div className="flex flex-col items-center gap-2 text-center p-4">
             <ImageIcon className="h-8 w-8 text-gray-400" />
             <div className="text-sm text-gray-500">
-              <span className="font-medium text-primary">Click to upload</span>
+              <span className="font-medium text-primary">{t('media.clickToUpload')}</span>
               <br />
-              or drag and drop
+              {t('media.orDragAndDrop')}
             </div>
-            <p className="text-xs text-gray-400">PNG, JPG up to {maxSize}MB</p>
+            <p className="text-xs text-gray-400">{t('upload.imageFormats', { maxSize })}</p>
           </div>
         )}
       </div>

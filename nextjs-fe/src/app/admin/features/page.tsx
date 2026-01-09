@@ -15,7 +15,7 @@ import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/compone
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';
-import { Trash2, CheckCircle, XCircle, Plus, Edit } from 'lucide-react';
+import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import type { FeatureMst } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { 
@@ -25,7 +25,7 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/constants';
-import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
+import { FeatureStatus, FeatureStatusLabels } from '@/shared/enums/enums';
 import {
   Dialog,
   DialogContent,
@@ -49,8 +49,6 @@ export default function FeatureListPage() {
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<FeatureMst | null>(null);
-
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const tCommon = useTranslations('common');
   const tEntities = useTranslations('entities');
@@ -112,8 +110,8 @@ export default function FeatureListPage() {
       label: tFields('status'),
       sortable: true,
       render: (feature) => (
-        <Badge variant={feature.is_active ? 'default' : 'secondary'}>
-          {feature.is_active ? tCommon('active') : tCommon('inactive')}
+        <Badge variant={feature.status === FeatureStatus.ACTIVE ? 'default' : 'secondary'}>
+          {FeatureStatusLabels[feature.status as FeatureStatus] || tCommon('inactive')}
         </Badge>
       ),
     },
@@ -127,11 +125,10 @@ export default function FeatureListPage() {
       label: tFields('status'),
       type: 'select',
       options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
+        { value: FeatureStatus.ACTIVE, label: FeatureStatusLabels[FeatureStatus.ACTIVE] },
+        { value: FeatureStatus.INACTIVE, label: FeatureStatusLabels[FeatureStatus.INACTIVE] },
       ],
     },
-    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
   ];
 
   const searchFields: SearchField[] = [
@@ -141,7 +138,7 @@ export default function FeatureListPage() {
       key: 'status',
       label: tFields('status'),
       type: 'select',
-      options: Object.entries(StatusLabels).map(([value, label]) => ({
+      options: Object.entries(FeatureStatusLabels).map(([value, label]) => ({
         value: value.toString(),
         label
       }))
@@ -161,23 +158,22 @@ export default function FeatureListPage() {
     { 
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     },
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
-    setAdvancedCriteria(criteria);
     const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
     setFilters(newFilters);
-    setPage(1);
+    setPage(PAGINATION.DEFAULT_PAGE);
   };
 
-  const handleImport = async (file: File, format: string) => {
+  const handleImport = async () => {
     refetch();
   };
 
@@ -187,7 +183,7 @@ export default function FeatureListPage() {
         title={tManagement('title', { entity: tEntities('features') })}
         description={tManagement('description', { entity: tEntities('features').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('features'), isActive: true },
         ]}
         action={

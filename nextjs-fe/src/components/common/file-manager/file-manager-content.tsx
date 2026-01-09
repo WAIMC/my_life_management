@@ -1,40 +1,41 @@
 'use client';
 
 import { useState } from 'react';
-import { Breadcrumb } from './breadcrumb';
+import { useFileManager } from './context';
 import { Toolbar } from './toolbar';
 import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
 import { PreviewModal } from './preview-modal';
-
-import { useFileManager } from '@/shared/hooks/use-file-manager';
+import { Breadcrumb } from './breadcrumb';
 import { buildBreadcrumb } from './utils';
 import { UploadDialog } from './dialogs/upload-dialog';
 import { NewFolderDialog } from './dialogs/new-folder-dialog';
 import { RenameDialog } from './dialogs/rename-dialog';
 import { DeleteConfirmDialog } from './dialogs/delete-confirm-dialog';
 import { MoveCopyDialog } from './dialogs/move-copy-dialog';
-import type { MediaFile } from './types';
+import type { MediaFile, FilterType, SortField, MoveCopyMode } from '@/shared/types/file-manager.types';
 import toast from 'react-hot-toast';
+import { useTranslations } from 'next-intl';
+import { SORT_ORDER } from '@/shared/constants/app';
+import { SORT_FIELD, FILTER_TYPE, VIEW_MODE, FILE_TYPE, MOVE_COPY_MODE, TRANSLATION_KEY } from '@/shared/constants/file-manager';
 
 export function FileManagerContent() {
   const {
-    currentPath,
-    viewMode,
     files,
+    currentPath,
+    setCurrentPath,
+    viewMode,
+    setViewMode,
     selectedFiles,
     isLoading,
     searchQuery,
+    setSearchQuery,
     filterType,
+    setFilterType,
     sortBy,
-    setCurrentPath,
-    setViewMode,
+    setSortBy,
     toggleFileSelection,
     selectAllFiles,
-    setSearchQuery,
-    setFilterType,
-    setSortBy,
-    refreshFiles,
     createFolder,
     uploadFiles,
     deleteFiles,
@@ -42,6 +43,8 @@ export function FileManagerContent() {
     moveFiles,
     copyFiles,
   } = useFileManager();
+  
+  const t = useTranslations('fileManager');
 
   // Dialog states
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -49,7 +52,7 @@ export function FileManagerContent() {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isMoveCopyOpen, setIsMoveCopyOpen] = useState(false);
-  const [moveCopyMode, setMoveCopyMode] = useState<'move' | 'copy'>('move');
+  const [moveCopyMode, setMoveCopyMode] = useState<MoveCopyMode>(MOVE_COPY_MODE.MOVE);
 
   // Selection state for operations
   const [targetFile, setTargetFile] = useState<MediaFile | null>(null);
@@ -59,7 +62,7 @@ export function FileManagerContent() {
 
   // Handlers
   const handleFileClick = (file: MediaFile) => {
-    if (file.type === 'folder') {
+    if (file.type === FILE_TYPE.FOLDER) {
       setCurrentPath(file.folder_path === '/' ? `/${file.name}` : `${file.folder_path}/${file.name}`);
     } else {
       setPreviewFile(file);
@@ -74,12 +77,12 @@ export function FileManagerContent() {
     try {
       if (uploadFiles) {
         await uploadFiles(filesToUpload);
-        toast.success('Upload thành công');
+        toast.success(t('uploadSuccess'));
       } else {
-        toast.error('Upload feature not available');
+        toast.error(t('featureUnavailable'));
       }
-    } catch (error) {
-      toast.error('Upload thất bại');
+    } catch {
+      toast.error(t('uploadFailed'));
     }
   };
 
@@ -87,12 +90,12 @@ export function FileManagerContent() {
     try {
       if (createFolder) {
         await createFolder(name);
-        toast.success('Tạo thư mục thành công');
+        toast.success(t('createFolderSuccess'));
       } else {
-        toast.error('feature unavailable');
+        toast.error(t('featureUnavailable'));
       }
-    } catch (error) {
-      toast.error('Tạo thư mục thất bại');
+    } catch {
+      toast.error(t('createFolderFailed'));
     }
   };
 
@@ -105,12 +108,12 @@ export function FileManagerContent() {
     try {
       if (renameFile) {
         await renameFile(file.id, newName);
-        toast.success('Đổi tên thành công');
+        toast.success(t('renameSuccess'));
       } else {
-        toast.error('feature unavailable');
+        toast.error(t('featureUnavailable'));
       }
-    } catch (error) {
-      toast.error('Đổi tên thất bại');
+    } catch {
+      toast.error(t('renameFailed'));
     }
   };
 
@@ -128,25 +131,25 @@ export function FileManagerContent() {
       const idsToDelete = targetFile ? [targetFile.id] : selectedFiles;
       if (deleteFiles) {
         await deleteFiles(idsToDelete);
-        toast.success('Xóa thành công');
+        toast.success(t('deleteSuccess'));
       } else {
-        toast.error('feature unavailable');
+        toast.error(t('featureUnavailable'));
       }
       setTargetFile(null);
-    } catch (error) {
-      toast.error('Xóa thất bại');
+    } catch {
+      toast.error(t('deleteFailed'));
     }
   };
 
   const handleMove = (file?: MediaFile) => {
-    setMoveCopyMode('move');
+    setMoveCopyMode(MOVE_COPY_MODE.MOVE);
     if (file) setTargetFile(file);
     else setTargetFile(null);
     setIsMoveCopyOpen(true);
   };
 
   const handleCopy = (file?: MediaFile) => {
-    setMoveCopyMode('copy');
+    setMoveCopyMode(MOVE_COPY_MODE.COPY);
     if (file) setTargetFile(file);
     else setTargetFile(null);
     setIsMoveCopyOpen(true);
@@ -155,24 +158,25 @@ export function FileManagerContent() {
   const handleMoveCopyConfirm = async (targetPath: string) => {
     try {
       const idsToProcess = targetFile ? [targetFile.id] : selectedFiles;
-      if (moveCopyMode === 'move') {
+      if (moveCopyMode === MOVE_COPY_MODE.MOVE) {
         if (moveFiles) {
           await moveFiles(idsToProcess, targetPath);
-          toast.success('Di chuyển thành công');
+          toast.success(t(TRANSLATION_KEY.MOVE_SUCCESS));
         } else {
-          toast.error('feature unavailable');
+          toast.error(t('featureUnavailable'));
         }
       } else {
         if (copyFiles) {
           await copyFiles(idsToProcess, targetPath);
-          toast.success('Sao chép thành công');
+          toast.success(t(TRANSLATION_KEY.COPY_SUCCESS));
         } else {
-          toast.error('feature unavailable');
+          toast.error(t('featureUnavailable'));
         }
       }
       setTargetFile(null);
-    } catch (error) {
-      toast.error(`${moveCopyMode === 'move' ? 'Di chuyển' : 'Sao chép'} thất bại`);
+    } catch {
+      const errorKey = moveCopyMode === MOVE_COPY_MODE.MOVE ? TRANSLATION_KEY.MOVE_FAILED : TRANSLATION_KEY.COPY_FAILED;
+      toast.error(t(errorKey));
     }
   };
 
@@ -224,14 +228,14 @@ export function FileManagerContent() {
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         selectedCount={selectedFiles.length}
-        filterOptions={{ type: (filterType as any) || 'all' }}
+        filterOptions={{ type: (filterType as FilterType) || FILTER_TYPE.ALL }}
         onFilterChange={(opts) => setFilterType(opts.type)}
-        sortOptions={{ field: (sortBy as any) || 'name', order: 'asc' }}
+        sortOptions={{ field: (sortBy as SortField) || SORT_FIELD.NAME, order: SORT_ORDER.ASC }}
         onSortChange={(opts) => setSortBy(opts.field)}
       />
 
       <div className="flex-1 overflow-auto p-4">
-        {viewMode === 'grid' ? (
+        {viewMode === VIEW_MODE.GRID ? (
           <FileGrid
             files={files}
             selectedFiles={selectedFiles}
@@ -255,9 +259,9 @@ export function FileManagerContent() {
             onFileClick={handleFileClick}
             onNavigate={handleNavigate}
             isLoading={isLoading}
-            sortField={(sortBy as any) || 'name'}
-            sortOrder="asc"
-            onSort={(field) => setSortBy(field as any)}
+            sortField={(sortBy as SortField) || SORT_FIELD.NAME}
+            sortOrder={SORT_ORDER.ASC}
+            onSort={(field) => setSortBy(field as SortField)}
             onPreview={setPreviewFile}
             onRename={handleRename}
             onMove={handleMove}

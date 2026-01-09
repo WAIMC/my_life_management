@@ -1,8 +1,10 @@
 'use client';
+'use no memo';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { formatDateForBackend, formatDateForInput } from '@/shared/utils/date-formatter';
@@ -21,25 +23,23 @@ import type { AdminMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { AdminStatus, Gender } from '@/shared/enums';
 import { adminSchema, type AdminFormData } from '@/shared/validation/validation';
-
-interface AdminFormProps {
-  initialData?: AdminMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { AdminFormProps } from './types';
 
 export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatar ?? null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(() => initialData?.avatar ?? null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
     setError,
   } = useForm<AdminFormData>({
@@ -66,7 +66,6 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         is_active: initialData.is_active,
         avatar: initialData.avatar,
       });
-      setAvatarPreview(initialData.avatar ?? null);
     } else {
       reset({
         email: '',
@@ -82,7 +81,6 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         is_active: true,
         avatar: '',
       });
-      setAvatarPreview(null);
     }
   }, [initialData, reset]);
 
@@ -100,29 +98,33 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
       //   data.avatar = uploadData.url;
       // }
 
-      const payload: any = { ...data };
+      const payload = { ...data };
 
       if (data.birth) {
-        payload.birth = formatDateForBackend(data.birth);
+        (payload as AdminFormData & { birth?: string }).birth = formatDateForBackend(data.birth);
       }
 
       if (isEdit && initialData) {
         if (!payload.password) {
-          delete payload.password;
+          delete (payload as AdminFormData & { password?: string }).password;
         }
         await update(initialData.id, payload);
       } else {
         await create({
           ...payload,
           is_delete: false,
-        });
+        } as AdminFormData & { is_delete: boolean });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const genderValue = useWatch({ control, name: 'gender' });
+  const statusValue = useWatch({ control, name: 'status' });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -206,7 +208,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
           type="password"
           {...register('password')}
           className={errors.password ? 'border-red-500' : ''}
-          placeholder={isEdit ? '••••••••' : 'Enter password'}
+          placeholder={isEdit ? tForms('passwordHidden') : tCommon('enterPassword')}
         />
         {errors.password && (
           <p className="text-sm text-red-500">{errors.password.message}</p>
@@ -257,8 +259,8 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             Gender <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('gender')?.toString() ?? ''}
-            onValueChange={(value) => setValue('gender', Number(value) as any)}
+            value={genderValue?.toString() ?? ''}
+            onValueChange={(value) => setValue('gender', Number(value) as Gender)}
           >
             <SelectTrigger>
               <SelectValue />
@@ -278,8 +280,8 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString() ?? ''}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
+            value={statusValue?.toString() ?? ''}
+            onValueChange={(value) => setValue('status', Number(value) as AdminStatus)}
           >
             <SelectTrigger>
               <SelectValue />
@@ -309,10 +311,10 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

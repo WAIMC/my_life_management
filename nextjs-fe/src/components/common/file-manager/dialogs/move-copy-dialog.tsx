@@ -19,17 +19,9 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Folder } from 'lucide-react';
-import type { Folder as FolderType } from '../types';
+import { useTranslations } from 'next-intl';
+import type { Folder as FolderType, MoveCopyDialogProps } from '../types';
 import { fileService } from '@/shared/services/modules/file-mock-service';
-
-interface MoveCopyDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mode: 'move' | 'copy';
-  count: number;
-  onConfirm: (targetPath: string) => Promise<void>;
-  currentPath: string;
-}
 
 export const MoveCopyDialog = ({
   open,
@@ -39,6 +31,7 @@ export const MoveCopyDialog = ({
   onConfirm,
   currentPath,
 }: MoveCopyDialogProps) => {
+  const t = useTranslations('fileManager.dialogs');
   const [folders, setFolders] = useState<FolderType[]>([]);
   const [selectedPath, setSelectedPath] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,11 +43,9 @@ export const MoveCopyDialog = ({
         setIsFetching(true);
         try {
           const allFolders = await fileService.getFolders();
-          // Filter out current folder and its children (simplified for now)
-          // In a real app, we'd need robust logic to prevent moving a folder into itself
           setFolders(allFolders.filter(f => f.path !== currentPath));
           setSelectedPath('');
-        } catch (error) {
+        } catch {
         } finally {
           setIsFetching(false);
         }
@@ -70,41 +61,41 @@ export const MoveCopyDialog = ({
     try {
       await onConfirm(selectedPath);
       onOpenChange(false);
-    } catch (error) {
+    } catch {
     } finally {
       setIsLoading(false);
     }
   };
 
-  const title = mode === 'move' ? 'Di chuyển' : 'Sao chép';
-  const action = mode === 'move' ? 'Di chuyển' : 'Sao chép';
+  const title = mode === 'move' ? t('moveCopy.moveTitle') : t('moveCopy.copyTitle');
+  const action = mode === 'move' ? t('moveCopy.move') : t('moveCopy.copy');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{title} {count} mục</DialogTitle>
+          <DialogTitle>{title} {count} {t('moveCopy.items')}</DialogTitle>
           <DialogDescription>
-            Chọn thư mục đích để {action.toLowerCase()} các mục đã chọn.
+            {t('moveCopy.description', { action: action.toLowerCase() })}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label>Thư mục đích</Label>
+            <Label>{t('moveCopy.targetFolder')}</Label>
             <Select
               value={selectedPath}
               onValueChange={setSelectedPath}
               disabled={isFetching || isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Chọn thư mục..." />
+                <SelectValue placeholder={t('moveCopy.selectFolder')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="/">
                   <div className="flex items-center gap-2">
                     <Folder className="h-4 w-4" />
-                    <span>Root (/)</span>
+                    <span>{t('moveCopy.root')}</span>
                   </div>
                 </SelectItem>
                 {folders.map((folder) => (
@@ -129,13 +120,13 @@ export const MoveCopyDialog = ({
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
-            Hủy
+            {t('cancel')}
           </Button>
           <Button 
             onClick={handleConfirm} 
             disabled={!selectedPath || isLoading}
           >
-            {isLoading ? 'Đang xử lý...' : action}
+            {isLoading ? t('processing') : action}
           </Button>
         </DialogFooter>
       </DialogContent>

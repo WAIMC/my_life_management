@@ -16,6 +16,9 @@
     "confirm": "Confirm",
     "close": "Close",
     "create": "Create",
+    "creating": "Creating...",
+    "update": "Update",
+    "updating": "Updating...",
     "edit": "Edit",
     "delete": "Delete",
     "actions": "Actions",
@@ -25,7 +28,23 @@
     "inactive": "Inactive",
     "unknown": "Unknown",
     "noImage": "No image",
-    "noLink": "No link"
+    "noLink": "No link",
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "displayOrder": "Display Order",
+    "isActive": "Is Active",
+    "isDisplay": "Is Display",
+    "email": "Email",
+    "password": "Password",
+    "enterPassword": "Enter password",
+    "url": "URL",
+    "link": "Link",
+    "title": "Title",
+    "slug": "Slug",
+    "icon": "Icon",
+    "image": "Image",
+    "required": "*"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -223,7 +242,19 @@
     "preview": "Preview",
     "avatarPreview": "Avatar preview",
     "invalidFileType": "Invalid file type. Accepted: {accept}",
-    "fileSizeExceeded": "File size must be less than {maxSize}MB"
+    "fileSizeExceeded": "File size must be less than {maxSize}MB",
+    "fileSizeExceeds": "File size exceeds {maxSize}",
+    "uploadFailed": "Upload failed",
+    "dragDropHere": "Drag and drop your file here, or click to browse",
+    "maxSize": "Max size",
+    "cancel": "Cancel",
+    "upload": "Upload",
+    "view": "View",
+    "download": "Download",
+    "delete": "Delete",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {totalPages}"
   },
   "savedFilters": {
     "filterName": "Filter name",
@@ -236,6 +267,23 @@
   "upload": {
     "uploadFiles": "Upload Files",
     "uploadTo": "Upload file to folder: {path}"
+  },
+  "forms": {
+    "placeholders": {
+      "apiName": "API Name",
+      "apiPath": "/api/v1/...",
+      "urlExample": "https://example.com",
+      "iconExample": "e.g., 📱 or fa-mobile",
+      "termsOfService": "e.g. Terms of Service",
+      "privacyPolicy": "e.g. Privacy Policy",
+      "privacyUrl": "https://example.com/privacy",
+      "slugExample": "e.g. javascript",
+      "socialName": "e.g. Facebook, Twitter",
+      "socialIcon": "e.g. fa-brands fa-facebook",
+      "socialUrl": "https://example.com/profile",
+      "enterToken": "Enter token key",
+      "passwordHidden": "••••••••"
+    }
   },
   "history": {
     "restoreConfirm": "Are you sure you want to restore this version?"

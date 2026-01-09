@@ -247,7 +247,6 @@ export interface UserMgmt {
   avatar?: string;
   updated_at: string;
 }
-}
 
 export interface SettingLinkMgmt {
   id: number;

@@ -20,36 +20,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import type { FilterOptions, SortOptions, SortField, SortOrder, FilterType } from './types';
 import { useTranslations } from 'next-intl';
-
-interface ToolbarProps {
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
-  onUpload: () => void;
-  onNewFolder: () => void;
-  onDelete: () => void;
-  onMove: () => void;
-  onCopy: () => void;
-  onSearchChange: (query: string) => void;
-  searchQuery: string;
-  selectedCount: number;
-  filterOptions: FilterOptions;
-  onFilterChange: (options: FilterOptions) => void;
-  sortOptions: SortOptions;
-  onSortChange: (options: SortOptions) => void;
-}
+import { SORT_ORDER } from '@/shared/constants/app';
+import { SORT_FIELD, VIEW_MODE } from '@/shared/constants/file-manager';
+import type { ToolbarProps, SortField, FilterType } from '@/shared/types/file-manager.types';
 
 export const Toolbar = ({
   viewMode,
@@ -67,17 +44,18 @@ export const Toolbar = ({
   sortOptions,
   onSortChange,
 }: ToolbarProps) => {
-  const t = useTranslations();
+  const t = useTranslations('fileManager');
+  
   const handleSort = (field: SortField) => {
     if (sortOptions.field === field) {
       onSortChange({
         ...sortOptions,
-        order: sortOptions.order === 'asc' ? 'desc' : 'asc',
+        order: sortOptions.order === SORT_ORDER.ASC ? SORT_ORDER.DESC : SORT_ORDER.ASC,
       });
     } else {
       onSortChange({
         field,
-        order: 'asc',
+        order: SORT_ORDER.ASC,
       });
     }
   };
@@ -93,7 +71,7 @@ export const Toolbar = ({
             className="gap-2"
           >
             <Upload className="h-4 w-4" />
-            Upload
+            {t('upload')}
           </Button>
           <Button
             onClick={onNewFolder}
@@ -102,7 +80,7 @@ export const Toolbar = ({
             className="gap-2"
           >
             <FolderPlus className="h-4 w-4" />
-            Thư mục mới
+            {t('newFolder')}
           </Button>
           
           {selectedCount > 0 && (
@@ -110,7 +88,7 @@ export const Toolbar = ({
               <div className="mx-2 h-6 w-px bg-border" />
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckSquare className="h-4 w-4" />
-                <span>{selectedCount} đã chọn</span>
+                <span>{t('selectedCount', { count: selectedCount })}</span>
               </div>
               <Button
                 onClick={onMove}
@@ -119,7 +97,7 @@ export const Toolbar = ({
                 className="gap-2"
               >
                 <Move className="h-4 w-4" />
-                Di chuyển
+                {t('move')}
               </Button>
               <Button
                 onClick={onCopy}
@@ -128,7 +106,7 @@ export const Toolbar = ({
                 className="gap-2"
               >
                 <Copy className="h-4 w-4" />
-                Sao chép
+                {t('copy')}
               </Button>
               <Button
                 onClick={onDelete}
@@ -137,7 +115,7 @@ export const Toolbar = ({
                 className="gap-2"
               >
                 <Delete className="h-4 w-4" />
-                Xóa
+                {t('delete')}
               </Button>
             </>
           )}
@@ -148,7 +126,7 @@ export const Toolbar = ({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <Filter className="h-4 w-4" />
-                Lọc: {filterOptions.type === 'all' ? 'Tất cả' : filterOptions.type}
+                {t('filter')}: {t(`filterType.${filterOptions.type}`)}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -158,11 +136,11 @@ export const Toolbar = ({
                   onFilterChange({ ...filterOptions, type: value as FilterType })
                 }
               >
-                <DropdownMenuRadioItem value="all">Tất cả</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="images">Hình ảnh</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="videos">Video</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="documents">Tài liệu</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="folders">Thư mục</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="all">{t('filterType.all')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="images">{t('filterType.images')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="videos">{t('filterType.videos')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="documents">{t('filterType.documents')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="folders">{t('filterType.folders')}</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -171,37 +149,37 @@ export const Toolbar = ({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <ArrowUpDown className="h-4 w-4" />
-                Sắp xếp
+                {t('sort')}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleSort('name')}>
-                Tên {sortOptions.field === 'name' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.NAME)}>
+                {t('sortField.name')} {sortOptions.field === SORT_FIELD.NAME && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('date')}>
-                Ngày tạo {sortOptions.field === 'date' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.DATE)}>
+                {t('sortField.date')} {sortOptions.field === SORT_FIELD.DATE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('size')}>
-                Dung lượng {sortOptions.field === 'size' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.SIZE)}>
+                {t('sortField.size')} {sortOptions.field === SORT_FIELD.SIZE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('type')}>
-                Loại {sortOptions.field === 'type' && (sortOptions.order === 'asc' ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.TYPE)}>
+                {t('sortField.type')} {sortOptions.field === SORT_FIELD.TYPE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <div className="flex rounded-md border border-input">
             <Button
-              onClick={() => onViewModeChange('grid')}
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              onClick={() => onViewModeChange(VIEW_MODE.GRID)}
+              variant={viewMode === VIEW_MODE.GRID ? 'secondary' : 'ghost'}
               size="sm"
               className="h-8 w-8 rounded-r-none px-0"
             >
               <Grid3x3 className="h-4 w-4" />
             </Button>
             <Button
-              onClick={() => onViewModeChange('list')}
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              onClick={() => onViewModeChange(VIEW_MODE.LIST)}
+              variant={viewMode === VIEW_MODE.LIST ? 'secondary' : 'ghost'}
               size="sm"
               className="h-8 w-8 rounded-l-none px-0"
             >
@@ -214,7 +192,7 @@ export const Toolbar = ({
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={t('fileManager.searchFiles')}
+          placeholder={t('searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-10"

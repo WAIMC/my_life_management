@@ -11,16 +11,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, X, File, AlertCircle } from 'lucide-react';
-import { formatFileSize } from '../utils';
-import { cn } from "@/shared/utils";
 import { useTranslations } from 'next-intl';
+import { cn } from "@/shared/utils";
+import type { UploadDialogProps } from '../types';
+import { formatFileSize } from '../utils';
 
-interface UploadDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpload: (files: File[]) => Promise<void>;
-  currentPath: string;
-}
+const UPLOAD_PROGRESS_UPDATE_INTERVAL = 200;
+const UPLOAD_PROGRESS_MAX_BEFORE_COMPLETION = 90;
+const UPLOAD_PROGRESS_INCREMENT = 10;
+const UPLOAD_SUCCESS_DELAY = 500;
 
 export const UploadDialog = ({
   open,
@@ -28,7 +27,7 @@ export const UploadDialog = ({
   onUpload,
   currentPath,
 }: UploadDialogProps) => {
-  const t = useTranslations();
+  const t = useTranslations('fileManager.dialogs');
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -78,10 +77,10 @@ export const UploadDialog = ({
     // Simulate progress
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) return prev;
-        return prev + 10;
+        if (prev >= UPLOAD_PROGRESS_MAX_BEFORE_COMPLETION) return prev;
+        return prev + UPLOAD_PROGRESS_INCREMENT;
       });
-    }, 200);
+    }, UPLOAD_PROGRESS_UPDATE_INTERVAL);
 
     try {
       await onUpload(files);
@@ -91,18 +90,30 @@ export const UploadDialog = ({
         setUploading(false);
         setProgress(0);
         onOpenChange(false);
-      }, 500);
-    } catch (err: any) {
+      }, UPLOAD_SUCCESS_DELAY);
+    } catch (err: unknown) {
       setUploading(false);
       setProgress(0);
       
       // Extract error message from API response
-      let errorMessage = 'Upload failed. Please try again.';
+      let errorMessage = t('upload.uploadError');
       
-      if (err?.response?.data?.error?.messages) {
-        errorMessage = err.response.data.error.messages;
-      } else if (err?.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const error = err as Record<string, unknown>;
+        if (error.response && typeof error.response === 'object' && error.response !== null) {
+          const response = error.response as Record<string, unknown>;
+          if (response.data && typeof response.data === 'object' && response.data !== null) {
+            const data = response.data as Record<string, unknown>;
+            if (data.error && typeof data.error === 'object' && data.error !== null) {
+              const errorObj = data.error as Record<string, unknown>;
+              if (typeof errorObj.messages === 'string') {
+                errorMessage = errorObj.messages;
+              }
+            }
+          }
+        } else if (typeof error.message === 'string') {
+          errorMessage = error.message;
+        }
       }
       
       setError(errorMessage);
@@ -148,10 +159,10 @@ export const UploadDialog = ({
                 <Upload className="h-6 w-6 text-primary" />
               </div>
               <div className="text-sm">
-                <span className="font-semibold text-primary">Click để chọn</span> hoặc kéo thả file vào đây
+                <span className="font-semibold text-primary">{t('upload.clickToSelect')}</span> {t('upload.orDragDrop')}
               </div>
               <p className="text-xs text-muted-foreground">
-                Hỗ trợ hình ảnh, video, tài liệu (tối đa 50MB)
+                {t('upload.supportedFiles')}
               </p>
             </div>
           </div>
@@ -191,7 +202,7 @@ export const UploadDialog = ({
             <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
               <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive mt-0.5" />
               <div className="flex-1">
-                <p className="font-medium text-destructive">Upload Failed</p>
+                <p className="font-medium text-destructive">{t('upload.uploadFailed')}</p>
                 <p className="text-destructive/90 mt-1">{error}</p>
               </div>
               <Button
@@ -209,7 +220,7 @@ export const UploadDialog = ({
           {uploading && (
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span>Đang upload...</span>
+                <span>{t('upload.uploading')}</span>
                 <span>{progress}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -223,13 +234,13 @@ export const UploadDialog = ({
               onClick={() => onOpenChange(false)}
               disabled={uploading}
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               onClick={handleUpload}
               disabled={files.length === 0 || uploading}
             >
-              {uploading ? 'Đang upload...' : 'Upload'}
+              {uploading ? t('upload.uploading') : t('upload.uploadButton')}
             </Button>
           </div>
         </div>

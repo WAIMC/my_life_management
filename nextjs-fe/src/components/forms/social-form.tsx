@@ -1,8 +1,10 @@
 'use client';
+'use no memo';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
@@ -17,16 +19,13 @@ import {
 } from '@/components/ui/select';
 import type { SocialMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status } from '@/shared/enums';
+import { SocialStatus, IsActive } from '@/shared/enums';
 import { socialSchema, type SocialFormData } from '@/shared/validation/validation';
-
-interface SocialFormProps {
-  initialData?: SocialMgmt | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { SocialFormProps } from './types';
 
 export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
 
@@ -35,96 +34,105 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
+    setError,
   } = useForm<SocialFormData>({
     resolver: zodResolver(socialSchema),
     defaultValues: {
       rank_order: 0,
-      status: Status.ACTIVE,
-      is_active: true,
+      status: IsActive.TRUE,
     },
   });
 
   useEffect(() => {
     if (initialData) {
       reset({
-        platform: initialData.platform,
-        url: initialData.url,
-        icon: initialData.icon || '',
+        name: initialData.name,
+        link: initialData.link,
+        image: initialData.image || '',
         rank_order: initialData.rank_order,
         status: initialData.status,
-        is_active: initialData.is_active,
+        is_display: initialData.is_display,
       });
     } else {
       reset({
-        platform: '',
-        url: '',
-        icon: '',
+        name: '',
+        link: '',
+        image: '',
         rank_order: 0,
-        status: Status.ACTIVE,
-        is_active: true,
+        status: IsActive.TRUE,
+        is_display: true,
       });
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: SocialFormData) => {
     try {
+      // Convert string to number for rank_order
+      const payload = {
+        ...data,
+        rank_order: Number(data.rank_order),
+      };
+      
       if (isEdit && initialData) {
-        await update(initialData.id, data);
+        await update(initialData.id, payload);
       } else {
         await create({
-          ...data,
+          ...payload,
           is_delete: false,
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
 
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const statusValue = useWatch({ control, name: 'status' });
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="platform">
-            Platform <span className="text-red-500">*</span>
+          <Label htmlFor="name">
+            Name <span className="text-red-500">*</span>
           </Label>
           <Input
-            id="platform"
-            {...register('platform')}
-            className={errors.platform ? 'border-red-500' : ''}
-            placeholder="e.g. Facebook, Twitter"
+            id="name"
+            {...register('name')}
+            className={errors.name ? 'border-red-500' : ''}
+            placeholder={tForms('socialName')}
           />
-          {errors.platform && (
-            <p className="text-sm text-red-500">{errors.platform.message}</p>
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="icon">Icon Class (FontAwesome/etc)</Label>
+          <Label htmlFor="image">Icon/Image URL</Label>
           <Input
-            id="icon"
-            {...register('icon')}
-            placeholder="e.g. fa-brands fa-facebook"
+            id="image"
+            {...register('image')}
+            placeholder={tForms('socialIcon')}
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="url">
-          URL <span className="text-red-500">*</span>
+        <Label htmlFor="link">
+          Link <span className="text-red-500">*</span>
         </Label>
         <Input
-          id="url"
-          {...register('url')}
-          className={errors.url ? 'border-red-500' : ''}
-          placeholder="https://example.com/profile"
+          id="link"
+          {...register('link')}
+          className={errors.link ? 'border-red-500' : ''}
+          placeholder={tForms('socialUrl')}
         />
-        {errors.url && (
-          <p className="text-sm text-red-500">{errors.url.message}</p>
+        {errors.link && (
+          <p className="text-sm text-red-500">{errors.link.message}</p>
         )}
       </div>
 
@@ -149,15 +157,15 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
+            value={statusValue?.toString()}
+            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={SocialStatus.ACTIVE.toString()}>Active</SelectItem>
+              <SelectItem value={SocialStatus.INACTIVE.toString()}>Inactive</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -166,19 +174,19 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
       <div className="flex items-center gap-2 mt-4">
         <input
           type="checkbox"
-          id="is_active"
-          {...register('is_active')}
+          id="is_display"
+          {...register('is_display')}
           className="rounded"
         />
-        <Label htmlFor="is_active">Is Active</Label>
+        <Label htmlFor="is_display">Is Display</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

@@ -10,29 +10,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown, Folder } from 'lucide-react';
-import type { MediaFile, SortField, SortOrder } from './types';
+import type { MediaFile, SortField } from '@/shared/types/file-manager.types';
 import { formatFileSize, getFileIcon, getMimeTypeLabel } from './utils';
 import { format } from 'date-fns';
 import { FileContextMenu } from './context-menu';
-
-interface FileListProps {
-  files: MediaFile[];
-  selectedFiles: string[];
-  onSelect: (fileId: string, selected: boolean) => void;
-  onSelectAll: (selected: boolean) => void;
-  onFileClick: (file: MediaFile) => void;
-  onNavigate: (path: string) => void;
-  isLoading?: boolean;
-  sortField?: SortField;
-  sortOrder?: SortOrder;
-  onSort?: (field: SortField) => void;
-  onPreview: (file: MediaFile) => void;
-  onRename: (file: MediaFile) => void;
-  onMove: (file: MediaFile) => void;
-  onCopy: (file: MediaFile) => void;
-  onDelete: (file: MediaFile) => void;
-  onDownload?: (file: MediaFile) => void;
-}
+import { useTranslations } from 'next-intl';
+import { SORT_FIELD, FILE_TYPE, DATE_FORMAT, SORT_ORDER } from '@/shared/constants/file-manager';
+import type { FileListProps } from '@/shared/types/file-manager.types';
 
 export const FileList = ({
   files,
@@ -52,14 +36,16 @@ export const FileList = ({
   onDelete,
   onDownload,
 }: FileListProps) => {
+  const t = useTranslations('fileManager');
+  
   if (isLoading) {
-    return <div className="py-8 text-center text-muted-foreground">Đang tải...</div>;
+    return <div className="py-8 text-center text-muted-foreground">{t('loading')}</div>;
   }
 
   if (files.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground">
-        Không có file nào
+        {t('noFiles')}
       </div>
     );
   }
@@ -69,7 +55,7 @@ export const FileList = ({
   };
 
   const handleDoubleClick = (file: MediaFile) => {
-    if (file.type === 'folder') {
+    if (file.type === FILE_TYPE.FOLDER) {
       onNavigate(file.folder_path === '/' ? `/${file.name}` : `${file.folder_path}/${file.name}`);
     } else {
       onPreview(file);
@@ -78,7 +64,7 @@ export const FileList = ({
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
-    return <ArrowUpDown className={`ml-2 h-4 w-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />;
+    return <ArrowUpDown className={`ml-2 h-4 w-4 ${sortOrder === SORT_ORDER.DESC ? 'rotate-180' : ''}`} />;
   };
 
   return (
@@ -100,34 +86,34 @@ export const FileList = ({
             </TableHead>
             <TableHead 
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.('name')}
+              onClick={() => onSort?.(SORT_FIELD.NAME)}
             >
               <div className="flex items-center">
-                Tên {renderSortIcon('name')}
+                {t('name')} {renderSortIcon(SORT_FIELD.NAME)}
               </div>
             </TableHead>
             <TableHead 
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.('type')}
+              onClick={() => onSort?.(SORT_FIELD.TYPE)}
             >
               <div className="flex items-center">
-                Loại {renderSortIcon('type')}
+                {t('type')} {renderSortIcon(SORT_FIELD.TYPE)}
               </div>
             </TableHead>
             <TableHead 
               className="text-right cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.('size')}
+              onClick={() => onSort?.(SORT_FIELD.SIZE)}
             >
               <div className="flex items-center justify-end">
-                Dung lượng {renderSortIcon('size')}
+                {t('size')} {renderSortIcon(SORT_FIELD.SIZE)}
               </div>
             </TableHead>
             <TableHead 
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.('date')}
+              onClick={() => onSort?.(SORT_FIELD.DATE)}
             >
               <div className="flex items-center">
-                Ngày tạo {renderSortIcon('date')}
+                {t('created')} {renderSortIcon(SORT_FIELD.DATE)}
               </div>
             </TableHead>
             <TableHead className="w-12"></TableHead>
@@ -164,7 +150,7 @@ export const FileList = ({
                   </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                      {file.type === 'folder' ? (
+                      {file.type === FILE_TYPE.FOLDER ? (
                         <Folder className="h-5 w-5 text-blue-500" fill="currentColor" />
                       ) : (
                         <Icon className="h-5 w-5 text-muted-foreground" />
@@ -181,37 +167,37 @@ export const FileList = ({
                     {formatFileSize(file.size)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {format(new Date(file.created_at), 'dd/MM/yyyy HH:mm')}
+                    {format(new Date(file.created_at), DATE_FORMAT.LONG)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">{t('openMenu')}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onPreview(file)}>
-                          Xem trước
+                          {t('preview')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onDownload?.(file)}>
-                          Tải xuống
+                          {t('download')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onRename(file)}>
-                          Đổi tên
+                          {t('rename')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onMove(file)}>
-                          Di chuyển
+                          {t('move')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onCopy(file)}>
-                          Sao chép
+                          {t('copy')}
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => onDelete(file)}
                           className="text-red-600 focus:text-red-600"
                         >
-                          Xóa
+                          {t('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

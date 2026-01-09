@@ -16,25 +16,17 @@ import { Download, Upload, FileSpreadsheet, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
+import type { ExportFormat, ImportFormat, ImportExportProps } from '@/shared/types/data-table.types';
+import { EXPORT_FORMATS } from '@/shared/constants/media';
 
-export type ExportFormat = 'csv' | 'excel' | 'json';
-export type ImportFormat = 'csv' | 'excel';
-
-interface ImportExportProps {
-  onExport?: (format: ExportFormat) => Promise<void> | void;
-  onImport?: (file: File, format: ImportFormat) => Promise<void> | void;
-  onDownloadTemplate?: (format: ImportFormat) => Promise<void> | void;
-  exportFormats?: ExportFormat[];
-  importFormats?: ImportFormat[];
-  moduleName?: string;
-}
+export type { ExportFormat, ImportFormat } from '@/shared/types/data-table.types';
 
 export function ImportExport({
   onExport,
   onImport,
   onDownloadTemplate,
-  exportFormats = ['csv', 'excel'],
-  importFormats = ['csv', 'excel'],
+  exportFormats = [EXPORT_FORMATS.CSV, EXPORT_FORMATS.EXCEL],
+  importFormats = [EXPORT_FORMATS.CSV, EXPORT_FORMATS.EXCEL],
   moduleName = 'data',
 }: ImportExportProps) {
   const t = useTranslations();
@@ -50,7 +42,8 @@ export function ImportExport({
       await onExport(format);
       toast.success(t('importExport.exported', { moduleName, format: format.toUpperCase() }));
       setIsOpen(false);
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast.error(t('importExport.exportFailed'));
     } finally {
       setIsProcessing(false);
@@ -69,7 +62,8 @@ export function ImportExport({
       toast.success(t('importExport.imported', { moduleName }));
       setSelectedFile(null);
       setIsOpen(false);
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast.error(t('importExport.importFailed'));
     } finally {
       setIsProcessing(false);
@@ -83,7 +77,8 @@ export function ImportExport({
     try {
       await onDownloadTemplate(format);
       toast.success(t('importExport.templateDownloaded', { format: format.toUpperCase() }));
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast.error(t('importExport.templateDownloadFailed'));
     } finally {
       setIsProcessing(false);
@@ -92,9 +87,9 @@ export function ImportExport({
 
   const getFormatIcon = (format: string) => {
     switch (format) {
-      case 'csv':
+      case EXPORT_FORMATS.CSV:
         return <FileText className="h-4 w-4" />;
-      case 'excel':
+      case EXPORT_FORMATS.EXCEL:
         return <FileSpreadsheet className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
@@ -110,28 +105,28 @@ export function ImportExport({
         className="gap-2"
       >
         <Download className="h-4 w-4" />
-        Import/Export
+        {t('importExport.title')}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Import/Export {moduleName}</DialogTitle>
+            <DialogTitle>{t('importExport.title')} {moduleName}</DialogTitle>
             <DialogDescription>
-              Export data to file or import data from file
+              {t('importExport.description')}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="export" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="export">Export</TabsTrigger>
-              <TabsTrigger value="import">Import</TabsTrigger>
+              <TabsTrigger value="export">{t('importExport.export')}</TabsTrigger>
+              <TabsTrigger value="import">{t('importExport.import')}</TabsTrigger>
             </TabsList>
 
             {/* Export Tab */}
             <TabsContent value="export" className="space-y-4">
               <div className="space-y-2">
-                <Label>Select Format</Label>
+                <Label>{t('importExport.selectFormat')}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {exportFormats.map((format) => (
                     <Button
@@ -148,30 +143,30 @@ export function ImportExport({
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Export all data to the selected format
+                {t('importExport.exportDescription')}
               </p>
             </TabsContent>
 
             {/* Import Tab */}
             <TabsContent value="import" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="file">Select File</Label>
+                <Label htmlFor="file">{t('importExport.selectFile')}</Label>
                 <Input
                   id="file"
                   type="file"
-                  accept={importFormats.map(f => f === 'csv' ? '.csv' : '.xlsx,.xls').join(',')}
+                  accept={importFormats.map(f => f === EXPORT_FORMATS.CSV ? '.csv' : '.xlsx,.xls').join(',')}
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                   disabled={isProcessing}
                 />
                 {selectedFile && (
                   <p className="text-sm text-muted-foreground">
-                    Selected: {selectedFile.name}
+                    {t('importExport.selected')}: {selectedFile.name}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label>Import As</Label>
+                <Label>{t('importExport.importAs')}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {importFormats.map((format) => (
                     <Button
@@ -196,13 +191,13 @@ export function ImportExport({
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
                       <span className="bg-background px-2 text-muted-foreground">
-                        Or
+                        {t('importExport.or')}
                       </span>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Download Template</Label>
+                    <Label>{t('importExport.downloadTemplate')}</Label>
                     <div className="grid grid-cols-2 gap-2">
                       {importFormats.map((format) => (
                         <Button
@@ -229,7 +224,7 @@ export function ImportExport({
               onClick={() => setIsOpen(false)}
               disabled={isProcessing}
             >
-              Close
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

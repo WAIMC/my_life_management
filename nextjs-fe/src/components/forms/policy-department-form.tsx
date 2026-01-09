@@ -3,31 +3,20 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { PolicyDepartmentMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status } from '@/shared/enums';
 import { policyDepartmentSchema, type PolicyDepartmentFormData } from '@/shared/validation/validation';
-
-interface PolicyDepartmentFormProps {
-  initialData?: PolicyDepartmentMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { PolicyDepartmentFormProps } from './types';
 
 export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: PolicyDepartmentFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<PolicyDepartmentMst>(ENDPOINTS.MASTER.POLICY_DEPARTMENT);
 
@@ -35,47 +24,45 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-    watch,
     reset,
+    setError,
   } = useForm<PolicyDepartmentFormData>({
     resolver: zodResolver(policyDepartmentSchema),
-    defaultValues: {
-      status: Status.ACTIVE,
-      is_active: true,
-    },
+    defaultValues: {},
   });
 
   useEffect(() => {
     if (initialData) {
       reset({
-        name: initialData.name,
-        description: initialData.description || '',
-        status: initialData.status,
-        is_active: initialData.is_active,
+        table_name: initialData.table_name,
+        row_id: initialData.row_id,
       });
     } else {
       reset({
-        name: '',
-        description: '',
-        status: Status.ACTIVE,
-        is_active: true,
+        table_name: '',
+        row_id: 0,
       });
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: PolicyDepartmentFormData) => {
     try {
+      // Convert string to number for row_id
+      const payload = {
+        ...data,
+        row_id: Number(data.row_id),
+      };
+      
       if (isEdit && initialData) {
-        await update(initialData.id, data);
+        await update(initialData.id, payload);
       } else {
         await create({
-          ...data,
+          ...payload,
           is_delete: false,
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
@@ -84,59 +71,41 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+        <Label htmlFor="table_name">
+          Table Name <span className="text-red-500">*</span>
         </Label>
         <Input
-          id="name"
-          {...register('name')}
-          className={errors.name ? 'border-red-500' : ''}
-          placeholder="e.g. Terms of Service"
+          id="table_name"
+          {...register('table_name')}
+          className={errors.table_name ? 'border-red-500' : ''}
+          placeholder={tForms('termsOfService')}
         />
-        {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
+        {errors.table_name && (
+          <p className="text-sm text-red-500">{errors.table_name.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" {...register('description')} rows={3} />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="status">
-          Status <span className="text-red-500">*</span>
+        <Label htmlFor="row_id">
+          Row ID <span className="text-red-500">*</span>
         </Label>
-        <Select
-          value={watch('status')?.toString()}
-          onValueChange={(value) => setValue('status', Number(value) as any)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-            <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center gap-2 mt-4">
-        <input
-          type="checkbox"
-          id="is_active"
-          {...register('is_active')}
-          className="rounded"
+        <Input
+          id="row_id"
+          type="number"
+          {...register('row_id')}
+          className={errors.row_id ? 'border-red-500' : ''}
         />
-        <Label htmlFor="is_active">Is Active</Label>
+        {errors.row_id && (
+          <p className="text-sm text-red-500">{errors.row_id.message}</p>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

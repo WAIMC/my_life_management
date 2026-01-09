@@ -15,11 +15,11 @@ import type { SettingLinkMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { 
   SORT_ORDER, 
+  SORT_FIELDS,
   type SortOrder, 
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/constants';
-import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
@@ -39,7 +39,7 @@ export default function SettingLinkListPage() {
   const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
   const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
-  const [sortBy, setSortBy] = useState('rank_order');
+  const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.ORDER);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
@@ -48,8 +48,6 @@ export default function SettingLinkListPage() {
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<SettingLinkMgmt | null>(null);
-
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const tCommon = useTranslations('common');
   const tEntities = useTranslations('entities');
@@ -123,30 +121,12 @@ export default function SettingLinkListPage() {
 
   const filterFields: FilterField[] = [
     { key: 'name', label: tFields('name'), type: 'text', placeholder: tCommon('search') },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
-      ],
-    },
-    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
+    { key: 'is_active', label: tFields('status'), type: 'boolean' },
   ];
   const searchFields: SearchField[] = [
     { key: 'name', label: tFields('name'), type: 'text' },
     { key: 'url', label: tFields('url'), type: 'text' },
     { key: 'description', label: tFields('description'), type: 'text' },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: Object.entries(StatusLabels).map(([value, label]) => ({
-        value: value.toString(),
-        label
-      }))
-    },
     { key: 'created_at', label: tFields('createdAt'), type: 'date' }
   ];
   const bulkActions: BulkAction[] = [
@@ -161,16 +141,23 @@ export default function SettingLinkListPage() {
     { 
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     }, 
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     }
   ];
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { setAdvancedCriteria(criteria); const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); setFilters(newFilters); setPage(1); };
-  const handleImport = async (file: File, format: string) => { refetch(); };
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    setFilters(newFilters);
+    setPage(PAGINATION.DEFAULT_PAGE);
+  };
+
+  const handleImport = async () => {
+    refetch();
+  };
 
   return (
     <AdminLayout>
@@ -178,7 +165,7 @@ export default function SettingLinkListPage() {
         title={tManagement('title', { entity: tEntities('settingLinks') })}
         description={tManagement('description', { entity: tEntities('settingLinks').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('settingLinks'), isActive: true },
         ]}
         action={
@@ -264,10 +251,10 @@ export default function SettingLinkListPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Setting Link(s)"
-        description={`Are you sure you want to delete ${deleteIds.length} setting link(s)? This action cannot be undone.`}
+        title={tCrud('deleteEntity', { entity: tEntities('settingLink') })}
+        description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('settingLink').toLowerCase() })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText={tCommon('delete')}
         variant="destructive"
       />
     </AdminLayout>

@@ -12,19 +12,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from 'next-intl';
+import type { NewFolderDialogProps } from '../types';
 import { isValidFileName } from '../utils';
-
-interface NewFolderDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreateFolder: (name: string) => Promise<void>;
-}
 
 export const NewFolderDialog = ({
   open,
   onOpenChange,
   onCreateFolder,
 }: NewFolderDialogProps) => {
+  const t = useTranslations('fileManager.dialogs');
   const [folderName, setFolderName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,12 +37,12 @@ export const NewFolderDialog = ({
     e.preventDefault();
     
     if (!folderName.trim()) {
-      setError('Tên thư mục không được để trống');
+      setError(t('newFolder.emptyNameError'));
       return;
     }
 
     if (!isValidFileName(folderName)) {
-      setError('Tên thư mục chứa ký tự không hợp lệ');
+      setError(t('newFolder.invalidNameError'));
       return;
     }
 
@@ -53,8 +50,8 @@ export const NewFolderDialog = ({
     try {
       await onCreateFolder(folderName);
       onOpenChange(false);
-    } catch (err) {
-      setError('Không thể tạo thư mục');
+    } catch {
+      setError(t('newFolder.createError'));
     } finally {
       setIsLoading(false);
     }
@@ -64,16 +61,16 @@ export const NewFolderDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Tạo thư mục mới</DialogTitle>
+          <DialogTitle>{t('newFolder.title')}</DialogTitle>
           <DialogDescription>
-            Nhập tên cho thư mục mới.
+            {t('newFolder.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Tên
+                {t('newFolder.nameLabel')}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -83,7 +80,7 @@ export const NewFolderDialog = ({
                     setFolderName(e.target.value);
                     setError('');
                   }}
-                  placeholder="Thư mục mới"
+                  placeholder={t('newFolder.placeholder')}
                   autoFocus
                 />
                 {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
@@ -97,10 +94,10 @@ export const NewFolderDialog = ({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={isLoading || !folderName.trim()}>
-              {isLoading ? 'Đang tạo...' : 'Tạo thư mục'}
+              {isLoading ? t('creating') : t('newFolder.createButton')}
             </Button>
           </DialogFooter>
         </form>

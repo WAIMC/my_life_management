@@ -20,7 +20,6 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/constants';
-import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
@@ -49,8 +48,6 @@ export default function TokenListPage() {
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingToken, setEditingToken] = useState<TokenMst | null>(null);
-
-  const [advancedCriteria, setAdvancedCriteria] = useState<SearchCriteria[]>([]);
 
   const tCommon = useTranslations('common');
   const tEntities = useTranslations('entities');
@@ -105,46 +102,21 @@ export default function TokenListPage() {
 
   const columns: Column<TokenMst>[] = [
     { key: 'id', label: tFields('id'), sortable: true },
-    { key: 'admin_mst_id', label: tFields('adminId'), sortable: true },
-    { key: 'token', label: tFields('token') },
-    {
-      key: 'status',
-      label: tFields('status'),
-      sortable: true,
-      render: (item) => (
-        <Badge variant={item.is_active ? 'default' : 'secondary'}>
-          {item.is_active ? tCommon('active') : tCommon('inactive')}
-        </Badge>
-      ),
-    },
+    { key: 'account_id', label: tFields('accountId'), sortable: true },
+    { key: 'device_name', label: tFields('deviceName') },
+    { key: 'ip_address', label: tFields('ipAddress') },
+    { key: 'expired_at', label: tFields('expiredAt'), sortable: true },
     { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
 
   const filterFields: FilterField[] = [
-    { key: 'admin_mst_id', label: tFields('adminId'), type: 'text', placeholder: tCommon('search') },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: [
-        { value: Status.ACTIVE, label: StatusLabels[Status.ACTIVE] },
-        { value: Status.INACTIVE, label: StatusLabels[Status.INACTIVE] },
-      ],
-    },
-    { key: 'is_active', label: tCommon('active'), type: 'boolean' },
+    { key: 'account_id', label: tFields('accountId'), type: 'text', placeholder: tCommon('search') },
+    { key: 'device_name', label: tFields('deviceName'), type: 'text' },
   ];
   const searchFields: SearchField[] = [
-    { key: 'admin_mst_id', label: tFields('adminId'), type: 'text' },
-    { key: 'token', label: tFields('token'), type: 'text' },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: Object.entries(StatusLabels).map(([value, label]) => ({
-        value: value.toString(),
-        label
-      }))
-    },
+    { key: 'account_id', label: tFields('accountId'), type: 'text' },
+    { key: 'device_name', label: tFields('deviceName'), type: 'text' },
+    { key: 'ip_address', label: tFields('ipAddress'), type: 'text' },
     { key: 'created_at', label: tFields('createdAt'), type: 'date' }
   ];
   const bulkActions: BulkAction[] = [
@@ -159,20 +131,24 @@ export default function TokenListPage() {
     { 
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     }, 
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { refetch(); } 
+      onClick: async () => { refetch(); } 
     }
   ];
+
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => { 
     const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); 
     setFilters(newFilters); 
     setPage(PAGINATION.DEFAULT_PAGE); 
   };
-  const handleImport = async (file: File, format: string) => { refetch(); };
+
+  const handleImport = async () => { 
+    refetch(); 
+  };
 
   return (
     <AdminLayout>
@@ -180,7 +156,7 @@ export default function TokenListPage() {
         title={tManagement('title', { entity: tEntities('tokens') })}
         description={tManagement('description', { entity: tEntities('tokens').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('tokens'), isActive: true },
         ]}
         action={

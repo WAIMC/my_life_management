@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 export default function NotFound() {
   const t = useTranslations('errors');
@@ -43,7 +44,7 @@ export default function NotFound() {
         {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button asChild size="lg" className="gap-2">
-            <Link href="/admin">
+            <Link href={ADMIN_ROUTES.DASHBOARD}>
               <Home className="h-4 w-4" />
               {tCommon('backToDashboard')}
             </Link>

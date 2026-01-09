@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { cn } from "@/shared/utils";
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 interface BreadcrumbItemType {
   label: string;
@@ -52,7 +53,7 @@ export function PageHeader({
             <BreadcrumbList>
               {/* Home Icon */}
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin" className="flex items-center gap-1">
+                <BreadcrumbLink href={ADMIN_ROUTES.DASHBOARD} className="flex items-center gap-1">
                   <Home className="h-4 w-4" />
                 </BreadcrumbLink>
               </BreadcrumbItem>

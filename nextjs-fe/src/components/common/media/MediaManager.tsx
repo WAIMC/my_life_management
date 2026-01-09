@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import { FileUpload } from './FileUpload';
 import type { MediaFile, ListFilesParams, FileType } from '@/shared/types/media-file.types';
@@ -8,45 +8,47 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useTranslations } from 'next-intl';
+import { PAGINATION } from '@/shared/constants';
+import { MEDIA_MANAGER_CONFIG, MEDIA_FILE_TYPES, MIME_TYPE_PREFIX } from '@/shared/constants/media';
+import { KEYBOARD_SHORTCUT } from '@/shared/constants/file-manager';
 
 export function MediaManager() {
   const t = useTranslations();
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [totalPages, setTotalPages] = useState<number>(PAGINATION.DEFAULT_PAGE);
   const [fileType, setFileType] = useState<FileType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
 
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     setLoading(true);
     try {
       const params: ListFilesParams = {
         page: currentPage,
-        per_page: 20,
+        per_page: MEDIA_MANAGER_CONFIG.DEFAULT_PER_PAGE,
         search: searchQuery || undefined,
-        file_type: fileType !== 'all' ? fileType : undefined,
+        file_type: fileType !== MEDIA_FILE_TYPES[0] ? fileType : undefined,
       };
 
       const response = await mediaFileService.list(params);
       setFiles(response.data);
       setTotalPages(response.last_page);
-    } catch (error) {
-      console.error('Failed to load files:', error);
+    } catch {
       alert(t('media.failedToLoadFiles'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, fileType, searchQuery, t]);
 
   useEffect(() => {
     loadFiles();
-  }, [currentPage, fileType]);
+  }, [currentPage, fileType, loadFiles]);
 
   const handleSearch = () => {
-    setCurrentPage(1);
+    setCurrentPage(PAGINATION.DEFAULT_PAGE);
     loadFiles();
   };
 
@@ -61,8 +63,7 @@ export function MediaManager() {
     try {
       await mediaFileService.deleteSingle(id);
       loadFiles();
-    } catch (error) {
-      console.error('Failed to delete file:', error);
+    } catch {
       alert(t('media.failedToDeleteFile'));
     }
   };
@@ -75,8 +76,7 @@ export function MediaManager() {
       await mediaFileService.delete({ ids: Array.from(selectedFiles) });
       setSelectedFiles(new Set());
       loadFiles();
-    } catch (error) {
-      console.error('Failed to delete files:', error);
+    } catch {
       alert(t('media.failedToDeleteFiles'));
     }
   };
@@ -117,7 +117,7 @@ export function MediaManager() {
             placeholder={t('media.searchFiles')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyPress={(e) => e.key === KEYBOARD_SHORTCUT.ENTER && handleSearch()}
             className="min-w-[250px]"
           />
           <Button onClick={handleSearch} variant="secondary" size="sm">
@@ -127,7 +127,7 @@ export function MediaManager() {
 
         {/* Filter Tabs */}
         <div className="flex gap-2">
-          {(['all', 'images', 'videos', 'documents'] as FileType[]).map((type) => (
+          {(MEDIA_FILE_TYPES as readonly FileType[]).map((type) => (
             <Button
               key={type}
               onClick={() => setFileType(type)}
@@ -171,7 +171,8 @@ export function MediaManager() {
 
                 {/* File Preview */}
                 <div className="flex h-48 items-center justify-center overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  {file.mime_type && file.mime_type.startsWith('image/') ? (
+                  {file.mime_type && file.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={file.url || ''}
                       alt={file.original_name}
@@ -203,7 +204,7 @@ export function MediaManager() {
                     onClick={() => window.open(file.url || '', '_blank')}
                     variant="ghost"
                     size="sm"
-                    title="View"
+                    title={t('view')}
                   >
                     👁️
                   </Button>
@@ -211,7 +212,7 @@ export function MediaManager() {
                     onClick={() => mediaFileService.download(file.id, file.original_name)}
                     variant="ghost"
                     size="sm"
-                    title="Download"
+                    title={t('download')}
                   >
                     ⬇️
                   </Button>
@@ -219,7 +220,7 @@ export function MediaManager() {
                     onClick={() => handleDelete(file.id)}
                     variant="ghost"
                     size="sm"
-                    title="Delete"
+                    title={t('delete')}
                   >
                     🗑️
                   </Button>
@@ -239,15 +240,15 @@ export function MediaManager() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-4">
               <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(MEDIA_MANAGER_CONFIG.MIN_PAGE, p - 1))}
+                disabled={currentPage === MEDIA_MANAGER_CONFIG.MIN_PAGE}
                 variant="outline"
                 size="sm"
               >
-                Previous
+                {t('previous')}
               </Button>
               <span className="text-slate-700 dark:text-slate-300">
-                Page {currentPage} of {totalPages}
+                {t('pageOf', { page: currentPage, totalPages })}
               </span>
               <Button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
@@ -255,7 +256,7 @@ export function MediaManager() {
                 variant="outline"
                 size="sm"
               >
-                Next
+                {t('next')}
               </Button>
             </div>
           )}

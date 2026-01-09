@@ -1,9 +1,10 @@
 'use client';
+'use no memo';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useJunctionTable } from '@/shared/hooks/useJunctionTable';
 import { handleBindErrors } from '@/shared/utils/error-handler';
@@ -22,21 +23,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // import { JunctionManager } from '@/components/features/junction/junction-manager';
 import type { CategoryMgmt, SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { CategoryStatus, CategoryStatusLabels } from '@/shared/enums';
+import { CategoryStatus } from '@/shared/enums';
 import { categorySchema, type CategoryFormData } from '@/shared/validation/validation';
-
-interface CategoryFormProps {
-  initialData?: CategoryMgmt | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { CategoryFormProps } from './types';
 
 export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<CategoryMgmt>(ENDPOINTS.MANAGEMENT.CATEGORY);
   const [activeTab, setActiveTab] = useState('details');
 
   // Junction table for Category-Skill (Only in Edit mode)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const skillJunction = useJunctionTable<SkillMgmt>(
     ENDPOINTS.JUNCTION.CATEGORY_SKILL,
     ENDPOINTS.MANAGEMENT.SKILL,
@@ -50,14 +49,15 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
+    setError,
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       rank_order: 0,
       status: CategoryStatus.ACTIVE,
-      is_active: true,
+      is_display: true,
     },
   });
 
@@ -66,39 +66,48 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       reset({
         name: initialData.name,
         description: initialData.description || '',
-        icon: initialData.icon || '',
+        slug: initialData.slug || '',
         rank_order: initialData.rank_order,
         status: initialData.status,
-        is_active: initialData.is_active,
+        is_display: initialData.is_display,
       });
     } else {
       reset({
         name: '',
         description: '',
-        icon: '',
+        slug: '',
         rank_order: 0,
         status: CategoryStatus.ACTIVE,
-        is_active: true,
+        is_display: true,
       });
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: CategoryFormData) => {
     try {
+      // Convert string to number for rank_order
+      const payload = {
+        ...data,
+        rank_order: Number(data.rank_order),
+      };
+      
       if (isEdit && initialData) {
-        await update(initialData.id, data);
+        await update(initialData.id, payload);
       } else {
         await create({
-          ...data,
+          ...payload,
           is_delete: false,
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const statusValue = useWatch({ control, name: 'status' });
 
   const FormContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -123,11 +132,11 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="icon">Icon (CSS class or emoji)</Label>
+          <Label htmlFor="slug">Slug</Label>
           <Input
-            id="icon"
-            {...register('icon')}
-            placeholder="e.g., 📱 or fa-mobile"
+            id="slug"
+            {...register('slug')}
+            placeholder={tForms('slugExample')}
           />
         </div>
 
@@ -153,15 +162,15 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
+            value={statusValue?.toString()}
+            onValueChange={(value) => setValue('status', Number(value) as CategoryStatus)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={CategoryStatus.ACTIVE.toString()}>Active</SelectItem>
+              <SelectItem value={CategoryStatus.INACTIVE.toString()}>Inactive</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -169,20 +178,20 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         <div className="flex items-center gap-2 mt-8">
           <input
             type="checkbox"
-            id="is_active"
-            {...register('is_active')}
+            id="is_display"
+            {...register('is_display')}
             className="rounded"
           />
-          <Label htmlFor="is_active">Is Active</Label>
+          <Label htmlFor="is_display">Is Display</Label>
         </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

@@ -21,22 +21,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
+import type { BulkAction, BulkActionsProps } from '@/shared/types/data-table.types';
 
-export interface BulkAction {
-  label: string;
-  icon?: React.ReactNode;
-  variant?: 'default' | 'destructive' | 'outline';
-  onClick: (selectedIds: number[]) => void | Promise<void>;
-  confirmMessage?: string;
-  confirmTitle?: string;
-}
-
-interface BulkActionsProps {
-  selectedIds: number[];
-  onClearSelection: () => void;
-  actions?: BulkAction[];
-  isLoading?: boolean;
-}
+export type { BulkAction } from '@/shared/types/data-table.types';
 
 export function BulkActions({
   selectedIds,
@@ -62,6 +49,7 @@ export function BulkActions({
     try {
       await action.onClick(selectedIds);
       onClearSelection();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
     } finally {
       setIsExecuting(false);
@@ -78,7 +66,9 @@ export function BulkActions({
       label: t('deleteSelected'),
       icon: <Trash2 className="h-4 w-4" />,
       variant: 'destructive',
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onClick: async (_ids) => {
+        // Placeholder action
       },
       confirmMessage: t('deleteConfirm', { count: selectedIds.length }),
       confirmTitle: t('deleteItems'),
@@ -86,19 +76,25 @@ export function BulkActions({
     {
       label: t('archiveSelected'),
       icon: <Archive className="h-4 w-4" />,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onClick: async (_ids) => {
+        // Placeholder action
       },
     },
     {
       label: t('activateSelected'),
       icon: <CheckCircle className="h-4 w-4" />,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onClick: async (_ids) => {
+        // Placeholder action
       },
     },
     {
       label: t('deactivateSelected'),
       icon: <XCircle className="h-4 w-4" />,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onClick: async (_ids) => {
+        // Placeholder action
       },
     },
   ];

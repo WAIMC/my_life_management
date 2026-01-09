@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { useTranslations } from 'next-intl';
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,9 +24,9 @@ export default function LoginPage() {
     if (isAuthenticated) {
       const redirectParam = searchParams.get("redirect");
       const redirectUrl =
-        redirectParam && redirectParam.startsWith("/admin")
+        redirectParam && redirectParam.startsWith(ADMIN_ROUTES.DASHBOARD)
           ? redirectParam
-          : "/admin";
+          : ADMIN_ROUTES.DASHBOARD;
       router.push(redirectUrl);
     }
   }, [isAuthenticated, router, searchParams]);
@@ -42,7 +43,6 @@ export default function LoginPage() {
       });
       // Redirect handled by useEffect
     } catch (error: unknown) {
-      // Laravel returns { error: { code, messages } }
       const axiosError = error as { response?: { data?: { error?: { messages?: string } } } };
       const errorMessage = axiosError.response?.data?.error?.messages || t('invalidCredentials');
       setError(errorMessage);

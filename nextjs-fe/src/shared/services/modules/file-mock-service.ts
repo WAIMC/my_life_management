@@ -1,4 +1,4 @@
-import { MediaFile, Folder, FilterOptions, SortOptions, PaginationState, PaginatedResponse, FileOperationType } from '@/components/common/file-manager/types';
+import { MediaFile, Folder, FilterOptions, SortOptions, PaginationState, PaginatedResponse, FileOperationType } from '@/shared/types/file-manager.types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initial Mock Data Generation

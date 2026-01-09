@@ -8,23 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { History, RotateCcw, Eye, Calendar, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import type { BaseHistory } from '@/shared/types/models';
 import { useTranslations } from 'next-intl';
-
-interface HistoryViewerProps {
-  // New interface (preferred)
-  entityType?: string;
-  entityId?: number;
-  endpoint?: string;
-  // Old interface (backwards compatibility)
-  baseUrl?: string;
-  recordId?: number;
-  // Common props
-  onRestore?: (historyId: number) => void;
-  className?: string;
-}
+import type { BaseHistory } from '@/shared/types/models';
+import type { HistoryViewerProps } from '@/shared/types/data-table.types';
 
 export function HistoryViewer({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   entityType,
   entityId,
   endpoint,
@@ -43,6 +32,7 @@ export function HistoryViewer({
     recordId: finalRecordId,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedHistory, setSelectedHistory] = useState<BaseHistory | null>(null);
 
   useEffect(() => {
@@ -59,13 +49,13 @@ export function HistoryViewer({
   const getActionColor = (action: string) => {
     switch (action) {
       case 'create':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'update':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'delete':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   };
 
@@ -79,7 +69,7 @@ export function HistoryViewer({
         <CardContent className="flex h-64 items-center justify-center">
           <div className="text-center text-muted-foreground">
             <History className="mx-auto h-8 w-8 animate-spin" />
-            <p className="mt-2">Loading history...</p>
+            <p className="mt-2">{t('history.loading')}</p>
           </div>
         </CardContent>
       </Card>
@@ -92,7 +82,7 @@ export function HistoryViewer({
         <CardContent className="flex h-64 items-center justify-center">
           <div className="text-center text-muted-foreground">
             <History className="mx-auto h-8 w-8" />
-            <p className="mt-2">No history found</p>
+            <p className="mt-2">{t('history.noHistory')}</p>
           </div>
         </CardContent>
       </Card>
@@ -104,10 +94,10 @@ export function HistoryViewer({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5" />
-          Change History
+          {t('history.title')}
         </CardTitle>
         <CardDescription>
-          View all changes made to this record
+          {t('history.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -126,9 +116,10 @@ export function HistoryViewer({
                           const date = item.changed_at ? new Date(item.changed_at) : null;
                           return date && !isNaN(date.getTime()) 
                             ? formatDistanceToNow(date, { addSuffix: true })
-                            : 'Unknown time';
+                            : t('history.unknownTime');
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                         } catch (e) {
-                          return 'Invalid date';
+                          return t('history.invalidDate');
                         }
                       })()}
                     </span>
@@ -137,7 +128,7 @@ export function HistoryViewer({
                   <div className="mt-2 flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <User className="h-4 w-4" />
-                      <span>User #{item.changed_by}</span>
+                      <span>{t('history.user', { id: item.changed_by })}</span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Calendar className="h-4 w-4" />
@@ -147,9 +138,10 @@ export function HistoryViewer({
                              const date = item.changed_at ? new Date(item.changed_at) : null;
                              return date && !isNaN(date.getTime())
                                ? date.toLocaleString()
-                               : 'Unknown date';
+                               : t('history.unknownDate');
+                           // eslint-disable-next-line @typescript-eslint/no-unused-vars
                            } catch (e) {
-                             return 'Invalid date';
+                             return t('history.invalidDate');
                            }
                         })()}
                       </span>
@@ -158,7 +150,7 @@ export function HistoryViewer({
 
                   {item.ip_address && (
                     <div className="mt-1 text-xs text-muted-foreground">
-                      IP: {item.ip_address}
+                      {t('history.ip')}: {item.ip_address}
                     </div>
                   )}
                 </div>

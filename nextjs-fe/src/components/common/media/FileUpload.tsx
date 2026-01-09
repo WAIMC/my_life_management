@@ -2,23 +2,18 @@
 
 import React, { useState, useCallback } from 'react';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
-import type { UploadFileResponse } from '@/shared/types/media-file.types';
-
-interface FileUploadProps {
-  onUploadSuccess?: (file: UploadFileResponse | number) => void;
-  onUploadError?: (error: Error) => void;
-  accept?: string;
-  maxSize?: number; // in bytes
-  isPublic?: boolean;
-}
+import type { FileUploadProps } from '@/shared/types/media.types';
+import { UPLOAD_CONFIG, DRAG_EVENTS, MIME_TYPE_PREFIX } from '@/shared/constants/media';
+import { useTranslations } from 'next-intl';
 
 export function FileUpload({
   onUploadSuccess,
   onUploadError,
-  accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx',
-  maxSize = 50 * 1024 * 1024, // 50MB default
+  accept = UPLOAD_CONFIG.DEFAULT_ACCEPT,
+  maxSize = UPLOAD_CONFIG.DEFAULT_MAX_SIZE,
   isPublic = false,
 }: FileUploadProps) {
+  const t = useTranslations('media');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
@@ -28,19 +23,19 @@ export function FileUpload({
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === DRAG_EVENTS.ENTER || e.type === DRAG_EVENTS.OVER) {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === DRAG_EVENTS.LEAVE) {
       setDragActive(false);
     }
   }, []);
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File): string | null => {
     if (file.size > maxSize) {
-      return `File size exceeds ${mediaFileService.formatFileSize(maxSize)}`;
+      return t('fileSizeExceeds', { maxSize: mediaFileService.formatFileSize(maxSize) });
     }
     return null;
-  };
+  }, [maxSize, t]);
 
   const handleFile = useCallback((file: File) => {
     const error = validateFile(file);
@@ -52,7 +47,7 @@ export function FileUpload({
     setSelectedFile(file);
 
     // Generate preview for images
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith(MIME_TYPE_PREFIX.IMAGE)) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -61,7 +56,7 @@ export function FileUpload({
     } else {
       setPreview(null);
     }
-  }, [maxSize]);
+  }, [validateFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -89,8 +84,8 @@ export function FileUpload({
     try {
       // Simulate progress (in real app, use XMLHttpRequest for actual progress)
       const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+        setProgress(prev => Math.min(prev + UPLOAD_CONFIG.PROGRESS_INCREMENT, UPLOAD_CONFIG.MAX_PROGRESS));
+      }, UPLOAD_CONFIG.PROGRESS_INTERVAL_MS);
 
       const result = await mediaFileService.upload({
         file: selectedFile,
@@ -98,27 +93,27 @@ export function FileUpload({
       });
 
       clearInterval(progressInterval);
-      setProgress(100);
+      setProgress(UPLOAD_CONFIG.PROGRESS_COMPLETE);
 
       setTimeout(() => {
         setSelectedFile(null);
         setPreview(null);
-        setProgress(0);
+        setProgress(UPLOAD_CONFIG.MIN_PROGRESS);
         setUploading(false);
         onUploadSuccess?.(result);
-      }, 500);
+      }, UPLOAD_CONFIG.UPLOAD_COMPLETE_DELAY_MS);
     } catch (error) {
       setUploading(false);
-      setProgress(0);
+      setProgress(UPLOAD_CONFIG.MIN_PROGRESS);
       onUploadError?.(error as Error);
-      alert('Upload failed: ' + (error as Error).message);
+      alert(t('uploadFailed') + ': ' + (error as Error).message);
     }
   };
 
   const handleCancel = () => {
     setSelectedFile(null);
     setPreview(null);
-    setProgress(0);
+    setProgress(UPLOAD_CONFIG.MIN_PROGRESS);
   };
 
   return (
@@ -142,10 +137,10 @@ export function FileUpload({
           <label htmlFor="file-upload-input" className="upload-label">
             <div className="upload-icon">📁</div>
             <p className="upload-text">
-              Drag and drop your file here, or click to browse
+              {t('dragDropHere')}
             </p>
             <p className="upload-hint">
-              Max size: {mediaFileService.formatFileSize(maxSize)}
+              {t('maxSize')}: {mediaFileService.formatFileSize(maxSize)}
             </p>
           </label>
         </div>
@@ -153,6 +148,7 @@ export function FileUpload({
         <div className="file-preview">
           {preview && (
             <div className="preview-image">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="Preview" />
             </div>
           )}
@@ -181,14 +177,14 @@ export function FileUpload({
               disabled={uploading}
               className="btn btn-primary"
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? t('uploading') : t('upload')}
             </button>
             <button
               onClick={handleCancel}
               disabled={uploading}
               className="btn btn-secondary"
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </div>

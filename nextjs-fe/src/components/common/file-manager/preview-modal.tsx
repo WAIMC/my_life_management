@@ -1,23 +1,15 @@
 'use client';
 
-import { X, Copy, Download, Trash2, ChevronLeft, ChevronRight, FileText, Music, Video } from 'lucide-react';
+import { X, Copy, Download, Trash2, ChevronLeft, ChevronRight, FileText, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { MediaFile } from './types';
 import { formatFileSize } from './utils';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
-
-interface PreviewModalProps {
-  file: MediaFile | null;
-  onClose: () => void;
-  onDelete?: (file: MediaFile) => void;
-  onNext?: () => void;
-  onPrev?: () => void;
-  hasNext?: boolean;
-  hasPrev?: boolean;
-}
+import { useTranslations } from 'next-intl';
+import type { PreviewModalProps } from '@/shared/types/file-manager.types';
+import { DATE_FORMAT, KEYBOARD_SHORTCUT, KEYBOARD_EVENT } from '@/shared/constants/file-manager';
 
 export const PreviewModal = ({
   file,
@@ -31,24 +23,26 @@ export const PreviewModal = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!file) return;
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight' && hasNext) onNext?.();
-      if (e.key === 'ArrowLeft' && hasPrev) onPrev?.();
+      if (e.key === KEYBOARD_SHORTCUT.ESCAPE) onClose();
+      if (e.key === KEYBOARD_SHORTCUT.ARROW_RIGHT && hasNext) onNext?.();
+      if (e.key === KEYBOARD_SHORTCUT.ARROW_LEFT && hasPrev) onPrev?.();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener(KEYBOARD_EVENT.KEYDOWN, handleKeyDown);
+    return () => window.removeEventListener(KEYBOARD_EVENT.KEYDOWN, handleKeyDown);
   }, [file, onClose, hasNext, hasPrev, onNext, onPrev]);
+
+  const t = useTranslations('fileManager');
 
   if (!file) return null;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(file.url);
-    toast.success('Đã sao chép link');
+    toast.success(t('linkCopied'));
   };
 
   const handleDelete = () => {
-    if (confirm('Bạn có chắc muốn xóa file này?')) {
+    if (confirm(t('confirmDelete'))) {
       onDelete?.(file);
       onClose();
     }
@@ -137,7 +131,7 @@ export const PreviewModal = ({
               <div className="flex flex-col items-center justify-center text-white">
                 <FileText className="h-24 w-24 mb-4" />
                 <p className="text-xl font-medium">{file.name}</p>
-                <p className="text-white/70 mt-2">Không thể xem trước file này</p>
+                <p className="text-white/70 mt-2">{t('previewNotAvailable')}</p>
               </div>
             )}
           </div>
@@ -157,19 +151,19 @@ export const PreviewModal = ({
 
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Loại:</span>
+                <span className="text-muted-foreground">{t('type')}:</span>
                 <span className="col-span-2 font-medium truncate" title={file.mime_type}>
                   {file.mime_type}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Ngày tạo:</span>
+                <span className="text-muted-foreground">{t('created')}:</span>
                 <span className="col-span-2 font-medium">
-                  {format(new Date(file.created_at), 'dd/MM/yyyy HH:mm')}
+                  {format(new Date(file.created_at), DATE_FORMAT.LONG)}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Thư mục:</span>
+                <span className="text-muted-foreground">{t('folder')}:</span>
                 <span className="col-span-2 font-medium truncate" title={file.folder_path}>
                   {file.folder_path}
                 </span>
@@ -179,12 +173,12 @@ export const PreviewModal = ({
             <div className="flex flex-col gap-2 pt-4 border-t">
               <Button onClick={handleCopyLink} variant="outline" className="w-full justify-start">
                 <Copy className="mr-2 h-4 w-4" />
-                Sao chép liên kết
+                {t('copyLink')}
               </Button>
               <Button asChild variant="outline" className="w-full justify-start">
                 <a href={file.url} download>
                   <Download className="mr-2 h-4 w-4" />
-                  Tải xuống
+                  {t('download')}
                 </a>
               </Button>
               <Button 
@@ -193,7 +187,7 @@ export const PreviewModal = ({
                 className="w-full justify-start"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Xóa file
+                {t('deleteFile')}
               </Button>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, RotateCcw, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -88,7 +89,7 @@ export default function Error({ error, reset }: ErrorProps) {
             {tCommon('tryAgain')}
           </Button>
           <Button variant="outline" asChild size="lg" className="gap-2">
-            <Link href="/admin">
+            <Link href={ADMIN_ROUTES.DASHBOARD}>
               <Home className="h-4 w-4" />
               {tCommon('backToDashboard')}
             </Link>

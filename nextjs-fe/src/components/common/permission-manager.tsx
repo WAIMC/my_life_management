@@ -6,25 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { useTranslations } from 'next-intl';
+import type { PermissionGroup, PermissionManagerProps } from '@/shared/types/data-table.types';
 
-export interface Permission {
-  id: number;
-  name: string;
-  description?: string;
-  category?: string;
-}
-
-export interface PermissionGroup {
-  name: string;
-  permissions: Permission[];
-}
-
-interface PermissionManagerProps {
-  permissions: PermissionGroup[];
-  selectedPermissions: number[];
-  onChange: (selectedIds: number[]) => void;
-  disabled?: boolean;
-}
+export type { Permission, PermissionGroup } from '@/shared/types/data-table.types';
 
 export function PermissionManager({
   permissions,
@@ -33,6 +18,7 @@ export function PermissionManager({
   disabled = false,
 }: PermissionManagerProps) {
   const [selected, setSelected] = useState<number[]>(selectedPermissions);
+  const t = useTranslations('permissions');
 
   const handleToggle = (permissionId: number) => {
     const newSelected = selected.includes(permissionId)
@@ -68,13 +54,13 @@ export function PermissionManager({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Permissions</h3>
+          <h3 className="text-lg font-medium">{t('title')}</h3>
           <p className="text-sm text-muted-foreground">
-            Select permissions for this role
+            {t('description')}
           </p>
         </div>
         <Badge variant="secondary">
-          {selected.length} selected
+          {t('selected', { count: selected.length })}
         </Badge>
       </div>
 
@@ -97,7 +83,7 @@ export function PermissionManager({
                 <div className="flex-1">
                   <CardTitle className="text-base">{group.name}</CardTitle>
                   <CardDescription className="text-xs">
-                    {group.permissions.length} permissions
+                    {t('permissionsCount', { count: group.permissions.length })}
                   </CardDescription>
                 </div>
               </div>

@@ -1,8 +1,10 @@
 'use client';
+'use no memo';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
@@ -18,34 +20,31 @@ import {
 import { ImageUpload } from '@/components/common/image-upload';
 import type { SliderMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status } from '@/shared/enums';
+import { IsActive } from '@/shared/enums';
 import { sliderSchema, type SliderFormData } from '@/shared/validation/validation';
-
-interface SliderFormProps {
-  initialData?: SliderMgmt | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { SliderFormProps } from './types';
 
 export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SliderMgmt>(ENDPOINTS.MANAGEMENT.SLIDER);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(() => initialData?.image || null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
+    setError,
   } = useForm<SliderFormData>({
     resolver: zodResolver(sliderSchema),
     defaultValues: {
-      rank_order: 0,
-      status: Status.ACTIVE,
-      is_active: true,
+      status: IsActive.TRUE,
     },
   });
 
@@ -53,32 +52,25 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
     if (initialData) {
       reset({
         title: initialData.title,
-        image_url: initialData.image_url || '',
-        link_url: initialData.link_url || '',
-        rank_order: initialData.rank_order,
+        image: initialData.image || '',
+        link: initialData.link || '',
+        slug: initialData.slug || '',
         status: initialData.status,
-        is_active: initialData.is_active,
       });
-      if (initialData.image_url) {
-        setImagePreview(initialData.image_url);
-      }
     } else {
       reset({
         title: '',
-        image_url: '',
-        link_url: '',
-        rank_order: 0,
-        status: Status.ACTIVE,
-        is_active: true,
+        image: '',
+        link: '',
+        slug: '',
+        status: IsActive.TRUE,
       });
-      setImagePreview(null);
-      setImageFile(null);
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: SliderFormData) => {
     try {
-      const payload: any = { ...data };
+      const payload = { ...data };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
@@ -89,11 +81,14 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const statusValue = useWatch({ control, name: 'status' });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -120,13 +115,13 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="link_url">Link URL</Label>
-            <Input id="link_url" {...register('link_url')} placeholder="https://example.com" />
+            <Label htmlFor="link">Link URL</Label>
+            <Input id="link" {...register('link')} placeholder={tForms('urlExample')} />
           </div>
 
            <div className="space-y-2">
-            <Label htmlFor="rank_order">Display Order</Label>
-            <Input id="rank_order" type="number" {...register('rank_order')} />
+            <Label htmlFor="slug">Slug</Label>
+            <Input id="slug" {...register('slug')} />
           </div>
         </div>
       </div>
@@ -134,27 +129,23 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
       <div className="grid grid-cols-2 gap-4">
          <div className="space-y-2">
             <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
-            <Select value={watch('status')?.toString()} onValueChange={(value) => setValue('status', Number(value) as any)}>
+            <Select value={statusValue?.toString()} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-                <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+                <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
+                <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-        <div className="flex items-center gap-2 mt-8">
-            <input type="checkbox" id="is_active" {...register('is_active')} className="rounded" />
-            <Label htmlFor="is_active">Is Active</Label>
-        </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

@@ -10,23 +10,8 @@ import {
 } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-interface PaginationInfo {
-  currentPage: number;
-  lastPage: number;
-  total: number;
-  perPage: number;
-  from: number;
-  to: number;
-}
-
-interface PaginationProps {
-  pagination: PaginationInfo;
-  page: number;
-  onPageChange: (page: number) => void;
-  perPage: number;
-  onPerPageChange: (perPage: number) => void;
-}
+import { PAGINATION } from '@/shared/constants/app';
+import { PaginationProps } from '@/shared/types';
 
 export function Pagination({
   pagination,
@@ -61,10 +46,11 @@ export function Pagination({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
+              {PAGINATION.PER_PAGE_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option.toString()}>
+                  {option}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -75,8 +61,8 @@ export function Pagination({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
+          onClick={() => onPageChange(PAGINATION.DEFAULT_PAGE)}
+          disabled={currentPage === PAGINATION.DEFAULT_PAGE}
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -84,7 +70,7 @@ export function Pagination({
           variant="outline"
           size="sm"
           onClick={() => onPageChange(page - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage === PAGINATION.DEFAULT_PAGE}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>

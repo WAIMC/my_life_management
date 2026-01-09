@@ -13,20 +13,10 @@ import {
   Copy,
   Trash,
   Download,
-  FolderInput,
 } from 'lucide-react';
-import type { MediaFile } from './types';
-
-interface FileContextMenuProps {
-  children: React.ReactNode;
-  file: MediaFile;
-  onPreview: (file: MediaFile) => void;
-  onRename: (file: MediaFile) => void;
-  onMove: (file: MediaFile) => void;
-  onCopy: (file: MediaFile) => void;
-  onDelete: (file: MediaFile) => void;
-  onDownload?: (file: MediaFile) => void;
-}
+import { useTranslations } from 'next-intl';
+import type { FileContextMenuProps } from '@/shared/types/file-manager.types';
+import { KEYBOARD_SHORTCUT } from '@/shared/constants/file-manager';
 
 export const FileContextMenu = ({
   children,
@@ -38,32 +28,34 @@ export const FileContextMenu = ({
   onDelete,
   onDownload,
 }: FileContextMenuProps) => {
+  const t = useTranslations('fileManager');
+  
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-64">
         <ContextMenuItem onClick={() => onPreview(file)}>
           <Eye className="mr-2 h-4 w-4" />
-          Xem trước
-          <ContextMenuShortcut>Enter</ContextMenuShortcut>
+          {t('preview')}
+          <ContextMenuShortcut>{KEYBOARD_SHORTCUT.ENTER}</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem onClick={() => onDownload?.(file)}>
           <Download className="mr-2 h-4 w-4" />
-          Tải xuống
+          {t('download')}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={() => onRename(file)}>
           <Pencil className="mr-2 h-4 w-4" />
-          Đổi tên
-          <ContextMenuShortcut>F2</ContextMenuShortcut>
+          {t('rename')}
+          <ContextMenuShortcut>{KEYBOARD_SHORTCUT.F2}</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem onClick={() => onMove(file)}>
           <Move className="mr-2 h-4 w-4" />
-          Di chuyển
+          {t('move')}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => onCopy(file)}>
           <Copy className="mr-2 h-4 w-4" />
-          Sao chép
+          {t('copy')}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
@@ -71,8 +63,8 @@ export const FileContextMenu = ({
           className="text-red-600 focus:text-red-600"
         >
           <Trash className="mr-2 h-4 w-4" />
-          Xóa
-          <ContextMenuShortcut>Del</ContextMenuShortcut>
+          {t('delete')}
+          <ContextMenuShortcut>{KEYBOARD_SHORTCUT.DELETE}</ContextMenuShortcut>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

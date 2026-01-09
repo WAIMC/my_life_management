@@ -15,9 +15,11 @@ import { NewFolderDialog } from './dialogs/new-folder-dialog';
 import { RenameDialog } from './dialogs/rename-dialog';
 import { DeleteConfirmDialog } from './dialogs/delete-confirm-dialog';
 import { MoveCopyDialog } from './dialogs/move-copy-dialog';
-import type { MediaFile } from './types';
+import type { MediaFile, FilterType, SortField, MoveCopyMode } from '@/shared/types/file-manager.types';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
+import { SORT_ORDER } from '@/shared/constants/app';
+import { SORT_FIELD, FILTER_TYPE, VIEW_MODE, FILE_TYPE, INITIAL_PAGINATION, MOVE_COPY_MODE, TRANSLATION_KEY } from '@/shared/constants/file-manager';
 
 export default function FileManager() {
   const t = useTranslations();
@@ -28,11 +30,8 @@ export default function FileManager() {
     selectedFiles,
     isLoading,
     searchQuery,
-
     filterType,
     sortBy,
-    filterOptions,
-    sortOptions,
     pagination,
     setCurrentPath,
     setViewMode,
@@ -42,7 +41,6 @@ export default function FileManager() {
     setFilterOptions,
     setSortOptions,
     setPagination,
-    refreshFiles,
     createFolder,
     uploadFiles,
     deleteFiles,
@@ -57,7 +55,7 @@ export default function FileManager() {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isMoveCopyOpen, setIsMoveCopyOpen] = useState(false);
-  const [moveCopyMode, setMoveCopyMode] = useState<'move' | 'copy'>('move');
+  const [moveCopyMode, setMoveCopyMode] = useState<MoveCopyMode>(MOVE_COPY_MODE.MOVE);
 
   // Selection state for operations
   const [targetFile, setTargetFile] = useState<MediaFile | null>(null);
@@ -67,7 +65,7 @@ export default function FileManager() {
 
   // Handlers
   const handleFileClick = (file: MediaFile) => {
-    if (file.type === 'folder') {
+    if (file.type === FILE_TYPE.FOLDER) {
       setCurrentPath(file.folder_path === '/' ? `/${file.name}` : `${file.folder_path}/${file.name}`);
     } else {
       setPreviewFile(file);
@@ -86,7 +84,7 @@ export default function FileManager() {
       } else {
         toast.error(t('fileManager.featureUnavailable'));
       }
-    } catch (error) {
+    } catch {
       toast.error(t('fileManager.uploadFailed'));
     }
   };
@@ -99,7 +97,7 @@ export default function FileManager() {
       } else {
         toast.error(t('fileManager.featureUnavailable'));
       }
-    } catch (error) {
+    } catch {
       toast.error(t('fileManager.createFolderFailed'));
     }
   };
@@ -117,7 +115,7 @@ export default function FileManager() {
       } else {
         toast.error(t('fileManager.featureUnavailable'));
       }
-    } catch (error) {
+    } catch {
       toast.error(t('fileManager.renameFailed'));
     }
   };
@@ -146,20 +144,20 @@ export default function FileManager() {
         toast.error(t('fileManager.featureUnavailable'));
       }
       setTargetFile(null);
-    } catch (error) {
+    } catch {
       toast.error(t('fileManager.deleteFailed'));
     }
   };
 
   const handleMove = (file?: MediaFile) => {
-    setMoveCopyMode('move');
+    setMoveCopyMode(MOVE_COPY_MODE.MOVE);
     if (file) setTargetFile(file);
     else setTargetFile(null);
     setIsMoveCopyOpen(true);
   };
 
   const handleCopy = (file?: MediaFile) => {
-    setMoveCopyMode('copy');
+    setMoveCopyMode(MOVE_COPY_MODE.COPY);
     if (file) setTargetFile(file);
     else setTargetFile(null);
     setIsMoveCopyOpen(true);
@@ -168,25 +166,25 @@ export default function FileManager() {
   const handleMoveCopyConfirm = async (targetPath: string) => {
     try {
       const idsToProcess = targetFile ? [targetFile.id] : selectedFiles;
-      if (moveCopyMode === 'move') {
+      if (moveCopyMode === MOVE_COPY_MODE.MOVE) {
         if (moveFiles) {
           await moveFiles(idsToProcess, targetPath);
-          toast.success(t('fileManager.moveSuccess'));
+          toast.success(t(`fileManager.${TRANSLATION_KEY.MOVE_SUCCESS}`));
         } else {
           toast.error(t('fileManager.featureUnavailable'));
         }
       } else {
         if (copyFiles) {
           await copyFiles(idsToProcess, targetPath);
-          toast.success(t('fileManager.copySuccess'));
+          toast.success(t(`fileManager.${TRANSLATION_KEY.COPY_SUCCESS}`));
         } else {
           toast.error(t('fileManager.featureUnavailable'));
         }
       }
       setTargetFile(null);
-    } catch (error) {
-      const errorKey = moveCopyMode === 'move' ? 'fileManager.moveFailed' : 'fileManager.copyFailed';
-      toast.error(t(errorKey));
+    } catch {
+      const errorKey = moveCopyMode === MOVE_COPY_MODE.MOVE ? TRANSLATION_KEY.MOVE_FAILED : TRANSLATION_KEY.COPY_FAILED;
+      toast.error(t(`fileManager.${errorKey}`));
     }
   };
 
@@ -248,14 +246,14 @@ export default function FileManager() {
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}
           selectedCount={selectedFiles.length}
-          filterOptions={{ type: (filterType as any) || 'all' }}
+          filterOptions={{ type: (filterType as FilterType) || FILTER_TYPE.ALL }}
           onFilterChange={(opts) => setFilterOptions?.(opts)}
-          sortOptions={{ field: (sortBy as any) || 'name', order: 'asc' }}
+          sortOptions={{ field: (sortBy as SortField) || SORT_FIELD.NAME, order: SORT_ORDER.ASC }}
           onSortChange={(opts) => setSortOptions?.(opts)}
         />
 
         <div className="flex-1 overflow-auto p-4">
-          {viewMode === 'grid' ? (
+          {viewMode === VIEW_MODE.GRID ? (
             <FileGrid
               files={files}
               selectedFiles={selectedFiles}
@@ -279,11 +277,11 @@ export default function FileManager() {
               onFileClick={handleFileClick}
               onNavigate={handleNavigate}
               isLoading={isLoading}
-              sortField={(sortBy as any) || 'name'}
-              sortOrder="asc"
+              sortField={(sortBy as SortField) || SORT_FIELD.NAME}
+              sortOrder={SORT_ORDER.ASC}
               onSort={(field) => setSortOptions?.({
-                field: field as any,
-                order: 'asc'
+                field: field as SortField,
+                order: SORT_ORDER.ASC
               })}
               onPreview={setPreviewFile}
               onRename={handleRename}
@@ -296,8 +294,8 @@ export default function FileManager() {
         </div>
 
         <Pagination
-          pagination={pagination || { page: 1, pageSize: 20, total: 0, totalPages: 1 }}
-          onPageChange={(page) => setPagination?.({ ...(pagination || { page: 1, pageSize: 20, total: 0, totalPages: 1 }), page })}
+          pagination={pagination || INITIAL_PAGINATION}
+          onPageChange={(page) => setPagination?.({ ...(pagination || INITIAL_PAGINATION), page })}
         />
       </div>
 

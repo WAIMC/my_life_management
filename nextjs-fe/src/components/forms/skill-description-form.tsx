@@ -1,9 +1,9 @@
 'use client';
+'use no memo';
 
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useCrud } from '@/shared/hooks/useCrud';
+import { useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';import { useTranslations } from 'next-intl';import { useCrud } from '@/shared/hooks/useCrud';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
@@ -19,16 +19,12 @@ import {
 } from '@/components/ui/select';
 import type { SkillDescriptionMgmt, SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status } from '@/shared/enums';
+import { IsActive } from '@/shared/enums';
 import { skillDescriptionSchema, type SkillDescriptionFormData } from '@/shared/validation/validation';
-
-interface SkillDescriptionFormProps {
-  initialData?: SkillDescriptionMgmt | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { SkillDescriptionFormProps } from './types';
 
 export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: SkillDescriptionFormProps) {
+  const tCommon = useTranslations('common');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SkillDescriptionMgmt>(ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
 
@@ -36,8 +32,8 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
   // We'll fetch all active skills (no pagination effectively, or big page size)
   // For simplicity assuming reasonable number of skills
   const { data: skills, loading: skillsLoading } = useApiData<SkillMgmt>(
-    ENDPOINTS.MASTER.SKILL,
-    { page: 1, per_page: 1000, sort_by: 'name', sort_order: 'asc', filters: { status: Status.ACTIVE } }
+    ENDPOINTS.MANAGEMENT.SKILL,
+    { page: 1, per_page: 1000, sort_by: 'name', sort_order: 'asc' }
   );
 
   const {
@@ -45,14 +41,15 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
+    setError,
   } = useForm<SkillDescriptionFormData>({
     resolver: zodResolver(skillDescriptionSchema),
     defaultValues: {
       rank_order: 0,
-      status: Status.ACTIVE,
-      is_active: true,
+      status: IsActive.TRUE,
+      is_display: true,
     },
   });
 
@@ -60,38 +57,53 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     if (initialData) {
       reset({
         skill_mgmt_id: initialData.skill_mgmt_id,
-        description: initialData.description,
+        title: initialData.title,
+        summary: initialData.summary || '',
+        article: initialData.article || '',
         rank_order: initialData.rank_order,
         status: initialData.status,
-        is_active: initialData.is_active,
+        is_display: initialData.is_display,
       });
     } else {
       reset({
         skill_mgmt_id: 0,
-        description: '',
+        title: '',
+        summary: '',
+        article: '',
         rank_order: 0,
-        status: Status.ACTIVE,
-        is_active: true,
+        status: IsActive.TRUE,
+        is_display: true,
       });
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: SkillDescriptionFormData) => {
     try {
+      // Convert string to number for numeric fields
+      const payload = {
+        ...data,
+        skill_mgmt_id: Number(data.skill_mgmt_id),
+        rank_order: Number(data.rank_order),
+      };
+      
       if (isEdit && initialData) {
-        await update(initialData.id, data);
+        await update(initialData.id, payload);
       } else {
         await create({
-          ...data,
+          ...payload,
           is_delete: false,
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const skillMgmtIdValue = useWatch({ control, name: 'skill_mgmt_id' });
+  const statusValue = useWatch({ control, name: 'status' });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -100,7 +112,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
           Skill <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={watch('skill_mgmt_id')?.toString()}
+          value={skillMgmtIdValue?.toString()}
           onValueChange={(value) => setValue('skill_mgmt_id', Number(value))}
           disabled={skillsLoading}
         >
@@ -121,18 +133,35 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">
-          Description <span className="text-red-500">*</span>
+        <Label htmlFor="title">
+          Title <span className="text-red-500">*</span>
         </Label>
-        <Textarea
-          id="description"
-          {...register('description')}
-          rows={4}
-          className={errors.description ? 'border-red-500' : ''}
+        <Input
+          id="title"
+          {...register('title')}
+          className={errors.title ? 'border-red-500' : ''}
         />
-        {errors.description && (
-          <p className="text-sm text-red-500">{errors.description.message}</p>
+        {errors.title && (
+          <p className="text-sm text-red-500">{errors.title.message}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="summary">Summary</Label>
+        <Textarea
+          id="summary"
+          {...register('summary')}
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="article">Article</Label>
+        <Textarea
+          id="article"
+          {...register('article')}
+          rows={5}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -152,15 +181,15 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
+            value={statusValue?.toString()}
+            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
+              <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -169,19 +198,19 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       <div className="flex items-center gap-2 mt-4">
         <input
           type="checkbox"
-          id="is_active"
-          {...register('is_active')}
+          id="is_display"
+          {...register('is_display')}
           className="rounded"
         />
-        <Label htmlFor="is_active">Is Active</Label>
+        <Label htmlFor="is_display">Is Display</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

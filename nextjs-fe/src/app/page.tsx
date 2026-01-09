@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 export default function Home() {
   const router = useRouter();
@@ -10,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     // Redirect root to admin
-    router.push('/admin');
+    router.push(ADMIN_ROUTES.DASHBOARD);
   }, [router]);
 
   return (

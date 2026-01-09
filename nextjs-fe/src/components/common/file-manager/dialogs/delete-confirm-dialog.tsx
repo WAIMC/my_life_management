@@ -10,14 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-interface DeleteConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => Promise<void>;
-  count: number;
-  itemName?: string;
-}
+import { useTranslations } from 'next-intl';
+import type { DeleteConfirmDialogProps } from '../types';
 
 export const DeleteConfirmDialog = ({
   open,
@@ -26,19 +20,21 @@ export const DeleteConfirmDialog = ({
   count,
   itemName,
 }: DeleteConfirmDialogProps) => {
+  const t = useTranslations('fileManager.dialogs');
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteConfirm.title')}</AlertDialogTitle>
           <AlertDialogDescription>
             {count === 1
-              ? `Bạn đang xóa "${itemName}". Hành động này không thể hoàn tác.`
-              : `Bạn đang xóa ${count} mục. Hành động này không thể hoàn tác.`}
+              ? t('deleteConfirm.singleMessage', { name: itemName || '' })
+              : t('deleteConfirm.multipleMessage', { count })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -46,7 +42,7 @@ export const DeleteConfirmDialog = ({
             }}
             className="bg-red-600 hover:bg-red-700"
           >
-            Xóa
+            {t('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

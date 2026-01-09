@@ -1,11 +1,12 @@
 'use client';
+'use no memo';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { handleBindErrors } from '@/shared/utils/error-handler';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,16 +22,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status } from '@/shared/enums';
+import { FeatureStatus, IsActive } from '@/shared/enums';
 import { featureSchema, type FeatureFormData } from '@/shared/validation/validation';
-
-interface FeatureFormProps {
-  initialData?: FeatureMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { FeatureFormProps } from './types';
 
 export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormProps) {
+  const tCommon = useTranslations('common');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<FeatureMst>(ENDPOINTS.MASTER.FEATURE);
 
@@ -39,14 +36,13 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
     setError,
   } = useForm<FeatureFormData>({
     resolver: zodResolver(featureSchema),
     defaultValues: {
-      status: Status.ACTIVE,
-      is_active: true,
+      status: FeatureStatus.ACTIVE as unknown as IsActive,
     },
   });
 
@@ -56,14 +52,12 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
         name: initialData.name,
         description: initialData.description || '',
         status: initialData.status,
-        is_active: initialData.is_active,
       });
     } else {
       reset({
         name: '',
         description: '',
-        status: Status.ACTIVE,
-        is_active: true,
+        status: FeatureStatus.ACTIVE as unknown as IsActive,
       });
     }
   }, [initialData, reset]);
@@ -85,12 +79,15 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by useCrud toast
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const statusValue = useWatch({ control, name: 'status' });
 
   const FormContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -119,15 +116,15 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
             Status <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={watch('status')?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as any)}
+            value={statusValue?.toString()}
+            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Status.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={Status.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={FeatureStatus.ACTIVE.toString()}>Active</SelectItem>
+              <SelectItem value={FeatureStatus.INACTIVE.toString()}>Inactive</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -136,10 +133,10 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

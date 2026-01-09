@@ -9,16 +9,8 @@ import { Progress } from '@/components/ui/progress';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import type { UploadResponse } from '@/shared/types/api';
+import type { FileUploadProps } from '@/shared/types/upload.types';
 import { useTranslations } from 'next-intl';
-
-interface FileUploadProps {
-  value?: string;
-  onChange: (url: string) => void;
-  accept?: string;
-  maxSize?: number; // in MB
-  className?: string;
-  disabled?: boolean;
-}
 
 export function FileUpload({
   value,
@@ -35,7 +27,7 @@ export function FileUpload({
   const [preview, setPreview] = useState<string | null>(value || null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     // Check file type
     if (accept && !file.type.match(accept.replace('*', '.*'))) {
       notification.error(t('media.invalidFileType', { accept }));
@@ -50,9 +42,9 @@ export function FileUpload({
     }
 
     return true;
-  };
+  }, [accept, maxSize, t]);
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     if (!validateFile(file)) return;
 
     try {
@@ -73,7 +65,7 @@ export function FileUpload({
         });
       }, 100);
 
-      const response = await apiClient.post<UploadResponse>(ENDPOINTS.UPLOAD, formData, {
+      const response = await apiClient.post<UploadResponse>(ENDPOINTS.MEDIA.UPLOAD, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -86,14 +78,16 @@ export function FileUpload({
       setPreview(uploadedUrl);
       onChange(uploadedUrl);
       notification.success(t('media.fileUploadedSuccessfully'));
-    } catch (error: any) {
-      const message = error.response?.data?.message || t('media.failedToUploadFile');
+    } catch (error: unknown) {
+      const message = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || t('media.failedToUploadFile')
+        : t('media.failedToUploadFile');
       notification.error(message);
     } finally {
       setUploading(false);
       setProgress(0);
     }
-  };
+  }, [validateFile, onChange, t]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,7 +119,7 @@ export function FileUpload({
         uploadFile(file);
       }
     },
-    [disabled, uploading]
+    [disabled, uploading, uploadFile]
   );
 
   const handleRemove = () => {
@@ -174,7 +168,7 @@ export function FileUpload({
               <span className="font-semibold text-primary">{t('media.clickToUpload')}</span> {t('media.orDragAndDrop')}
             </div>
             <div className="text-xs text-gray-500">
-              {accept} (max {maxSize}MB)
+              {accept} ({t('media.maxFileSize', { maxSize })})
             </div>
           </div>
         </div>
@@ -231,7 +225,7 @@ export function FileUpload({
             onClick={handleClick}
             disabled={disabled}
           >
-            Change Image
+            {t('media.changeImage')}
           </Button>
         </div>
       )}

@@ -6,12 +6,13 @@ import { SearchFilter } from '@/components/layout/search-filter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTranslations } from 'next-intl';
+import { ADMIN_ROUTES } from '@/shared/constants';
 
 export default function AdminDashboard() {
   const t = useTranslations('dashboard');
   const tCommon = useTranslations('common');
 
-  const handleSearch = (value: string) => {
+  const handleSearch = () => {
   };
 
   const stats = [
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
       <PageHeader
         title={tCommon('dashboard')}
         description={t('welcomeDescription')}
-        breadcrumbs={[{ label: tCommon('admin'), href: '/admin' }, { label: tCommon('dashboard'), isActive: true }]}
+        breadcrumbs={[{ label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD }, { label: tCommon('dashboard'), isActive: true }]}
         action={
           <Button className="gap-2">
             <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

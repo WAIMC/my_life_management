@@ -1,11 +1,12 @@
 'use client';
+'use no memo';
 
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useJunctionTable } from '@/shared/hooks/useJunctionTable';
-import { departmentService } from '@/shared/services/modules/department.service';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,20 +23,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { DepartmentMst, PolicyDepartmentMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { Status, IsActive, IsDelete } from '@/shared/enums';
+import { IsActive, DepartmentStatus } from '@/shared/enums';
 import { departmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
-
-interface DepartmentFormProps {
-  initialData?: DepartmentMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { DepartmentFormProps } from './types';
 
 export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentFormProps) {
+  const tCommon = useTranslations('common');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
 
   // Junction table for Department-PolicyDepartment (Only in Edit mode)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const policyDepartmentJunction = useJunctionTable<PolicyDepartmentMst>(
     ENDPOINTS.JUNCTION.DEPARTMENT_MANAGEMENT,
     ENDPOINTS.MASTER.POLICY_DEPARTMENT,
@@ -49,13 +47,13 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
     setError,
   } = useForm<DepartmentFormData>({
     resolver: zodResolver(departmentSchema),
     defaultValues: {
-      status: Status.PUBLISHED,
+      status: DepartmentStatus.ACTIVE as unknown as IsActive,
     },
   });
 
@@ -71,7 +69,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
       reset({
         code: '',
         name: '',
-        status: Status.PUBLISHED,
+        status: DepartmentStatus.ACTIVE as unknown as IsActive,
       });
     }
   }, [initialData, reset]);
@@ -84,20 +82,23 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
         if (!initialData) return;
         await update(initialData.id, {
           ...payload,
-          is_delete: initialData.is_delete || IsDelete.FALSE,
+          is_delete: initialData.is_delete || false,
         });
       } else {
         await create({
           ...payload,
-          is_delete: IsDelete.FALSE,
+          is_delete: false,
         });
       }
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       handleBindErrors(error, setError);
     }
   };
+
+  // Use useWatch hook instead of watch() to avoid React Compiler issues
+  const statusValue = useWatch({ control, name: 'status' });
 
   const FormContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -137,26 +138,27 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
           Status <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={watch('status')?.toString()}
-          onValueChange={(value) => setValue('status', Number(value) as any)}
+          value={statusValue?.toString()}
+          onValueChange={(value) => setValue('status', Number(value) as unknown as IsActive)}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={Status.DRAFT.toString()}>Draft</SelectItem>
-            <SelectItem value={Status.PUBLISHED.toString()}>Published</SelectItem>
-            <SelectItem value={Status.ARCHIVED.toString()}>Archived</SelectItem>
+            <SelectItem value={DepartmentStatus.ACTIVE.toString()}>Active</SelectItem>
+            <SelectItem value={DepartmentStatus.INACTIVE.toString()}>Inactive</SelectItem>
+            <SelectItem value={DepartmentStatus.DRAFT.toString()}>Draft</SelectItem>
+            <SelectItem value={DepartmentStatus.ARCHIVED.toString()}>Archived</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>
@@ -179,6 +181,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
       </TabsContent>
 
       <TabsContent value="policy-departments" className="mt-4">
+        {/* TODO: Uncomment when JunctionManager component is available
         <JunctionManager
           allItems={policyDepartmentJunction.allItems}
           selectedIds={policyDepartmentJunction.selectedIds}
@@ -190,6 +193,8 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
           itemLabel="policy departments"
           searchPlaceholder="Search policy departments..."
         />
+        */}
+        <p className="text-muted-foreground">Junction management coming soon</p>
       </TabsContent>
       
       <TabsContent value="history" className="mt-4">

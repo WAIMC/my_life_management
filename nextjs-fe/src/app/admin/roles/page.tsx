@@ -18,8 +18,7 @@ import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import type { RoleMst } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, type SortOrder } from '@/shared/constants';
-import { IsActive, IsActiveLabels } from '@/shared/enums';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/constants';
 import {
   Dialog,
   DialogContent,
@@ -31,8 +30,8 @@ import { RoleForm } from '@/components/forms/role-form';
 import { useTranslations } from 'next-intl';
 
 export default function RoleListPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
@@ -120,15 +119,6 @@ export default function RoleListPage() {
   const searchFields: SearchField[] = [
     { key: 'name', label: tFields('name'), type: 'text' },
     { key: 'description', label: tFields('description'), type: 'text' },
-    {
-      key: 'status',
-      label: tFields('status'),
-      type: 'select',
-      options: Object.entries(IsActiveLabels).map(([value, label]) => ({
-        value: value.toString(),
-        label
-      }))
-    },
     { key: 'created_at', label: tFields('createdAt'), type: 'date' },
   ];
 
@@ -137,21 +127,29 @@ export default function RoleListPage() {
       label: tBulkActions('deleteSelected'),
       icon: <Trash2 className="h-4 w-4" />,
       variant: 'destructive',
-      onClick: async (_ids) => { await remove(_ids); refetch(); },
+      onClick: async (ids) => { await remove(ids); refetch(); },
       confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('role').toLowerCase() }),
       confirmTitle: tCrud('deleteEntity', { entity: tEntities('roles') }),
     },
-    { label: tBulkActions('activateSelected'), icon: <CheckCircle className="h-4 w-4" />, onClick: async (_ids) => { refetch(); } },
-    { label: tBulkActions('deactivateSelected'), icon: <XCircle className="h-4 w-4" />, onClick: async (_ids) => { refetch(); } },
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async () => { refetch(); } 
+    },
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async () => { refetch(); } 
+    },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
     const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
     setFilters(newFilters);
-    setPage(1);
+    setPage(PAGINATION.DEFAULT_PAGE);
   };
 
-  const handleImport = async (_file: File, _format: string) => {
+  const handleImport = async () => {
     refetch();
   };
 
@@ -161,7 +159,7 @@ export default function RoleListPage() {
         title={tManagement('title', { entity: tEntities('roles') })}
         description={tManagement('description', { entity: tEntities('roles').toLowerCase() })}
         breadcrumbs={[
-          { label: tCommon('admin'), href: '/admin' },
+          { label: tCommon('admin'), href: ADMIN_ROUTES.DASHBOARD },
           { label: tEntities('roles'), isActive: true },
         ]}
         action={
@@ -174,7 +172,14 @@ export default function RoleListPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="role-filters" />
+          <SavedFilters 
+            currentFilters={filters} 
+            onApplyFilter={(f) => { 
+              setFilters(f); 
+              setPage(PAGINATION.DEFAULT_PAGE); 
+            }} 
+            storageKey="role-filters" 
+          />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -182,11 +187,11 @@ export default function RoleListPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -215,7 +220,7 @@ export default function RoleListPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>
