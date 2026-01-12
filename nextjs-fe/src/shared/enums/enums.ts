@@ -1,6 +1,6 @@
 /**
- * Enums matching Laravel backend (app/Enums/)
- * Auto-synced from laravel-api
+ * Enums matching back-end (app/Enums/)
+ * Auto-synced from back-end api
  */
 
 // ==========================================

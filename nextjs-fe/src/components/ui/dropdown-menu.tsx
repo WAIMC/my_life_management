@@ -5,6 +5,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 
 import { cn } from "@/shared/utils"
+import { UI_CONSTANTS } from '@/shared/config';
 
 function DropdownMenu({
   ...props
@@ -33,7 +34,7 @@ function DropdownMenuTrigger({
 
 function DropdownMenuContent({
   className,
-  sideOffset = 4,
+  sideOffset = UI_CONSTANTS.DROPDOWN_MENU_SIDE_OFFSET,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (

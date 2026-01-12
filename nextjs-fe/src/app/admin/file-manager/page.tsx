@@ -4,7 +4,7 @@ import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { FileManagerContent } from '@/components/common/file-manager/file-manager-content';
 import { useTranslations } from 'next-intl';
-import { ADMIN_ROUTES } from '@/shared/constants';
+import { ADMIN_ROUTES } from '@/shared/config';
 
 export default function FileManagerPage() {
   const tCommon = useTranslations('common');

@@ -9,7 +9,7 @@ import { FileContextMenu } from './context-menu';
 import { Folder } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { FileGridProps } from '@/shared/types/file-manager.types';
-import { FILE_TYPE, DATE_FORMAT, UI_CONFIG } from '@/shared/constants/file-manager';
+import { DATE_FORMATS, UI_CONSTANTS, MIME_TYPE_PREFIX } from '@/shared/config/constant';
 
 export const FileGrid = ({
   files,
@@ -30,7 +30,7 @@ export const FileGrid = ({
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {Array.from({ length: UI_CONFIG.LOADING_SKELETON_COUNT }).map((_, i) => (
+        {Array.from({ length: UI_CONSTANTS.LOADING_SKELETON_COUNT }).map((_, i) => (
           <Card key={i} className="h-40 animate-pulse bg-muted" />
         ))}
       </div>
@@ -94,7 +94,7 @@ export const FileGrid = ({
                   <div className="flex h-full items-center justify-center bg-blue-50 dark:bg-blue-900/20">
                     <Folder className="h-16 w-16 text-blue-500" fill="currentColor" />
                   </div>
-                ) : file.mime_type?.startsWith('image/') ? (
+                ) : file.mime_type?.startsWith(MIME_TYPE_PREFIX.IMAGE) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={file.url}
@@ -116,7 +116,7 @@ export const FileGrid = ({
                 </p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{formatFileSize(file.size)}</span>
-                  <span>{format(new Date(file.created_at), DATE_FORMAT.SHORT)}</span>
+                  <span>{format(new Date(file.created_at), DATE_FORMATS.SHORT)}</span>
                 </div>
               </div>
             </Card>

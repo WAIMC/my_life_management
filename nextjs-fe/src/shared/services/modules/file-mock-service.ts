@@ -1,5 +1,6 @@
-import { MediaFile, Folder, FilterOptions, SortOptions, PaginationState, PaginatedResponse, FileOperationType } from '@/shared/types/file-manager.types';
+import { MediaFile, Folder, FilterOptions, SortOptions, PaginationState, PaginatedResponse } from '@/shared/types/file-manager.types';
 import { v4 as uuidv4 } from 'uuid';
+import { FILE_TYPE, MIME_TYPE_PREFIX, FILTER_TYPE } from '@/shared/config/constant';
 
 // Initial Mock Data Generation
 const generateMockData = () => {
@@ -26,7 +27,7 @@ const generateMockData = () => {
       owner_id: 'user_1',
       created_at: new Date('2024-01-15').toISOString(),
       updated_at: new Date('2024-01-15').toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     },
     {
       id: 'file_2',
@@ -40,7 +41,7 @@ const generateMockData = () => {
       owner_id: 'user_1',
       created_at: new Date('2024-02-01').toISOString(),
       updated_at: new Date('2024-02-10').toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     },
     {
       id: 'file_3',
@@ -54,7 +55,7 @@ const generateMockData = () => {
       owner_id: 'user_1',
       created_at: new Date('2024-03-05').toISOString(),
       updated_at: new Date('2024-03-05').toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     },
     {
       id: 'file_4',
@@ -68,7 +69,7 @@ const generateMockData = () => {
       owner_id: 'user_1',
       created_at: new Date('2024-03-10').toISOString(),
       updated_at: new Date('2024-03-10').toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     },
     {
       id: 'file_5',
@@ -82,7 +83,7 @@ const generateMockData = () => {
       owner_id: 'user_1',
       created_at: new Date('2024-03-12').toISOString(),
       updated_at: new Date('2024-03-12').toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     },
   ];
 
@@ -100,7 +101,7 @@ const generateMockData = () => {
       owner_id: 'user_1',
       created_at: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
       updated_at: new Date().toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     });
   }
 
@@ -154,7 +155,7 @@ class FileMockService {
           owner_id: 'system',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          type: 'folder' as const,
+          type: FILE_TYPE.FOLDER,
         }));
       result = [...subfolders, ...result];
     }
@@ -166,13 +167,13 @@ class FileMockService {
     }
 
     // 3. Filter options
-    if (filterOptions.type !== 'all') {
+    if (filterOptions.type !== FILTER_TYPE.ALL) {
       result = result.filter((f) => {
-        if (filterOptions.type === 'folders') return f.type === 'folder';
-        if (filterOptions.type === 'images') return f.mime_type.startsWith('image/');
-        if (filterOptions.type === 'videos') return f.mime_type.startsWith('video/');
-        if (filterOptions.type === 'documents')
-          return !f.mime_type.startsWith('image/') && !f.mime_type.startsWith('video/') && f.type !== 'folder';
+        if (filterOptions.type === FILTER_TYPE.FOLDERS) return f.type === FILE_TYPE.FOLDER;
+        if (filterOptions.type === FILTER_TYPE.IMAGES) return f.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE);
+        if (filterOptions.type === FILTER_TYPE.VIDEOS) return f.mime_type.startsWith(MIME_TYPE_PREFIX.VIDEO);
+        if (filterOptions.type === FILTER_TYPE.DOCUMENTS)
+          return !f.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE) && !f.mime_type.startsWith(MIME_TYPE_PREFIX.VIDEO) && f.type !== FILE_TYPE.FOLDER;
         return true;
       });
     }
@@ -256,7 +257,7 @@ class FileMockService {
       owner_id: 'current_user',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      type: 'file',
+      type: FILE_TYPE.FILE,
     };
 
     this.files.push(newFile);

@@ -43,7 +43,7 @@ function NavigationProvider() {
   return null;
 }
 
-import { AuthProvider } from '@/providers/auth-provider';
+import { AuthProvider } from '@/providers/auth';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const store = useMemo(() => {

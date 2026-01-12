@@ -4,13 +4,8 @@ import { ArrowUp } from 'lucide-react';
 import { cn } from "@/shared/utils";
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-
-interface ContentProps {
-  children: React.ReactNode;
-  className?: string;
-  padded?: boolean;
-  fullWidth?: boolean;
-}
+import { UI_CONSTANTS } from '@/shared/config';
+import type { ContentProps } from '@/shared/types/layout.types';
 
 export function Content({ 
   children, 
@@ -23,7 +18,7 @@ export function Content({
   useEffect(() => {
     const handleScroll = (e: Event) => {
       const target = e.target as HTMLElement;
-      setShowScrollTop(target.scrollTop > 300);
+      setShowScrollTop(target.scrollTop > UI_CONSTANTS.SCROLL_TOP_THRESHOLD);
     };
 
     const mainElement = document.querySelector('main');

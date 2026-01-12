@@ -1,9 +1,10 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';import { useTranslations } from 'next-intl';import { useCrud } from '@/shared/hooks/useCrud';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
+import { useCrud } from '@/shared/hooks/useCrud';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
@@ -19,12 +20,14 @@ import {
 } from '@/components/ui/select';
 import type { SkillDescriptionMgmt, SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive } from '@/shared/enums';
+import { SORT_ORDER, SORT_FIELDS, PAGINATION, FORM_DEFAULTS } from '@/shared/config/constant';
+import { IsActive, IsActiveLabels } from '@/shared/enums';
 import { skillDescriptionSchema, type SkillDescriptionFormData } from '@/shared/validation/validation';
 import type { SkillDescriptionFormProps } from './types';
 
 export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: SkillDescriptionFormProps) {
   const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SkillDescriptionMgmt>(ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
 
@@ -33,7 +36,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
   // For simplicity assuming reasonable number of skills
   const { data: skills, loading: skillsLoading } = useApiData<SkillMgmt>(
     ENDPOINTS.MANAGEMENT.SKILL,
-    { page: 1, per_page: 1000, sort_by: 'name', sort_order: 'asc' }
+    { page: PAGINATION.DEFAULT_PAGE, per_page: PAGINATION.MAX_PER_PAGE, sort_by: SORT_FIELDS.NAME, sort_order: SORT_ORDER.ASC }
   );
 
   const {
@@ -47,7 +50,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
   } = useForm<SkillDescriptionFormData>({
     resolver: zodResolver(skillDescriptionSchema),
     defaultValues: {
-      rank_order: 0,
+      rank_order: FORM_DEFAULTS.RANK_ORDER,
       status: IsActive.TRUE,
       is_display: true,
     },
@@ -70,7 +73,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
         title: '',
         summary: '',
         article: '',
-        rank_order: 0,
+        rank_order: FORM_DEFAULTS.RANK_ORDER,
         status: IsActive.TRUE,
         is_display: true,
       });
@@ -109,7 +112,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="skill_mgmt_id">
-          Skill <span className="text-red-500">*</span>
+          {tCommon('skill')} <span className="text-red-500">*</span>
         </Label>
         <Select
           value={skillMgmtIdValue?.toString()}
@@ -117,7 +120,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
           disabled={skillsLoading}
         >
           <SelectTrigger>
-            <SelectValue placeholder={skillsLoading ? 'Loading skills...' : 'Select a skill'} />
+            <SelectValue placeholder={skillsLoading ? tCommon('loading') : tForms('selectSkill')} />
           </SelectTrigger>
           <SelectContent>
             {skills.map((skill) => (
@@ -134,7 +137,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
 
       <div className="space-y-2">
         <Label htmlFor="title">
-          Title <span className="text-red-500">*</span>
+          {tCommon('title')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="title"
@@ -147,7 +150,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="summary">Summary</Label>
+        <Label htmlFor="summary">{tCommon('summary')}</Label>
         <Textarea
           id="summary"
           {...register('summary')}
@@ -156,7 +159,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="article">Article</Label>
+        <Label htmlFor="article">{tCommon('article')}</Label>
         <Textarea
           id="article"
           {...register('article')}
@@ -167,7 +170,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="rank_order">
-            Display Order <span className="text-red-500">*</span>
+            {tCommon('displayOrder')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="rank_order"
@@ -178,7 +181,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
 
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tCommon('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString()}
@@ -188,8 +191,8 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
-              <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
+              <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
+              <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -202,7 +205,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
           {...register('is_display')}
           className="rounded"
         />
-        <Label htmlFor="is_display">Is Display</Label>
+        <Label htmlFor="is_display">{tCommon('isDisplay')}</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

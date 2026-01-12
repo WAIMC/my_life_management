@@ -4,31 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/shared/api/client';
 import { notification } from '@/shared/utils/notification';
 import { AxiosError } from 'axios';
-
-interface UseCrudReturn<T> {
-  create: (data: Partial<T>) => Promise<number>;
-  update: (id: number, data: Partial<T>) => Promise<number>;
-  remove: (ids: number[]) => Promise<void>;
-  loading: boolean;
-  error: Error | AxiosError | null;
-}
-
-interface UseCrudOptions {
-  /**
-   * Query keys to invalidate after successful mutation
-   * Example: ['users'] will invalidate all user-related queries
-   */
-  invalidateKeys?: string[];
-  
-  /**
-   * Custom success messages
-   */
-  messages?: {
-    create?: string;
-    update?: string;
-    delete?: string;
-  };
-}
+import { useTranslations } from 'next-intl';
+import type { UseCrudReturn, UseCrudOptions } from '@/shared/types/api';
 
 /**
  * Generic CRUD operations hook using TanStack Query mutations
@@ -39,12 +16,14 @@ interface UseCrudOptions {
  * - Better error handling
  * - Optimistic updates support (can be added)
  * - Mutation state tracking
+ * - i18n support for messages
  */
 export function useCrud<T>(
   endpoint: string,
   options: UseCrudOptions = {}
 ): UseCrudReturn<T> {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   const { invalidateKeys = [endpoint], messages = {} } = options;
 
   /**
@@ -56,18 +35,15 @@ export function useCrud<T>(
       return response.data;
     },
     onSuccess: () => {
-      notification.success(messages.create || 'Created successfully');
-      // Invalidate queries to refetch data
+      notification.success(messages.create || t('createdSuccessfully'));
       invalidateKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: [key] });
       });
     },
-    onError: (err: any) => {
-      // If it's a validation error (422), we don't show a generic toast, 
-      // because the form will handle showing specific field errors.
+    onError: (err: AxiosError<{ message?: string }>) => {
       if (err.response?.status !== 422) {
-         const message = err.response?.data?.message || 'Failed to create';
-         notification.error(message);
+        const message = err.response?.data?.message || t('failedToCreate');
+        notification.error(message);
       }
     },
   });
@@ -84,16 +60,14 @@ export function useCrud<T>(
       return response.data;
     },
     onSuccess: () => {
-      notification.success(messages.update || 'Updated successfully');
-      // Invalidate queries to refetch data
+      notification.success(messages.update || t('updatedSuccessfully'));
       invalidateKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: [key] });
       });
     },
-    onError: (err: any) => {
-      // If it's a validation error (422), we don't show a generic toast
+    onError: (err: AxiosError<{ message?: string }>) => {
       if (err.response?.status !== 422) {
-        const message = err.response?.data?.message || 'Failed to update';
+        const message = err.response?.data?.message || t('failedToUpdate');
         notification.error(message);
       }
     },
@@ -111,16 +85,16 @@ export function useCrud<T>(
       await apiClient.post(`${endpoint}/delete`, { ids });
     },
     onSuccess: (_, ids) => {
-      notification.success(
-        messages.delete || `Deleted ${ids.length} item${ids.length > 1 ? 's' : ''} successfully`
-      );
-      // Invalidate queries to refetch data
+      const defaultMessage = ids.length > 1
+        ? t('deletedItemsSuccessfully', { count: ids.length })
+        : t('deletedSuccessfully');
+      notification.success(messages.delete || defaultMessage);
       invalidateKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: [key] });
       });
     },
-    onError: (err: any) => {
-      const message = err.response?.data?.message || 'Failed to delete';
+    onError: (err: AxiosError<{ message?: string }>) => {
+      const message = err.response?.data?.message || t('failedToDelete');
       notification.error(message);
     },
   });
@@ -142,7 +116,7 @@ export function useCrud<T>(
   const loading = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   
   // Combine errors (return the first error if any)
-  const error = (createMutation.error || updateMutation.error || deleteMutation.error) as Error | AxiosError | null;
+  const error = (createMutation.error || updateMutation.error || deleteMutation.error) as Error | null;
 
   return {
     create,

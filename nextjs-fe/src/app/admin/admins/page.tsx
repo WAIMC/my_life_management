@@ -20,7 +20,7 @@ import {
   type SortOrder, 
   PAGINATION, 
   ADMIN_ROUTES 
-} from '@/shared/constants';
+} from '@/shared/config';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';

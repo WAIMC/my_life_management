@@ -5,24 +5,20 @@ import { Button } from '@/components/ui/button';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Search, X, Filter } from 'lucide-react';
 import { cn } from "@/shared/utils";
-
-interface SearchFilterProps {
-  placeholder?: string;
-  onSearch?: (value: string) => void;
-  onFilterClick?: () => void;
-  showFilter?: boolean;
-  debounceMs?: number;
-  className?: string;
-}
+import { UI_CONSTANTS, KEYBOARD_KEYS } from '@/shared/config';
+import type { SearchFilterProps } from '@/shared/types/layout.types';
+import { useTranslations } from 'next-intl';
 
 export function SearchFilter({
-  placeholder = 'Search...',
+  placeholder,
   onSearch,
   onFilterClick,
   showFilter = true,
-  debounceMs = 300,
+  debounceMs = UI_CONSTANTS.DEBOUNCE_MS,
   className,
 }: SearchFilterProps) {
+  const tSearch = useTranslations('search');
+  const finalPlaceholder = placeholder || tSearch('placeholder');
   const [searchValue, setSearchValue] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,7 +58,7 @@ export function SearchFilter({
   }, [onSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
+    if (e.key === KEYBOARD_KEYS.ESCAPE) {
       handleClear();
     }
   };
@@ -80,7 +76,7 @@ export function SearchFilter({
         />
         <Input
           type="search"
-          placeholder={placeholder}
+          placeholder={finalPlaceholder}
           value={searchValue}
           onChange={(e) => handleSearch(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -112,7 +108,7 @@ export function SearchFilter({
           aria-label="Open filters"
         >
           <Filter className="h-4 w-4" />
-          <span className="hidden sm:inline">Filter</span>
+          <span className="hidden sm:inline">{tSearch('filter')}</span>
         </Button>
       )}
     </div>

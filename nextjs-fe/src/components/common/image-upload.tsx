@@ -7,7 +7,7 @@ import { X, Image as ImageIcon } from 'lucide-react';
 import { cn } from "@/shared/utils";
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
-import { UPLOAD_CONFIG, IMAGE_SHAPES, type ImageShape } from '@/shared/constants/media';
+import { UPLOAD_CONFIG, IMAGE_SHAPES, MIME_TYPE_PREFIX, type ImageShape } from '@/shared/config/constant';
 import type { ImageUploadProps } from '@/shared/types/data-table.types';
 
 export function ImageUpload({
@@ -32,7 +32,7 @@ export function ImageUpload({
     }
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith(MIME_TYPE_PREFIX.IMAGE)) {
       toast.error(t('validation.selectImageFile'));
       return;
     }

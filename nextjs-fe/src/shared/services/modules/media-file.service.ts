@@ -5,7 +5,9 @@
 
 import { apiClient } from '@/shared/api/client';
 import { ENDPOINTS } from '@/shared/api';
+import { MIME_TYPE_PREFIX } from '@/shared/config/constant';
 import type { PaginatedResponse } from '@/shared/types/api';
+import { API_PATHS } from '@/shared/types/api';
 import type {
   MediaFile,
   UploadFileParams,
@@ -13,7 +15,7 @@ import type {
   RenameFileParams,
   MoveFileParams,
   DeleteFilesParams,
-  UploadFileResponse,
+  CreateFolderParams,
 } from '@/shared/types/media-file.types';
 
 class MediaFileService {
@@ -35,7 +37,7 @@ class MediaFileService {
     }
 
     const response = await apiClient.post<number>(
-      `${this.baseUrl}/store`,
+      `${this.baseUrl}${API_PATHS.STORE}`,
       formData,
       {
         headers: {
@@ -51,7 +53,7 @@ class MediaFileService {
    */
   async list(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
     const response = await apiClient.get<PaginatedResponse<MediaFile>>(
-      `${this.baseUrl}/list`,
+      `${this.baseUrl}${API_PATHS.LIST}`,
       params
     );
     return response.data;
@@ -69,14 +71,14 @@ class MediaFileService {
    * Get file view URL
    */
   getViewUrl(id: number): string {
-    return `${this.baseUrl}/${id}/view`;
+    return `${this.baseUrl}/${id}${API_PATHS.VIEW}`;
   }
 
   /**
    * Get file download URL
    */
   getDownloadUrl(id: number): string {
-    return `${this.baseUrl}/${id}/download`;
+    return `${this.baseUrl}/${id}${API_PATHS.DOWNLOAD}`;
   }
 
   /**
@@ -103,7 +105,7 @@ class MediaFileService {
    */
   async rename(id: number, params: RenameFileParams): Promise<number> {
     const response = await apiClient.put<number>(
-      `${this.baseUrl}/update/${id}`,
+      `${this.baseUrl}${API_PATHS.UPDATE}/${id}`,
       { name: params.name }
     );
     return response.data;
@@ -114,7 +116,7 @@ class MediaFileService {
    */
   async move(id: number, params: MoveFileParams): Promise<number> {
     const response = await apiClient.put<number>(
-      `${this.baseUrl}/update/${id}`,
+      `${this.baseUrl}${API_PATHS.UPDATE}/${id}`,
       { new_parent_path: params.new_parent_path }
     );
     return response.data;
@@ -136,15 +138,15 @@ class MediaFileService {
    * Delete single file
    */
   async deleteSingle(id: number): Promise<void> {
-    await apiClient.delete(`${this.baseUrl}/delete/${id}`);
+    await apiClient.delete(`${this.baseUrl}${API_PATHS.DELETE}/${id}`);
   }
 
   /**
    * Get file type icon based on MIME type
    */
   getFileTypeIcon(mimeType: string): string {
-    if (mimeType.startsWith('image/')) return '🖼️';
-    if (mimeType.startsWith('video/')) return '🎥';
+    if (mimeType.startsWith(MIME_TYPE_PREFIX.IMAGE)) return '🖼️';
+    if (mimeType.startsWith(MIME_TYPE_PREFIX.VIDEO)) return '🎥';
     if (mimeType.includes('pdf')) return '📄';
     if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊';
@@ -170,9 +172,9 @@ class MediaFileService {
   /**
    * Create folder
    */
-  async createFolder(params: import('@/types/media-file.types').CreateFolderParams): Promise<number> {
+  async createFolder(params: CreateFolderParams): Promise<number> {
     const response = await apiClient.post<number>(
-      `${this.baseUrl}/store`,
+      `${this.baseUrl}${API_PATHS.STORE}`,
       {
         name: params.name,
         parent_path: params.parent_path,
@@ -185,9 +187,9 @@ class MediaFileService {
   /**
    * List folders
    */
-  async listFolders(params?: import('@/types/media-file.types').ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
+  async listFolders(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
     const response = await apiClient.get<PaginatedResponse<MediaFile>>(
-      `${this.baseUrl}/list`,
+      `${this.baseUrl}${API_PATHS.LIST}`,
       { ...params, is_file: false }
     );
     return response.data;
@@ -195,9 +197,9 @@ class MediaFileService {
 
   /**
    * Copy files to different folder
+   * Note: Copy functionality not implemented in backend yet
    */
-  async copy(params: import('@/types/media-file.types').CopyFilesParams): Promise<{ copied_count: number; copied_ids: number[] }> {
-    // Note: Copy functionality not implemented in backend yet
+  async copy(): Promise<{ copied_count: number; copied_ids: number[] }> {
     // This is a placeholder for future implementation
     throw new Error('Copy functionality not yet implemented in backend');
   }

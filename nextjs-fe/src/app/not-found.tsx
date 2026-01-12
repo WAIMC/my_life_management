@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { ADMIN_ROUTES } from '@/shared/constants';
+import { ADMIN_ROUTES } from '@/shared/config';
 
 export default function NotFound() {
   const t = useTranslations('errors');

@@ -1,11 +1,4 @@
 import { createContext } from 'react';
+import { AuthContextValue } from '@/shared/types';
 
-export interface AuthContextType {
-  user: any | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (credentials: any) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

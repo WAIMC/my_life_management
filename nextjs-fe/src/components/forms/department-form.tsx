@@ -1,12 +1,10 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
-import { useJunctionTable } from '@/shared/hooks/useJunctionTable';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,28 +17,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { JunctionManager } from '@/components/features/junction/junction-manager';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
-import type { DepartmentMst, PolicyDepartmentMst } from '@/shared/types/api';
+import type { DepartmentMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, DepartmentStatus } from '@/shared/enums';
+import { IsActive, DepartmentStatus, DepartmentStatusLabels } from '@/shared/enums';
 import { departmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
 import type { DepartmentFormProps } from './types';
 
 export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentFormProps) {
   const tCommon = useTranslations('common');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
-
-  // Junction table for Department-PolicyDepartment (Only in Edit mode)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const policyDepartmentJunction = useJunctionTable<PolicyDepartmentMst>(
-    ENDPOINTS.JUNCTION.DEPARTMENT_MANAGEMENT,
-    ENDPOINTS.MASTER.POLICY_DEPARTMENT,
-    'department_mst_id',
-    'policy_department_mst_id',
-    initialData?.id || 0
-  );
 
   const {
     register,
@@ -105,7 +93,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="code">
-            Code <span className="text-red-500">*</span>
+            {tLabels('code')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="code"
@@ -120,7 +108,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
 
         <div className="space-y-2">
           <Label htmlFor="name">
-            Name <span className="text-red-500">*</span>
+            {tLabels('name')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="name"
@@ -135,7 +123,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
 
       <div className="space-y-2">
         <Label htmlFor="status">
-          Status <span className="text-red-500">*</span>
+          {tLabels('status')} <span className="text-red-500">*</span>
         </Label>
         <Select
           value={statusValue?.toString()}
@@ -145,10 +133,10 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={DepartmentStatus.ACTIVE.toString()}>Active</SelectItem>
-            <SelectItem value={DepartmentStatus.INACTIVE.toString()}>Inactive</SelectItem>
-            <SelectItem value={DepartmentStatus.DRAFT.toString()}>Draft</SelectItem>
-            <SelectItem value={DepartmentStatus.ARCHIVED.toString()}>Archived</SelectItem>
+            <SelectItem value={DepartmentStatus.ACTIVE.toString()}>{DepartmentStatusLabels[DepartmentStatus.ACTIVE]}</SelectItem>
+            <SelectItem value={DepartmentStatus.INACTIVE.toString()}>{DepartmentStatusLabels[DepartmentStatus.INACTIVE]}</SelectItem>
+            <SelectItem value={DepartmentStatus.DRAFT.toString()}>{DepartmentStatusLabels[DepartmentStatus.DRAFT]}</SelectItem>
+            <SelectItem value={DepartmentStatus.ARCHIVED.toString()}>{DepartmentStatusLabels[DepartmentStatus.ARCHIVED]}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -171,9 +159,9 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
   return (
     <Tabs defaultValue="details" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="details">Details</TabsTrigger>
-        <TabsTrigger value="policy-departments">Policy Departments</TabsTrigger>
-        <TabsTrigger value="history">History</TabsTrigger>
+        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+        <TabsTrigger value="policy-departments">{tCommon('policyDepartments')}</TabsTrigger>
+        <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
       </TabsList>
       
       <TabsContent value="details" className="mt-4">
@@ -181,20 +169,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
       </TabsContent>
 
       <TabsContent value="policy-departments" className="mt-4">
-        {/* TODO: Uncomment when JunctionManager component is available
-        <JunctionManager
-          allItems={policyDepartmentJunction.allItems}
-          selectedIds={policyDepartmentJunction.selectedIds}
-          onSelectionChange={policyDepartmentJunction.setSelectedIds}
-          onSave={policyDepartmentJunction.save}
-          loading={policyDepartmentJunction.loading}
-          saving={policyDepartmentJunction.saving}
-          title="Manage Policy Departments"
-          itemLabel="policy departments"
-          searchPlaceholder="Search policy departments..."
-        />
-        */}
-        <p className="text-muted-foreground">Junction management coming soon</p>
+        <p className="text-muted-foreground">{tCommon('junctionManagementComingSoon')}</p>
       </TabsContent>
       
       <TabsContent value="history" className="mt-4">

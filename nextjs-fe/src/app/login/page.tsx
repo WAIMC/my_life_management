@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { useTranslations } from 'next-intl';
-import { ADMIN_ROUTES } from '@/shared/constants';
+import { ADMIN_ROUTES } from '@/shared/config';
 
 export default function LoginPage() {
   const router = useRouter();

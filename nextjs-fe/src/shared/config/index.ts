@@ -1,5 +1,5 @@
 /**
  * Config Barrel Export
  */
-export * from './env';
+export * from './constant';
 export * from './navigation';

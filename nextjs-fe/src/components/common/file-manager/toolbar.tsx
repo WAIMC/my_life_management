@@ -24,8 +24,8 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { useTranslations } from 'next-intl';
-import { SORT_ORDER } from '@/shared/constants/app';
-import { SORT_FIELD, VIEW_MODE } from '@/shared/constants/file-manager';
+import { SORT_ORDER } from '@/shared/config/constant';
+import { FILE_MANAGER_SORT_FIELDS, VIEW_MODE } from '@/shared/config/constant';
 import type { ToolbarProps, SortField, FilterType } from '@/shared/types/file-manager.types';
 
 export const Toolbar = ({
@@ -153,17 +153,17 @@ export const Toolbar = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.NAME)}>
-                {t('sortField.name')} {sortOptions.field === SORT_FIELD.NAME && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(FILE_MANAGER_SORT_FIELDS.NAME)}>
+                {t('sortField.name')} {sortOptions.field === FILE_MANAGER_SORT_FIELDS.NAME && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.DATE)}>
-                {t('sortField.date')} {sortOptions.field === SORT_FIELD.DATE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(FILE_MANAGER_SORT_FIELDS.DATE)}>
+                {t('sortField.date')} {sortOptions.field === FILE_MANAGER_SORT_FIELDS.DATE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.SIZE)}>
-                {t('sortField.size')} {sortOptions.field === SORT_FIELD.SIZE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(FILE_MANAGER_SORT_FIELDS.SIZE)}>
+                {t('sortField.size')} {sortOptions.field === FILE_MANAGER_SORT_FIELDS.SIZE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort(SORT_FIELD.TYPE)}>
-                {t('sortField.type')} {sortOptions.field === SORT_FIELD.TYPE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
+              <DropdownMenuItem onClick={() => handleSort(FILE_MANAGER_SORT_FIELDS.TYPE)}>
+                {t('sortField.type')} {sortOptions.field === FILE_MANAGER_SORT_FIELDS.TYPE && (sortOptions.order === SORT_ORDER.ASC ? '↑' : '↓')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

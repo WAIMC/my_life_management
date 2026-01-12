@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -21,20 +20,23 @@ import {
 } from '@/components/ui/select';
 import type { ApiMst, FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
+import { SORT_ORDER, SORT_FIELDS, HTTP_METHODS } from '@/shared/config/constant';
+import { IsActive, IsActiveLabels, TypeOfMethod } from '@/shared/enums';
 import { apiSchema, type ApiFormData } from '@/shared/validation/validation';
 import type { ApiFormProps } from './types';
 
 export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<ApiMst>(ENDPOINTS.MASTER.API);
   
   // Fetch features for dropdown
   const { data: features } = useApiData<FeatureMst>(ENDPOINTS.MASTER.FEATURE, {
     per_page: 1000,
-    sort_by: 'name',
-    sort_order: 'asc',
+    sort_by: SORT_FIELDS.NAME,
+    sort_order: SORT_ORDER.ASC,
   });
 
   const {
@@ -58,9 +60,15 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
   useEffect(() => {
     if (initialData) {
-      const methods: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+      const methods: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> = [
+        HTTP_METHODS.GET,
+        HTTP_METHODS.POST,
+        HTTP_METHODS.PUT,
+        HTTP_METHODS.PATCH,
+        HTTP_METHODS.DELETE
+      ];
       const typeIndex = typeof initialData.type === 'string' ? parseInt(initialData.type) : initialData.type;
-      const mappedMethod = methods[typeIndex] || 'GET';
+      const mappedMethod = methods[typeIndex] || HTTP_METHODS.GET;
       
       reset({
         name: initialData.name,
@@ -76,7 +84,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         name: '',
         path: '',
         type: 0,
-        method: 'GET',
+        method: HTTP_METHODS.GET,
         description: '',
         is_active: true,
         feature_mst_id: 0,
@@ -87,7 +95,11 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   const onSubmit = async (data: ApiFormData) => {
     try {
       const methodMap: Record<string, number> = {
-        'GET': 0, 'POST': 1, 'PUT': 2, 'PATCH': 3, 'DELETE': 4
+        [HTTP_METHODS.GET]: TypeOfMethod.GET,
+        [HTTP_METHODS.POST]: TypeOfMethod.POST,
+        [HTTP_METHODS.PUT]: TypeOfMethod.PUT,
+        [HTTP_METHODS.PATCH]: TypeOfMethod.PATCH,
+        [HTTP_METHODS.DELETE]: TypeOfMethod.DELETE
       };
       
       const payload = { 
@@ -122,7 +134,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="feature_mst_id">
-          Feature <span className="text-red-500">*</span>
+          {tLabels('feature')} <span className="text-red-500">*</span>
         </Label>
         <Select
           value={currentFeatureId.toString()}
@@ -133,7 +145,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select Feature" />
+            <SelectValue placeholder={tForms('selectFeature')} />
           </SelectTrigger>
           <SelectContent>
             {features.map((feature) => (
@@ -150,7 +162,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+          {tLabels('name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -165,7 +177,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="path">
-          Path / URI <span className="text-red-500">*</span>
+          {tLabels('path')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="path"
@@ -180,12 +192,18 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="method">
-          Method <span className="text-red-500">*</span>
+          {tLabels('method')} <span className="text-red-500">*</span>
         </Label>
         <Select
           value={methodValue}
           onValueChange={(value) => {
-            const validMethods: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+            const validMethods: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> = [
+              HTTP_METHODS.GET,
+              HTTP_METHODS.POST,
+              HTTP_METHODS.PUT,
+              HTTP_METHODS.PATCH,
+              HTTP_METHODS.DELETE
+            ];
             if (value && validMethods.includes(value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE')) {
               setValue('method', value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE');
             }
@@ -195,11 +213,11 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="GET">GET</SelectItem>
-            <SelectItem value="POST">POST</SelectItem>
-            <SelectItem value="PUT">PUT</SelectItem>
-            <SelectItem value="DELETE">DELETE</SelectItem>
-            <SelectItem value="PATCH">PATCH</SelectItem>
+            <SelectItem value={HTTP_METHODS.GET}>{HTTP_METHODS.GET}</SelectItem>
+            <SelectItem value={HTTP_METHODS.POST}>{HTTP_METHODS.POST}</SelectItem>
+            <SelectItem value={HTTP_METHODS.PUT}>{HTTP_METHODS.PUT}</SelectItem>
+            <SelectItem value={HTTP_METHODS.DELETE}>{HTTP_METHODS.DELETE}</SelectItem>
+            <SelectItem value={HTTP_METHODS.PATCH}>{HTTP_METHODS.PATCH}</SelectItem>
           </SelectContent>
         </Select>
         {errors.method && (
@@ -208,24 +226,24 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description (Optional)</Label>
+        <Label htmlFor="description">{tLabels('description')}</Label>
         <Textarea id="description" {...register('description')} rows={3} />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="is_active">
-          Status <span className="text-red-500">*</span>
+          {tLabels('status')} <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={isActiveValue ? '1' : '0'}
-          onValueChange={(value) => setValue('is_active', value === '1')}
+          value={isActiveValue ? IsActive.TRUE.toString() : IsActive.FALSE.toString()}
+          onValueChange={(value) => setValue('is_active', value === IsActive.TRUE.toString())}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">Active</SelectItem>
-            <SelectItem value="0">Inactive</SelectItem>
+            <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
+            <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
           </SelectContent>
         </Select>
       </div>

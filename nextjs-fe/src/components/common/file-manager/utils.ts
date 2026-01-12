@@ -8,8 +8,8 @@ import {
   FileCode,
   Folder,
 } from 'lucide-react';
-import { SORT_ORDER } from '@/shared/constants/app';
-import { FILTER_TYPE, FILE_TYPE, FILE_SIZE_UNITS, MIME_TYPE_LABELS } from '@/shared/constants/file-manager';
+import { SORT_ORDER, MIME_TYPE_PREFIX } from '@/shared/config/constant';
+import { FILTER_TYPE, FILE_TYPE, FILE_SIZE_UNITS, MIME_TYPE_LABELS } from '@/shared/config/constant';
 import type { MediaFile, FilterOptions, SortOptions } from '@/shared/types/file-manager.types';
 
 export const formatFileSize = (bytes: number): string => {
@@ -28,8 +28,8 @@ export const getFileIcon = (mimeType: string | null | undefined) => {
   }
   
   if (mimeType === 'folder' || mimeType === 'application/vnd.google-apps.folder') return Folder;
-  if (mimeType.startsWith('image/')) return FileImage;
-  if (mimeType.startsWith('video/')) return FileVideo;
+  if (mimeType.startsWith(MIME_TYPE_PREFIX.IMAGE)) return FileImage;
+  if (mimeType.startsWith(MIME_TYPE_PREFIX.VIDEO)) return FileVideo;
   if (mimeType.startsWith('audio/')) return FileAudio;
   if (
     mimeType.includes('pdf') ||
@@ -70,9 +70,9 @@ export const filterFiles = (
     // Type filter
     if (options.type !== FILTER_TYPE.ALL) {
       if (options.type === FILTER_TYPE.FOLDERS && file.type !== FILE_TYPE.FOLDER) return false;
-      if (options.type === FILTER_TYPE.IMAGES && (file.type === FILE_TYPE.FOLDER || !file.mime_type || !file.mime_type.startsWith('image/'))) return false;
-      if (options.type === FILTER_TYPE.VIDEOS && (file.type === FILE_TYPE.FOLDER || !file.mime_type || !file.mime_type.startsWith('video/'))) return false;
-      if (options.type === FILTER_TYPE.DOCUMENTS && (file.type === FILE_TYPE.FOLDER || !file.mime_type || file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/'))) return false;
+      if (options.type === FILTER_TYPE.IMAGES && (file.type === FILE_TYPE.FOLDER || !file.mime_type || !file.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE))) return false;
+      if (options.type === FILTER_TYPE.VIDEOS && (file.type === FILE_TYPE.FOLDER || !file.mime_type || !file.mime_type.startsWith(MIME_TYPE_PREFIX.VIDEO))) return false;
+      if (options.type === FILTER_TYPE.DOCUMENTS && (file.type === FILE_TYPE.FOLDER || !file.mime_type || file.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE) || file.mime_type.startsWith(MIME_TYPE_PREFIX.VIDEO))) return false;
     }
 
     // Date filter

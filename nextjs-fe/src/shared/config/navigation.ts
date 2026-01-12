@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Users,
-  FileText,
   Settings,
   LucideIcon,
   FolderOpen,
@@ -11,8 +10,6 @@ import {
   Building2,
   Code,
   Sparkles,
-  Languages,
-  MessageSquare,
   Key,
   FileCheck,
   UserCog,
@@ -24,145 +21,129 @@ import {
   Share2,
   Link,
 } from 'lucide-react';
-
-export interface MenuItem {
-  label: string;
-  icon: LucideIcon;
-  href?: string;
-  children?: MenuItem[];
-  badge?: string | number;
-  disabled?: boolean;
-}
+import { MenuItem } from '@/shared/types';
+import { ADMIN_ROUTES } from '@/shared/config';
 
 export const NAVIGATION_MENU: MenuItem[] = [
   {
-    label: 'Dashboard',
+    label: 'navigation.dashboard',
     icon: LayoutDashboard,
-    href: '/admin',
+    href: ADMIN_ROUTES.DASHBOARD,
   },
   {
-    label: 'File Manager',
+    label: 'navigation.fileManager',
     icon: FolderOpen,
-    href: '/admin/file-manager',
+    href: ADMIN_ROUTES.FILE_MANAGER,
   },
   {
-    label: 'Master Data',
+    label: 'navigation.masterData',
     icon: Database,
     children: [
       {
-        label: 'Admins',
+        label: 'entities.admins',
         icon: UserCog,
-        href: '/admin/admins',
+        href: ADMIN_ROUTES.ADMINS,
       },
       {
-        label: 'Roles',
+        label: 'entities.roles',
         icon: Shield,
-        href: '/admin/roles',
+        href: ADMIN_ROUTES.ROLES,
       },
       {
-        label: 'Departments',
+        label: 'entities.departments',
         icon: Building2,
-        href: '/admin/departments',
+        href: ADMIN_ROUTES.DEPARTMENTS,
       },
       {
-        label: 'APIs',
+        label: 'entities.apis',
         icon: Code,
-        href: '/admin/apis',
+        href: ADMIN_ROUTES.APIS,
       },
       {
-        label: 'Features',
+        label: 'entities.features',
         icon: Sparkles,
-        href: '/admin/features',
+        href: ADMIN_ROUTES.FEATURES,
       },
       {
-        label: 'Tokens',
+        label: 'entities.tokens',
         icon: Key,
-        href: '/admin/tokens',
+        href: ADMIN_ROUTES.TOKENS,
       },
       {
-        label: 'Policy Departments',
+        label: 'entities.policyDepartments',
         icon: FileCheck,
-        href: '/admin/policy-departments',
+        href: ADMIN_ROUTES.POLICY_DEPARTMENTS,
       },
     ],
   },
   {
-    label: 'Content Management',
+    label: 'navigation.contentManagement',
     icon: Package,
     children: [
       {
-        label: 'Users',
+        label: 'entities.users',
         icon: Users,
-        href: '/admin/users',
+        href: ADMIN_ROUTES.USERS,
       },
       {
-        label: 'Categories',
+        label: 'entities.categories',
         icon: Grid3x3,
-        href: '/admin/categories',
+        href: ADMIN_ROUTES.CATEGORIES,
       },
       {
-        label: 'Skills',
+        label: 'entities.skills',
         icon: Briefcase,
-        href: '/admin/skills',
+        href: ADMIN_ROUTES.SKILLS,
       },
       {
-        label: 'Skill Descriptions',
+        label: 'entities.skillDescriptions',
         icon: Layers,
-        href: '/admin/skill-descriptions',
+        href: ADMIN_ROUTES.SKILL_DESCRIPTIONS,
       },
       {
-        label: 'Banners',
+        label: 'entities.banners',
         icon: Image,
-        href: '/admin/banners',
+        href: ADMIN_ROUTES.BANNERS,
       },
       {
-        label: 'Sliders',
+        label: 'entities.sliders',
         icon: Sliders,
-        href: '/admin/sliders',
+        href: ADMIN_ROUTES.SLIDERS,
       },
       {
-        label: 'Social Links',
+        label: 'entities.socials',
         icon: Share2,
-        href: '/admin/socials',
+        href: ADMIN_ROUTES.SOCIALS,
       },
       {
-        label: 'Setting Links',
+        label: 'entities.settingLinks',
         icon: Link,
-        href: '/admin/setting-links',
+        href: ADMIN_ROUTES.SETTING_LINKS,
       },
     ],
   },
   {
-    label: 'Settings',
+    label: 'navigation.settings',
     icon: Settings,
     children: [
       {
-        label: 'General',
+        label: 'navigation.general',
         icon: Settings,
-        href: '/admin/settings/general'
+        href: ADMIN_ROUTES.SETTINGS_GENERAL,
       },
       {
-        label: 'Security',
+        label: 'navigation.security',
         icon: Settings,
-        href: '/admin/settings/security'
+        href: ADMIN_ROUTES.SETTINGS_SECURITY,
       },
       {
-        label: 'Notifications',
+        label: 'navigation.notifications',
         icon: Settings,
-        href: '/admin/settings/notifications'
+        href: ADMIN_ROUTES.SETTINGS_NOTIFICATIONS,
       },
     ],
   },
 ];
-
-// Route permissions mapping (for future use)
-export const ROUTE_PERMISSIONS: Record<string, string[]> = {
-  '/admin': ['admin', 'user'],
-  '/admin/users': ['admin'],
-  '/admin/posts': ['admin', 'editor'],
-  '/admin/file-manager': ['admin', 'editor', 'user'],
-  '/admin/settings': ['admin'],
-};
 
 // Helper function to check if a route is active
 export function isRouteActive(currentPath: string, targetPath?: string): boolean {

@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -19,13 +18,14 @@ import {
 } from '@/components/ui/select';
 import type { SocialMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { SocialStatus, IsActive } from '@/shared/enums';
+import { SocialStatus, SocialStatusLabels, IsActive } from '@/shared/enums';
 import { socialSchema, type SocialFormData } from '@/shared/validation/validation';
 import type { SocialFormProps } from './types';
 
 export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
 
@@ -98,7 +98,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">
-            Name <span className="text-red-500">*</span>
+            {tCommon('name')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="name"
@@ -112,7 +112,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="image">Icon/Image URL</Label>
+          <Label htmlFor="image">{tLabels('iconImageUrl')}</Label>
           <Input
             id="image"
             {...register('image')}
@@ -123,7 +123,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
 
       <div className="space-y-2">
         <Label htmlFor="link">
-          Link <span className="text-red-500">*</span>
+          {tCommon('link')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="link"
@@ -139,7 +139,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="rank_order">
-            Display Order <span className="text-red-500">*</span>
+            {tCommon('displayOrder')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="rank_order"
@@ -154,7 +154,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
 
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString()}
@@ -164,8 +164,8 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={SocialStatus.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={SocialStatus.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={SocialStatus.ACTIVE.toString()}>{SocialStatusLabels[SocialStatus.ACTIVE]}</SelectItem>
+              <SelectItem value={SocialStatus.INACTIVE.toString()}>{SocialStatusLabels[SocialStatus.INACTIVE]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -178,7 +178,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
           {...register('is_display')}
           className="rounded"
         />
-        <Label htmlFor="is_display">Is Display</Label>
+        <Label htmlFor="is_display">{tCommon('isDisplay')}</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

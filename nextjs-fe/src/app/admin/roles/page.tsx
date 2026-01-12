@@ -18,7 +18,7 @@ import { ImportExport } from '@/components/common/import-export';
 import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import type { RoleMst } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/constants';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/config';
 import {
   Dialog,
   DialogContent,

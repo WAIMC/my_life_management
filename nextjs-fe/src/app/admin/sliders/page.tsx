@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { SliderMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/constants';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/config';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import Image from 'next/image';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';

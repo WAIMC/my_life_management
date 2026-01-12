@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
 import type { ExportFormat, ImportFormat, ImportExportProps } from '@/shared/types/data-table.types';
-import { EXPORT_FORMATS } from '@/shared/constants/media';
+import { EXPORT_FORMATS } from '@/shared/config/constant';
 
 export type { ExportFormat, ImportFormat } from '@/shared/types/data-table.types';
 

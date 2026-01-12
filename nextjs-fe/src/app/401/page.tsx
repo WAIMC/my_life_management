@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
-import { SUPPORT_EMAIL } from '@/shared/constants';
+import { SUPPORT_EMAIL } from '@/shared/config';
 
 export default function UnauthorizedPage() {
   const t = useTranslations('errors');

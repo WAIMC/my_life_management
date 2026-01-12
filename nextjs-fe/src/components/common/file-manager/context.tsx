@@ -2,8 +2,8 @@
 
 import { useState, createContext, useContext, ReactNode } from 'react';
 import type { MediaFile, ViewMode, SortField, FilterType, FileManagerContextType } from '@/shared/types/file-manager.types';
-import { SORT_FIELD, VIEW_MODE, FILTER_TYPE } from '@/shared/constants/file-manager';
-import { PAGINATION } from '@/shared/constants/app';
+import { FILE_MANAGER_SORT_FIELDS, VIEW_MODE, FILTER_TYPE } from '@/shared/config/constant';
+import { PAGINATION } from '@/shared/config/constant';
 
 const FileManagerContext = createContext<FileManagerContextType | undefined>(undefined);
 
@@ -15,7 +15,7 @@ export const FileManagerProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>(FILTER_TYPE.ALL);
-  const [sortBy, setSortBy] = useState<SortField>(SORT_FIELD.NAME);
+  const [sortBy, setSortBy] = useState<SortField>(FILE_MANAGER_SORT_FIELDS.NAME);
 
   const value: FileManagerContextType = {
     currentPath,

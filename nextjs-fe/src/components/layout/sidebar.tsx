@@ -16,6 +16,8 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const tCommon = useTranslations('common');
+  const tNav = useTranslations('navigation');
+  const tEntities = useTranslations('entities');
 
   const toggleMenu = useCallback((label: string) => {
     setExpandedMenu((prev) => prev === label ? null : label);
@@ -46,7 +48,7 @@ export function Sidebar() {
               >
                 <span className="flex items-center gap-3">
                   <item.icon className="h-5 w-5" />
-                  {item.label}
+                  {item.label.startsWith('navigation.') ? tNav(item.label.replace('navigation.', '')) : tEntities(item.label.replace('entities.', ''))}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -74,7 +76,7 @@ export function Sidebar() {
                           : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                       )}
                     >
-                      {child.label}
+                      {child.label.startsWith('navigation.') ? tNav(child.label.replace('navigation.', '')) : tEntities(child.label.replace('entities.', ''))}
                     </Link>
                   ))}
                 </div>
@@ -92,7 +94,7 @@ export function Sidebar() {
               )}
             >
               <item.icon className="h-5 w-5" />
-              {item.label}
+              {item.label.startsWith('navigation.') ? tNav(item.label.replace('navigation.', '')) : tEntities(item.label.replace('entities.', ''))}
               {item.badge && (
                 <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                   {item.badge}

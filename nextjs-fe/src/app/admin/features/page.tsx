@@ -24,7 +24,7 @@ import {
   type SortOrder, 
   PAGINATION, 
   ADMIN_ROUTES 
-} from '@/shared/constants';
+} from '@/shared/config';
 import { FeatureStatus, FeatureStatusLabels } from '@/shared/enums/enums';
 import {
   Dialog,

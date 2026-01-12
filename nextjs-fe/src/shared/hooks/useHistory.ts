@@ -4,39 +4,23 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '@/shared/api/client';
-import type { PaginatedResponse } from '@/shared/types/api';
+import type { PaginatedResponse, UseHistoryOptions, UseHistoryReturn } from '@/shared/types/api';
 import type { BaseHistory, HistoryFilterOptions, HistoryDiff } from '@/shared/types/models/history';
-
-interface UseHistoryOptions {
-  baseUrl: string;
-  recordId: number;
-}
-
-interface UseHistoryReturn<T extends BaseHistory> {
-  history: T[];
-  isLoading: boolean;
-  error: Error | null;
-  pagination: {
-    page: number;
-    perPage: number;
-    total: number;
-  };
-  fetchHistory: (filters?: HistoryFilterOptions) => Promise<void>;
-  compareVersions: (oldVersion: T, newVersion: T) => HistoryDiff[];
-  restoreVersion: (historyId: number) => Promise<void>;
-}
+import { PAGINATION } from '@/shared/config/constant';
 
 export function useHistory<T extends BaseHistory = BaseHistory>({
   baseUrl,
   recordId,
 }: UseHistoryOptions): UseHistoryReturn<T> {
+  const t = useTranslations('common');
   const [history, setHistory] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [pagination, setPagination] = useState({
-    page: 1,
-    perPage: 20,
+    page: PAGINATION.DEFAULT_PAGE as number,
+    perPage: PAGINATION.DEFAULT_PER_PAGE as number,
     total: 0,
   });
 
@@ -68,12 +52,12 @@ export function useHistory<T extends BaseHistory = BaseHistory>({
           total: response.data.total,
         });
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch history'));
+        setError(err instanceof Error ? err : new Error(t('failedToFetchHistory')));
       } finally {
         setIsLoading(false);
       }
     },
-    [baseUrl, recordId, pagination.page, pagination.perPage]
+    [baseUrl, recordId, pagination.page, pagination.perPage, t]
   );
 
   const compareVersions = useCallback((oldVersion: T, newVersion: T): HistoryDiff[] => {
@@ -112,10 +96,10 @@ export function useHistory<T extends BaseHistory = BaseHistory>({
         // Refresh history after restore
         await fetchHistory();
       } catch (err) {
-        throw err instanceof Error ? err : new Error('Failed to restore version');
+        throw err instanceof Error ? err : new Error(t('failedToRestoreVersion'));
       }
     },
-    [baseUrl, fetchHistory]
+    [baseUrl, fetchHistory, t]
   );
 
   return {

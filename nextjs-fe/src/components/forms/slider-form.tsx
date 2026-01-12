@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -20,7 +19,7 @@ import {
 import { ImageUpload } from '@/components/common/image-upload';
 import type { SliderMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive } from '@/shared/enums';
+import { IsActive, IsActiveLabels } from '@/shared/enums';
 import { sliderSchema, type SliderFormData } from '@/shared/validation/validation';
 import type { SliderFormProps } from './types';
 
@@ -94,8 +93,8 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-           <ImageUpload
-            label="Slider Image"
+          <ImageUpload
+            label={tCommon('sliderImage')}
             value={imagePreview ?? undefined}
             onChange={(file, preview) => {
               setImageFile(file);
@@ -109,31 +108,31 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
         
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
+            <Label htmlFor="title">{tCommon('title')} <span className="text-red-500">*</span></Label>
             <Input id="title" {...register('title')} className={errors.title ? 'border-red-500' : ''} />
             {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="link">Link URL</Label>
+            <Label htmlFor="link">{tCommon('linkUrl')}</Label>
             <Input id="link" {...register('link')} placeholder={tForms('urlExample')} />
           </div>
 
-           <div className="space-y-2">
-            <Label htmlFor="slug">Slug</Label>
+          <div className="space-y-2">
+            <Label htmlFor="slug">{tCommon('slug')}</Label>
             <Input id="slug" {...register('slug')} />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-         <div className="space-y-2">
-            <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
+        <div className="space-y-2">
+            <Label htmlFor="status">{tCommon('status')} <span className="text-red-500">*</span></Label>
             <Select value={statusValue?.toString()} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
-                <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
+                <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
+                <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
               </SelectContent>
             </Select>
           </div>

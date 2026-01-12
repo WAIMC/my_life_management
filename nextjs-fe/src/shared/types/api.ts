@@ -41,6 +41,8 @@ export interface PaginationLink {
  * Common Query Parameters
  */
 
+export type FilterValue = string | number | boolean | null | undefined;
+
 export interface ListQueryParams {
   page?: number;
   per_page?: number;
@@ -48,6 +50,108 @@ export interface ListQueryParams {
   sort_order?: 'asc' | 'desc';
   from_date?: string; // Format: d/m/Y
   to_date?: string; // Format: d/m/Y
+  [key: string]: FilterValue;
+}
+
+/**
+ * useApiData Hook Types
+ */
+
+export interface UseApiDataOptions {
+  page?: number;
+  per_page?: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+  from_date?: string;
+  to_date?: string;
+  filters?: Record<string, FilterValue>;
+  enabled?: boolean; // If false, don't fetch automatically
+}
+
+export interface UseApiDataReturn<T> {
+  data: T[];
+  loading: boolean;
+  error: Error | null;
+  pagination: {
+    currentPage: number;
+    lastPage: number;
+    total: number;
+    perPage: number;
+    from: number;
+    to: number;
+  };
+  refetch: () => void;
+  isRefetching: boolean;
+}
+
+/**
+ * useCrud Hook Types
+ */
+
+export interface UseCrudReturn<T> {
+  create: (data: Partial<T>) => Promise<number>;
+  update: (id: number, data: Partial<T>) => Promise<number>;
+  remove: (ids: number[]) => Promise<void>;
+  loading: boolean;
+  error: Error | null;
+}
+
+export interface UseCrudOptions {
+  /**
+   * Query keys to invalidate after successful mutation
+   * Example: ['users'] will invalidate all user-related queries
+   */
+  invalidateKeys?: string[];
+  
+  /**
+   * Custom success messages
+   */
+  messages?: {
+    create?: string;
+    update?: string;
+    delete?: string;
+  };
+}
+
+/**
+ * useHistory Hook Types
+ */
+
+import type { BaseHistory, HistoryDiff } from './models/history';
+
+export interface UseHistoryOptions {
+  baseUrl: string;
+  recordId: number;
+}
+
+export interface UseHistoryReturn<T extends BaseHistory> {
+  history: T[];
+  isLoading: boolean;
+  error: Error | null;
+  pagination: {
+    page: number;
+    perPage: number;
+    total: number;
+  };
+  fetchHistory: (filters?: Record<string, unknown>) => Promise<void>;
+  compareVersions: (oldVersion: T, newVersion: T) => HistoryDiff[];
+  restoreVersion: (historyId: number) => Promise<void>;
+}
+
+/**
+ * useJunctionTable Hook Types
+ */
+
+export interface UseJunctionTableReturn<T = Record<string, unknown>> {
+  allItems: T[];
+  assignedIds: number[];
+  selectedIds: number[];
+  loading: boolean;
+  saving: boolean;
+  setSelectedIds: (ids: number[]) => void;
+  toggleSelection: (id: number) => void;
+  save: () => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 /**
@@ -247,7 +351,6 @@ export interface UserMgmt {
   avatar?: string;
   updated_at: string;
 }
-}
 
 export interface SettingLinkMgmt {
   id: number;
@@ -337,4 +440,134 @@ export interface UploadResponse {
   filename: string;
   size: number;
   mime_type: string;
+}
+
+/**
+ * API Endpoint Paths Constants
+ */
+export const API_PATHS = {
+  LIST: '/list',
+  STORE: '/store',
+  UPDATE: '/update',
+  DELETE: '/delete',
+  VIEW: '/view',
+  DOWNLOAD: '/download',
+  EXPORT: '/export',
+  IMPORT: '/import',
+} as const;
+
+/**
+ * User Type
+ */
+export interface User {
+  id: string | number;
+  email: string;
+  name: string;
+  avatar?: string;
+  role?: string;
+  permissions?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Auth Service Response Types
+ */
+export interface LoginApiResponse {
+  user: User;
+  expires_at: number;
+  token?: string;
+}
+
+export interface RefreshApiResponse {
+  expires_at: number;
+  token?: string;
+}
+
+export interface MeApiResponse {
+  user: User;
+  expires_at: number;
+}
+
+/**
+ * Service Query Parameters
+ * Extended query params for service-specific filtering
+ */
+
+export interface BaseServiceListParams extends ListQueryParams {
+  id?: number;
+  name?: string;
+  status?: number;
+  is_active?: boolean;
+  is_delete?: boolean;
+}
+
+export type ApiListParams = BaseServiceListParams;
+export type FeatureListParams = BaseServiceListParams;
+export type RoleListParams = BaseServiceListParams;
+
+export interface TokenListParams extends BaseServiceListParams {
+  token?: string;
+  admin_mst_id?: number;
+}
+
+/**
+ * Import/Export Response Types
+ */
+
+export interface ImportResponse {
+  success: number;
+  failed: number;
+  errors?: Array<{
+    row: number;
+    message: string;
+    data?: unknown;
+  }>;
+}
+
+/**
+ * Service Factory Types
+ */
+
+/**
+ * Service configuration for endpoints
+ */
+export interface ServiceConfig {
+  /** Base endpoint URL */
+  endpoint: string;
+  /** Use suffix pattern (/list, /store, /update, /delete) instead of direct endpoint */
+  useSuffix?: boolean;
+}
+
+/**
+ * Standard CRUD operations interface
+ */
+export interface CrudServiceOperations<T> {
+  list(params?: ListQueryParams): Promise<{ data: PaginatedResponse<T> }>;
+  getById(id: number): Promise<T | null>;
+  create(data: Omit<T, 'id' | 'updated_at' | 'created_at'>): Promise<{ data: number }>;
+  update(id: number, data: Partial<T>): Promise<{ data: number }>;
+  delete(ids: number[]): Promise<void>;
+}
+
+/**
+ * CRUD Service Class Configuration
+ */
+export interface CrudServiceConfig {
+  baseUrl: string;
+  endpoints?: {
+    list?: string;
+    get?: string;
+    create?: string;
+    update?: string;
+    delete?: string;
+  };
+}
+
+export interface RequiredEndpoints {
+  list: string;
+  get: string;
+  create: string;
+  update: string;
+  delete: string;
 }

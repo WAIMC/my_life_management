@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -20,13 +19,14 @@ import {
 import { ImageUpload } from '@/components/common/image-upload';
 import type { BannerMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive } from '@/shared/enums';
+import { IsActive, IsActiveLabels } from '@/shared/enums';
 import { bannerSchema, type BannerFormData } from '@/shared/validation/validation';
 import type { BannerFormProps } from './types';
 
 export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -101,7 +101,7 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-           <ImageUpload
+          <ImageUpload
             label="Banner Image"
             value={imagePreview ?? undefined}
             onChange={(file, preview) => {
@@ -118,31 +118,31 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
         
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
+            <Label htmlFor="title">{tLabels('title')} <span className="text-red-500">*</span></Label>
             <Input id="title" {...register('title')} className={errors.title ? 'border-red-500' : ''} />
             {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="link">Link URL</Label>
+            <Label htmlFor="link">{tLabels('linkUrl')}</Label>
             <Input id="link" {...register('link')} placeholder={tForms('urlExample')} />
           </div>
 
-           <div className="space-y-2">
-            <Label htmlFor="position">Position</Label>
+          <div className="space-y-2">
+            <Label htmlFor="position">{tLabels('position')}</Label>
             <Input id="position" {...register('position')} />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-         <div className="space-y-2">
-            <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
+        <div className="space-y-2">
+            <Label htmlFor="status">{tLabels('status')} <span className="text-red-500">*</span></Label>
             <Select value={statusValue?.toString()} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
-                <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
+                <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
+                <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
               </SelectContent>
             </Select>
           </div>

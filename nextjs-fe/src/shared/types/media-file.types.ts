@@ -45,6 +45,7 @@ export interface ListFilesParams {
   per_page?: number;
   page?: number;
   file_type?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface RenameFileParams {

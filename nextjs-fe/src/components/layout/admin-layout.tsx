@@ -6,20 +6,21 @@ import { useAuth } from "@/shared/hooks/use-auth";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { Content } from "./content";
-
-interface AdminLayoutProps {
-  children: React.ReactNode;
-  className?: string;
-}
+import type { AdminLayoutProps } from '@/shared/types/layout.types';
+import { useTranslations } from 'next-intl';
 
 export function AdminLayout({ children, className }: AdminLayoutProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+  const tCommon = useTranslations('common');
   const [isMounted, setIsMounted] = useState(false);
 
   // Fix hydration error: Only render after client-side mount
   useEffect(() => {
-    setIsMounted(true);
+    const timer = requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+    return () => cancelAnimationFrame(timer);
   }, []);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
         <div className="text-center">
           <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-800 dark:border-t-blue-400" />
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Loading...
+            {tCommon('loading')}
           </p>
         </div>
       </div>

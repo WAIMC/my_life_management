@@ -5,35 +5,35 @@ import {
   FilterOptions, 
   SortOptions, 
   PaginationState,
-  FileManagerContextType 
+  FileManagerContextType,
+  FilterType,
+  SortField
 } from '@/shared/types/file-manager.types';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import toast from 'react-hot-toast';
+import { FILTER_TYPE, FILE_MANAGER_SORT_FIELDS, SORT_ORDER, INITIAL_PAGINATION, FILE_TYPE, MIME_TYPE_PREFIX, PAGINATION } from '@/shared/config/constant';
+import { useTranslations } from 'next-intl';
 
 export const useFileManager = (): FileManagerContextType => {
+  const t = useTranslations('fileManager');
   const [currentPath, setCurrentPath] = useState('/');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [rawFiles, setRawFiles] = useState<MediaFile[]>([]); // Cache raw data from API
-  const [files, setFiles] = useState<MediaFile[]>([]); // Filtered/sorted files for display
+  const [rawFiles, setRawFiles] = useState<MediaFile[]>([]);
+  const [files, setFiles] = useState<MediaFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    type: 'all'
+    type: FILTER_TYPE.ALL
   });
   
   const [sortOptions, setSortOptions] = useState<SortOptions>({
-    field: 'date',
-    order: 'desc'
+    field: FILE_MANAGER_SORT_FIELDS.DATE,
+    order: SORT_ORDER.DESC
   });
 
-  const [pagination, setPagination] = useState<PaginationState>({
-    page: 1,
-    pageSize: 25,
-    total: 0,
-    totalPages: 0
-  });
+  const [pagination, setPagination] = useState<PaginationState>(INITIAL_PAGINATION);
 
   // Fetch files from API (only when path changes)
   const fetchFiles = useCallback(async () => {
@@ -45,31 +45,33 @@ export const useFileManager = (): FileManagerContextType => {
       });
       
       // Transform and cache raw data
-      const transformedFiles: MediaFile[] = (response.data || []).map((file: any) => ({
-        id: String(file.id),
-        drive_id: file.id,
-        name: file.original_name,
-        mime_type: file.mime_type,
-        url: file.view_url || file.url || '',
-        thumbnail_url: file.mime_type?.startsWith('image/') ? (file.view_url || file.url) : undefined,
-        folder_path: file.folder_path || '/',
-        size: file.size,
-        owner_id: String(file.workspace_id || 0),
-        created_at: file.created_at,
-        updated_at: file.updated_at,
-        type: file.is_file === false ? 'folder' as const : 'file' as const
-      }));
+      const transformedFiles: MediaFile[] = ((response.data || []) as unknown[]).map((fileData: unknown) => {
+        const file = fileData as Record<string, unknown>;
+        const mimeType = (file.mime_type as string | null | undefined) || '';
+        return {
+          id: String(file.id),
+          drive_id: String(file.id),
+          name: file.original_name as string,
+          mime_type: mimeType,
+          url: (file.view_url as string) || (file.url as string) || '',
+          thumbnail_url: mimeType?.startsWith(MIME_TYPE_PREFIX.IMAGE) ? ((file.view_url as string) || (file.url as string)) : undefined,
+          folder_path: (file.folder_path as string) || '/',
+          size: file.size as number,
+          owner_id: String(file.workspace_id || 0),
+          created_at: file.created_at as string,
+          updated_at: file.updated_at as string,
+          type: file.is_file === false ? FILE_TYPE.FOLDER : FILE_TYPE.FILE
+        };
+      });
       
-      setRawFiles(transformedFiles); // Cache raw data
-    } catch (error) {
-      toast.error('Không thể tải danh sách file');
-      console.error('❌ Error fetching files:', error);
+      setRawFiles(transformedFiles);
+    } catch {
+      toast.error(t('listError'));
       setRawFiles([]);
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPath]); // Empty dependencies - uses current values from closure
+  }, [currentPath, t]);
 
   // Fetch files only when path changes
   useEffect(() => {
@@ -88,16 +90,16 @@ export const useFileManager = (): FileManagerContextType => {
     }
     
     // 2. Apply filter by type
-    if (filterOptions.type !== 'all') {
+    if (filterOptions.type !== FILTER_TYPE.ALL) {
       processed = processed.filter(file => {
-        if (filterOptions.type === 'folders') return file.type === 'folder';
-        if (filterOptions.type === 'images') return file.mime_type?.startsWith('image/');
-        if (filterOptions.type === 'videos') return file.mime_type?.startsWith('video/');
-        if (filterOptions.type === 'documents') {
-          return file.type === 'file' && 
-                 file.mime_type && 
-                 !file.mime_type.startsWith('image/') && 
-                 !file.mime_type.startsWith('video/');
+        if (filterOptions.type === FILTER_TYPE.FOLDERS) return file.type === FILE_TYPE.FOLDER;
+        if (filterOptions.type === FILTER_TYPE.IMAGES) return file.mime_type?.startsWith(MIME_TYPE_PREFIX.IMAGE);
+        if (filterOptions.type === FILTER_TYPE.VIDEOS) return file.mime_type?.startsWith(MIME_TYPE_PREFIX.VIDEO);
+        if (filterOptions.type === FILTER_TYPE.DOCUMENTS) {
+          return file.type === FILE_TYPE.FILE && 
+                file.mime_type && 
+                !file.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE) && 
+                !file.mime_type.startsWith(MIME_TYPE_PREFIX.VIDEO);
         }
         return true;
       });
@@ -105,16 +107,16 @@ export const useFileManager = (): FileManagerContextType => {
     
     // 3. Apply sorting
     processed.sort((a, b) => {
-      const multiplier = sortOptions.order === 'asc' ? 1 : -1;
+      const multiplier = sortOptions.order === SORT_ORDER.ASC ? 1 : -1;
       
       switch (sortOptions.field) {
-        case 'name':
+        case FILE_MANAGER_SORT_FIELDS.NAME:
           return a.name.localeCompare(b.name) * multiplier;
-        case 'date':
+        case FILE_MANAGER_SORT_FIELDS.DATE:
           return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * multiplier;
-        case 'size':
+        case FILE_MANAGER_SORT_FIELDS.SIZE:
           return (a.size - b.size) * multiplier;
-        case 'type':
+        case FILE_MANAGER_SORT_FIELDS.TYPE:
           return (a.mime_type || '').localeCompare(b.mime_type || '') * multiplier;
         default:
           return 0;
@@ -126,7 +128,7 @@ export const useFileManager = (): FileManagerContextType => {
 
   // Reset pagination when filters change
   useEffect(() => {
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination(prev => ({ ...prev, page: PAGINATION.DEFAULT_PAGE }));
   }, [searchQuery, filterOptions]);
 
   // Clear selection when path changes
@@ -166,57 +168,48 @@ export const useFileManager = (): FileManagerContextType => {
         name,
         parent_path: currentPath // Send current path as parent_path
       });
-      toast.success('Tạo thư mục thành công');
-      // Refresh file list to show new folder
+      toast.success(t('createFolderSuccess'));
       await fetchFiles();
-    } catch (error) {
-      toast.error('Không thể tạo thư mục');
-      console.error('Error creating folder:', error);
+    } catch {
+      toast.error(t('createFolderError'));
     }
-  }, [currentPath, fetchFiles]);
+  }, [currentPath, fetchFiles, t]);
 
   const uploadFiles = useCallback(async (filesToUpload: File[]) => {
     try {
-      // Upload sequentially for now
       for (const file of filesToUpload) {
         await mediaFileService.upload({ 
           file,
-          parent_path: currentPath // Upload to current folder
+          parent_path: currentPath
         });
       }
-      toast.success(`Đã tải lên ${filesToUpload.length} file`);
-      // Refresh file list to show uploaded files
+      toast.success(`${t('uploadSuccess')} ${filesToUpload.length} file`);
       await fetchFiles();
-    } catch (error) {
-      toast.error('Không thể tải lên file');
-      console.error('Error uploading files:', error);
+    } catch {
+      toast.error(t('uploadError'));
     }
-  }, [currentPath, fetchFiles]);
+  }, [currentPath, fetchFiles, t]);
 
   const deleteFiles = useCallback(async (ids: string[]) => {
     try {
       await mediaFileService.delete({ ids: ids.map(id => Number(id)) });
       setSelectedFiles(prev => prev.filter(id => !ids.includes(id)));
-      toast.success('Đã xóa file');
-      // Refresh file list
+      toast.success(t('deleteSuccess'));
       await fetchFiles();
-    } catch (error) {
-      toast.error('Không thể xóa file');
-      console.error('Error deleting files:', error);
+    } catch {
+      toast.error(t('deleteError'));
     }
-  }, [fetchFiles]);
+  }, [fetchFiles, t]);
 
   const renameFile = useCallback(async (id: string, newName: string) => {
     try {
       await mediaFileService.rename(Number(id), { name: newName });
-      toast.success('Đã đổi tên file');
-      // Refresh file list
+      toast.success(t('renameSuccess'));
       await fetchFiles();
-    } catch (error) {
-      toast.error('Không thể đổi tên file');
-      console.error('Error renaming file:', error);
+    } catch {
+      toast.error(t('renameError'));
     }
-  }, [fetchFiles]);
+  }, [fetchFiles, t]);
 
   const moveFiles = useCallback(async (ids: string[], targetPath: string) => {
     try {
@@ -224,14 +217,12 @@ export const useFileManager = (): FileManagerContextType => {
         await mediaFileService.move(Number(id), { new_parent_path: targetPath });
       }
       setSelectedFiles(prev => prev.filter(id => !ids.includes(id)));
-      toast.success('Đã di chuyển file');
-      // Refresh file list
+      toast.success(t('moveSuccess'));
       await fetchFiles();
-    } catch (error) {
-      toast.error('Không thể di chuyển file');
-      console.error('Error moving files:', error);
+    } catch {
+      toast.error(t('moveError'));
     }
-  }, [fetchFiles]);
+  }, [fetchFiles, t]);
 
   const copyFiles = useCallback(async (ids: string[], targetPath: string) => {
     try {
@@ -239,14 +230,12 @@ export const useFileManager = (): FileManagerContextType => {
         ids: ids.map(id => Number(id)),
         target_folder_path: targetPath
       });
-      toast.success('Đã sao chép file');
-      // Refresh file list
+      toast.success(t('copySuccess'));
       await fetchFiles();
-    } catch (error) {
-      toast.error('Không thể sao chép file');
-      console.error('Error copying files:', error);
+    } catch {
+      toast.error(t('copyError'));
     }
-  }, [fetchFiles]);
+  }, [fetchFiles, t]);
 
   return {
     currentPath,
@@ -276,9 +265,9 @@ export const useFileManager = (): FileManagerContextType => {
     renameFile,
     moveFiles,
     filterType: filterOptions.type,
-    setFilterType: (type: string) => setFilterOptions(prev => ({ ...prev, type: type as any })),
+    setFilterType: (type: string) => setFilterOptions(prev => ({ ...prev, type: type as FilterType })),
     sortBy: sortOptions.field,
-    setSortBy: (field: any) => setSortOptions(prev => ({ ...prev, field })),
+    setSortBy: (field: SortField) => setSortOptions(prev => ({ ...prev, field })),
     copyFiles
   };
 };

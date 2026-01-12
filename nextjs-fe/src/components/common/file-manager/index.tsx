@@ -18,8 +18,8 @@ import { MoveCopyDialog } from './dialogs/move-copy-dialog';
 import type { MediaFile, FilterType, SortField, MoveCopyMode } from '@/shared/types/file-manager.types';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
-import { SORT_ORDER } from '@/shared/constants/app';
-import { SORT_FIELD, FILTER_TYPE, VIEW_MODE, FILE_TYPE, INITIAL_PAGINATION, MOVE_COPY_MODE, TRANSLATION_KEY } from '@/shared/constants/file-manager';
+import { SORT_ORDER } from '@/shared/config/constant';
+import { FILE_MANAGER_SORT_FIELDS, FILTER_TYPE, VIEW_MODE, FILE_TYPE, INITIAL_PAGINATION, MOVE_COPY_MODE, TRANSLATION_KEY } from '@/shared/config/constant';
 
 export default function FileManager() {
   const t = useTranslations();
@@ -248,7 +248,7 @@ export default function FileManager() {
           selectedCount={selectedFiles.length}
           filterOptions={{ type: (filterType as FilterType) || FILTER_TYPE.ALL }}
           onFilterChange={(opts) => setFilterOptions?.(opts)}
-          sortOptions={{ field: (sortBy as SortField) || SORT_FIELD.NAME, order: SORT_ORDER.ASC }}
+          sortOptions={{ field: (sortBy as SortField) || FILE_MANAGER_SORT_FIELDS.NAME, order: SORT_ORDER.ASC }}
           onSortChange={(opts) => setSortOptions?.(opts)}
         />
 
@@ -277,7 +277,7 @@ export default function FileManager() {
               onFileClick={handleFileClick}
               onNavigate={handleNavigate}
               isLoading={isLoading}
-              sortField={(sortBy as SortField) || SORT_FIELD.NAME}
+              sortField={(sortBy as SortField) || FILE_MANAGER_SORT_FIELDS.NAME}
               sortOrder={SORT_ORDER.ASC}
               onSort={(field) => setSortOptions?.({
                 field: field as SortField,

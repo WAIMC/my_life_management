@@ -1,30 +1,49 @@
 import { authLock } from "@/shared/utils/auth-lock";
-import { apiClient } from "@/shared/utils/api-client";
-import { ENDPOINTS } from "@/shared/api/endpoints";
-
-export interface AuthResponse {
-  expires_at: number;
-  user?: any;
-}
+import { apiClient } from "@/shared/api/client";
+import { ENDPOINTS } from "@/shared/api";
+import type {
+  LoginCredentials,
+  AuthResponse,
+  RefreshTokenResponse,
+} from "@/shared/types/auth.types";
+import type {
+  LoginApiResponse,
+  RefreshApiResponse,
+  MeApiResponse,
+} from "@/shared/types/api";
 
 export const authService = {
-  // ... (keep API methods)
-  async login(credentials: any): Promise<AuthResponse> {
-    const response = await apiClient.post<any>(ENDPOINTS.AUTH.LOGIN, credentials);
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    const response = await apiClient.post<LoginApiResponse>(
+      ENDPOINTS.AUTH.LOGIN,
+      credentials
+    );
     return response.data;
   },
+
+  // Note: REGISTER endpoint is not available in the current API
+  // Uncomment when the endpoint is added to ENDPOINTS.AUTH
+  // async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+  //   const response = await apiClient.post<LoginApiResponse>(
+  //     ENDPOINTS.AUTH.REGISTER,
+  //     credentials
+  //   );
+  //   return response.data;
+  // },
 
   async logout(): Promise<void> {
     await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
   },
 
-  async refreshToken(): Promise<AuthResponse> {
-    const response = await apiClient.post<any>(ENDPOINTS.AUTH.REFRESH);
+  async refreshToken(): Promise<RefreshTokenResponse> {
+    const response = await apiClient.post<RefreshApiResponse>(
+      ENDPOINTS.AUTH.REFRESH
+    );
     return response.data;
   },
 
-  async getMe(): Promise<AuthResponse & { [key: string]: any }> {
-    const response = await apiClient.get<any>(ENDPOINTS.AUTH.ME);
+  async getMe(): Promise<AuthResponse> {
+    const response = await apiClient.get<MeApiResponse>(ENDPOINTS.AUTH.ME);
     return response.data;
   },
 

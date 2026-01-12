@@ -1,31 +1,168 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { AuthContext } from "@/providers/auth-context";
-import { authService } from "@/shared/services/modules/auth.service";
+import React, { useReducer, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/shared/services/modules/auth.service';
+import { ADMIN_ROUTES } from '@/shared/config/constant';
 import {
-  AUTH_CHANNEL_NAME,
+  AuthState,
+  AuthAction,
+  AuthContextValue,
+  LoginCredentials,
   AuthMessage,
   LoginSuccessPayload,
   RefreshSuccessPayload,
-} from "@/shared/utils/notification";
-import { useRouter } from "next/navigation";
+  LogoutPayload,
+  LogoutReason,
+  AuthError,
+  User,
+  AUTH_CHANNEL_NAME,
+  DEFAULT_REFRESH_CONFIG,
+} from '@/shared/types';
+import { AuthContext } from './auth-context';
+
+// Broadcast event types
+const BROADCAST_EVENTS = {
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  REFRESH_SUCCESS: 'REFRESH_SUCCESS',
+  LOGOUT: 'LOGOUT',
+  FORCE_REFRESH: 'FORCE_REFRESH',
+} as const;
+
+const initialState: AuthState = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  expiresAt: null,
+  error: null,
+};
+
+function authReducer(state: AuthState, action: AuthAction): AuthState {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    case 'SET_USER':
+      return { ...state, user: action.payload };
+    case 'SET_EXPIRES_AT':
+      return { ...state, expiresAt: action.payload };
+    case 'SET_AUTHENTICATED':
+      return {
+        ...state,
+        user: action.payload.user,
+        expiresAt: action.payload.expiresAt,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      };
+    case 'SET_ERROR':
+      return { ...state, error: action.payload, isLoading: false };
+    case 'CLEAR_ERROR':
+      return { ...state, error: null };
+    case 'LOGOUT':
+      return { ...initialState, isLoading: false };
+    case 'RESET':
+      return initialState;
+    default:
+      return state;
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [expiresAt, setExpiresAt] = useState<number | null>(null);
-
   const router = useRouter();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [state, dispatch] = useReducer(authReducer, initialState);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
 
-  // =================================================================
-  // BROADCAST CHANNEL SETUP
-  // =================================================================
+  const broadcast = useCallback((message: AuthMessage) => {
+    channelRef.current?.postMessage(message);
+  }, []);
+
+  const handleLogoutSync = useCallback(() => {
+    dispatch({ type: 'LOGOUT' });
+    router.push(ADMIN_ROUTES.LOGIN);
+  }, [router]);
+
+  const performLogout = useCallback(
+    async (reason: LogoutReason = 'manual') => {
+      try {
+        await authService.logout();
+      } catch {
+        // Ignore logout errors
+      } finally {
+        handleLogoutSync();
+
+        if (typeof window !== 'undefined') {
+          const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+          channel.postMessage({ type: BROADCAST_EVENTS.LOGOUT, payload: { reason } });
+          channel.close();
+        }
+      }
+    },
+    [handleLogoutSync]
+  );
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const performRefresh = useCallback(
+    async (isRetry = false) => {
+      if (authService.isRefreshLocked()) return;
+
+      const acquired = await authService.acquireRefreshLock();
+      if (!acquired) return;
+
+      try {
+        const data = await authService.refreshToken();
+        retryCountRef.current = 0;
+        dispatch({ type: 'SET_EXPIRES_AT', payload: data.expires_at });
+        broadcast({ type: BROADCAST_EVENTS.REFRESH_SUCCESS, payload: { expiresAt: data.expires_at } });
+      } catch (error) {
+        if (!isRetry && retryCountRef.current < DEFAULT_REFRESH_CONFIG.maxRetries!) {
+          retryCountRef.current++;
+          setTimeout(() => performRefresh(true), DEFAULT_REFRESH_CONFIG.retryDelay!);
+        } else {
+          const authError: AuthError = {
+            message: 'errors.E0002',
+            code: 'TOKEN_REFRESH_FAILED',
+          };
+          dispatch({ type: 'SET_ERROR', payload: authError });
+          await performLogout('token_refresh_failed');
+        }
+      } finally {
+        authService.releaseRefreshLock();
+      }
+    },
+    [broadcast, performLogout]
+  );
+
+  const scheduleRefresh = useCallback(() => {
+    clearTimer();
+
+    if (!state.expiresAt || !state.isAuthenticated) return;
+
+    const now = Date.now();
+    const expirationTime = state.expiresAt * 1000;
+    const timeUntilRefresh = expirationTime - now - DEFAULT_REFRESH_CONFIG.refreshBeforeExpiry!;
+
+    if (timeUntilRefresh <= 0) {
+      performRefresh();
+    } else {
+      timerRef.current = setTimeout(performRefresh, timeUntilRefresh);
+    }
+  }, [state.expiresAt, state.isAuthenticated, performRefresh, clearTimer]);
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    scheduleRefresh();
+    return clearTimer;
+  }, [scheduleRefresh, clearTimer]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
 
     const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
     channelRef.current = channel;
@@ -34,168 +171,120 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { type, payload } = event.data;
 
       switch (type) {
-        case "LOGIN_SUCCESS":
-          handleLoginSuccess(payload as LoginSuccessPayload);
+        case BROADCAST_EVENTS.LOGIN_SUCCESS: {
+          const { user, expiresAt } = payload as LoginSuccessPayload;
+          dispatch({ type: 'SET_AUTHENTICATED', payload: { user, expiresAt } });
           break;
-        case "REFRESH_SUCCESS":
-          handleRefreshSuccess(payload as RefreshSuccessPayload);
+        }
+        case BROADCAST_EVENTS.REFRESH_SUCCESS: {
+          const { expiresAt } = payload as RefreshSuccessPayload;
+          dispatch({ type: 'SET_EXPIRES_AT', payload: expiresAt });
           break;
-        case "LOGOUT":
+        }
+        case BROADCAST_EVENTS.LOGOUT: {
           handleLogoutSync();
+          break;
+        }
+        case BROADCAST_EVENTS.FORCE_REFRESH:
+          performRefresh();
           break;
       }
     };
 
     return () => {
       channel.close();
+      channelRef.current = null;
     };
+  }, [handleLogoutSync]);
+
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'CLEAR_ERROR' });
+
+      try {
+        const data = await authService.login(credentials);
+        dispatch({ type: 'SET_AUTHENTICATED', payload: { user: data.user, expiresAt: data.expires_at } });
+        broadcast({ type: BROADCAST_EVENTS.LOGIN_SUCCESS, payload: { user: data.user, expiresAt: data.expires_at } });
+      } catch (error: unknown) {
+        const authError: AuthError = {
+          message: (error as Error).message || 'auth.invalidCredentials',
+          code: (error as { code?: string }).code || 'LOGIN_FAILED',
+          status: (error as { status?: number }).status,
+        };
+        dispatch({ type: 'SET_ERROR', payload: authError });
+        throw error;
+      }
+    },
+    [broadcast]
+  );
+
+  const logout = useCallback(
+    async (reason: LogoutReason = 'manual') => {
+      await performLogout(reason);
+    },
+    [performLogout]
+  );
+
+  const refreshToken = useCallback(async () => {
+    await performRefresh();
+  }, [performRefresh]);
+
+  const clearError = useCallback(() => {
+    dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
-  // =================================================================
-  // TIMER LOGIC
-  // =================================================================
-  useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!state.user || !state.isAuthenticated) return false;
+      return state.user.permissions?.includes(permission) ?? false;
+    },
+    [state.user, state.isAuthenticated]
+  );
 
-    if (!expiresAt || !isAuthenticated) return;
+  const hasRole = useCallback(
+    (role: string): boolean => {
+      if (!state.user || !state.isAuthenticated) return false;
+      return state.user.role === role;
+    },
+    [state.user, state.isAuthenticated]
+  );
 
-    const now = Date.now();
-    const expirationTime = expiresAt * 1000;
-    // Schedule check 30 seconds before expiration
-    const timeUntilCheck = expirationTime - now - 30000;
-
-    if (timeUntilCheck <= 0) {
-      // If already past the check time (but technically not expired or just expired),
-      // trigger check immediately
-      handleScheduledRefresh();
-    } else {
-      timerRef.current = setTimeout(handleScheduledRefresh, timeUntilCheck);
-    }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [expiresAt, isAuthenticated]);
-
-  // =================================================================
-  // REFRESH FLOW (LEADER LOGIC)
-  // =================================================================
-  const handleScheduledRefresh = async () => {
-    // 1. Check if another tab is already refreshing
-    if (authService.isRefreshLocked()) {
-      return; // Wait for broadcast
-    }
-
-    // 2. Try to become leader
-    if (await authService.acquireRefreshLock()) {
-      try {
-        // 3. Call Refresh API
-        const data = await authService.refreshToken();
-
-        // 4. Update Local State
-        setExpiresAt(data.expires_at);
-
-        // 5. Broadcast Success
-        broadcast("REFRESH_SUCCESS", { expiresAt: data.expires_at });
-      } catch (error) {
-        console.error("Refresh failed:", error);
-        // 6. On Failure -> Logout All
-        await performLogout();
-      } finally {
-        // 7. Release Lock
-        authService.releaseRefreshLock();
-      }
-    }
-  };
-
-  // =================================================================
-  // HANDLERS
-  // =================================================================
-
-  const broadcast = (type: any, payload?: any) => {
-    channelRef.current?.postMessage({ type, payload });
-  };
-
-  const handleLoginSuccess = (payload: LoginSuccessPayload) => {
-    setUser(payload.user);
-    setExpiresAt(payload.expiresAt);
-    setIsAuthenticated(true);
-  };
-
-  const handleRefreshSuccess = (payload: RefreshSuccessPayload) => {
-    setExpiresAt(payload.expiresAt);
-  };
-
-  const handleLogoutSync = () => {
-    setUser(null);
-    setExpiresAt(null);
-    setIsAuthenticated(false);
-    router.push("/login");
-  };
-
-  const performLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (e) {
-      // Ignore errors during logout
-    } finally {
-      handleLogoutSync();
-      broadcast("LOGOUT");
-    }
-  };
-
-  // =================================================================
-  // PUBLIC METHODS
-  // =================================================================
-
-  const login = async (credentials: any) => {
-    const data = await authService.login(credentials);
-
-    // Update Local
-    setUser(data.user || {}); // Adjust based on actual API response
-    setExpiresAt(data.expires_at);
-    setIsAuthenticated(true);
-
-    // Broadcast
-    broadcast("LOGIN_SUCCESS", {
-      expiresAt: data.expires_at,
-      user: data.user,
-    });
-  };
-
-  const logout = async () => {
-    await performLogout();
-  };
-
-  // =================================================================
-  // INITIALIZATION
-  // =================================================================
   useEffect(() => {
     const initAuth = async () => {
       try {
         const data = await authService.getMe();
-        setUser(data.user || data);
-        setExpiresAt(data.expires_at);
-        setIsAuthenticated(true);
-      } catch (error) {
-        // Not authenticated, just stay in guest mode
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+        const user: User = data.user || data;
+        const expiresAt = data.expires_at;
+
+        if (!expiresAt) {
+          throw new Error('Invalid auth response: missing expires_at');
+        }
+
+        dispatch({ type: 'SET_AUTHENTICATED', payload: { user, expiresAt } });
+      } catch {
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
 
     initAuth();
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{ user, isAuthenticated, isLoading, login, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const contextValue: AuthContextValue = useMemo(
+    () => ({
+      user: state.user,
+      isAuthenticated: state.isAuthenticated,
+      isLoading: state.isLoading,
+      error: state.error,
+      login,
+      logout,
+      refreshToken,
+      clearError,
+      hasPermission,
+      hasRole,
+    }),
+    [state.user, state.isAuthenticated, state.isLoading, state.error, login, logout, refreshToken, clearError, hasPermission, hasRole]
   );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

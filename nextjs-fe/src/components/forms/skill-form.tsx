@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -21,7 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { SkillStatus, IsActive } from '@/shared/enums';
+import { FORM_DEFAULTS } from '@/shared/config/constant';
+import { SkillStatus, SkillStatusLabels, IsActive } from '@/shared/enums';
 import { skillSchema, type SkillFormData } from '@/shared/validation/validation';
 import type { SkillFormProps } from './types';
 
@@ -42,7 +42,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
   } = useForm<SkillFormData>({
     resolver: zodResolver(skillSchema),
     defaultValues: {
-      rank_order: 0,
+      rank_order: FORM_DEFAULTS.RANK_ORDER,
       status: SkillStatus.ACTIVE as unknown as IsActive,
       is_display: true,
     },
@@ -61,7 +61,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
       reset({
         name: '',
         slug: '',
-        rank_order: 0,
+        rank_order: FORM_DEFAULTS.RANK_ORDER,
         status: SkillStatus.ACTIVE as unknown as IsActive,
         is_display: true,
       });
@@ -98,7 +98,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+          {tCommon('name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -111,14 +111,14 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="slug">Slug</Label>
+        <Label htmlFor="slug">{tCommon('slug')}</Label>
         <Input id="slug" {...register('slug')} placeholder={tForms('slugExample')} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="rank_order">
-            Display Order <span className="text-red-500">*</span>
+            {tCommon('displayOrder')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="rank_order"
@@ -133,7 +133,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
 
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tCommon('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString()}
@@ -143,8 +143,8 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={SkillStatus.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={SkillStatus.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={SkillStatus.ACTIVE.toString()}>{SkillStatusLabels[SkillStatus.ACTIVE]}</SelectItem>
+              <SelectItem value={SkillStatus.INACTIVE.toString()}>{SkillStatusLabels[SkillStatus.INACTIVE]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -157,7 +157,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
           {...register('is_display')}
           className="rounded"
         />
-        <Label htmlFor="is_display">Is Display</Label>
+        <Label htmlFor="is_display">{tCommon('isDisplay')}</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
@@ -178,8 +178,8 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
   return (
     <Tabs defaultValue="details" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="details">Details</TabsTrigger>
-        <TabsTrigger value="history">History</TabsTrigger>
+        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+        <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
       </TabsList>
       <TabsContent value="details" className="mt-4">
         {FormContent}

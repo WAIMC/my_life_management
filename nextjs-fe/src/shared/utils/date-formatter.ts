@@ -3,7 +3,7 @@
  * Provides standardized date/time formatting functions matching backend Laravel format (d/m/Y)
  */
 
-import { format, parse, parseISO, isValid } from 'date-fns';
+import { format, parse, parseISO, isValid, formatDistanceToNow } from 'date-fns';
 import { CommonVal } from '@/shared/config/common';
 
 /**
@@ -172,4 +172,36 @@ export function getCurrentDate(): string {
  */
 export function getCurrentDateTime(): string {
   return format(new Date(), CommonVal.DATETIME_FORMAT);
+}
+
+/**
+ * Format timestamp to relative time (e.g., "2 hours ago")
+ * @param date - Date object or timestamp
+ * @returns Formatted relative time string or fallback to locale time string
+ */
+export function formatTimestamp(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  
+  try {
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    if (!isValid(dateObj)) return '';
+    
+    return formatDistanceToNow(dateObj, { addSuffix: true });
+  } catch {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleTimeString();
+    } catch {
+      return '';
+    }
+  }
+}
+
+/**
+ * Get a date from now by milliseconds
+ * @param ms - Milliseconds to subtract from now
+ * @returns Date object
+ */
+export function getDateFromNow(ms: number): Date {
+  return new Date(Date.now() - ms);
 }

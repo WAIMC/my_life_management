@@ -7,7 +7,8 @@ import { X, Image as ImageIcon } from 'lucide-react';
 import { cn } from "@/shared/utils";
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
-import { UPLOAD_CONFIG } from '@/shared/constants/media';
+import { MIME_TYPE_PREFIX } from '@/shared/config/constant';
+import { UPLOAD_CONFIG } from '@/shared/config/constant';
 import type { AvatarUploadProps } from '@/shared/types/data-table.types';
 
 export function AvatarUpload({
@@ -29,7 +30,7 @@ export function AvatarUpload({
     }
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith(MIME_TYPE_PREFIX.IMAGE)) {
       toast.error(t('media.invalidFileType', { accept: 'image/*' }));
       return;
     }

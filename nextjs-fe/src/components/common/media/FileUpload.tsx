@@ -3,14 +3,14 @@
 import React, { useState, useCallback } from 'react';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import type { FileUploadProps } from '@/shared/types/media.types';
-import { UPLOAD_CONFIG, DRAG_EVENTS, MIME_TYPE_PREFIX } from '@/shared/constants/media';
+import { UPLOAD_CONFIG, DRAG_EVENTS, MIME_TYPE_PREFIX } from '@/shared/config/constant';
 import { useTranslations } from 'next-intl';
 
 export function FileUpload({
   onUploadSuccess,
   onUploadError,
   accept = UPLOAD_CONFIG.DEFAULT_ACCEPT,
-  maxSize = UPLOAD_CONFIG.DEFAULT_MAX_SIZE,
+  maxSize = UPLOAD_CONFIG.DEFAULT_MAX_SIZE_MB * 1024 * 1024,
   isPublic = false,
 }: FileUploadProps) {
   const t = useTranslations('media');
@@ -93,7 +93,7 @@ export function FileUpload({
       });
 
       clearInterval(progressInterval);
-      setProgress(UPLOAD_CONFIG.PROGRESS_COMPLETE);
+      setProgress(UPLOAD_CONFIG.COMPLETE);
 
       setTimeout(() => {
         setSelectedFile(null);
@@ -101,7 +101,7 @@ export function FileUpload({
         setProgress(UPLOAD_CONFIG.MIN_PROGRESS);
         setUploading(false);
         onUploadSuccess?.(result);
-      }, UPLOAD_CONFIG.UPLOAD_COMPLETE_DELAY_MS);
+      }, UPLOAD_CONFIG.COMPLETE_DELAY_MS);
     } catch (error) {
       setUploading(false);
       setProgress(UPLOAD_CONFIG.MIN_PROGRESS);

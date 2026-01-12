@@ -23,49 +23,18 @@ import {
   LogOut
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { formatDistanceToNow } from 'date-fns';
 import { useTranslations } from 'next-intl';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  timestamp: Date;
-}
+import { THEME } from '@/shared/config';
+import { formatTimestamp } from '@/shared/utils';
+import type { Notification } from '@/shared/types/layout.types';
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const t = useTranslations('header');
   const tCommon = useTranslations('common');
-  const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 3600000);
-  const twoDaysAgo = new Date(now.getTime() - 172800000);
   
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'New User Registration',
-      message: 'John Doe has registered a new account',
-      read: false,
-      timestamp: now,
-    },
-    {
-      id: '2',
-      title: 'System Alert',
-      message: 'Server uptime check passed successfully',
-      read: true,
-      timestamp: oneHourAgo,
-    },
-    {
-      id: '3',
-      title: 'New Post Published',
-      message: 'Article "Getting Started with Next.js" is live',
-      read: false,
-      timestamp: twoDaysAgo,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // Prevent hydration mismatch for theme
   useEffect(() => {
@@ -88,15 +57,7 @@ export function Header() {
   }, []);
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  const formatTimestamp = (date: Date) => {
-    try {
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch {
-      return new Date(date).toLocaleTimeString();
-    }
+    setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK);
   };
 
   return (
@@ -134,10 +95,10 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              aria-label={`Switch to ${theme === THEME.DARK ? THEME.LIGHT : THEME.DARK} mode`}
               className="transition-transform hover:scale-110"
             >
-              {theme === 'dark' ? (
+              {theme === THEME.DARK ? (
                 <Sun className="h-5 w-5 text-yellow-500" />
               ) : (
                 <Moon className="h-5 w-5 text-slate-700" />

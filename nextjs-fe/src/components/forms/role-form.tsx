@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -21,12 +20,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { RoleMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive } from '@/shared/enums';
+import { IsActive, IsActiveLabels } from '@/shared/enums';
 import { roleSchema, type RoleFormData } from '@/shared/validation/validation';
 import type { RoleFormProps } from './types';
 
 export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
   const tCommon = useTranslations('common');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<RoleMst>(ENDPOINTS.MASTER.ROLE);
 
@@ -88,7 +88,7 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+          {tLabels('name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -102,7 +102,7 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="permission">
-          Permission <span className="text-red-500">*</span>
+          {tLabels('permission')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="permission"
@@ -117,7 +117,7 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="is_active">
-            Status <span className="text-red-500">*</span>
+            {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={isActiveValue?.toString()}
@@ -127,8 +127,8 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
-              <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
+              <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
+              <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
             </SelectContent>
           </Select>
           {errors.is_active && (
@@ -155,8 +155,8 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
   return (
     <Tabs defaultValue="details" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="details">Details</TabsTrigger>
-        <TabsTrigger value="history">History</TabsTrigger>
+        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+        <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
       </TabsList>
       <TabsContent value="details" className="mt-4">
         {FormContent}

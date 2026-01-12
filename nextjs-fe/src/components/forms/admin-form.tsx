@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -21,13 +20,15 @@ import {
 import { AvatarUpload } from '@/components/common/avatar-upload';
 import type { AdminMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { AdminStatus, Gender } from '@/shared/enums';
+import { AdminStatus, Gender, GenderLabels, AdminStatusLabels } from '@/shared/enums';
+import { UPLOAD_CONFIG } from '@/shared/config/constant';
 import { adminSchema, type AdminFormData } from '@/shared/validation/validation';
 import type { AdminFormProps } from './types';
 
 export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -86,7 +87,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
 
   const onSubmit = async (data: AdminFormData) => {
     if (!isEdit && !data.password) {
-      setError('password', { type: 'manual', message: 'Password is required for new admins' });
+      setError('password', { type: 'manual', message: tCommon('passwordRequired') });
       return;
     }
 
@@ -129,21 +130,21 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="flex justify-center mb-4">
-         <AvatarUpload
-            value={avatarPreview ?? undefined}
-            onChange={(file, preview) => {
-              setAvatarFile(file);
-              setAvatarPreview(preview);
-              // In a real scenario, we might upload immediately or wait for submit
-            }}
-            maxSize={5}
-          />
+        <AvatarUpload
+          value={avatarPreview ?? undefined}
+          onChange={(file, preview) => {
+            setAvatarFile(file);
+            setAvatarPreview(preview);
+            // In a real scenario, we might upload immediately or wait for submit
+          }}
+          maxSize={UPLOAD_CONFIG.DEFAULT_AVATAR_MAX_SIZE}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="first_name">
-            First Name <span className="text-red-500">*</span>
+            {tLabels('firstName')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="first_name"
@@ -156,7 +157,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         </div>
         <div className="space-y-2">
           <Label htmlFor="last_name">
-            Last Name <span className="text-red-500">*</span>
+            {tLabels('lastName')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="last_name"
@@ -172,7 +173,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="email">
-            Email <span className="text-red-500">*</span>
+            {tLabels('email')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="email"
@@ -186,7 +187,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         </div>
         <div className="space-y-2">
           <Label htmlFor="user_name">
-            Username <span className="text-red-500">*</span>
+            {tLabels('username')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="user_name"
@@ -199,9 +200,9 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         </div>
       </div>
 
-       <div className="space-y-2">
+      <div className="space-y-2">
         <Label htmlFor="password">
-          Password {isEdit ? '(Leave blank to keep current)' : <span className="text-red-500">*</span>}
+          {tLabels('password')} {isEdit ? `(${tForms('leaveBlankToKeepCurrent')})` : <span className="text-red-500">*</span>}
         </Label>
         <Input
           id="password"
@@ -215,9 +216,9 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         )}
       </div>
 
-       <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="phone_number">Phone Number</Label>
+          <Label htmlFor="phone_number">{tLabels('phoneNumber')}</Label>
           <Input
             id="phone_number"
             {...register('phone_number')}
@@ -228,7 +229,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="birth">Birth Date</Label>
+          <Label htmlFor="birth">{tLabels('birthDate')}</Label>
           <Input
             id="birth"
             type="date"
@@ -242,7 +243,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{tLabels('address')}</Label>
         <Input
           id="address"
           {...register('address')}
@@ -256,7 +257,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="gender">
-            Gender <span className="text-red-500">*</span>
+            {tLabels('gender')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={genderValue?.toString() ?? ''}
@@ -266,9 +267,9 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={Gender.MALE.toString()}>Male</SelectItem>
-              <SelectItem value={Gender.FEMALE.toString()}>Female</SelectItem>
-              <SelectItem value={Gender.OTHER.toString()}>Other</SelectItem>
+              <SelectItem value={Gender.MALE.toString()}>{GenderLabels[Gender.MALE]}</SelectItem>
+              <SelectItem value={Gender.FEMALE.toString()}>{GenderLabels[Gender.FEMALE]}</SelectItem>
+              <SelectItem value={Gender.OTHER.toString()}>{GenderLabels[Gender.OTHER]}</SelectItem>
             </SelectContent>
           </Select>
           {errors.gender && (
@@ -277,7 +278,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         </div>
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString() ?? ''}
@@ -287,10 +288,10 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={AdminStatus.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={AdminStatus.INACTIVE.toString()}>Inactive</SelectItem>
-              <SelectItem value={AdminStatus.WAITING.toString()}>Waiting</SelectItem>
-              <SelectItem value={AdminStatus.SUSPENDED.toString()}>Suspended</SelectItem>
+              <SelectItem value={AdminStatus.ACTIVE.toString()}>{AdminStatusLabels[AdminStatus.ACTIVE]}</SelectItem>
+              <SelectItem value={AdminStatus.INACTIVE.toString()}>{AdminStatusLabels[AdminStatus.INACTIVE]}</SelectItem>
+              <SelectItem value={AdminStatus.WAITING.toString()}>{AdminStatusLabels[AdminStatus.WAITING]}</SelectItem>
+              <SelectItem value={AdminStatus.SUSPENDED.toString()}>{AdminStatusLabels[AdminStatus.SUSPENDED]}</SelectItem>
             </SelectContent>
           </Select>
           {errors.status && (
@@ -306,7 +307,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
           {...register('is_active')}
           className="rounded"
         />
-        <Label htmlFor="is_active">Is Active</Label>
+        <Label htmlFor="is_active">{tLabels('isActive')}</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

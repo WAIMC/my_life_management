@@ -6,7 +6,7 @@ import { SearchFilter } from '@/components/layout/search-filter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTranslations } from 'next-intl';
-import { ADMIN_ROUTES } from '@/shared/constants';
+import { ADMIN_ROUTES } from '@/shared/config';
 
 export default function AdminDashboard() {
   const t = useTranslations('dashboard');

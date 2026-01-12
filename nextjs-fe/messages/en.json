@@ -40,11 +40,30 @@
     "enterPassword": "Enter password",
     "url": "URL",
     "link": "Link",
+    "linkUrl": "Link URL",
     "title": "Title",
     "slug": "Slug",
     "icon": "Icon",
     "image": "Image",
-    "required": "*"
+    "sliderImage": "Slider Image",
+    "article": "Article",
+    "summary": "Summary",
+    "details": "Details",
+    "history": "History",
+    "required": "*",
+    "more": "More",
+    "createdSuccessfully": "Created successfully",
+    "updatedSuccessfully": "Updated successfully",
+    "deletedSuccessfully": "Deleted successfully",
+    "deletedItemsSuccessfully": "Deleted {count} items successfully",
+    "failedToCreate": "Failed to create",
+    "failedToUpdate": "Failed to update",
+    "failedToDelete": "Failed to delete",
+    "failedToFetchHistory": "Failed to fetch history",
+    "failedToRestoreVersion": "Failed to restore version",
+    "failedToLoadData": "Failed to load data",
+    "noChangesToSave": "No changes to save",
+    "relationshipsUpdatedSuccessfully": "Relationships updated successfully"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -90,6 +109,22 @@
     "noNotifications": "No notifications",
     "myAccount": "My Account",
     "searchPlaceholder": "Search... (⌘K)"
+  },
+  "navigation": {
+    "navigateTo": "Navigate to...",
+    "adminDashboard": "Admin Dashboard",
+    "dashboard": "Dashboard",
+    "fileManager": "File Manager",
+    "masterData": "Master Data",
+    "contentManagement": "Content Management",
+    "settings": "Settings",
+    "general": "General",
+    "security": "Security",
+    "notifications": "Notifications"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "filter": "Filter"
   },
   "dashboard": {
     "welcomeDescription": "Welcome back! Here's what's happening with your business today.",
@@ -264,11 +299,47 @@
     "enterFilterName": "Please enter a filter name",
     "failedToSaveFilter": "Failed to save filter"
   },
+  "fileManager": {
+    "listError": "Failed to load file list",
+    "createFolderSuccess": "Folder created successfully",
+    "createFolderError": "Failed to create folder",
+    "uploadSuccess": "Uploaded",
+    "uploadError": "Failed to upload file",
+    "deleteSuccess": "File deleted",
+    "deleteError": "Failed to delete file",
+    "renameSuccess": "File renamed",
+    "renameError": "Failed to rename file",
+    "moveSuccess": "File moved",
+    "moveError": "Failed to move file",
+    "copySuccess": "File copied",
+    "copyError": "Failed to copy file"
+  },
   "upload": {
     "uploadFiles": "Upload Files",
     "uploadTo": "Upload file to folder: {path}"
   },
   "forms": {
+    "labels": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "passwordOptional": "Password (leave blank to keep current)",
+      "phoneNumber": "Phone Number",
+      "birthDate": "Birth Date",
+      "address": "Address",
+      "gender": "Gender",
+      "status": "Status",
+      "isActive": "Is Active",
+      "details": "Details",
+      "history": "History",
+      "account": "Account",
+      "deviceName": "Device Name",
+      "ipAddress": "IP Address",
+      "expiredAt": "Expired At",
+      "iconImageUrl": "Icon/Image URL"
+    },
     "placeholders": {
       "apiName": "API Name",
       "apiPath": "/api/v1/...",
@@ -296,5 +367,94 @@
     "imported": "Imported {moduleName} successfully",
     "templateDownloaded": "Downloaded {format} template",
     "templateDownloadFailed": "Template download failed"
+  },
+  "validation": {
+    "required": "{field} is required",
+    "email": {
+      "required": "Email is required",
+      "invalid": "Invalid email address",
+      "maxLength": "Email cannot exceed {max} characters"
+    },
+    "username": {
+      "minLength": "Username must be at least {min} characters",
+      "maxLength": "Username cannot exceed {max} characters"
+    },
+    "password": {
+      "required": "Password is required",
+      "minLength": "Password must be at least {min} characters",
+      "maxLength": "Password cannot exceed {max} characters"
+    },
+    "firstName": {
+      "required": "First name is required",
+      "maxLength": "First name cannot exceed {max} characters"
+    },
+    "lastName": {
+      "required": "Last name is required",
+      "maxLength": "Last name cannot exceed {max} characters"
+    },
+    "address": {
+      "maxLength": "Address cannot exceed {max} characters"
+    },
+    "phone": {
+      "maxLength": "Phone cannot exceed {max} characters"
+    },
+    "avatar": {
+      "maxLength": "Avatar path cannot exceed {max} characters"
+    },
+    "name": {
+      "required": "Name is required",
+      "maxLength": "Name cannot exceed {max} characters"
+    },
+    "title": {
+      "required": "Title is required"
+    },
+    "content": {
+      "required": "Content is required"
+    },
+    "slug": {
+      "required": "Slug is required"
+    },
+    "url": {
+      "required": "URL is required",
+      "invalid": "Must be a valid URL"
+    },
+    "order": {
+      "min": "Order must be {min} or greater"
+    },
+    "code": {
+      "required": "Code is required",
+      "maxLength": "Code cannot exceed {max} characters"
+    },
+    "permission": {
+      "required": "Permission is required",
+      "maxLength": "Permission cannot exceed {max} characters"
+    },
+    "skill": {
+      "required": "Skill is required"
+    },
+    "feature": {
+      "required": "Feature is required"
+    },
+    "category": {
+      "required": "Category is required"
+    },
+    "account": {
+      "required": "Account is required"
+    },
+    "deviceName": {
+      "required": "Device name is required"
+    },
+    "type": {
+      "required": "Type is required"
+    },
+    "path": {
+      "required": "Path is required"
+    },
+    "tableName": {
+      "required": "Table name is required"
+    },
+    "rowId": {
+      "required": "Row ID is required"
+    }
   }
 }

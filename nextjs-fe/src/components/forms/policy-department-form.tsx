@@ -17,6 +17,7 @@ import type { PolicyDepartmentFormProps } from './types';
 export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: PolicyDepartmentFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<PolicyDepartmentMst>(ENDPOINTS.MASTER.POLICY_DEPARTMENT);
 
@@ -72,7 +73,7 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="table_name">
-          Table Name <span className="text-red-500">*</span>
+          {tLabels('tableName')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="table_name"
@@ -87,7 +88,7 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
 
       <div className="space-y-2">
         <Label htmlFor="row_id">
-          Row ID <span className="text-red-500">*</span>
+          {tLabels('rowId')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="row_id"

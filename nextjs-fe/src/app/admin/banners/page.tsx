@@ -18,7 +18,7 @@ import {
   type SortOrder, 
   PAGINATION, 
   ADMIN_ROUTES 
-} from '@/shared/constants';
+} from '@/shared/config';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import Image from 'next/image';
 import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';

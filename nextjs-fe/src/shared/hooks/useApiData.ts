@@ -1,29 +1,14 @@
 'use client';
 
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/shared/api/client';
-import type { PaginatedResponse, ListQueryParams } from '@/shared/types/api';
-
-interface UseApiDataOptions extends ListQueryParams {
-  filters?: Record<string, any>;
-  enabled?: boolean; // If false, don't fetch automatically
-}
-
-interface UseApiDataReturn<T> {
-  data: T[];
-  loading: boolean;
-  error: Error | null;
-  pagination: {
-    currentPage: number;
-    lastPage: number;
-    total: number;
-    perPage: number;
-    from: number;
-    to: number;
-  };
-  refetch: () => void;
-  isRefetching: boolean;
-}
+import type {
+  PaginatedResponse,
+  UseApiDataOptions,
+  UseApiDataReturn,
+  FilterValue,
+} from '@/shared/types/api';
+import { PAGINATION, SORT_ORDER } from '@/shared/config/constant';
 
 /**
  * Generic hook for fetching paginated data from API using TanStack Query
@@ -40,11 +25,11 @@ export function useApiData<T>(
   options: UseApiDataOptions = {}
 ): UseApiDataReturn<T> {
   const {
-    page = 1,
-    per_page = 15,
+    page = PAGINATION.DEFAULT_PAGE,
+    per_page = PAGINATION.DEFAULT_PER_PAGE,
     filters = {},
     sort_by,
-    sort_order = 'asc',
+    sort_order = SORT_ORDER.ASC,
     from_date,
     to_date,
     enabled = true,
@@ -66,7 +51,7 @@ export function useApiData<T>(
 
   // Fetch function
   const fetchData = async (): Promise<PaginatedResponse<T>> => {
-    const params: Record<string, any> = {
+    const params: Record<string, FilterValue> = {
       page,
       per_page,
       ...filters,
@@ -97,12 +82,12 @@ export function useApiData<T>(
   // Extract pagination info
   const paginationData = query.data || {
     data: [],
-    current_page: 1,
-    last_page: 1,
-    total: 0,
-    per_page: 15,
-    from: 0,
-    to: 0,
+    current_page: PAGINATION.DEFAULT_PAGE,
+    last_page: PAGINATION.DEFAULT_TOTAL_PAGES,
+    total: PAGINATION.DEFAULT_TOTAL,
+    per_page: PAGINATION.DEFAULT_PER_PAGE,
+    from: PAGINATION.DEFAULT_FROM,
+    to: PAGINATION.DEFAULT_TO,
   };
 
   return {

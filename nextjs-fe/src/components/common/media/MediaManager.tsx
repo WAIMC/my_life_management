@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useTranslations } from 'next-intl';
-import { PAGINATION } from '@/shared/constants';
-import { MEDIA_MANAGER_CONFIG, MEDIA_FILE_TYPES, MIME_TYPE_PREFIX } from '@/shared/constants/media';
-import { KEYBOARD_SHORTCUT } from '@/shared/constants/file-manager';
+import { PAGINATION } from '@/shared/config';
+import { MEDIA_FILE_TYPES, MIME_TYPE_PREFIX } from '@/shared/config/constant';
+import { KEYBOARD_KEYS } from '@/shared/config/constant';
 
 export function MediaManager() {
   const t = useTranslations();
@@ -28,7 +28,7 @@ export function MediaManager() {
     try {
       const params: ListFilesParams = {
         page: currentPage,
-        per_page: MEDIA_MANAGER_CONFIG.DEFAULT_PER_PAGE,
+        per_page: PAGINATION.DEFAULT_PER_PAGE,
         search: searchQuery || undefined,
         file_type: fileType !== MEDIA_FILE_TYPES[0] ? fileType : undefined,
       };
@@ -117,7 +117,7 @@ export function MediaManager() {
             placeholder={t('media.searchFiles')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === KEYBOARD_SHORTCUT.ENTER && handleSearch()}
+            onKeyPress={(e) => e.key === KEYBOARD_KEYS.ENTER && handleSearch()}
             className="min-w-[250px]"
           />
           <Button onClick={handleSearch} variant="secondary" size="sm">
@@ -240,8 +240,8 @@ export function MediaManager() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-4">
               <Button
-                onClick={() => setCurrentPage((p) => Math.max(MEDIA_MANAGER_CONFIG.MIN_PAGE, p - 1))}
-                disabled={currentPage === MEDIA_MANAGER_CONFIG.MIN_PAGE}
+                onClick={() => setCurrentPage((p) => Math.max(PAGINATION.DEFAULT_PAGE, p - 1))}
+                disabled={currentPage === PAGINATION.DEFAULT_PAGE}
                 variant="outline"
                 size="sm"
               >

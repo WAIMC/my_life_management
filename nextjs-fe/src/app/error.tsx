@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, RotateCcw, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ADMIN_ROUTES } from '@/shared/constants';
+import { ADMIN_ROUTES } from '@/shared/config';
 
 interface ErrorProps {
   error: Error & { digest?: string };

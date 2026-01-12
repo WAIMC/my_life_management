@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { FileContextMenuProps } from '@/shared/types/file-manager.types';
-import { KEYBOARD_SHORTCUT } from '@/shared/constants/file-manager';
+import { KEYBOARD_KEYS } from '@/shared/config/constant';
 
 export const FileContextMenu = ({
   children,
@@ -37,7 +37,7 @@ export const FileContextMenu = ({
         <ContextMenuItem onClick={() => onPreview(file)}>
           <Eye className="mr-2 h-4 w-4" />
           {t('preview')}
-          <ContextMenuShortcut>{KEYBOARD_SHORTCUT.ENTER}</ContextMenuShortcut>
+          <ContextMenuShortcut>{KEYBOARD_KEYS.ENTER}</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem onClick={() => onDownload?.(file)}>
           <Download className="mr-2 h-4 w-4" />
@@ -47,7 +47,7 @@ export const FileContextMenu = ({
         <ContextMenuItem onClick={() => onRename(file)}>
           <Pencil className="mr-2 h-4 w-4" />
           {t('rename')}
-          <ContextMenuShortcut>{KEYBOARD_SHORTCUT.F2}</ContextMenuShortcut>
+          <ContextMenuShortcut>{KEYBOARD_KEYS.F2}</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem onClick={() => onMove(file)}>
           <Move className="mr-2 h-4 w-4" />
@@ -64,7 +64,7 @@ export const FileContextMenu = ({
         >
           <Trash className="mr-2 h-4 w-4" />
           {t('delete')}
-          <ContextMenuShortcut>{KEYBOARD_SHORTCUT.DELETE}</ContextMenuShortcut>
+          <ContextMenuShortcut>{KEYBOARD_KEYS.DELETE}</ContextMenuShortcut>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

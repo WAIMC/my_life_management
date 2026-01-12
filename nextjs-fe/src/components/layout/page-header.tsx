@@ -12,23 +12,8 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { cn } from "@/shared/utils";
-import { ADMIN_ROUTES } from '@/shared/constants';
-
-interface BreadcrumbItemType {
-  label: string;
-  href?: string;
-  isActive?: boolean;
-}
-
-interface PageHeaderProps {
-  title: string;
-  description?: string;
-  breadcrumbs?: BreadcrumbItemType[];
-  action?: React.ReactNode;
-  showBackButton?: boolean;
-  onBackClick?: () => void;
-  className?: string;
-}
+import { ADMIN_ROUTES } from '@/shared/config';
+import type { PageHeaderProps } from '@/shared/types/layout.types';
 
 export function PageHeader({
   title,

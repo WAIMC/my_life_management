@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { PreviewModalProps } from '@/shared/types/file-manager.types';
-import { DATE_FORMAT, KEYBOARD_SHORTCUT, KEYBOARD_EVENT } from '@/shared/constants/file-manager';
+import { DATE_FORMATS, KEYBOARD_KEYS, KEYBOARD_EVENT, MIME_TYPE_PREFIX } from '@/shared/config/constant';
 
 export const PreviewModal = ({
   file,
@@ -23,9 +23,9 @@ export const PreviewModal = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!file) return;
-      if (e.key === KEYBOARD_SHORTCUT.ESCAPE) onClose();
-      if (e.key === KEYBOARD_SHORTCUT.ARROW_RIGHT && hasNext) onNext?.();
-      if (e.key === KEYBOARD_SHORTCUT.ARROW_LEFT && hasPrev) onPrev?.();
+      if (e.key === KEYBOARD_KEYS.ESCAPE) onClose();
+      if (e.key === KEYBOARD_KEYS.ARROW_RIGHT && hasNext) onNext?.();
+      if (e.key === KEYBOARD_KEYS.ARROW_LEFT && hasPrev) onPrev?.();
     };
 
     window.addEventListener(KEYBOARD_EVENT.KEYDOWN, handleKeyDown);
@@ -48,8 +48,8 @@ export const PreviewModal = ({
     }
   };
 
-  const isImage = file.mime_type.startsWith('image/');
-  const isVideo = file.mime_type.startsWith('video/');
+  const isImage = file.mime_type.startsWith(MIME_TYPE_PREFIX.IMAGE);
+  const isVideo = file.mime_type.startsWith(MIME_TYPE_PREFIX.VIDEO);
   const isAudio = file.mime_type.startsWith('audio/');
   const isPdf =
     file.mime_type === 'application/pdf' ||
@@ -159,7 +159,7 @@ export const PreviewModal = ({
               <div className="grid grid-cols-3 gap-2">
                 <span className="text-muted-foreground">{t('created')}:</span>
                 <span className="col-span-2 font-medium">
-                  {format(new Date(file.created_at), DATE_FORMAT.LONG)}
+                  {format(new Date(file.created_at), DATE_FORMATS.LONG)}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">

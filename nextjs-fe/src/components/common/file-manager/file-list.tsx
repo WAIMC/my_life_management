@@ -15,7 +15,7 @@ import { formatFileSize, getFileIcon, getMimeTypeLabel } from './utils';
 import { format } from 'date-fns';
 import { FileContextMenu } from './context-menu';
 import { useTranslations } from 'next-intl';
-import { SORT_FIELD, FILE_TYPE, DATE_FORMAT, SORT_ORDER } from '@/shared/constants/file-manager';
+import { DATE_FORMATS, SORT_ORDER } from '@/shared/config/constant';
 import type { FileListProps } from '@/shared/types/file-manager.types';
 
 export const FileList = ({
@@ -86,34 +86,34 @@ export const FileList = ({
             </TableHead>
             <TableHead 
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.(SORT_FIELD.NAME)}
+              onClick={() => onSort?.(FILE_MANAGER_SORT_FIELDS.NAME)}
             >
               <div className="flex items-center">
-                {t('name')} {renderSortIcon(SORT_FIELD.NAME)}
+                {t('name')} {renderSortIcon(FILE_MANAGER_SORT_FIELDS.NAME)}
               </div>
             </TableHead>
             <TableHead 
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.(SORT_FIELD.TYPE)}
+              onClick={() => onSort?.(FILE_MANAGER_SORT_FIELDS.TYPE)}
             >
               <div className="flex items-center">
-                {t('type')} {renderSortIcon(SORT_FIELD.TYPE)}
+                {t('type')} {renderSortIcon(FILE_MANAGER_SORT_FIELDS.TYPE)}
               </div>
             </TableHead>
             <TableHead 
               className="text-right cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.(SORT_FIELD.SIZE)}
+              onClick={() => onSort?.(FILE_MANAGER_SORT_FIELDS.SIZE)}
             >
               <div className="flex items-center justify-end">
-                {t('size')} {renderSortIcon(SORT_FIELD.SIZE)}
+                {t('size')} {renderSortIcon(FILE_MANAGER_SORT_FIELDS.SIZE)}
               </div>
             </TableHead>
             <TableHead 
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onSort?.(SORT_FIELD.DATE)}
+              onClick={() => onSort?.(FILE_MANAGER_SORT_FIELDS.DATE)}
             >
               <div className="flex items-center">
-                {t('created')} {renderSortIcon(SORT_FIELD.DATE)}
+                {t('created')} {renderSortIcon(FILE_MANAGER_SORT_FIELDS.DATE)}
               </div>
             </TableHead>
             <TableHead className="w-12"></TableHead>
@@ -167,7 +167,7 @@ export const FileList = ({
                     {formatFileSize(file.size)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {format(new Date(file.created_at), DATE_FORMAT.LONG)}
+                    {format(new Date(file.created_at), DATE_FORMATS.LONG)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>

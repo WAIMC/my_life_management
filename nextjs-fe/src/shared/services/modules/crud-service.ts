@@ -4,31 +4,39 @@
  */
 
 import { apiClient } from '@/shared/api/client';
-import type { PaginatedResponse, ListQueryParams } from '@/shared/types/api';
+import type {
+  PaginatedResponse,
+  ListQueryParams,
+  ImportResponse,
+  CrudServiceConfig,
+  RequiredEndpoints,
+} from '@/shared/types/api';
+import { API_PATHS } from '@/shared/types/api';
 
-export interface CrudServiceConfig {
-  baseUrl: string;
-  endpoints?: {
-    list?: string;
-    get?: string;
-    create?: string;
-    update?: string;
-    delete?: string;
-  };
-}
+/**
+ * Service Endpoints Configuration
+ * @deprecated Use API_PATHS from '@/shared/types/api' instead
+ */
+export const SERVICE_ENDPOINTS = {
+  LIST: API_PATHS.LIST,
+  STORE: API_PATHS.STORE,
+  UPDATE: API_PATHS.UPDATE,
+  DELETE: API_PATHS.DELETE,
+  GET: '',
+} as const;
 
-export class CrudService<T = any> {
+export class CrudService<T = Record<string, unknown>> {
   private baseUrl: string;
-  private endpoints: Required<CrudServiceConfig['endpoints']>;
+  private endpoints: RequiredEndpoints;
 
   constructor(config: CrudServiceConfig) {
     this.baseUrl = config.baseUrl;
     this.endpoints = {
-      list: config.endpoints?.list ?? '/list',
-      get: config.endpoints?.get ?? '',
-      create: config.endpoints?.create ?? '/store',
-      update: config.endpoints?.update ?? '/update',
-      delete: config.endpoints?.delete ?? '/delete',
+      list: config.endpoints?.list ?? SERVICE_ENDPOINTS.LIST,
+      get: config.endpoints?.get ?? SERVICE_ENDPOINTS.GET,
+      create: config.endpoints?.create ?? SERVICE_ENDPOINTS.STORE,
+      update: config.endpoints?.update ?? SERVICE_ENDPOINTS.UPDATE,
+      delete: config.endpoints?.delete ?? SERVICE_ENDPOINTS.DELETE,
     };
   }
 
@@ -36,7 +44,7 @@ export class CrudService<T = any> {
    * Get list of items with pagination
    */
   async list(params?: ListQueryParams): Promise<PaginatedResponse<T>> {
-    const url = `${this.baseUrl}${this.endpoints!.list}`;
+    const url = `${this.baseUrl}${this.endpoints.list}`;
     const response = await apiClient.get<PaginatedResponse<T>>(url, params);
     return response.data;
   }
@@ -45,7 +53,7 @@ export class CrudService<T = any> {
    * Get single item by ID
    */
   async getById(id: string | number): Promise<T | null> {
-    const response = await this.list({ id, per_page: 1 } as any);
+    const response = await this.list({ id, per_page: 1 } as ListQueryParams);
     return response.data[0] || null;
   }
 
@@ -53,7 +61,7 @@ export class CrudService<T = any> {
    * Get single item by ID (alternative method using dedicated endpoint)
    */
   async get(id: string | number): Promise<T> {
-    const url = `${this.baseUrl}${this.endpoints!.get}/${id}`;
+    const url = `${this.baseUrl}${this.endpoints.get}/${id}`;
     const response = await apiClient.get<T>(url);
     return response.data;
   }
@@ -62,7 +70,7 @@ export class CrudService<T = any> {
    * Create new item
    */
   async create(data: Partial<T>): Promise<number> {
-    const url = `${this.baseUrl}${this.endpoints!.create}`;
+    const url = `${this.baseUrl}${this.endpoints.create}`;
     const response = await apiClient.post<number>(url, data);
     return response.data;
   }
@@ -71,7 +79,7 @@ export class CrudService<T = any> {
    * Update existing item
    */
   async update(id: string | number, data: Partial<T>): Promise<number> {
-    const url = `${this.baseUrl}${this.endpoints!.update}/${id}`;
+    const url = `${this.baseUrl}${this.endpoints.update}/${id}`;
     const response = await apiClient.put<number>(url, data);
     return response.data;
   }
@@ -80,7 +88,7 @@ export class CrudService<T = any> {
    * Delete item by ID
    */
   async delete(id: string | number): Promise<void> {
-    const url = `${this.baseUrl}${this.endpoints!.delete}/${id}`;
+    const url = `${this.baseUrl}${this.endpoints.delete}/${id}`;
     await apiClient.delete(url);
   }
 
@@ -88,7 +96,7 @@ export class CrudService<T = any> {
    * Bulk delete items
    */
   async bulkDelete(ids: number[]): Promise<void> {
-    const url = `${this.baseUrl}${this.endpoints!.delete}`;
+    const url = `${this.baseUrl}${this.endpoints.delete}`;
     await apiClient.post(url, { ids });
   }
 
@@ -96,8 +104,17 @@ export class CrudService<T = any> {
    * Export data to CSV
    */
   async export(params?: ListQueryParams): Promise<Blob> {
-    const url = `${this.baseUrl}/export`;
-    const response = await fetch(url + '?' + new URLSearchParams(params as any), {
+    const url = `${this.baseUrl}${API_PATHS.EXPORT}`;
+    const queryParams = new URLSearchParams(
+      Object.entries(params || {}).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          acc[key] = String(value);
+        }
+        return acc;
+      }, {} as Record<string, string>)
+    );
+    
+    const response = await fetch(url + '?' + queryParams.toString(), {
       method: 'GET',
       headers: {
         'Accept': 'text/csv',
@@ -109,12 +126,12 @@ export class CrudService<T = any> {
   /**
    * Import data from file
    */
-  async import(file: File): Promise<{ success: number; failed: number; errors?: any[] }> {
-    const url = `${this.baseUrl}/import`;
+  async import(file: File): Promise<ImportResponse> {
+    const url = `${this.baseUrl}${API_PATHS.IMPORT}`;
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await apiClient.post<{ success: number; failed: number; errors?: any[] }>(
+    const response = await apiClient.post<ImportResponse>(
       url,
       formData,
       {
@@ -130,6 +147,6 @@ export class CrudService<T = any> {
 /**
  * Create a CRUD service instance for a specific module
  */
-export function createCrudService<T = any>(config: CrudServiceConfig): CrudService<T> {
+export function createCrudService<T = Record<string, unknown>>(config: CrudServiceConfig): CrudService<T> {
   return new CrudService<T>(config);
 }

@@ -1,8 +1,3 @@
-/**
- * API Endpoints Configuration
- * Centralized endpoint definitions for all API calls
- */
-
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export const API_ENDPOINTS = {
@@ -44,5 +39,4 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
-// Legacy compatibility - will be deprecated
 export const ENDPOINTS = API_ENDPOINTS;

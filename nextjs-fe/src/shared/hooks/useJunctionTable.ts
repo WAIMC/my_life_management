@@ -1,34 +1,25 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '@/shared/api/client';
 import { notification } from '@/shared/utils/notification';
-import type { UpdateJunctionRequest } from '@/shared/types/api';
-
-interface UseJunctionTableReturn<T> {
-  allItems: any[];
-  assignedIds: number[];
-  selectedIds: number[];
-  loading: boolean;
-  saving: boolean;
-  setSelectedIds: (ids: number[]) => void;
-  toggleSelection: (id: number) => void;
-  save: () => Promise<void>;
-  refetch: () => Promise<void>;
-}
+import { PAGINATION } from '@/shared/config/constant';
+import type { UseJunctionTableReturn, PaginatedResponse } from '@/shared/types/api';
 
 /**
  * Hook for managing junction table relationships
  * Handles fetching, selecting, and updating many-to-many relationships
  */
-export function useJunctionTable<T>(
+export function useJunctionTable<T = unknown>(
   junctionEndpoint: string,
   allItemsEndpoint: string,
   parentIdKey: string,
   childIdKey: string,
   parentId: number
 ): UseJunctionTableReturn<T> {
-  const [allItems, setAllItems] = useState<any[]>([]);
+  const t = useTranslations('common');
+  const [allItems, setAllItems] = useState<T[]>([]);
   const [assignedIds, setAssignedIds] = useState<number[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,31 +33,32 @@ export function useJunctionTable<T>(
       setLoading(true);
 
       // Fetch all available items (e.g., all roles)
-      const allItemsResponse = await apiClient.get(`${allItemsEndpoint}/list`, {
-        per_page: 100,
+      const allItemsResponse = await apiClient.get<PaginatedResponse<T> | T[]>(`${allItemsEndpoint}/list`, {
+        per_page: PAGINATION.MAX_PER_PAGE,
       });
-      const data = allItemsResponse.data as any;
-      setAllItems(data.data || data);
+      const data = allItemsResponse.data;
+      setAllItems(Array.isArray(data) ? data : (data as PaginatedResponse<T>).data || []);
 
       // Fetch assigned relationships
-      const assignedResponse = await apiClient.get(`${junctionEndpoint}/list`, {
+      const assignedResponse = await apiClient.get<PaginatedResponse<Record<string, number>> | Record<string, number>[]>(`${junctionEndpoint}/list`, {
         [parentIdKey]: parentId,
-        per_page: 100,
+        per_page: PAGINATION.MAX_PER_PAGE,
       });
 
-      const assignedData = assignedResponse.data as any;
-      const assigned = assignedData.data || assignedData;
-      const assignedItemIds = assigned.map((item: any) => item[childIdKey]);
+      const assignedData = assignedResponse.data;
+      const assigned = Array.isArray(assignedData) ? assignedData : (assignedData as PaginatedResponse<Record<string, number>>).data || [];
+      const assignedItemIds = assigned.map((item: Record<string, number>) => item[childIdKey]);
 
       setAssignedIds(assignedItemIds);
       setSelectedIds(assignedItemIds);
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to load data';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || t('failedToLoadData');
       notification.error(message);
     } finally {
       setLoading(false);
     }
-  }, [junctionEndpoint, allItemsEndpoint, parentIdKey, childIdKey, parentId]);
+  }, [junctionEndpoint, allItemsEndpoint, parentIdKey, childIdKey, parentId, t]);
 
   useEffect(() => {
     fetchData();
@@ -104,12 +96,11 @@ export function useJunctionTable<T>(
         }));
 
       if (toDelete.length === 0 && toInsert.length === 0) {
-        notification.success('No changes to save');
+        notification.success(t('noChangesToSave'));
         return;
       }
 
-      // Update junction table
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         [parentIdKey]: parentId,
       };
 
@@ -119,9 +110,10 @@ export function useJunctionTable<T>(
       await apiClient.put(`${junctionEndpoint}/update`, updateData);
 
       setAssignedIds(selectedIds);
-      notification.success('Relationships updated successfully');
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to update';
+      notification.success(t('relationshipsUpdatedSuccessfully'));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || t('failedToUpdate');
       notification.error(message);
       throw error;
     } finally {
@@ -134,6 +126,7 @@ export function useJunctionTable<T>(
     parentId,
     assignedIds,
     selectedIds,
+    t,
   ]);
 
   return {

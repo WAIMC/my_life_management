@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -20,23 +19,21 @@ import {
 } from '@/components/ui/select';
 import type { TokenMst, AdminMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
+import { SORT_ORDER, PAGINATION } from '@/shared/config/constant';
 import { tokenSchema, type TokenFormData } from '@/shared/validation/validation';
-
-interface TokenFormProps {
-  initialData?: TokenMst | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type { TokenFormProps } from './types';
 
 export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) {
   const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<TokenMst>(ENDPOINTS.MASTER.TOKEN);
 
   // Fetch admins for the dropdown
   const { data: admins, loading: adminsLoading } = useApiData<AdminMst>(
     ENDPOINTS.MASTER.ADMIN,
-    { page: 1, per_page: 1000, sort_by: 'email', sort_order: 'asc' }
+    { page: PAGINATION.DEFAULT_PAGE, per_page: PAGINATION.MAX_PER_PAGE, sort_by: 'email', sort_order: SORT_ORDER.ASC }
   );
 
   const {
@@ -100,7 +97,7 @@ export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) 
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="account_id">
-          Account <span className="text-red-500">*</span>
+          {tLabels('account')} <span className="text-red-500">*</span>
         </Label>
         <Select
           value={accountIdValue?.toString()}
@@ -108,7 +105,7 @@ export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) 
           disabled={adminsLoading}
         >
           <SelectTrigger>
-            <SelectValue placeholder={adminsLoading ? 'Loading accounts...' : 'Select an account'} />
+            <SelectValue placeholder={adminsLoading ? tCommon('loading') : tForms('selectAccount')} />
           </SelectTrigger>
           <SelectContent>
             {admins.map((admin) => (
@@ -123,15 +120,15 @@ export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) 
         )}
       </div>
 
-       <div className="space-y-2">
+      <div className="space-y-2">
         <Label htmlFor="device_name">
-          Device Name <span className="text-red-500">*</span>
+          {tLabels('deviceName')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="device_name"
           {...register('device_name')}
           className={errors.device_name ? 'border-red-500' : ''}
-          placeholder="Enter device name"
+          placeholder={tForms('deviceName')}
         />
         {errors.device_name && (
           <p className="text-sm text-red-500">{errors.device_name.message}</p>
@@ -140,18 +137,18 @@ export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) 
 
       <div className="space-y-2">
         <Label htmlFor="ip_address">
-          IP Address
+          {tLabels('ipAddress')}
         </Label>
         <Input
           id="ip_address"
           {...register('ip_address')}
-          placeholder="Enter IP address"
+          placeholder={tForms('ipAddress')}
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="expired_at">
-          Expired At
+          {tLabels('expiredAt')}
         </Label>
         <Input
           id="expired_at"

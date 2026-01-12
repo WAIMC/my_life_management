@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -22,12 +21,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { FeatureStatus, IsActive } from '@/shared/enums';
+import { FeatureStatus, IsActive, FeatureStatusLabels } from '@/shared/enums';
 import { featureSchema, type FeatureFormData } from '@/shared/validation/validation';
 import type { FeatureFormProps } from './types';
 
 export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormProps) {
   const tCommon = useTranslations('common');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<FeatureMst>(ENDPOINTS.MASTER.FEATURE);
 
@@ -93,7 +93,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+          {tLabels('name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -106,14 +106,14 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{tLabels('description')}</Label>
         <Textarea id="description" {...register('description')} rows={3} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString()}
@@ -123,8 +123,8 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={FeatureStatus.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={FeatureStatus.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={FeatureStatus.ACTIVE.toString()}>{FeatureStatusLabels[FeatureStatus.ACTIVE]}</SelectItem>
+              <SelectItem value={FeatureStatus.INACTIVE.toString()}>{FeatureStatusLabels[FeatureStatus.INACTIVE]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -149,8 +149,8 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
   return (
     <Tabs defaultValue="details" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="details">Details</TabsTrigger>
-        <TabsTrigger value="history">History</TabsTrigger>
+        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+        <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
       </TabsList>
       <TabsContent value="details" className="mt-4">
         {FormContent}

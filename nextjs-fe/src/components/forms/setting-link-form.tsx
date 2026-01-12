@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -20,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import type { SettingLinkMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive } from '@/shared/enums';
+import { IsActive, IsActiveLabels } from '@/shared/enums';
 import { settingLinkSchema, type SettingLinkFormData } from '@/shared/validation/validation';
 import type { SettingLinkFormProps } from './types';
 
@@ -99,7 +98,7 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+          {tCommon('name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -114,7 +113,7 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
 
       <div className="space-y-2">
         <Label htmlFor="url">
-          URL <span className="text-red-500">*</span>
+          {tCommon('url')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="url"
@@ -128,14 +127,14 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{tCommon('description')}</Label>
         <Textarea id="description" {...register('description')} rows={3} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="rank_order">
-            Display Order <span className="text-red-500">*</span>
+            {tCommon('displayOrder')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="rank_order"
@@ -146,7 +145,7 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
 
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tCommon('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString()}
@@ -156,8 +155,8 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.TRUE.toString()}>Active</SelectItem>
-              <SelectItem value={IsActive.FALSE.toString()}>Inactive</SelectItem>
+              <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
+              <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -170,7 +169,7 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
           {...register('is_active')}
           className="rounded"
         />
-        <Label htmlFor="is_active">Is Active</Label>
+        <Label htmlFor="is_active">{tCommon('isActive')}</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

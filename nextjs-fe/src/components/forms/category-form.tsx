@@ -1,12 +1,10 @@
 'use client';
-'use no memo';
 
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
-import { useJunctionTable } from '@/shared/hooks/useJunctionTable';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,29 +18,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { JunctionManager } from '@/components/features/junction/junction-manager';
-import type { CategoryMgmt, SkillMgmt } from '@/shared/types/api';
+import type { CategoryMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { CategoryStatus } from '@/shared/enums';
+import { CategoryStatus, CategoryStatusLabels } from '@/shared/enums';
 import { categorySchema, type CategoryFormData } from '@/shared/validation/validation';
 import type { CategoryFormProps } from './types';
 
 export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tLabels = useTranslations('forms.labels');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<CategoryMgmt>(ENDPOINTS.MANAGEMENT.CATEGORY);
   const [activeTab, setActiveTab] = useState('details');
-
-  // Junction table for Category-Skill (Only in Edit mode)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const skillJunction = useJunctionTable<SkillMgmt>(
-    ENDPOINTS.JUNCTION.CATEGORY_SKILL,
-    ENDPOINTS.MANAGEMENT.SKILL,
-    'category_mgmt_id',
-    'skill_mgmt_id',
-    initialData?.id || 0
-  );
 
   const {
     register,
@@ -113,7 +101,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-red-500">*</span>
+          {tLabels('name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -126,13 +114,13 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{tLabels('description')}</Label>
         <Textarea id="description" {...register('description')} rows={3} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="slug">Slug</Label>
+          <Label htmlFor="slug">{tLabels('slug')}</Label>
           <Input
             id="slug"
             {...register('slug')}
@@ -142,7 +130,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
 
         <div className="space-y-2">
           <Label htmlFor="rank_order">
-            Display Order <span className="text-red-500">*</span>
+            {tLabels('displayOrder')} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="rank_order"
@@ -159,7 +147,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
+            {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
             value={statusValue?.toString()}
@@ -169,8 +157,8 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={CategoryStatus.ACTIVE.toString()}>Active</SelectItem>
-              <SelectItem value={CategoryStatus.INACTIVE.toString()}>Inactive</SelectItem>
+              <SelectItem value={CategoryStatus.ACTIVE.toString()}>{CategoryStatusLabels[CategoryStatus.ACTIVE]}</SelectItem>
+              <SelectItem value={CategoryStatus.INACTIVE.toString()}>{CategoryStatusLabels[CategoryStatus.INACTIVE]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -182,7 +170,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
             {...register('is_display')}
             className="rounded"
           />
-          <Label htmlFor="is_display">Is Display</Label>
+          <Label htmlFor="is_display">{tLabels('isDisplay')}</Label>
         </div>
       </div>
 
@@ -204,8 +192,8 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="details">Details</TabsTrigger>
-        <TabsTrigger value="skills">Skills</TabsTrigger>
+        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+        <TabsTrigger value="skills">{tCommon('skills')}</TabsTrigger>
       </TabsList>
       
       <TabsContent value="details" className="mt-4">
@@ -213,19 +201,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       </TabsContent>
 
       <TabsContent value="skills" className="mt-4">
-        {/* TODO: Restore JunctionManager when component is available */}
-        <div className="text-muted-foreground">Skills management will be available soon.</div>
-        {/* <JunctionManager
-          allItems={skillJunction.allItems}
-          selectedIds={skillJunction.selectedIds}
-          onSelectionChange={skillJunction.setSelectedIds}
-          onSave={skillJunction.save}
-          loading={skillJunction.loading}
-          saving={skillJunction.saving}
-          title="Manage Category Skills"
-          itemLabel="skills"
-          searchPlaceholder="Search skills..."
-        /> */}
+        <div className="text-muted-foreground">{tCommon('skillsManagementComingSoon')}</div>
       </TabsContent>
     </Tabs>
   );

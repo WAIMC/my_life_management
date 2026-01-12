@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import type { SidebarFolder, SidebarProps } from '@/shared/types/file-manager.types';
-import { DEFAULT_SIDEBAR_FOLDERS } from '@/shared/constants/file-manager';
+import { DEFAULT_SIDEBAR_FOLDERS } from '@/shared/config/constant';
 
 export const Sidebar = ({
   currentPath,

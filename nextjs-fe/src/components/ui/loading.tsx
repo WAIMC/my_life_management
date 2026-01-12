@@ -1,6 +1,10 @@
 'use client';
 
-export function LoadingSpinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+import type { LoadingSpinnerProps, LoadingOverlayProps, LoadingSkeletonProps } from '@/shared/types';
+import { useTranslations } from 'next-intl';
+import { UI_CONSTANTS } from '@/shared/config';
+
+export function LoadingSpinner({ size = 'md' }: LoadingSpinnerProps) {
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-8 w-8',
@@ -14,13 +18,14 @@ export function LoadingSpinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   );
 }
 
-export function LoadingOverlay({ message = 'Loading...' }: { message?: string }) {
+export function LoadingOverlay({ message }: LoadingOverlayProps) {
+  const t = useTranslations('common');
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-slate-900 rounded-lg p-6 shadow-xl">
         <div className="flex flex-col items-center gap-4">
           <LoadingSpinner size="lg" />
-          <p className="text-slate-900 dark:text-white font-medium">{message}</p>
+          <p className="text-slate-900 dark:text-white font-medium">{message || t('loading')}</p>
         </div>
       </div>
     </div>
@@ -28,17 +33,18 @@ export function LoadingOverlay({ message = 'Loading...' }: { message?: string })
 }
 
 export function LoadingPage() {
+  const t = useTranslations('common');
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="text-center">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-slate-600 dark:text-slate-400">Loading...</p>
+        <p className="mt-4 text-slate-600 dark:text-slate-400">{t('loading')}</p>
       </div>
     </div>
   );
 }
 
-export function LoadingSkeleton({ rows = 5 }: { rows?: number }) {
+export function LoadingSkeleton({ rows = UI_CONSTANTS.DEFAULT_SKELETON_ROWS }: LoadingSkeletonProps) {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
