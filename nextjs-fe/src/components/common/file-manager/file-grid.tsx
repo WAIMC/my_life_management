@@ -9,7 +9,7 @@ import { FileContextMenu } from './context-menu';
 import { Folder } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { FileGridProps } from '@/shared/types/file-manager.types';
-import { DATE_FORMATS, UI_CONSTANTS, MIME_TYPE_PREFIX } from '@/shared/config/constant';
+import { DATE_FORMATS, UI_CONSTANTS, MIME_TYPE_PREFIX, FILE_TYPE } from '@/shared/config/constant';
 
 export const FileGrid = ({
   files,

@@ -22,13 +22,14 @@ import type { AdminMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { AdminStatus, Gender, GenderLabels, AdminStatusLabels } from '@/shared/enums';
 import { UPLOAD_CONFIG } from '@/shared/config/constant';
-import { adminSchema, type AdminFormData } from '@/shared/validation/validation';
+import { getAdminSchema, type AdminFormData } from '@/shared/validation/validation';
 import type { AdminFormProps } from './types';
 
 export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -44,7 +45,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
     reset,
     setError,
   } = useForm<AdminFormData>({
-    resolver: zodResolver(adminSchema),
+    resolver: zodResolver(getAdminSchema(tValidation)),
     defaultValues: {
       gender: Gender.MALE,
       status: AdminStatus.ACTIVE,
@@ -137,7 +138,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             setAvatarPreview(preview);
             // In a real scenario, we might upload immediately or wait for submit
           }}
-          maxSize={UPLOAD_CONFIG.DEFAULT_AVATAR_MAX_SIZE}
+          maxSize={UPLOAD_CONFIG.DEFAULT_AVATAR_MAX_SIZE_MB}
         />
       </div>
 

@@ -21,13 +21,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { CategoryMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { CategoryStatus, CategoryStatusLabels } from '@/shared/enums';
-import { categorySchema, type CategoryFormData } from '@/shared/validation/validation';
+import { getCategorySchema, type CategoryFormData } from '@/shared/validation/validation';
 import type { CategoryFormProps } from './types';
 
 export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<CategoryMgmt>(ENDPOINTS.MANAGEMENT.CATEGORY);
   const [activeTab, setActiveTab] = useState('details');
@@ -41,7 +42,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
     reset,
     setError,
   } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(getCategorySchema(tValidation)),
     defaultValues: {
       rank_order: 0,
       status: CategoryStatus.ACTIVE,

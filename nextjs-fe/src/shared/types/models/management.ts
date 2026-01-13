@@ -1,6 +1,6 @@
 /**
  * Management Data Model Types
- * Auto-generated from Laravel API models
+ * Auto-generated from back-end API models
  */
 
 // ============================================

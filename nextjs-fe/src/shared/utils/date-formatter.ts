@@ -1,10 +1,10 @@
 /**
  * Date Formatting Utilities
- * Provides standardized date/time formatting functions matching backend Laravel format (d/m/Y)
+ * Provides standardized date/time formatting functions matching backend back-end format (d/m/Y)
  */
 
 import { format, parse, parseISO, isValid, formatDistanceToNow } from 'date-fns';
-import { CommonVal } from '@/shared/config/common';
+import { DATE_FORMATS } from '@/shared/config/constant';
 
 /**
  * Format a date to display format (dd/MM/yyyy)
@@ -17,7 +17,7 @@ export function formatDate(date: Date | string | null | undefined): string {
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) return '';
-    return format(dateObj, CommonVal.DATE_FORMAT);
+    return format(dateObj, DATE_FORMATS.DATE);
   } catch {
     return '';
   }
@@ -34,7 +34,7 @@ export function formatDateForInput(date: Date | string | null | undefined): stri
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) return '';
-    return format(dateObj, CommonVal.DATE_INPUT_FORMAT);
+    return format(dateObj, DATE_FORMATS.DATE_INPUT);
   } catch {
     return '';
   }
@@ -42,7 +42,7 @@ export function formatDateForInput(date: Date | string | null | undefined): stri
 
 /**
  * Format a date to backend format (dd/MM/yyyy)
- * Use this when sending dates to the Laravel API
+ * Use this when sending dates to the back-end API
  * @param date - Date object, ISO string, or any valid date input
  * @returns Formatted date string in dd/MM/yyyy format for backend
  */
@@ -52,7 +52,7 @@ export function formatDateForBackend(date: Date | string | null | undefined): st
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) return '';
-    return format(dateObj, CommonVal.DATE_FORMAT); // dd/MM/yyyy matches Laravel d/m/Y
+    return format(dateObj, DATE_FORMATS.DATE); // dd/MM/yyyy matches back-end d/m/Y
   } catch {
     return '';
   }
@@ -69,7 +69,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) return '';
-    return format(dateObj, CommonVal.DATETIME_FORMAT);
+    return format(dateObj, DATE_FORMATS.FULL);
   } catch {
     return '';
   }
@@ -77,7 +77,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
 
 /**
  * Format a datetime to backend format (dd/MM/yyyy HH:mm:ss)
- * Use this when sending datetimes to the Laravel API
+ * Use this when sending date times to the back-end API
  * @param date - Date object, ISO string, or any valid date input
  * @returns Formatted datetime string for backend
  */
@@ -87,7 +87,7 @@ export function formatDateTimeForBackend(date: Date | string | null | undefined)
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) return '';
-    return format(dateObj, CommonVal.DATETIME_FORMAT); // dd/MM/yyyy HH:mm:ss
+    return format(dateObj, DATE_FORMATS.FULL); // dd/MM/yyyy HH:mm:ss
   } catch {
     return '';
   }
@@ -102,7 +102,7 @@ export function parseDateFromBackend(dateString: string | null | undefined): Dat
   if (!dateString) return null;
   
   try {
-    const parsed = parse(dateString, CommonVal.DATE_FORMAT, new Date());
+    const parsed = parse(dateString, DATE_FORMATS.DATE, new Date());
     return isValid(parsed) ? parsed : null;
   } catch {
     return null;
@@ -118,7 +118,7 @@ export function parseDateTimeFromBackend(dateTimeString: string | null | undefin
   if (!dateTimeString) return null;
   
   try {
-    const parsed = parse(dateTimeString, CommonVal.DATETIME_FORMAT, new Date());
+    const parsed = parse(dateTimeString, DATE_FORMATS.FULL, new Date());
     return isValid(parsed) ? parsed : null;
   } catch {
     return null;
@@ -136,7 +136,7 @@ export function formatTime(date: Date | string | null | undefined): string {
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) return '';
-    return format(dateObj, CommonVal.TIME_FORMAT);
+    return format(dateObj, DATE_FORMATS.TIME);
   } catch {
     return '';
   }
@@ -163,7 +163,7 @@ export function isValidDate(dateString: string | null | undefined): boolean {
  * @returns Current date in dd/MM/yyyy format
  */
 export function getCurrentDate(): string {
-  return format(new Date(), CommonVal.DATE_FORMAT);
+  return format(new Date(), DATE_FORMATS.DATE);
 }
 
 /**
@@ -171,7 +171,7 @@ export function getCurrentDate(): string {
  * @returns Current datetime in dd/MM/yyyy HH:mm:ss format
  */
 export function getCurrentDateTime(): string {
-  return format(new Date(), CommonVal.DATETIME_FORMAT);
+  return format(new Date(), DATE_FORMATS.FULL);
 }
 
 /**

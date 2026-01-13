@@ -6,7 +6,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Search, X, Filter } from 'lucide-react';
 import { cn } from "@/shared/utils";
 import { UI_CONSTANTS, KEYBOARD_KEYS } from '@/shared/config';
-import type { SearchFilterProps } from '@/shared/types/layout.types';
+import type { SearchFilterProps } from '@/shared/types/ui.types';
 import { useTranslations } from 'next-intl';
 
 export function SearchFilter({

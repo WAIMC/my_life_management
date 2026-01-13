@@ -19,7 +19,8 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/config';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';

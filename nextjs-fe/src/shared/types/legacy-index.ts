@@ -4,6 +4,6 @@
  */
 
 export * from './api';
-export * from './enums';
-export * from './authType';
+
+export * from './auth.types';
 export type * from './media-file.types';

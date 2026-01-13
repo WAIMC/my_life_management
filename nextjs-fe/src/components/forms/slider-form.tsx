@@ -20,12 +20,13 @@ import { ImageUpload } from '@/components/common/image-upload';
 import type { SliderMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { IsActive, IsActiveLabels } from '@/shared/enums';
-import { sliderSchema, type SliderFormData } from '@/shared/validation/validation';
+import { getSliderSchema, type SliderFormData } from '@/shared/validation/validation';
 import type { SliderFormProps } from './types';
 
 export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SliderMgmt>(ENDPOINTS.MANAGEMENT.SLIDER);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -41,7 +42,7 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
     reset,
     setError,
   } = useForm<SliderFormData>({
-    resolver: zodResolver(sliderSchema),
+    resolver: zodResolver(getSliderSchema(tValidation)),
     defaultValues: {
       status: IsActive.TRUE,
     },

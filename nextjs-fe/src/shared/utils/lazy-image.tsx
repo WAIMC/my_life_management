@@ -1,15 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from "@/shared/utils";
-
-interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  src: string;
-  alt: string;
-  className?: string;
-}
+import { LazyImageProps } from '@/shared/types/ui.types';
 
 export const LazyImage = ({ src, alt, className, ...props }: LazyImageProps) => {
+  const t = useTranslations('common');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -53,11 +50,9 @@ export const LazyImage = ({ src, alt, className, ...props }: LazyImageProps) => 
             isLoaded ? 'opacity-100' : 'opacity-0'
           )}
           onLoad={() => {
-            console.log('✅ Image loaded:', src);
             setIsLoaded(true);
           }}
-          onError={(e) => {
-            console.error('❌ Image failed to load:', src, e);
+          onError={() => {
             setHasError(true);
           }}
           {...props}
@@ -71,8 +66,8 @@ export const LazyImage = ({ src, alt, className, ...props }: LazyImageProps) => 
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
           <div className="text-center text-xs text-muted-foreground">
-            <p>Failed to load</p>
-            <p className="mt-1 text-[10px] opacity-50">Check console</p>
+            <p>{t('failedToLoad')}</p>
+            <p className="mt-1 text-[10px] opacity-50">{t('checkConsole')}</p>
           </div>
         </div>
       )}

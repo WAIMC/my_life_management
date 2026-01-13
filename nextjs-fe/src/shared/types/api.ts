@@ -2,6 +2,8 @@
  * API Response Types
  */
 
+import { SORT_ORDER } from '../config/constant';
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -47,7 +49,7 @@ export interface ListQueryParams {
   page?: number;
   per_page?: number;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: typeof SORT_ORDER[keyof typeof SORT_ORDER];
   from_date?: string; // Format: d/m/Y
   to_date?: string; // Format: d/m/Y
   [key: string]: FilterValue;
@@ -61,7 +63,7 @@ export interface UseApiDataOptions {
   page?: number;
   per_page?: number;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: typeof SORT_ORDER[keyof typeof SORT_ORDER];
   from_date?: string;
   to_date?: string;
   filters?: Record<string, FilterValue>;
@@ -223,10 +225,6 @@ export interface ApiMst {
   // Relationships
   feature?: FeatureMst;
 }
-
-
-
-
 
 export interface TokenMst {
   id: number;

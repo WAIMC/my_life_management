@@ -25,12 +25,13 @@ import type { UserMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { IsActive, Gender, GenderLabels, IsActiveLabels } from '@/shared/enums';
 import { FILE_UPLOAD } from '@/shared/config/constant';
-import { userSchema, type UserFormData } from '@/shared/validation/validation';
+import { getUserSchema, type UserFormData } from '@/shared/validation/validation';
 import type { UserFormProps } from './types';
 
 export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<UserMgmt>(ENDPOINTS.MANAGEMENT.USER);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -46,7 +47,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     reset,
     setError,
   } = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(getUserSchema(tValidation)),
     defaultValues: {
       gender: Gender.MALE,
       status: IsActive.TRUE,

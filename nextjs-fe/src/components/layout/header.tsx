@@ -26,7 +26,7 @@ import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import { THEME } from '@/shared/config';
 import { formatTimestamp } from '@/shared/utils';
-import type { Notification } from '@/shared/types/layout.types';
+import type { Notification } from '@/shared/types/ui.types';
 
 export function Header() {
   const { theme, setTheme } = useTheme();

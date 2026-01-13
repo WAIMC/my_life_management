@@ -15,7 +15,7 @@ import { formatFileSize, getFileIcon, getMimeTypeLabel } from './utils';
 import { format } from 'date-fns';
 import { FileContextMenu } from './context-menu';
 import { useTranslations } from 'next-intl';
-import { DATE_FORMATS, SORT_ORDER } from '@/shared/config/constant';
+import { DATE_FORMATS, SORT_ORDER, FILE_TYPE, FILE_MANAGER_SORT_FIELDS } from '@/shared/config/constant';
 import type { FileListProps } from '@/shared/types/file-manager.types';
 
 export const FileList = ({
@@ -37,7 +37,7 @@ export const FileList = ({
   onDownload,
 }: FileListProps) => {
   const t = useTranslations('fileManager');
-  
+
   if (isLoading) {
     return <div className="py-8 text-center text-muted-foreground">{t('loading')}</div>;
   }
@@ -84,7 +84,7 @@ export const FileList = ({
                 }}
               />
             </TableHead>
-            <TableHead 
+            <TableHead
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => onSort?.(FILE_MANAGER_SORT_FIELDS.NAME)}
             >

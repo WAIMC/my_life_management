@@ -20,13 +20,14 @@ import {
 import type { TokenMst, AdminMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, PAGINATION } from '@/shared/config/constant';
-import { tokenSchema, type TokenFormData } from '@/shared/validation/validation';
+import { getTokenSchema, type TokenFormData } from '@/shared/validation/validation';
 import type { TokenFormProps } from './types';
 
 export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<TokenMst>(ENDPOINTS.MASTER.TOKEN);
 
@@ -45,7 +46,7 @@ export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) 
     reset,
     setError,
   } = useForm<TokenFormData>({
-    resolver: zodResolver(tokenSchema),
+    resolver: zodResolver(getTokenSchema(tValidation)),
     defaultValues: {
       account_id: 0,
       device_name: '',

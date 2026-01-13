@@ -22,7 +22,8 @@ import {
   ADMIN_ROUTES 
 } from '@/shared/config';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';
@@ -162,14 +163,14 @@ export default function ApiListPage() {
     { 
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { 
+      onClick: async () => { 
         refetch(); 
       } 
     }, 
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
-      onClick: async (ids) => { 
+      onClick: async () => { 
         refetch(); 
       } 
     }
@@ -181,7 +182,7 @@ export default function ApiListPage() {
     setPage(PAGINATION.DEFAULT_PAGE);
   };
 
-  const handleImport = async (file: File, format: string) => {
+  const handleImport = async () => {
     refetch();
   };
 

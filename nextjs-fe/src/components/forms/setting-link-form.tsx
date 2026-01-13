@@ -20,12 +20,13 @@ import {
 import type { SettingLinkMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { IsActive, IsActiveLabels } from '@/shared/enums';
-import { settingLinkSchema, type SettingLinkFormData } from '@/shared/validation/validation';
+import { getSettingLinkSchema, type SettingLinkFormData } from '@/shared/validation/validation';
 import type { SettingLinkFormProps } from './types';
 
 export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLinkFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SettingLinkMgmt>(ENDPOINTS.MANAGEMENT.SETTING_LINK);
 
@@ -38,7 +39,7 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
     reset,
     setError,
   } = useForm<SettingLinkFormData>({
-    resolver: zodResolver(settingLinkSchema),
+    resolver: zodResolver(getSettingLinkSchema(tValidation)),
     defaultValues: {
       rank_order: 0,
       status: IsActive.TRUE,

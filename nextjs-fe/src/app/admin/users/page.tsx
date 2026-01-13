@@ -13,9 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { UserMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, type SortOrder } from '@/shared/config';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, ADMIN_ROUTES, PAGINATION } from '@/shared/config';
 import { IsActive, IsActiveLabels, Gender, GenderLabels } from '@/shared/enums';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';
@@ -31,8 +32,8 @@ import { UserForm } from '@/components/forms/user-form';
 import { useTranslations } from 'next-intl';
 
 export default function UsersPage() {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [perPage, setPerPage] = useState<number>(PAGINATION.DEFAULT_PER_PAGE);
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
@@ -176,22 +177,22 @@ export default function UsersPage() {
     {
       label: tBulkActions('activateSelected'),
       icon: <CheckCircle className="h-4 w-4" />,
-      onClick: async (_ids) => { refetch(); },
+      onClick: async () => { refetch(); },
     },
     {
       label: tBulkActions('deactivateSelected'),
       icon: <XCircle className="h-4 w-4" />,
-      onClick: async (_ids) => { refetch(); },
+      onClick: async () => { refetch(); },
     },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
     const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
     setFilters(newFilters);
-    setPage(1);
+    setPage(PAGINATION.DEFAULT_PAGE);
   };
 
-  const handleImport = async (_file: File, _format: string) => {
+  const handleImport = async () => {
     refetch();
   };
 
@@ -214,7 +215,7 @@ export default function UsersPage() {
       <div className="mt-6 space-y-4">
         <div className="flex gap-2">
           <AdvancedSearch fields={searchFields} onSearch={handleAdvancedSearch} />
-          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(1); }} storageKey="user-filters" />
+          <SavedFilters currentFilters={filters} onApplyFilter={(f) => { setFilters(f); setPage(PAGINATION.DEFAULT_PAGE); }} storageKey="user-filters" />
           <ImportExport onImport={handleImport} />
         </div>
 
@@ -222,11 +223,11 @@ export default function UsersPage() {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           onReset={() => {
             setFilters({});
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
           fields={filterFields}
         />
@@ -255,7 +256,7 @@ export default function UsersPage() {
           perPage={perPage}
           onPerPageChange={(newPerPage) => {
             setPerPage(newPerPage);
-            setPage(1);
+            setPage(PAGINATION.DEFAULT_PAGE);
           }}
         />
       </div>

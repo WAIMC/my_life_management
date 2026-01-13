@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
-import type { FileUploadProps } from '@/shared/types/media.types';
+import type { FileUploadProps } from '@/shared/types/media-file.types';
 import { UPLOAD_CONFIG, DRAG_EVENTS, MIME_TYPE_PREFIX } from '@/shared/config/constant';
 import { useTranslations } from 'next-intl';
 

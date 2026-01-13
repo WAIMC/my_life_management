@@ -11,7 +11,8 @@ import { FilterPanel, type FilterField } from '@/components/common/data-table/fi
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';

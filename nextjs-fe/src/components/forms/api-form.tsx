@@ -22,13 +22,14 @@ import type { ApiMst, FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, SORT_FIELDS, HTTP_METHODS } from '@/shared/config/constant';
 import { IsActive, IsActiveLabels, TypeOfMethod } from '@/shared/enums';
-import { apiSchema, type ApiFormData } from '@/shared/validation/validation';
+import { getApiSchema, type ApiFormData } from '@/shared/validation/validation';
 import type { ApiFormProps } from './types';
 
 export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<ApiMst>(ENDPOINTS.MASTER.API);
   
@@ -48,7 +49,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
     reset,
     setError,
   } = useForm<ApiFormData>({
-    resolver: zodResolver(apiSchema),
+    resolver: zodResolver(getApiSchema(tValidation)),
     defaultValues: {
       name: '',
       path: '',

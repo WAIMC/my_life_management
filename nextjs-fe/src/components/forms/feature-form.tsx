@@ -22,12 +22,13 @@ import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { FeatureStatus, IsActive, FeatureStatusLabels } from '@/shared/enums';
-import { featureSchema, type FeatureFormData } from '@/shared/validation/validation';
+import { getFeatureSchema, type FeatureFormData } from '@/shared/validation/validation';
 import type { FeatureFormProps } from './types';
 
 export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormProps) {
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<FeatureMst>(ENDPOINTS.MASTER.FEATURE);
 
@@ -40,7 +41,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
     reset,
     setError,
   } = useForm<FeatureFormData>({
-    resolver: zodResolver(featureSchema),
+    resolver: zodResolver(getFeatureSchema(tValidation)),
     defaultValues: {
       status: FeatureStatus.ACTIVE as unknown as IsActive,
     },

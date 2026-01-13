@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { SortOrder } from '../constants/app';
+import type { SortOrder, ExportFormat, ImportFormat, ImageShape } from '../config/constant';
 
 /**
  * Data Table Column Definition
@@ -113,7 +113,7 @@ export interface AdvancedSearchProps {
 /**
  * Import/Export Types (re-exported from constants for backward compatibility)
  */
-export type { ExportFormat, ImportFormat, ImageShape } from '../constants/media';
+export type { ExportFormat, ImportFormat, ImageShape };
 
 /**
  * Avatar Upload Component Props
@@ -134,7 +134,7 @@ export interface ImageUploadProps {
   maxSize?: number;
   className?: string;
   label?: string;
-  shape?: import('../constants/media').ImageShape;
+  shape?: ImageShape;
   aspectRatio?: string;
 }
 

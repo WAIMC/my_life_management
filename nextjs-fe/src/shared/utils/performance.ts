@@ -9,16 +9,16 @@ import { useCallback, useEffect, useRef } from 'react';
  * Simple in-memory cache with TTL
  */
 class Cache {
-  private cache = new Map<string, { data: any; expiry: number }>();
+  private cache = new Map<string, { data: unknown; expiry: number }>();
 
-  set(key: string, data: any, ttl: number = 5 * 60 * 1000) {
+  set(key: string, data: unknown, ttl: number = 5 * 60 * 1000) {
     this.cache.set(key, {
       data,
       expiry: Date.now() + ttl,
     });
   }
 
-  get(key: string): any | null {
+  get(key: string): unknown | null {
     const item = this.cache.get(key);
     if (!item) return null;
 
@@ -63,11 +63,11 @@ export function useDebounce<T>(value: T, delay: number = 500): T {
 /**
  * Hook for throttling function calls
  */
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number = 1000
 ): T {
-  const lastRun = useRef(Date.now());
+  const lastRun = useRef(0);
 
   return useCallback(
     (...args: Parameters<T>) => {
@@ -123,7 +123,8 @@ export class PerformanceMonitor {
       const existing = this.metrics.get(label) || [];
       this.metrics.set(label, [...existing, duration]);
       
-      if (duration > 1000) {}
+      if (duration > 1000) {
+}
     };
   }
 
@@ -151,17 +152,17 @@ export const perfMonitor = new PerformanceMonitor();
 export class RequestBatcher {
   private queue: Array<{
     key: string;
-    resolve: (value: any) => void;
-    reject: (error: any) => void;
+    resolve: (value: unknown) => void;
+    reject: (error: unknown) => void;
   }> = [];
   private timeout: NodeJS.Timeout | null = null;
 
   constructor(
-    private batchFn: (keys: string[]) => Promise<any[]>,
+    private batchFn: (keys: string[]) => Promise<unknown[]>,
     private delay: number = 50
   ) {}
 
-  request(key: string): Promise<any> {
+  request(key: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
       this.queue.push({ key, resolve, reject });
 

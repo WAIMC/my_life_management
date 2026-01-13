@@ -6,5 +6,5 @@ export {
   type LoginSuccessPayload,
   type LogoutPayload,
   type AuthErrorPayload,
-} from '@/providers/auth/types';
+} from '@/shared/types';
 

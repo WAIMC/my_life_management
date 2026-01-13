@@ -20,13 +20,14 @@ import { ImageUpload } from '@/components/common/image-upload';
 import type { BannerMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { IsActive, IsActiveLabels } from '@/shared/enums';
-import { bannerSchema, type BannerFormData } from '@/shared/validation/validation';
+import { getBannerSchema, type BannerFormData } from '@/shared/validation/validation';
 import type { BannerFormProps } from './types';
 
 export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -42,7 +43,7 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
     reset,
     setError,
   } = useForm<BannerFormData>({
-    resolver: zodResolver(bannerSchema),
+    resolver: zodResolver(getBannerSchema(tValidation)),
     defaultValues: {
       status: IsActive.TRUE,
     },

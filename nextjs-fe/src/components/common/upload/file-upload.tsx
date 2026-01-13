@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import type { UploadResponse } from '@/shared/types/api';
-import type { FileUploadProps } from '@/shared/types/upload.types';
+import type { SimpleFileUploadProps as FileUploadProps } from '@/shared/types/media-file.types';
 import { useTranslations } from 'next-intl';
 
 export function FileUpload({

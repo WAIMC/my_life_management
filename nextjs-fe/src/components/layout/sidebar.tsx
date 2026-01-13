@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/shared/utils";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/shared/hooks/use-auth";
+import { useAuth } from "@/shared/hooks";
 import { LogOut, Menu, X, ChevronDown } from "lucide-react";
 import { NAVIGATION_MENU, isRouteActive } from "@/shared/config/navigation";
 import { useTranslations } from 'next-intl';
@@ -104,7 +104,7 @@ export function Sidebar() {
           )}
         </div>
       )),
-    [pathname, expandedMenu, toggleMenu]
+    [pathname, expandedMenu, toggleMenu, tNav, tEntities]
   );
 
   return (

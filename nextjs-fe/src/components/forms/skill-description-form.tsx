@@ -22,12 +22,13 @@ import type { SkillDescriptionMgmt, SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, SORT_FIELDS, PAGINATION, FORM_DEFAULTS } from '@/shared/config/constant';
 import { IsActive, IsActiveLabels } from '@/shared/enums';
-import { skillDescriptionSchema, type SkillDescriptionFormData } from '@/shared/validation/validation';
+import { getSkillDescriptionSchema, type SkillDescriptionFormData } from '@/shared/validation/validation';
 import type { SkillDescriptionFormProps } from './types';
 
 export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: SkillDescriptionFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SkillDescriptionMgmt>(ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
 
@@ -48,7 +49,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     reset,
     setError,
   } = useForm<SkillDescriptionFormData>({
-    resolver: zodResolver(skillDescriptionSchema),
+    resolver: zodResolver(getSkillDescriptionSchema(tValidation)),
     defaultValues: {
       rank_order: FORM_DEFAULTS.RANK_ORDER,
       status: IsActive.TRUE,

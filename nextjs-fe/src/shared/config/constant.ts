@@ -59,7 +59,7 @@ export const DATE_FORMATS = {
   DATE_INPUT: 'yyyy-MM-dd',              // HTML input[type="date"] format
   DATETIME_INPUT: 'yyyy-MM-dd HH:mm:ss', // Backend datetime format
   
-  // Backend compatibility (Laravel formats for reference)
+  // Backend compatibility (back end formats for reference)
   BACKEND_DATE: 'd/m/Y',
   BACKEND_DATETIME: 'd/m/Y H:i:s',
 } as const;
@@ -243,7 +243,8 @@ export const MIME_TYPE_PREFIX = {
 } as const;
 
 // File size units
-export const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB'] as const;
+export const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+
 
 // MIME type labels
 export const MIME_TYPE_LABELS: Record<string, string> = {

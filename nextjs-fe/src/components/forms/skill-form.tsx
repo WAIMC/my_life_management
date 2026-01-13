@@ -22,12 +22,13 @@ import type { SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { FORM_DEFAULTS } from '@/shared/config/constant';
 import { SkillStatus, SkillStatusLabels, IsActive } from '@/shared/enums';
-import { skillSchema, type SkillFormData } from '@/shared/validation/validation';
+import { getSkillSchema, type SkillFormData } from '@/shared/validation/validation';
 import type { SkillFormProps } from './types';
 
 export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SkillMgmt>(ENDPOINTS.MANAGEMENT.SKILL);
 
@@ -40,7 +41,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
     reset,
     setError,
   } = useForm<SkillFormData>({
-    resolver: zodResolver(skillSchema),
+    resolver: zodResolver(getSkillSchema(tValidation)),
     defaultValues: {
       rank_order: FORM_DEFAULTS.RANK_ORDER,
       status: SkillStatus.ACTIVE as unknown as IsActive,

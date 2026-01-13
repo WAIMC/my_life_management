@@ -34,8 +34,8 @@ export const API_ENDPOINTS = {
     CATEGORY_SKILL: '/admin/category-skill-mgmt',
   },
   MEDIA: {
-    FILES: '/admin/media-files',
-    UPLOAD: '/admin/media-files/upload',
+    FILES: '/admin/media-mgmt',
+    UPLOAD: '/admin/media-mgmt/store',
   },
 } as const;
 

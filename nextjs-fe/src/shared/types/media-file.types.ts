@@ -20,7 +20,7 @@ export interface MediaFile {
   width: number | null;
   height: number | null;
   duration: number | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   is_delete: boolean;
   created_by: number | null;
   updated_by: number | null;
@@ -84,4 +84,48 @@ export interface FileTypeFilter {
   label: string;
   value: FileType;
   icon?: string;
+}
+
+/**
+ * Media Upload Component Types
+ */
+
+export interface FileUploadProps {
+  onUploadSuccess?: (file: UploadFileResponse | number) => void;
+  onUploadError?: (error: Error) => void;
+  accept?: string;
+  maxSize?: number; // in bytes
+  isPublic?: boolean;
+}
+
+/**
+ * Upload Component Types
+ */
+
+export interface SimpleFileUploadProps {
+  value?: string;
+  onChange: (url: string) => void;
+  accept?: string;
+  maxSize?: number; // in MB
+  className?: string;
+  disabled?: boolean;
+}
+
+export interface UploadError {
+  message: string;
+  code?: string;
+}
+
+export interface MediaApiListResponse {
+  data: MediaFile[];
+  error?: {
+    status: boolean;
+    code: number;
+    messages: unknown;
+  };
+  // API response might not always have pagination, but UI code expects it
+  current_page?: number;
+  last_page?: number;
+  total?: number;
+  per_page?: number;
 }

@@ -16,9 +16,10 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { NAVIGATION_MENU, type MenuItem } from '@/shared/config/navigation';
+import { NAVIGATION_MENU } from '@/shared/config/navigation';
+import type { MenuItem } from '@/shared/types/ui.types';
 import { cn } from "@/shared/utils";
-import type { AdminNavDropdownProps } from '@/shared/types/layout.types';
+import type { AdminNavDropdownProps } from '@/shared/types/ui.types';
 import { useTranslations } from 'next-intl';
 
 export function AdminNavDropdown({

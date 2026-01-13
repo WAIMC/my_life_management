@@ -3,6 +3,7 @@
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { FileManagerContent } from '@/components/common/file-manager/file-manager-content';
+import { FileManagerProvider } from '@/components/common/file-manager/context';
 import { useTranslations } from 'next-intl';
 import { ADMIN_ROUTES } from '@/shared/config';
 
@@ -25,7 +26,9 @@ export default function FileManagerPage() {
 
       {/* File Manager Content */}
       <div className="h-[calc(100vh-16rem)] overflow-hidden">
-        <FileManagerContent />
+        <FileManagerProvider>
+          <FileManagerContent />
+        </FileManagerProvider>
       </div>
     </AdminLayout>
   );

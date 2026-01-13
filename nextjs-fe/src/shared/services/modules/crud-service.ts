@@ -12,6 +12,7 @@ import type {
   RequiredEndpoints,
 } from '@/shared/types/api';
 import { API_PATHS } from '@/shared/types/api';
+import { PAGINATION } from '@/shared/config/constant';
 
 /**
  * Service Endpoints Configuration
@@ -53,7 +54,7 @@ export class CrudService<T = Record<string, unknown>> {
    * Get single item by ID
    */
   async getById(id: string | number): Promise<T | null> {
-    const response = await this.list({ id, per_page: 1 } as ListQueryParams);
+    const response = await this.list({ id, per_page: PAGINATION.DEFAULT_PER_PAGE } as ListQueryParams);
     return response.data[0] || null;
   }
 

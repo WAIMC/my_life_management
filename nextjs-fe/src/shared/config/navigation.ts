@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  LucideIcon,
   FolderOpen,
   Database,
   Package,

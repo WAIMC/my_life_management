@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from "@/shared/utils";
 import { ADMIN_ROUTES } from '@/shared/config';
-import type { PageHeaderProps } from '@/shared/types/layout.types';
+import type { PageHeaderProps } from '@/shared/types/ui.types';
 
 export function PageHeader({
   title,

@@ -20,9 +20,9 @@ export const Breadcrumb = ({ items, onNavigate }: BreadcrumbProps) => {
         >
           <Home className="h-4 w-4" />
         </Button>
-        
+
         {items.length > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-        
+
         {items.map((item, index) => (
           <div key={`${item.path}-${index}`} className="flex items-center space-x-1 whitespace-nowrap">
             <Button

@@ -29,7 +29,7 @@ export const FileContextMenu = ({
   onDownload,
 }: FileContextMenuProps) => {
   const t = useTranslations('fileManager');
-  
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>

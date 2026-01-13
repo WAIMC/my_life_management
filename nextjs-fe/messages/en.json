@@ -63,7 +63,9 @@
     "failedToRestoreVersion": "Failed to restore version",
     "failedToLoadData": "Failed to load data",
     "noChangesToSave": "No changes to save",
-    "relationshipsUpdatedSuccessfully": "Relationships updated successfully"
+    "relationshipsUpdatedSuccessfully": "Relationships updated successfully",
+    "failedToLoad": "Failed to load",
+    "checkConsole": "Check console"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -88,6 +90,7 @@
     "stillExperiencingIssues": "Still experiencing issues?",
     "showErrorDetails": "Show Error Details (Dev Mode)",
     "hideErrorDetails": "Hide Error Details (Dev Mode)",
+    "copyNotImplemented": "Copy functionality not yet implemented in backend",
     "E0001": "Login failed",
     "E0002": "Session expired. Please login again.",
     "E0003": "Logout failed. Please try again.",
@@ -218,7 +221,8 @@
     "settingLink": "Setting Link",
     "settingLinks": "Setting Links",
     "file": "File",
-    "files": "Files"
+    "files": "Files",
+    "fileManager": "File Manager"
   },
   "fields": {
     "id": "ID",
@@ -300,19 +304,117 @@
     "failedToSaveFilter": "Failed to save filter"
   },
   "fileManager": {
+    "noFiles": "No files found",
+    "featureUnavailable": "Feature unavailable",
+    "name": "Name",
+    "size": "Size",
+    "openMenu": "Open Menu",
+    "type": "Type",
+    "created": "Created",
+    "folder": "Folder",
+    "copyLink": "Copy Link",
+    "deleteFile": "Delete File",
+    "previewNotAvailable": "Preview not available",
+    "linkCopied": "Link copied to clipboard",
+    "confirmDelete": "Are you sure you want to delete this file?",
+    "home": "Home",
+    "preview": "Preview",
+    "download": "Download",
+    "rename": "Rename",
+    "upload": "Upload",
+    "newFolder": "New Folder",
+    "move": "Move",
+    "copy": "Copy",
+    "delete": "Delete",
+    "filter": "Filter",
+    "selectedCount": "{count} selected",
+    "searchPlaceholder": "Search files...",
+    "filterType": {
+      "all": "All",
+      "images": "Images",
+      "videos": "Videos",
+      "documents": "Documents",
+      "folders": "Folders"
+    },
+    "sort": "Sort",
+    "sortField": {
+      "name": "Name",
+      "date": "Date",
+      "size": "Size",
+      "type": "Type"
+    },
     "listError": "Failed to load file list",
     "createFolderSuccess": "Folder created successfully",
     "createFolderError": "Failed to create folder",
+    "createFolderFailed": "Failed to create folder",
     "uploadSuccess": "Uploaded",
     "uploadError": "Failed to upload file",
+    "uploadFailed": "Failed to upload file",
     "deleteSuccess": "File deleted",
     "deleteError": "Failed to delete file",
+    "deleteFailed": "Failed to delete file",
     "renameSuccess": "File renamed",
     "renameError": "Failed to rename file",
+    "renameFailed": "Failed to rename file",
     "moveSuccess": "File moved",
     "moveError": "Failed to move file",
+    "moveFailed": "Failed to move file",
     "copySuccess": "File copied",
-    "copyError": "Failed to copy file"
+    "copyError": "Failed to copy file",
+    "copyFailed": "Failed to copy file",
+    "dialogs": {
+      "moveCopy": {
+        "moveTitle": "Move",
+        "copyTitle": "Copy",
+        "items": "items",
+        "description": "Are you sure you want to {action} these items?",
+        "move": "Move",
+        "copy": "Copy",
+        "targetFolder": "Target Folder",
+        "selectFolder": "Select folder",
+        "root": "Root"
+      },
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "rename": {
+        "title": "Rename Item",
+        "description": "Rename item",
+        "newNameLabel": "New Name",
+        "saveButton": "Rename",
+        "emptyNameError": "Name cannot be empty",
+        "invalidNameError": "Invalid file name",
+        "renameError": "Failed to rename item"
+      },
+      "deleteConfirm": {
+        "title": "Delete Item(s)",
+        "singleMessage": "Are you sure you want to delete \"{name}\"?",
+        "multipleMessage": "Are you sure you want to delete {count} items?",
+        "delete": "Delete"
+      },
+      "delete": "Delete",
+      "creating": "Creating...",
+      "upload": {
+        "uploadFiles": "Upload Files",
+        "uploadTo": "Upload file to folder: {path}",
+        "clickToSelect": "Click to select",
+        "orDragDrop": "or drag and drop",
+        "supportedFiles": "Supported files: Images, Videos, Documents",
+        "uploadButton": "Upload",
+        "uploading": "Uploading...",
+        "uploadFailed": "Upload failed",
+        "uploadError": "An error occurred while uploading"
+      },
+      "newFolder": {
+        "title": "New Folder",
+        "description": "Create a new folder to organize your files.",
+        "nameLabel": "Folder Name",
+        "placeholder": "Enter folder name",
+        "createButton": "Create",
+        "emptyNameError": "Folder name cannot be empty",
+        "invalidNameError": "Invalid folder name",
+        "createError": "Failed to create folder"
+      }
+    }
   },
   "upload": {
     "uploadFiles": "Upload Files",

@@ -19,7 +19,8 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/config';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';
@@ -41,7 +42,7 @@ export default function SkillDescriptionListPage() {
   const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.ORDER);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  
+
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);

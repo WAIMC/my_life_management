@@ -11,13 +11,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { PolicyDepartmentMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { policyDepartmentSchema, type PolicyDepartmentFormData } from '@/shared/validation/validation';
+import { getPolicyDepartmentSchema, type PolicyDepartmentFormData } from '@/shared/validation/validation';
 import type { PolicyDepartmentFormProps } from './types';
 
 export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: PolicyDepartmentFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<PolicyDepartmentMst>(ENDPOINTS.MASTER.POLICY_DEPARTMENT);
 
@@ -28,7 +29,7 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
     reset,
     setError,
   } = useForm<PolicyDepartmentFormData>({
-    resolver: zodResolver(policyDepartmentSchema),
+    resolver: zodResolver(getPolicyDepartmentSchema(tValidation)),
     defaultValues: {},
   });
 

@@ -17,7 +17,7 @@ import type { MediaFile, FilterType, SortField, MoveCopyMode } from '@/shared/ty
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
 import { SORT_ORDER } from '@/shared/config/constant';
-import { FILE_MANAGER_SORT_FIELDS, FILTER_TYPE, VIEW_MODE, FILE_TYPE, MOVE_COPY_MODE, TRANSLATION_KEY } from '@/shared/config/constant';
+import { FILE_MANAGER_SORT_FIELDS, FILTER_TYPE, VIEW_MODE, FILE_TYPE, MOVE_COPY_MODE } from '@/shared/config/constant';
 
 export function FileManagerContent() {
   const {
@@ -43,7 +43,7 @@ export function FileManagerContent() {
     moveFiles,
     copyFiles,
   } = useFileManager();
-  
+
   const t = useTranslations('fileManager');
 
   // Dialog states
@@ -77,12 +77,11 @@ export function FileManagerContent() {
     try {
       if (uploadFiles) {
         await uploadFiles(filesToUpload);
-        toast.success(t('uploadSuccess'));
       } else {
         toast.error(t('featureUnavailable'));
       }
     } catch {
-      toast.error(t('uploadFailed'));
+      // Error handled in hook
     }
   };
 
@@ -90,12 +89,11 @@ export function FileManagerContent() {
     try {
       if (createFolder) {
         await createFolder(name);
-        toast.success(t('createFolderSuccess'));
       } else {
         toast.error(t('featureUnavailable'));
       }
     } catch {
-      toast.error(t('createFolderFailed'));
+      // Error handled in hook
     }
   };
 
@@ -108,12 +106,11 @@ export function FileManagerContent() {
     try {
       if (renameFile) {
         await renameFile(file.id, newName);
-        toast.success(t('renameSuccess'));
       } else {
         toast.error(t('featureUnavailable'));
       }
     } catch {
-      toast.error(t('renameFailed'));
+      // Error handled in hook
     }
   };
 
@@ -131,13 +128,12 @@ export function FileManagerContent() {
       const idsToDelete = targetFile ? [targetFile.id] : selectedFiles;
       if (deleteFiles) {
         await deleteFiles(idsToDelete);
-        toast.success(t('deleteSuccess'));
       } else {
         toast.error(t('featureUnavailable'));
       }
       setTargetFile(null);
     } catch {
-      toast.error(t('deleteFailed'));
+      // Error handled in hook
     }
   };
 
@@ -161,22 +157,19 @@ export function FileManagerContent() {
       if (moveCopyMode === MOVE_COPY_MODE.MOVE) {
         if (moveFiles) {
           await moveFiles(idsToProcess, targetPath);
-          toast.success(t(TRANSLATION_KEY.MOVE_SUCCESS));
         } else {
           toast.error(t('featureUnavailable'));
         }
       } else {
         if (copyFiles) {
           await copyFiles(idsToProcess, targetPath);
-          toast.success(t(TRANSLATION_KEY.COPY_SUCCESS));
         } else {
           toast.error(t('featureUnavailable'));
         }
       }
       setTargetFile(null);
     } catch {
-      const errorKey = moveCopyMode === MOVE_COPY_MODE.MOVE ? TRANSLATION_KEY.MOVE_FAILED : TRANSLATION_KEY.COPY_FAILED;
-      toast.error(t(errorKey));
+      // Error handled in hook
     }
   };
 

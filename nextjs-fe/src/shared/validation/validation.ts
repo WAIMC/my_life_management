@@ -2,38 +2,40 @@ import { z } from 'zod';
 import { Gender, Status, AdminStatus, CategoryStatus } from '@/shared/enums';
 import { ValidationRules } from './validation-rules';
 
-// Base validation schemas matching Laravel backend
-export const emailValidation = z.string()
-  .min(1, 'Email is required')
-  .max(ValidationRules.EMAIL_MAX, `Email cannot exceed ${ValidationRules.EMAIL_MAX} characters`)
-  .email('Invalid email address');
+type Translator = (key: string, params?: Record<string, string | number>) => string;
 
-export const usernameValidation = z.string()
-  .min(ValidationRules.USERNAME_MIN, `Username must be at least ${ValidationRules.USERNAME_MIN} characters`)
-  .max(ValidationRules.USERNAME_MAX, `Username cannot exceed ${ValidationRules.USERNAME_MAX} characters`);
+// Base validation schemas matching back end backend
+export const getEmailValidation = (t: Translator) => z.string()
+  .min(1, t('email.required'))
+  .max(ValidationRules.EMAIL_MAX, t('email.maxLength', { max: ValidationRules.EMAIL_MAX }))
+  .email(t('email.invalid'));
 
-export const passwordValidation = z.string()
-  .min(ValidationRules.PASSWORD_MIN, `Password must be at least ${ValidationRules.PASSWORD_MIN} characters`)
-  .max(ValidationRules.PASSWORD_MAX, `Password cannot exceed ${ValidationRules.PASSWORD_MAX} characters`);
+export const getUsernameValidation = (t: Translator) => z.string()
+  .min(ValidationRules.USERNAME_MIN, t('username.minLength', { min: ValidationRules.USERNAME_MIN }))
+  .max(ValidationRules.USERNAME_MAX, t('username.maxLength', { max: ValidationRules.USERNAME_MAX }));
 
-export const firstNameValidation = z.string()
-  .min(1, 'First name is required')
-  .max(ValidationRules.NAME_MAX, `First name cannot exceed ${ValidationRules.NAME_MAX} characters`);
+export const getPasswordValidation = (t: Translator) => z.string()
+  .min(ValidationRules.PASSWORD_MIN, t('password.minLength', { min: ValidationRules.PASSWORD_MIN }))
+  .max(ValidationRules.PASSWORD_MAX, t('password.maxLength', { max: ValidationRules.PASSWORD_MAX }));
 
-export const lastNameValidation = z.string()
-  .min(1, 'Last name is required')
-  .max(ValidationRules.NAME_MAX, `Last name cannot exceed ${ValidationRules.NAME_MAX} characters`);
+export const getFirstNameValidation = (t: Translator) => z.string()
+  .min(1, t('firstName.required'))
+  .max(ValidationRules.NAME_MAX, t('firstName.maxLength', { max: ValidationRules.NAME_MAX }));
 
-export const addressValidation = z.string()
-  .max(ValidationRules.ADDRESS_MAX, `Address cannot exceed ${ValidationRules.ADDRESS_MAX} characters`)
+export const getLastNameValidation = (t: Translator) => z.string()
+  .min(1, t('lastName.required'))
+  .max(ValidationRules.NAME_MAX, t('lastName.maxLength', { max: ValidationRules.NAME_MAX }));
+
+export const getAddressValidation = (t: Translator) => z.string()
+  .max(ValidationRules.ADDRESS_MAX, t('address.maxLength', { max: ValidationRules.ADDRESS_MAX }))
   .optional();
 
-export const phoneValidation = z.string()
-  .max(ValidationRules.PHONE_MAX, `Phone cannot exceed ${ValidationRules.PHONE_MAX} characters`)
+export const getPhoneValidation = (t: Translator) => z.string()
+  .max(ValidationRules.PHONE_MAX, t('phone.maxLength', { max: ValidationRules.PHONE_MAX }))
   .optional();
 
-export const avatarValidation = z.string()
-  .max(ValidationRules.AVATAR_MAX, `Avatar path cannot exceed ${ValidationRules.AVATAR_MAX} characters`)
+export const getAvatarValidation = (t: Translator) => z.string()
+  .max(ValidationRules.AVATAR_MAX, t('avatar.maxLength', { max: ValidationRules.AVATAR_MAX }))
   .optional();
 
 export const genderValidation = z.nativeEnum(Gender);
@@ -42,85 +44,85 @@ export const adminStatusValidation = z.nativeEnum(AdminStatus);
 export const categoryStatusValidation = z.nativeEnum(CategoryStatus);
 
 // Admin schema matching StoreAdminMstRequest
-export const adminSchema = z.object({
-  email: emailValidation,
-  user_name: usernameValidation,
-  password: passwordValidation.optional(),
-  first_name: firstNameValidation,
-  last_name: lastNameValidation,
-  address: addressValidation,
-  phone_number: phoneValidation,
+export const getAdminSchema = (t: Translator) => z.object({
+  email: getEmailValidation(t),
+  user_name: getUsernameValidation(t),
+  password: getPasswordValidation(t).optional(),
+  first_name: getFirstNameValidation(t),
+  last_name: getLastNameValidation(t),
+  address: getAddressValidation(t),
+  phone_number: getPhoneValidation(t),
   birth: z.string().optional(),
   gender: genderValidation,
   status: adminStatusValidation,
   is_active: z.boolean(),
-  avatar: avatarValidation,
+  avatar: getAvatarValidation(t),
 });
 
-export type AdminFormData = z.infer<typeof adminSchema>;
+export type AdminFormData = z.infer<ReturnType<typeof getAdminSchema>>;
 
 // User schema
-export const userSchema = z.object({
-  email: emailValidation,
-  user_name: usernameValidation,
-  password: passwordValidation.optional(),
-  first_name: firstNameValidation,
-  last_name: lastNameValidation,
-  address: addressValidation,
-  phone_number: phoneValidation,
+export const getUserSchema = (t: Translator) => z.object({
+  email: getEmailValidation(t),
+  user_name: getUsernameValidation(t),
+  password: getPasswordValidation(t).optional(),
+  first_name: getFirstNameValidation(t),
+  last_name: getLastNameValidation(t),
+  address: getAddressValidation(t),
+  phone_number: getPhoneValidation(t),
   birth: z.string().optional(),
   gender: genderValidation,
   status: statusValidation,
   is_active: z.boolean(),
-  avatar: avatarValidation,
+  avatar: getAvatarValidation(t),
 });
 
-export type UserFormData = z.infer<typeof userSchema>;
+export type UserFormData = z.infer<ReturnType<typeof getUserSchema>>;
 
 // Category schema
-export const categorySchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+export const getCategorySchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')),
   description: z.string().optional(),
   slug: z.string().optional(),
-  rank_order: z.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
   status: categoryStatusValidation,
   is_display: z.boolean().optional(),
 });
 
-export type CategoryFormData = z.infer<typeof categorySchema>;
+export type CategoryFormData = z.infer<ReturnType<typeof getCategorySchema>>;
 
 // Skill schema
-export const skillSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+export const getSkillSchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')),
   slug: z.string().optional(),
-  rank_order: z.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
 
-export type SkillFormData = z.infer<typeof skillSchema>;
+export type SkillFormData = z.infer<ReturnType<typeof getSkillSchema>>;
 
 // Role schema
-export const roleSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(30, 'Name cannot exceed 30 characters'),
-  permission: z.string().min(1, 'Permission is required').max(50, 'Permission cannot exceed 50 characters'),
+export const getRoleSchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')).max(30, t('name.maxLength', { max: 30 })),
+  permission: z.string().min(1, t('permission.required')).max(50, t('permission.maxLength', { max: 50 })),
   is_active: z.boolean(),
 });
 
-export type RoleFormData = z.infer<typeof roleSchema>;
+export type RoleFormData = z.infer<ReturnType<typeof getRoleSchema>>;
 
 // Department schema
-export const departmentSchema = z.object({
-  code: z.string().min(1, 'Code is required').max(50, 'Code cannot exceed 50 characters'),
-  name: z.string().min(1, 'Name is required'),
+export const getDepartmentSchema = (t: Translator) => z.object({
+  code: z.string().min(1, t('code.required')).max(50, t('code.maxLength', { max: 50 })),
+  name: z.string().min(1, t('name.required')),
   status: statusValidation,
 });
 
-export type DepartmentFormData = z.infer<typeof departmentSchema>;
+export type DepartmentFormData = z.infer<ReturnType<typeof getDepartmentSchema>>;
 
 // Banner schema
-export const bannerSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+export const getBannerSchema = (t: Translator) => z.object({
+  title: z.string().min(1, t('title.required')),
   slug: z.string().optional(),
   description: z.string().optional(),
   link: z.string().optional(),
@@ -129,133 +131,133 @@ export const bannerSchema = z.object({
   status: statusValidation,
 });
 
-export type BannerFormData = z.infer<typeof bannerSchema>;
+export type BannerFormData = z.infer<ReturnType<typeof getBannerSchema>>;
 
 // Feature schema
-export const featureSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+export const getFeatureSchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')),
   group_name: z.string().optional(),
   description: z.string().optional(),
   status: statusValidation,
 });
 
-export type FeatureFormData = z.infer<typeof featureSchema>;
+export type FeatureFormData = z.infer<ReturnType<typeof getFeatureSchema>>;
 
 // Slider schema
-export const sliderSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+export const getSliderSchema = (t: Translator) => z.object({
+  title: z.string().min(1, t('title.required')),
   slug: z.string().optional(),
   link: z.string().optional(),
   image: z.string().optional(),
   status: statusValidation,
 });
 
-export type SliderFormData = z.infer<typeof sliderSchema>;
+export type SliderFormData = z.infer<ReturnType<typeof getSliderSchema>>;
 
 // Social schema
-export const socialSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+export const getSocialSchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')),
   slug: z.string().optional(),
-  link: z.string().url('Must be a valid URL'),
+  link: z.string().url(t('url.invalid')),
   image: z.string().optional(),
-  rank_order: z.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
 
-export type SocialFormData = z.infer<typeof socialSchema>;
+export type SocialFormData = z.infer<ReturnType<typeof getSocialSchema>>;
 
 // Skill Description schema
-export const skillDescriptionSchema = z.object({
-  skill_mgmt_id: z.number().min(1, 'Skill is required'),
-  title: z.string().min(1, 'Title is required'),
+export const getSkillDescriptionSchema = (t: Translator) => z.object({
+  skill_mgmt_id: z.number().min(1, t('skill.required')),
+  title: z.string().min(1, t('title.required')),
   summary: z.string().optional(),
   article: z.string().optional(),
-  rank_order: z.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
 
-export type SkillDescriptionFormData = z.infer<typeof skillDescriptionSchema>;
+export type SkillDescriptionFormData = z.infer<ReturnType<typeof getSkillDescriptionSchema>>;
 
 // API schema
-export const apiSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  path: z.string().min(1, 'Path is required'),
-  type: z.number().min(0, 'Type is required'),
+export const getApiSchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')),
+  path: z.string().min(1, t('path.required')),
+  type: z.number().min(0, t('type.required')),
   method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
   description: z.string().optional(),
-  feature_mst_id: z.number().min(1, 'Feature is required'),
+  feature_mst_id: z.number().min(1, t('feature.required')),
   is_active: z.boolean(),
 });
 
-export type ApiFormData = z.infer<typeof apiSchema>;
+export type ApiFormData = z.infer<ReturnType<typeof getApiSchema>>;
 
 // Token schema
-export const tokenSchema = z.object({
-  account_id: z.number().min(1, 'Account is required'),
-  device_name: z.string().min(1, 'Device name is required'),
+export const getTokenSchema = (t: Translator) => z.object({
+  account_id: z.number().min(1, t('account.required')),
+  device_name: z.string().min(1, t('deviceName.required')),
   ip_address: z.string().optional(),
   expired_at: z.string().optional(),
 });
 
-export type TokenFormData = z.infer<typeof tokenSchema>;
+export type TokenFormData = z.infer<ReturnType<typeof getTokenSchema>>;
 
 // Setting Link schema
-export const settingLinkSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  url: z.string().url('Must be a valid URL'),
+export const getSettingLinkSchema = (t: Translator) => z.object({
+  name: z.string().min(1, t('name.required')),
+  url: z.string().url(t('url.invalid')),
   description: z.string().optional(),
-  rank_order: z.number().min(0, 'Order must be 0 or greater'),
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_active: z.boolean(),
 });
 
-export type SettingLinkFormData = z.infer<typeof settingLinkSchema>;
+export type SettingLinkFormData = z.infer<ReturnType<typeof getSettingLinkSchema>>;
 
 // Policy Department schema
-export const policyDepartmentSchema = z.object({
-  table_name: z.string().min(1, 'Table name is required'),
-  row_id: z.number().min(1, 'Row ID is required'),
+export const getPolicyDepartmentSchema = (t: Translator) => z.object({
+  table_name: z.string().min(1, t('tableName.required')),
+  row_id: z.number().min(1, t('rowId.required')),
 });
 
-export type PolicyDepartmentFormData = z.infer<typeof policyDepartmentSchema>;
+export type PolicyDepartmentFormData = z.infer<ReturnType<typeof getPolicyDepartmentSchema>>;
 
 // Post schema
-export const postSchema = z.object({
+export const getPostSchema = (t: Translator) => z.object({
   id: z.number().optional(),
-  title: z.string().min(1, 'Title is required'),
-  slug: z.string().min(1, 'Slug is required'),
-  content: z.string().min(1, 'Content is required'),
+  title: z.string().min(1, t('title.required')),
+  slug: z.string().min(1, t('slug.required')),
+  content: z.string().min(1, t('content.required')),
   excerpt: z.string().optional(),
-  featured_image: urlSchema,
-  status: statusSchema,
-  is_active: booleanSchema,
-  category_id: z.number().int().positive('Category is required'),
+  featured_image: z.string().url(t('url.invalid')).optional(),
+  status: statusValidation,
+  is_active: z.boolean(),
+  category_id: z.number().int().positive(t('category.required')),
   author_id: z.number().int().positive().optional(),
   published_at: z.string().optional(),
 });
 
-export type PostFormData = z.infer<typeof postSchema>;
+export type PostFormData = z.infer<ReturnType<typeof getPostSchema>>;
 
 // Generic CRUD item schema
-export const crudItemSchema = z.object({
+export const getCrudItemSchema = (t: Translator) => z.object({
   id: z.number().optional(),
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, t('name.required')),
   description: z.string().optional(),
-  status: statusSchema,
-  is_active: booleanSchema,
+  status: statusValidation,
+  is_active: z.boolean(),
 });
 
-export type CrudItemFormData = z.infer<typeof crudItemSchema>;
+export type CrudItemFormData = z.infer<ReturnType<typeof getCrudItemSchema>>;
 
 // Login schema
-export const loginSchema = z.object({
-  user_name: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+export const getLoginSchema = (t: Translator) => z.object({
+  user_name: z.string().min(1, t('username.required', { field: 'Username' })),
+  password: z.string().min(1, t('password.required')),
 });
 
-export type LoginFormData = z.infer<typeof loginSchema>;
+export type LoginFormData = z.infer<ReturnType<typeof getLoginSchema>>;
 
 // Pagination params schema
 export const paginationParamsSchema = z.object({

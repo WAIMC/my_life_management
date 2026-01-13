@@ -3,10 +3,10 @@
  * Handles all API calls for media file management
  */
 
+import { InternalAxiosRequestConfig } from 'axios';
 import { apiClient } from '@/shared/api/client';
 import { ENDPOINTS } from '@/shared/api';
-import { MIME_TYPE_PREFIX } from '@/shared/config/constant';
-import type { PaginatedResponse } from '@/shared/types/api';
+import { MIME_TYPE_PREFIX, FILE_SIZE_UNITS } from '@/shared/config/constant';
 import { API_PATHS } from '@/shared/types/api';
 import type {
   MediaFile,
@@ -16,10 +16,12 @@ import type {
   MoveFileParams,
   DeleteFilesParams,
   CreateFolderParams,
+  CopyFilesParams,
+  MediaApiListResponse,
 } from '@/shared/types/media-file.types';
 
 class MediaFileService {
-  private baseUrl = ENDPOINTS.MEDIA;
+  private baseUrl = ENDPOINTS.MEDIA.FILES;
 
   /**
    * Upload file to server
@@ -43,7 +45,7 @@ class MediaFileService {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      } as unknown as InternalAxiosRequestConfig
     );
     return response.data;
   }
@@ -51,12 +53,12 @@ class MediaFileService {
   /**
    * Get list of media files
    */
-  async list(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
-    const response = await apiClient.get<PaginatedResponse<MediaFile>>(
+  async list(params?: ListFilesParams): Promise<MediaApiListResponse> {
+    const response = await apiClient.get<MediaApiListResponse>(
       `${this.baseUrl}${API_PATHS.LIST}`,
-      params
+      { params } as unknown as InternalAxiosRequestConfig
     );
-    return response.data;
+    return response as unknown as MediaApiListResponse;
   }
 
   /**
@@ -130,7 +132,7 @@ class MediaFileService {
     const firstId = params.ids[0];
     await apiClient.delete(
       `${this.baseUrl}/delete/${firstId}`,
-      { ids: params.ids }
+      { data: { ids: params.ids } } as unknown as InternalAxiosRequestConfig
     );
   }
 
@@ -157,16 +159,15 @@ class MediaFileService {
    * Format file size to human readable format
    */
   formatFileSize(bytes: number): string {
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     let size = bytes;
     let unitIndex = 0;
     
-    while (size >= 1024 && unitIndex < units.length - 1) {
+    while (size >= 1024 && unitIndex < FILE_SIZE_UNITS.length - 1) {
       size /= 1024;
       unitIndex++;
     }
     
-    return `${size.toFixed(2)} ${units[unitIndex]}`;
+    return `${size.toFixed(2)} ${FILE_SIZE_UNITS[unitIndex]}`;
   }
 
   /**
@@ -187,19 +188,20 @@ class MediaFileService {
   /**
    * List folders
    */
-  async listFolders(params?: ListFilesParams): Promise<PaginatedResponse<MediaFile>> {
-    const response = await apiClient.get<PaginatedResponse<MediaFile>>(
+  async listFolders(params?: ListFilesParams): Promise<MediaApiListResponse> {
+    const response = await apiClient.get<MediaApiListResponse>(
       `${this.baseUrl}${API_PATHS.LIST}`,
-      { ...params, is_file: false }
+      { params: { ...params, is_file: false } } as unknown as InternalAxiosRequestConfig
     );
-    return response.data;
+    return response as unknown as MediaApiListResponse;
   }
 
   /**
    * Copy files to different folder
    * Note: Copy functionality not implemented in backend yet
    */
-  async copy(): Promise<{ copied_count: number; copied_ids: number[] }> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async copy(_params: CopyFilesParams): Promise<{ copied_count: number; copied_ids: number[] }> {
     // This is a placeholder for future implementation
     throw new Error('Copy functionality not yet implemented in backend');
   }

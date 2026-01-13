@@ -14,7 +14,7 @@ import type { AvatarUploadProps } from '@/shared/types/data-table.types';
 export function AvatarUpload({
   value,
   onChange,
-  maxSize = UPLOAD_CONFIG.DEFAULT_AVATAR_MAX_SIZE,
+  maxSize = UPLOAD_CONFIG.DEFAULT_AVATAR_MAX_SIZE_MB,
   className,
 }: AvatarUploadProps) {
   const t = useTranslations();

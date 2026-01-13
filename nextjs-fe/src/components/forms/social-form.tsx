@@ -19,13 +19,14 @@ import {
 import type { SocialMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { SocialStatus, SocialStatusLabels, IsActive } from '@/shared/enums';
-import { socialSchema, type SocialFormData } from '@/shared/validation/validation';
+import { getSocialSchema, type SocialFormData } from '@/shared/validation/validation';
 import type { SocialFormProps } from './types';
 
 export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<SocialMgmt>(ENDPOINTS.MANAGEMENT.SOCIAL);
 
@@ -38,7 +39,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
     reset,
     setError,
   } = useForm<SocialFormData>({
-    resolver: zodResolver(socialSchema),
+    resolver: zodResolver(getSocialSchema(tValidation)),
     defaultValues: {
       rank_order: 0,
       status: IsActive.TRUE,

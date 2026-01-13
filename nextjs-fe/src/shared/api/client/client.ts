@@ -108,28 +108,35 @@ class ApiClient {
 
   async get<T>(
     url: string,
-    params?: Record<string, unknown>
+    config?: InternalAxiosRequestConfig
   ): Promise<ApiResponse<T>> {
-    const response = await this.client.get<ApiResponse<T>>(url, { params });
+    const response = await this.client.get<ApiResponse<T>>(url, config);
     return response.data;
   }
 
   async post<T>(
     url: string,
     data?: unknown,
-    config?: Record<string, unknown>
+    config?: InternalAxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  async put<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
-    const response = await this.client.put<ApiResponse<T>>(url, data);
+  async put<T>(
+    url: string,
+    data?: unknown,
+    config?: InternalAxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
+    const response = await this.client.put<ApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  async delete<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
-    const response = await this.client.delete<ApiResponse<T>>(url, { data });
+  async delete<T>(
+    url: string,
+    config?: InternalAxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
+    const response = await this.client.delete<ApiResponse<T>>(url, config);
     return response.data;
   }
 

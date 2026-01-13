@@ -12,7 +12,6 @@ import {
   AuthMessage,
   LoginSuccessPayload,
   RefreshSuccessPayload,
-  LogoutPayload,
   LogoutReason,
   AuthError,
   User,
@@ -121,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         retryCountRef.current = 0;
         dispatch({ type: 'SET_EXPIRES_AT', payload: data.expires_at });
         broadcast({ type: BROADCAST_EVENTS.REFRESH_SUCCESS, payload: { expiresAt: data.expires_at } });
-      } catch (error) {
+      } catch {
         if (!isRetry && retryCountRef.current < DEFAULT_REFRESH_CONFIG.maxRetries!) {
           retryCountRef.current++;
           setTimeout(() => performRefresh(true), DEFAULT_REFRESH_CONFIG.retryDelay!);
@@ -195,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       channel.close();
       channelRef.current = null;
     };
-  }, [handleLogoutSync]);
+  }, [handleLogoutSync, performRefresh]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
@@ -251,9 +250,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const initAuth = async () => {
       try {
-        const data = await authService.getMe();
+        const data = await authService.getMe({ signal: controller.signal });
         const user: User = data.user || data;
         const expiresAt = data.expires_at;
 
@@ -261,13 +262,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw new Error('Invalid auth response: missing expires_at');
         }
 
-        dispatch({ type: 'SET_AUTHENTICATED', payload: { user, expiresAt } });
-      } catch {
-        dispatch({ type: 'SET_LOADING', payload: false });
+        if (!controller.signal.aborted) {
+          dispatch({ type: 'SET_AUTHENTICATED', payload: { user, expiresAt } });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
       }
     };
 
     initAuth();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const contextValue: AuthContextValue = useMemo(

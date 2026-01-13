@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Upload, X, File, AlertCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from "@/shared/utils";
-import type { UploadDialogProps } from '../types';
+import type { UploadDialogProps } from '@/shared/types/file-manager.types';
 import { formatFileSize } from '../utils';
 
 const UPLOAD_PROGRESS_UPDATE_INTERVAL = 200;

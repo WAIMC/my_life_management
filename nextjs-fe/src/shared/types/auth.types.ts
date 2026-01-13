@@ -6,7 +6,7 @@ import type { User } from './api';
 export type { User } from './api';
 
 export interface LoginCredentials {
-  email: string;
+  user_name: string;
   password: string;
   remember?: boolean;
 }
@@ -124,3 +124,25 @@ export type AuthAction =
   | { type: 'CLEAR_ERROR' }
   | { type: 'LOGOUT' }
   | { type: 'RESET' };
+
+// From authType.ts
+export type LoginPayload = {
+  user_name: string;
+  password: string;
+}
+
+export type StoreAuthState = {
+  accessToken: string | null;
+  isAuthenticated: boolean;
+  redirectUrl?: string | null;
+  tabId: string | null; // Current tab ID
+  leaderId: string | null; // ID of leader tab managing refresh
+  refreshAtTime: number | null; // Time when token should be refreshed (in ms)
+  authInitialized: boolean; // Whether auth initialization has completed
+}
+
+export type LoginResponseData = {
+  auth_type: string;
+  ttl: number;
+  access_token: string;
+}

@@ -21,12 +21,13 @@ import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { RoleMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { IsActive, IsActiveLabels } from '@/shared/enums';
-import { roleSchema, type RoleFormData } from '@/shared/validation/validation';
+import { getRoleSchema, type RoleFormData } from '@/shared/validation/validation';
 import type { RoleFormProps } from './types';
 
 export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<RoleMst>(ENDPOINTS.MASTER.ROLE);
 
@@ -39,7 +40,7 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
     reset,
     setError,
   } = useForm<RoleFormData>({
-    resolver: zodResolver(roleSchema),
+    resolver: zodResolver(getRoleSchema(tValidation)),
     defaultValues: {
       is_active: true,
     },

@@ -1,38 +1,21 @@
-'use client';
-
-import { useEffect } from 'react';
 import "./globals.css";
 import { Providers } from './providers';
-import { useTranslations } from 'next-intl';
+import { getMessages } from 'next-intl/server';
+import { MetadataManager } from '@/components/common/metadata-manager';
 
-function MetadataManager() {
-  const t = useTranslations('metadata');
-
-  useEffect(() => {
-    document.title = t('title');
-    
-    // Add or update meta description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', t('description'));
-  }, [t]);
-
-  return null;
-}
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Providing all messages to the client
+  // side is the easiest way to get started
+  const messages = await getMessages();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <Providers>
+        <Providers messages={messages}>
           <MetadataManager />
           {children}
         </Providers>

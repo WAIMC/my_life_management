@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslations } from 'next-intl';
-import type { RenameDialogProps } from '../types';
+import type { RenameDialogProps } from '@/shared/types/file-manager.types';
 import { isValidFileName } from '../utils';
 
 export const RenameDialog = ({
@@ -37,7 +37,7 @@ export const RenameDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
-    
+
     if (!newName.trim()) {
       setError(t('rename.emptyNameError'));
       return;

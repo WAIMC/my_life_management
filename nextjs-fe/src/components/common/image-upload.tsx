@@ -13,7 +13,7 @@ import type { ImageUploadProps } from '@/shared/types/data-table.types';
 export function ImageUpload({
   value,
   onChange,
-  maxSize = UPLOAD_CONFIG.DEFAULT_IMAGE_MAX_SIZE,
+  maxSize = UPLOAD_CONFIG.DEFAULT_IMAGE_MAX_SIZE_MB,
   className,
   label,
   shape = IMAGE_SHAPES.RECTANGLE,

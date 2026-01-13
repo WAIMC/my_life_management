@@ -10,7 +10,6 @@ import { Pagination } from '@/components/common/data-table/pagination';
 import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import type { TokenMst } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { 
@@ -20,7 +19,8 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/config';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';
@@ -42,7 +42,7 @@ export default function TokenListPage() {
   const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.CREATED_AT);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.DESC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  
+
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);

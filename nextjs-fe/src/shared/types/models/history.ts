@@ -1,6 +1,6 @@
 /**
  * History Model Types
- * Auto-generated from Laravel API history models
+ * Auto-generated from back-end API history models
  */
 
 // Base History Interface
@@ -9,8 +9,8 @@ export interface BaseHistory {
   action: 'create' | 'update' | 'delete';
   changed_by: number; // Admin ID who made the change
   changed_at: string;
-  old_values?: Record<string, any>;
-  new_values?: Record<string, any>;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
 }
@@ -83,8 +83,8 @@ export interface SettingLinkMgmtHist extends BaseHistory {
 
 export interface HistoryDiff {
   field: string;
-  oldValue: any;
-  newValue: any;
+  oldValue: unknown;
+  newValue: unknown;
   label?: string;
 }
 

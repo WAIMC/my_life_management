@@ -13,7 +13,7 @@ import { FILTER_TYPE, FILE_TYPE, FILE_SIZE_UNITS, MIME_TYPE_LABELS } from '@/sha
 import type { MediaFile, FilterOptions, SortOptions } from '@/shared/types/file-manager.types';
 
 export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0 || bytes === null || bytes === undefined) return '0 B';
 
   const k = 1024;
   const i = Math.floor(Math.log(bytes) / Math.log(k));

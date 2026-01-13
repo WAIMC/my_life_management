@@ -19,7 +19,8 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/config';
-import { AdvancedSearch, type SearchField, type SearchCriteria } from '@/components/common/advanced-search';
+import { AdvancedSearch } from '@/components/common/advanced-search';
+import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
 import { BulkActions, type BulkAction } from '@/components/common/bulk-actions';
 import { ImportExport } from '@/components/common/import-export';
@@ -41,7 +42,7 @@ export default function SkillListPage() {
   const [sortBy, setSortBy] = useState<string>(SORT_FIELDS.ORDER);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SORT_ORDER.ASC);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  
+
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<number[]>([]);
@@ -117,34 +118,34 @@ export default function SkillListPage() {
     { key: 'created_at', label: tFields('createdAt'), type: 'date' }
   ];
   const bulkActions: BulkAction[] = [
-    { 
-      label: tBulkActions('deleteSelected'), 
-      icon: <Trash2 className="h-4 w-4" />, 
-      variant: 'destructive', 
-      onClick: async (ids) => { await remove(ids); refetch(); }, 
-      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('skill').toLowerCase() }), 
-      confirmTitle: tCrud('deleteEntity', { entity: tEntities('skills') }) 
-    }, 
-    { 
-      label: tBulkActions('activateSelected'), 
-      icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async () => { refetch(); } 
-    }, 
-    { 
-      label: tBulkActions('deactivateSelected'), 
-      icon: <XCircle className="h-4 w-4" />, 
-      onClick: async () => { refetch(); } 
+    {
+      label: tBulkActions('deleteSelected'),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive',
+      onClick: async (ids) => { await remove(ids); refetch(); },
+      confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('skill').toLowerCase() }),
+      confirmTitle: tCrud('deleteEntity', { entity: tEntities('skills') })
+    },
+    {
+      label: tBulkActions('activateSelected'),
+      icon: <CheckCircle className="h-4 w-4" />,
+      onClick: async () => { refetch(); }
+    },
+    {
+      label: tBulkActions('deactivateSelected'),
+      icon: <XCircle className="h-4 w-4" />,
+      onClick: async () => { refetch(); }
     }
   ];
 
-  const handleAdvancedSearch = (criteria: SearchCriteria[]) => { 
-    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {}); 
-    setFilters(newFilters); 
-    setPage(PAGINATION.DEFAULT_PAGE); 
+  const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
+    const newFilters = criteria.reduce((acc, c) => ({ ...acc, [c.field]: c.value }), {});
+    setFilters(newFilters);
+    setPage(PAGINATION.DEFAULT_PAGE);
   };
 
-  const handleImport = async () => { 
-    refetch(); 
+  const handleImport = async () => {
+    refetch();
   };
 
   return (

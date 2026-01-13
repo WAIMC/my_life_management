@@ -21,12 +21,13 @@ import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { DepartmentMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { IsActive, DepartmentStatus, DepartmentStatusLabels } from '@/shared/enums';
-import { departmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
+import { getDepartmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
 import type { DepartmentFormProps } from './types';
 
 export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentFormProps) {
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
+  const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<DepartmentMst>(ENDPOINTS.MASTER.DEPARTMENT);
 
@@ -39,7 +40,7 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
     reset,
     setError,
   } = useForm<DepartmentFormData>({
-    resolver: zodResolver(departmentSchema),
+    resolver: zodResolver(getDepartmentSchema(tValidation)),
     defaultValues: {
       status: DepartmentStatus.ACTIVE as unknown as IsActive,
     },

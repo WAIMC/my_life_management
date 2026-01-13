@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslations } from 'next-intl';
-import type { NewFolderDialogProps } from '../types';
+import type { NewFolderDialogProps } from '@/shared/types/file-manager.types';
 import { isValidFileName } from '../utils';
 
 export const NewFolderDialog = ({
@@ -35,7 +35,7 @@ export const NewFolderDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!folderName.trim()) {
       setError(t('newFolder.emptyNameError'));
       return;

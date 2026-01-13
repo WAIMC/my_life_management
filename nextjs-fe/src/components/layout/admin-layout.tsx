@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/shared/hooks/use-auth";
+import { useAuth } from "@/shared/hooks";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { Content } from "./content";
-import type { AdminLayoutProps } from '@/shared/types/layout.types';
+import type { AdminLayoutProps } from '@/shared/types/ui.types';
 import { useTranslations } from 'next-intl';
 
 export function AdminLayout({ children, className }: AdminLayoutProps) {

@@ -21,16 +21,6 @@ export const authService = {
     return response.data;
   },
 
-  // Note: REGISTER endpoint is not available in the current API
-  // Uncomment when the endpoint is added to ENDPOINTS.AUTH
-  // async register(credentials: RegisterCredentials): Promise<AuthResponse> {
-  //   const response = await apiClient.post<LoginApiResponse>(
-  //     ENDPOINTS.AUTH.REGISTER,
-  //     credentials
-  //   );
-  //   return response.data;
-  // },
-
   async logout(): Promise<void> {
     await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
   },
@@ -42,8 +32,8 @@ export const authService = {
     return response.data;
   },
 
-  async getMe(): Promise<AuthResponse> {
-    const response = await apiClient.get<MeApiResponse>(ENDPOINTS.AUTH.ME);
+  async getMe(config?: InternalAxiosRequestConfig): Promise<AuthResponse> {
+    const response = await apiClient.get<MeApiResponse>(ENDPOINTS.AUTH.ME, config);
     return response.data;
   },
 

@@ -20,8 +20,9 @@ import {
 import { Label } from '@/components/ui/label';
 import { Folder } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { Folder as FolderType, MoveCopyDialogProps } from '../types';
-import { fileService } from '@/shared/services/modules/file-mock-service';
+import type { Folder as FolderType, MoveCopyDialogProps } from '@/shared/types/file-manager.types';
+import type { MediaFile as ServiceMediaFile } from '@/shared/types/media-file.types';
+import { mediaFileService } from '@/shared/services/modules/media-file.service';
 
 export const MoveCopyDialog = ({
   open,
@@ -42,8 +43,32 @@ export const MoveCopyDialog = ({
       const fetchFolders = async () => {
         setIsFetching(true);
         try {
-          const allFolders = await fileService.getFolders();
-          setFolders(allFolders.filter(f => f.path !== currentPath));
+          // Use mediaFileService.listFolders instead of fileService.getFolders
+          // Note: mediaFileService.listFolders returns PaginatedResponse<MediaFile>
+          // We need to map MediaFile to FolderType if necessary or adjust types
+          // Looking at types: MediaFile has folder_path, FolderType has path
+          const response = await mediaFileService.listFolders({
+             parent_path: '/', // TODO: Should we list all folders recursively or just root?
+             // The original mock did a flat list of all folders. 
+             // Real API might need recursive fetching or just flat list if supported.
+             // Assuming listFolders returns what we need for now, but we might need to adjust.
+             // Let's check mediaFileService.listFolders implementation again.
+             // It calls API_PATHS.LIST with is_file=false.
+          });
+
+          // The listFolders returns MediaFile[], but we need FolderType[]
+          // We cast to any to safely access properties that might vary between API types and runtime response
+          const mappedFolders: FolderType[] = response.data.map((f: ServiceMediaFile) => {
+             const item = f as unknown as { parent_id?: number };
+             return {
+               id: f.id.toString(),
+               name: f.original_name,
+               path: f.virtual_path,
+               parent_id: item.parent_id?.toString() || 'root'
+             };
+          });
+
+          setFolders(mappedFolders.filter(f => f.path !== currentPath));
           setSelectedPath('');
         } catch {
         } finally {

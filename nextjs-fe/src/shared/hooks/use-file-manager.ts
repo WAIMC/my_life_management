@@ -60,7 +60,7 @@ export const useFileManager = (): FileManagerContextType => {
           owner_id: String(file.workspace_id || 0),
           created_at: file.created_at as string,
           updated_at: file.updated_at as string,
-          type: file.is_file === false ? FILE_TYPE.FOLDER : FILE_TYPE.FILE
+          type: !file.is_file ? FILE_TYPE.FOLDER : FILE_TYPE.FILE
         };
       });
       

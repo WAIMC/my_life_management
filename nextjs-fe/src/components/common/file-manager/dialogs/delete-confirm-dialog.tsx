@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
-import type { DeleteConfirmDialogProps } from '../types';
+import type { DeleteConfirmDialogProps } from '@/shared/types/file-manager.types';
 
 export const DeleteConfirmDialog = ({
   open,

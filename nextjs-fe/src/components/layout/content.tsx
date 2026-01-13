@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils";
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { UI_CONSTANTS } from '@/shared/config';
-import type { ContentProps } from '@/shared/types/layout.types';
+import type { ContentProps } from '@/shared/types/ui.types';
 
 export function Content({ 
   children, 
