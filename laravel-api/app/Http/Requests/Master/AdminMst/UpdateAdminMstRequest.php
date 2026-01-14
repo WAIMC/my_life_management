@@ -42,7 +42,7 @@ class UpdateAdminMstRequest extends FormRequest
     return [
       'id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER, Rule::exists(AdminMst::class, 'id')],
       'email' => ['required', 'email:rfc,dns', 'min:' . CommonVal::MIN_VARCHAR, 'max:30', Rule::unique('admin_mst')->ignore($this->route('id')),],
-      'user_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
+      'user_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50', Rule::unique('admin_mst', 'user_name')->ignore($this->route('id')),],
       'password' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
       'first_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:20',],
       'last_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:20',],

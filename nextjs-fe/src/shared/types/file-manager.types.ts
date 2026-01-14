@@ -140,6 +140,7 @@ export interface MoveCopyDialogProps {
   count: number;
   onConfirm: (targetPath: string) => Promise<void>;
   currentPath: string;
+  selectedFileIds: string[]; // IDs of files/folders being moved
 }
 
 export interface NewFolderDialogProps {

@@ -63,8 +63,8 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         address: initialData.address || '',
         phone_number: initialData.phone_number || '',
         birth: formatDateForInput(initialData.birth),
-        gender: initialData.gender,
-        status: initialData.status,
+        gender: initialData.gender ? Number(initialData.gender) : Gender.MALE,
+        status: initialData.status !== undefined ? Number(initialData.status) : AdminStatus.ACTIVE,
         is_active: initialData.is_active,
         avatar: initialData.avatar,
       });
@@ -261,7 +261,8 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             {tLabels('gender')} <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={genderValue?.toString() ?? ''}
+            key={String(genderValue)}
+            value={genderValue !== undefined && genderValue !== null ? String(genderValue) : ''}
             onValueChange={(value) => setValue('gender', Number(value) as Gender)}
           >
             <SelectTrigger>
@@ -282,7 +283,8 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={statusValue?.toString() ?? ''}
+            key={String(statusValue)}
+            value={statusValue !== undefined && statusValue !== null ? String(statusValue) : ''}
             onValueChange={(value) => setValue('status', Number(value) as AdminStatus)}
           >
             <SelectTrigger>

@@ -9,6 +9,7 @@ import type {
   FilterValue,
 } from '@/shared/types/api';
 import { PAGINATION, SORT_ORDER } from '@/shared/config/constant';
+import { getPaginationInfo } from '@/shared/utils/pagination';
 
 /**
  * Generic hook for fetching paginated data from API using TanStack Query
@@ -64,7 +65,7 @@ export function useApiData<T>(
 
     const response = await apiClient.get<PaginatedResponse<T>>(
       `${endpoint}/list`,
-      params
+      { params }
     );
 
     return response.data;
@@ -80,28 +81,18 @@ export function useApiData<T>(
   });
 
   // Extract pagination info
-  const paginationData = query.data || {
-    data: [],
-    current_page: PAGINATION.DEFAULT_PAGE,
-    last_page: PAGINATION.DEFAULT_TOTAL_PAGES,
-    total: PAGINATION.DEFAULT_TOTAL,
-    per_page: PAGINATION.DEFAULT_PER_PAGE,
-    from: PAGINATION.DEFAULT_FROM,
-    to: PAGINATION.DEFAULT_TO,
-  };
+
+  const responseData = query.data;
+
+
+
+  const paginationInfo = getPaginationInfo(responseData);
 
   return {
-    data: paginationData.data || [],
+    data: responseData?.data || [],
     loading: query.isLoading,
     error: query.error as Error | null,
-    pagination: {
-      currentPage: paginationData.current_page,
-      lastPage: paginationData.last_page,
-      total: paginationData.total,
-      perPage: paginationData.per_page,
-      from: paginationData.from,
-      to: paginationData.to,
-    },
+    pagination: paginationInfo,
     refetch: () => {
       query.refetch();
     },

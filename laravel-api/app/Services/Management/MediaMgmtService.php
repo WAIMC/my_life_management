@@ -12,210 +12,226 @@ use Exception;
 
 class MediaMgmtService extends BaseService
 {
-    public function __construct(
-        protected MediaMgmtInterface $mediaMgmt,
-        protected MinioService $minioService
-    ) {}
+  public function __construct(
+    protected MediaMgmtInterface $mediaMgmt,
+    protected MinioService $minioService
+  ) {}
 
-    protected function getHistoryRepository()
-    {
-        return null; // No history tracking for media
+  protected function getHistoryRepository()
+  {
+    return null; // No history tracking for media
+  }
+
+  protected function getHistoryForeignKey(): string
+  {
+    return '';
+  }
+
+  /**
+   * List media (files and folders)
+   */
+  public function list(array $payload): array
+  {
+    $list = $this->mediaMgmt->list($payload);
+
+    // Manually transform to array to avoid ResourceCollection pagination wrapper
+    return $list->map(function ($item) {
+      return (new \App\Http\Resources\Management\MediaFileResource($item))->resolve();
+    })->values()->all();
+  }
+
+  /**
+   * Store media (file upload or folder creation)
+   */
+  public function store(array $payload, ?UploadedFile $file = null): int
+  {
+    // If file is provided, upload file
+    if ($file) {
+      return $this->uploadFile($file, $payload);
     }
 
-    protected function getHistoryForeignKey(): string
-    {
-        return '';
+    // Otherwise, create folder
+    return $this->createFolder($payload);
+  }
+
+  /**
+   * Update media (rename or move)
+   */
+  public function update(array $payload): int
+  {
+    $media = $this->mediaMgmt->find($payload['id']);
+
+    if (!$media) {
+      throw new Exception('Media not found');
     }
 
-    /**
-     * List media (files and folders)
-     */
-    public function list(array $payload): array
-    {
-        $list = $this->mediaMgmt->list($payload);
-        
-        // Manually transform to array to avoid ResourceCollection pagination wrapper
-        return $list->map(function ($item) {
-            return (new \App\Http\Resources\Management\MediaFileResource($item))->resolve();
-        })->values()->all();
+    // If new_parent_path is provided, it's a move operation
+    if (isset($payload['new_parent_path'])) {
+      return $this->move($payload, $media);
     }
 
-    /**
-     * Store media (file upload or folder creation)
-     */
-    public function store(array $payload, ?UploadedFile $file = null): int
-    {
-        // If file is provided, upload file
-        if ($file) {
-            return $this->uploadFile($file, $payload);
-        }
-        
-        // Otherwise, create folder
-        return $this->createFolder($payload);
+    // Otherwise, it's a rename operation
+    if (isset($payload['name'])) {
+      return $this->rename($payload, $media);
     }
 
-    /**
-     * Update media (rename or move)
-     */
-    public function update(array $payload): int
-    {
-        $media = $this->mediaMgmt->find($payload['id']);
+    throw new Exception('Either name or new_parent_path must be provided');
+  }
 
-        if (!$media) {
-            throw new Exception('Media not found');
-        }
+  /**
+   * Delete (file or folder)
+   */
+  public function delete(array $payload): void
+  {
+    $ids = $payload['ids'] ?? [];
 
-        // If new_parent_path is provided, it's a move operation
-        if (isset($payload['new_parent_path'])) {
-            return $this->move($payload, $media);
-        }
+    foreach ($ids as $id) {
+      $media = $this->mediaMgmt->find($id);
 
-        // Otherwise, it's a rename operation
-        if (isset($payload['name'])) {
-            return $this->rename($payload, $media);
-        }
-
-        throw new Exception('Either name or new_parent_path must be provided');
+      if ($media && $media->isFile() && $media->storage_path) {
+        // Delete from MinIO
+        $this->minioService->delete($media->storage_path);
+      }
     }
 
-    /**
-     * Delete (file or folder)
-     */
-    public function delete(array $payload): void
-    {
-        $ids = $payload['ids'] ?? [];
+    // Soft delete in DB
+    $this->mediaMgmt->executeDelete($ids);
+  }
 
-        foreach ($ids as $id) {
-            $media = $this->mediaMgmt->find($id);
+  /**
+   * Create folder (internal method)
+   */
+  protected function createFolder(array $payload): int
+  {
+    $parentPath = $payload['parent_path'] ?? '/';
+    $folderName = $payload['name'];
 
-            if ($media && $media->isFile() && $media->storage_path) {
-                // Delete from MinIO
-                $this->minioService->delete($media->storage_path);
-            }
-        }
+    $virtualPath = rtrim($parentPath, '/') . '/' . $folderName . '/';
 
-        // Soft delete in DB
-        $this->mediaMgmt->executeDelete($ids);
+    $data = [
+      'workspace_id' => $payload['workspace_id'] ?? null,
+      'is_file' => MediaConst::TYPE_FOLDER,
+      'virtual_path' => $virtualPath,
+      'storage_path' => null,  // Folders don't have storage path
+      'original_name' => $folderName,
+      'is_delete' => false,
+    ];
+
+    return $this->mediaMgmt->executeStore($data);
+  }
+
+  /**
+   * Upload file (internal method)
+   */
+  protected function uploadFile(UploadedFile $file, array $payload): int
+  {
+    $parentPath = $payload['parent_path'] ?? '/';
+    $workspaceId = $payload['workspace_id'] ?? null;
+
+    // Upload to MinIO
+    $uploadResult = $this->minioService->upload($file, $workspaceId);
+
+    // Extract metadata
+    $metadata = $this->extractMetadata($file);
+
+    // Virtual path
+    $virtualPath = rtrim($parentPath, '/') . '/' . $file->getClientOriginalName();
+
+    $data = [
+      'workspace_id' => $workspaceId,
+      'is_file' => MediaConst::TYPE_FILE,
+      'virtual_path' => $virtualPath,
+      'storage_path' => $uploadResult['storage_path'],
+      'original_name' => $file->getClientOriginalName(),
+      'extension' => $file->getClientOriginalExtension(),
+      'mime_type' => $file->getMimeType(),
+      'size' => $uploadResult['size'],
+      'minio_bucket' => $uploadResult['bucket'],
+      'minio_object_key' => $uploadResult['object_key'],
+      'minio_etag' => $uploadResult['etag'],
+      'url' => $uploadResult['url'],
+      'width' => $metadata['width'] ?? null,
+      'height' => $metadata['height'] ?? null,
+      'duration' => $metadata['duration'] ?? null,
+      'is_delete' => false,
+    ];
+
+    return $this->mediaMgmt->executeStore($data);
+  }
+
+  /**
+   * Rename (internal method)
+   */
+  protected function rename(array $payload, $media): int
+  {
+    $newName = $payload['name'];
+    $parentPath = dirname($media->virtual_path);
+    $newVirtualPath = rtrim($parentPath, '/') . '/' . $newName;
+
+    if (!$media->isFile()) {
+      $newVirtualPath .= '/';
     }
 
-    /**
-     * Create folder (internal method)
-     */
-    protected function createFolder(array $payload): int
-    {
-        $parentPath = $payload['parent_path'] ?? '/';
-        $folderName = $payload['name'];
+    $updateData = [
+      'id' => $media->id,
+      'original_name' => $newName,
+      'virtual_path' => $newVirtualPath,
+    ];
 
-        $virtualPath = rtrim($parentPath, '/') . '/' . $folderName . '/';
+    return $this->mediaMgmt->executeUpdate($updateData);
+  }
 
-        $data = [
-            'workspace_id' => $payload['workspace_id'] ?? null,
-            'is_file' => MediaConst::TYPE_FOLDER,
-            'virtual_path' => $virtualPath,
-            'storage_path' => null,  // Folders don't have storage path
-            'original_name' => $folderName,
-            'is_delete' => false,
-        ];
+  /**
+   * Move (internal method)
+   */
+  protected function move(array $payload, $media): int
+  {
+    $newParentPath = $payload['new_parent_path'] ?? '/';
+    $currentVirtualPath = $media->virtual_path;
 
-        return $this->mediaMgmt->executeStore($data);
+    // Build new virtual path
+    $newVirtualPath = rtrim($newParentPath, '/') . '/' . $media->original_name;
+
+    if (!$media->isFile()) {
+      $newVirtualPath .= '/';
+
+      // IMPORTANT: Prevent moving folder into itself or its own subfolder
+      // If new path starts with current path, it means we're trying to move inside itself
+      // Example: moving /documents/ to /documents/subfolder/ would create: /documents/subfolder/documents/
+      // This would make the folder disappear from the original location
+      if (str_starts_with($newVirtualPath, $currentVirtualPath)) {
+        throw new Exception('Cannot move folder into itself or its subfolder');
+      }
     }
 
-    /**
-     * Upload file (internal method)
-     */
-    protected function uploadFile(UploadedFile $file, array $payload): int
-    {
-        $parentPath = $payload['parent_path'] ?? '/';
-        $workspaceId = $payload['workspace_id'] ?? null;
-
-        // Upload to MinIO
-        $uploadResult = $this->minioService->upload($file, $workspaceId);
-
-        // Extract metadata
-        $metadata = $this->extractMetadata($file);
-
-        // Virtual path
-        $virtualPath = rtrim($parentPath, '/') . '/' . $file->getClientOriginalName();
-
-        $data = [
-            'workspace_id' => $workspaceId,
-            'is_file' => MediaConst::TYPE_FILE,
-            'virtual_path' => $virtualPath,
-            'storage_path' => $uploadResult['storage_path'],
-            'original_name' => $file->getClientOriginalName(),
-            'extension' => $file->getClientOriginalExtension(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $uploadResult['size'],
-            'minio_bucket' => $uploadResult['bucket'],
-            'minio_object_key' => $uploadResult['object_key'],
-            'minio_etag' => $uploadResult['etag'],
-            'url' => $uploadResult['url'],
-            'width' => $metadata['width'] ?? null,
-            'height' => $metadata['height'] ?? null,
-            'duration' => $metadata['duration'] ?? null,
-            'is_delete' => false,
-        ];
-
-        return $this->mediaMgmt->executeStore($data);
+    // Additional check: if new path equals current path, no need to move (keep original position)
+    if ($newVirtualPath === $currentVirtualPath) {
+      return $media->id; // Return same ID, no changes needed
     }
 
-    /**
-     * Rename (internal method)
-     */
-    protected function rename(array $payload, $media): int
-    {
-        $newName = $payload['name'];
-        $parentPath = dirname($media->virtual_path);
-        $newVirtualPath = rtrim($parentPath, '/') . '/' . $newName;
+    $updateData = [
+      'id' => $media->id,
+      'virtual_path' => $newVirtualPath,
+    ];
 
-        if (!$media->isFile()) {
-            $newVirtualPath .= '/';
-        }
+    return $this->mediaMgmt->executeUpdate($updateData);
+  }
 
-        $updateData = [
-            'id' => $media->id,
-            'original_name' => $newName,
-            'virtual_path' => $newVirtualPath,
-        ];
+  /**
+   * Extract metadata from file
+   */
+  protected function extractMetadata(UploadedFile $file): array
+  {
+    $metadata = [];
 
-        return $this->mediaMgmt->executeUpdate($updateData);
+    if (str_starts_with($file->getMimeType(), 'image/')) {
+      $imageInfo = getimagesize($file->getRealPath());
+      if ($imageInfo) {
+        $metadata['width'] = $imageInfo[0];
+        $metadata['height'] = $imageInfo[1];
+      }
     }
 
-    /**
-     * Move (internal method)
-     */
-    protected function move(array $payload, $media): int
-    {
-        $newParentPath = $payload['new_parent_path'] ?? '/';
-        $newVirtualPath = rtrim($newParentPath, '/') . '/' . $media->original_name;
-
-        if (!$media->isFile()) {
-            $newVirtualPath .= '/';
-        }
-
-        $updateData = [
-            'id' => $media->id,
-            'virtual_path' => $newVirtualPath,
-        ];
-
-        return $this->mediaMgmt->executeUpdate($updateData);
-    }
-
-    /**
-     * Extract metadata from file
-     */
-    protected function extractMetadata(UploadedFile $file): array
-    {
-        $metadata = [];
-
-        if (str_starts_with($file->getMimeType(), 'image/')) {
-            $imageInfo = getimagesize($file->getRealPath());
-            if ($imageInfo) {
-                $metadata['width'] = $imageInfo[0];
-                $metadata['height'] = $imageInfo[1];
-            }
-        }
-
-        return $metadata;
-    }
+    return $metadata;
+  }
 }

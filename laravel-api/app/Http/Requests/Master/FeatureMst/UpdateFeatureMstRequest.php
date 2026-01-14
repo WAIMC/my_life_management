@@ -31,7 +31,6 @@ class UpdateFeatureMstRequest extends FormRequest
       'id' => ['required', 'integer', 'min:1', Rule::exists(FeatureMst::class, 'id')],
       'name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'group_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
-      'description' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
       'status' => ['required', new Enum(StatusEnum::class),],
     ];
   }
@@ -41,7 +40,6 @@ class UpdateFeatureMstRequest extends FormRequest
     return [
       'name' => __('messages.name'),
       'group_name' => __('messages.group_name'),
-      'description' => __('messages.description'),
       'status' => __('messages.status'),
       'is_delete' => __('messages.is_delete'),
     ];

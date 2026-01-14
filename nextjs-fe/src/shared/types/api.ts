@@ -33,6 +33,26 @@ export interface PaginatedResponse<T> {
   total: number;
 }
 
+export interface PaginationSource {
+  meta?: {
+    current_page?: number;
+    last_page?: number;
+    total?: number;
+    per_page?: number;
+    from?: number;
+    to?: number;
+  };
+  current_page?: number;
+  currentPage?: number;
+  last_page?: number;
+  lastPage?: number;
+  total?: number;
+  per_page?: number;
+  perPage?: number;
+  from?: number;
+  to?: number;
+}
+
 export interface PaginationLink {
   url: string | null;
   label: string;
@@ -207,7 +227,6 @@ export interface FeatureMst {
   id: number;
   name: string;
   group_name?: string;
-  description?: string;
   status: number;
   is_delete: boolean;
   updated_at: string;

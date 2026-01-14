@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { FeatureStatus, IsActive, FeatureStatusLabels } from '@/shared/enums';
+import { FeatureStatus, FeatureStatusLabels } from '@/shared/enums';
 import { getFeatureSchema, type FeatureFormData } from '@/shared/validation/validation';
 import type { FeatureFormProps } from './types';
 
@@ -29,6 +29,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
   const tValidation = useTranslations('validation');
+  
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<FeatureMst>(ENDPOINTS.MASTER.FEATURE);
 
@@ -43,7 +44,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
   } = useForm<FeatureFormData>({
     resolver: zodResolver(getFeatureSchema(tValidation)),
     defaultValues: {
-      status: FeatureStatus.ACTIVE as unknown as IsActive,
+      status: FeatureStatus.ACTIVE,
     },
   });
 
@@ -51,14 +52,14 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
     if (initialData) {
       reset({
         name: initialData.name,
-        description: initialData.description || '',
+        group_name: initialData.group_name || '',
         status: initialData.status,
       });
     } else {
       reset({
         name: '',
-        description: '',
-        status: FeatureStatus.ACTIVE as unknown as IsActive,
+        group_name: '',
+        status: FeatureStatus.ACTIVE,
       });
     }
   }, [initialData, reset]);
@@ -107,9 +108,20 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">{tLabels('description')}</Label>
-        <Textarea id="description" {...register('description')} rows={3} />
+        <Label htmlFor="group_name">
+          {tLabels('groupName')} <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="group_name"
+          {...register('group_name')}
+          className={errors.group_name ? 'border-red-500' : ''}
+        />
+        {errors.group_name && (
+          <p className="text-sm text-red-500">{errors.group_name.message}</p>
+        )}
       </div>
+
+
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -118,7 +130,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
           </Label>
           <Select
             value={statusValue?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
+            onValueChange={(value) => setValue('status', Number(value) as FeatureStatus)}
           >
             <SelectTrigger>
               <SelectValue />

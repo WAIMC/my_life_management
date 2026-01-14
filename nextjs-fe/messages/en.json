@@ -65,7 +65,17 @@
     "noChangesToSave": "No changes to save",
     "relationshipsUpdatedSuccessfully": "Relationships updated successfully",
     "failedToLoad": "Failed to load",
-    "checkConsole": "Check console"
+    "checkConsole": "Check console",
+    "signIn": "Sign In",
+    "redirecting": "Redirecting",
+    "reset": "Reset",
+    "preview": "Preview",
+    "passwordRequired": "Password Required",
+    "skills": "Skills",
+    "skillsManagementComingSoon": "Skills Management Coming Soon",
+    "policyDepartments": "Policy Departments",
+    "junctionManagementComingSoon": "Junction Management Coming Soon",
+    "skill": "Skill"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -104,7 +114,8 @@
     "E0502": "Bad Gateway",
     "E0503": "Service Unavailable",
     "E0504": "Gateway Timeout",
-    "E1000": "Cannot connect to server. Please check your network connection."
+    "E1000": "Cannot connect to server. Please check your network connection.",
+    "support": "Support"
   },
   "header": {
     "notifications": "Notifications",
@@ -250,7 +261,15 @@
     "token": "Token",
     "skillId": "Skill ID",
     "image": "Image",
-    "link": "Link"
+    "link": "Link",
+    "tableName": "Table Name",
+    "rowId": "Row ID",
+    "summary": "Summary",
+    "slug": "Slug",
+    "accountId": "Account ID",
+    "deviceName": "Device Name",
+    "ipAddress": "IP Address",
+    "expiredAt": "Expired At"
   },
   "management": {
     "title": "{entity} Management",
@@ -281,6 +300,7 @@
     "preview": "Preview",
     "avatarPreview": "Avatar preview",
     "invalidFileType": "Invalid file type. Accepted: {accept}",
+    "selectImageFile": "Please select an image file",
     "fileSizeExceeded": "File size must be less than {maxSize}MB",
     "fileSizeExceeds": "File size exceeds {maxSize}",
     "uploadFailed": "Upload failed",
@@ -293,7 +313,8 @@
     "delete": "Delete",
     "previous": "Previous",
     "next": "Next",
-    "pageOf": "Page {page} of {totalPages}"
+    "pageOf": "Page {page} of {totalPages}",
+    "changeImage": "Change Image"
   },
   "savedFilters": {
     "filterName": "Filter name",
@@ -301,7 +322,13 @@
     "filterSaved": "Filter saved successfully",
     "deleteFilterConfirm": "Are you sure you want to delete this filter?",
     "enterFilterName": "Please enter a filter name",
-    "failedToSaveFilter": "Failed to save filter"
+    "failedToSaveFilter": "Failed to save filter",
+    "defaultFilterUpdated": "Default Filter Updated",
+    "savedFilters": "Saved Filters",
+    "noSavedFilters": "No Saved Filters",
+    "saveCurrentFilter": "Save Current Filter",
+    "saveFilterTitle": "Save Filter Title",
+    "saveFilterDescription": "Save Filter Description"
   },
   "fileManager": {
     "noFiles": "No files found",
@@ -414,11 +441,31 @@
         "invalidNameError": "Invalid folder name",
         "createError": "Failed to create folder"
       }
+    },
+    "loading": "Loading",
+    "sidebar": {
+      "title": "Title",
+      "foldersList": "Folders List",
+      "images": "Images",
+      "videos": "Videos",
+      "documents": "Documents",
+      "recent": "Recent",
+      "shared": "Shared"
     }
   },
   "upload": {
     "uploadFiles": "Upload Files",
-    "uploadTo": "Upload file to folder: {path}"
+    "uploadTo": "Upload file to folder: {path}",
+    "avatar": "Avatar",
+    "image": "Image",
+    "imageFormats": "PNG, JPG, GIF up to {maxSize}MB",
+    "uploadError": "Upload error occurred",
+    "clickToSelect": "Click to select",
+    "orDragDrop": "or drag and drop",
+    "supportedFiles": "Supported files: Images, Videos, Documents",
+    "uploadButton": "Upload",
+    "uploadFailed": "Upload Failed",
+    "uploading": "Uploading..."
   },
   "forms": {
     "labels": {
@@ -440,7 +487,23 @@
       "deviceName": "Device Name",
       "ipAddress": "IP Address",
       "expiredAt": "Expired At",
-      "iconImageUrl": "Icon/Image URL"
+      "iconImageUrl": "Icon/Image URL",
+      "feature": "Feature",
+      "name": "Name",
+      "groupName": "Group Name",
+      "path": "Path",
+      "method": "Method",
+      "description": "Description",
+      "title": "Title",
+      "linkUrl": "Link URL",
+      "position": "Position",
+      "slug": "Slug",
+      "displayOrder": "Display Order",
+      "isDisplay": "Is Display",
+      "code": "Code",
+      "tableName": "Table Name",
+      "rowId": "Row ID",
+      "permission": "Permission"
     },
     "placeholders": {
       "apiName": "API Name",
@@ -455,11 +518,34 @@
       "socialIcon": "e.g. fa-brands fa-facebook",
       "socialUrl": "https://example.com/profile",
       "enterToken": "Enter token key",
-      "passwordHidden": "••••••••"
+      "passwordHidden": "••••••••",
+      "leaveBlankToKeepCurrent": "Leave Blank To Keep Current",
+      "selectFeature": "Select Feature",
+      "selectSkill": "Select Skill",
+      "selectAccount": "Select Account",
+      "deviceName": "Device Name",
+      "ipAddress": "IP Address"
     }
   },
   "history": {
-    "restoreConfirm": "Are you sure you want to restore this version?"
+    "restoreConfirm": "Are you sure you want to restore this version?",
+    "nullValue": "Null Value",
+    "noChanges": "No Changes",
+    "changes": "Changes",
+    "oldValue": "Old Value",
+    "newValue": "New Value",
+    "loading": "Loading",
+    "noHistory": "No History",
+    "title": "Title",
+    "description": "Description",
+    "unknownTime": "Unknown Time",
+    "invalidDate": "Invalid Date",
+    "unknownDate": "Unknown Date",
+    "ip": "IP",
+    "noTimeline": "No Timeline",
+    "timeline": "Timeline",
+    "timelineDescription": "Timeline Description",
+    "user": "User: {id}"
   },
   "importExport": {
     "exportFailed": "Export failed",
@@ -468,7 +554,17 @@
     "exported": "Exported {moduleName} as {format}",
     "imported": "Imported {moduleName} successfully",
     "templateDownloaded": "Downloaded {format} template",
-    "templateDownloadFailed": "Template download failed"
+    "templateDownloadFailed": "Template download failed",
+    "title": "Title",
+    "description": "Description",
+    "export": "Export",
+    "import": "Import",
+    "selectFormat": "Select Format",
+    "exportDescription": "Export Description",
+    "selected": "Selected",
+    "importAs": "Import As",
+    "or": "Or",
+    "downloadTemplate": "Download Template"
   },
   "validation": {
     "required": "{field} is required",
@@ -543,6 +639,10 @@
     "account": {
       "required": "Account is required"
     },
+    "groupName": {
+      "required": "Group Name is required",
+      "maxLength": "Group Name cannot exceed {max} characters"
+    },
     "deviceName": {
       "required": "Device name is required"
     },
@@ -557,6 +657,41 @@
     },
     "rowId": {
       "required": "Row ID is required"
-    }
+    },
+    "invalidEmail": "Invalid Email",
+    "saving": "Saving"
+  },
+  "advancedSearch": {
+    "contains": "Contains",
+    "equals": "Equals",
+    "startsWith": "Starts With",
+    "endsWith": "Ends With",
+    "greaterThan": "Greater Than",
+    "lessThan": "Less Than",
+    "between": "Between",
+    "on": "On",
+    "before": "Before",
+    "after": "After",
+    "notEquals": "Not Equals",
+    "title": "Title",
+    "description": "Description",
+    "field": "Field",
+    "operator": "Operator",
+    "value": "Value",
+    "addCriteria": "Add Criteria"
+  },
+  "view": "View",
+  "download": "Download",
+  "delete": "Delete",
+  "previous": "Previous",
+  "next": "Next",
+  "multiSelect": {
+    "placeholder": "Placeholder",
+    "search": "Search",
+    "noItems": "No Items"
+  },
+  "permissions": {
+    "title": "Title",
+    "description": "Description"
   }
 }

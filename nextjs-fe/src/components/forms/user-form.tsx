@@ -65,8 +65,9 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         address: initialData.address || '',
         phone_number: initialData.phone_number || '',
         birth: initialData.birth || '',
-        gender: initialData.gender,
-        status: initialData.status,
+
+        gender: initialData.gender ? Number(initialData.gender) : Gender.MALE,
+        status: initialData.status !== undefined ? Number(initialData.status) : IsActive.TRUE,
         is_active: initialData.is_active,
         password: '',
       });
@@ -252,7 +253,8 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         <div className="space-y-2">
           <Label htmlFor="gender">{tLabels('gender')} <span className="text-red-500">*</span></Label>
           <Select
-            value={genderValue?.toString()}
+            key={`gender-${String(genderValue)}`}
+            value={genderValue !== undefined && genderValue !== null ? String(genderValue) : ''}
             onValueChange={(value) => setValue('gender', Number(value) as Gender)}
           >
             <SelectTrigger>
@@ -271,7 +273,8 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
             {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={statusValue?.toString()}
+            key={`status-${String(statusValue)}`}
+            value={statusValue !== undefined && statusValue !== null ? String(statusValue) : ''}
             onValueChange={(value) => setValue('status', Number(value) as IsActive)}
           >
             <SelectTrigger>

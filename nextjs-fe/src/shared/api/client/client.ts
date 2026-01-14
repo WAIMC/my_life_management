@@ -2,6 +2,7 @@ import axios, {
   AxiosInstance,
   AxiosError,
   InternalAxiosRequestConfig,
+  AxiosRequestConfig,
 } from "axios";
 import { handleCommonError } from "./error-handler";
 import { ApiResponse } from "@/shared/types/api";
@@ -108,7 +109,7 @@ class ApiClient {
 
   async get<T>(
     url: string,
-    config?: InternalAxiosRequestConfig
+    config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await this.client.get<ApiResponse<T>>(url, config);
     return response.data;
@@ -117,7 +118,7 @@ class ApiClient {
   async post<T>(
     url: string,
     data?: unknown,
-    config?: InternalAxiosRequestConfig
+    config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, data, config);
     return response.data;
@@ -126,7 +127,7 @@ class ApiClient {
   async put<T>(
     url: string,
     data?: unknown,
-    config?: InternalAxiosRequestConfig
+    config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await this.client.put<ApiResponse<T>>(url, data, config);
     return response.data;
@@ -134,7 +135,7 @@ class ApiClient {
 
   async delete<T>(
     url: string,
-    config?: InternalAxiosRequestConfig
+    config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await this.client.delete<ApiResponse<T>>(url, config);
     return response.data;

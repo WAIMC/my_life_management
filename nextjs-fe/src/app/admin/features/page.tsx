@@ -105,7 +105,6 @@ export default function FeatureListPage() {
   const columns: Column<FeatureMst>[] = [
     { key: 'id', label: tFields('id'), sortable: true },
     { key: 'name', label: tFields('name'), sortable: true },
-    { key: 'description', label: tFields('description') },
     {
       key: 'status',
       label: tFields('status'),
@@ -134,7 +133,6 @@ export default function FeatureListPage() {
 
   const searchFields: SearchField[] = [
     { key: 'name', label: tFields('name'), type: 'text' },
-    { key: 'description', label: tFields('description'), type: 'text' },
     {
       key: 'status',
       label: tFields('status'),

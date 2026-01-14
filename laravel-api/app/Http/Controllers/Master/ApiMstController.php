@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Requests\Master\ApiMst\ListApiMstRequest;
 use App\Http\Requests\Master\ApiMst\StoreApiMstRequest;
 use App\Http\Requests\Master\ApiMst\UpdateApiMstRequest;
+use App\Http\Requests\Master\ApiMst\DeleteApiMstRequest;
 use App\Services\Master\ApiMstService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Resources\Json\JsonResource;

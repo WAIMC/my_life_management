@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { handleBindErrors } from '@/shared/utils/error-handler';
+import { apiClient } from '@/shared/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,8 +37,8 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
   // Fetch features for dropdown
   const { data: features } = useApiData<FeatureMst>(ENDPOINTS.MASTER.FEATURE, {
     per_page: 1000,
-    sort_by: SORT_FIELDS.NAME,
-    sort_order: SORT_ORDER.ASC,
+    sort_by: SORT_FIELDS.UPDATED_AT,
+    sort_order: SORT_ORDER.DESC,
   });
 
   const {
@@ -68,15 +69,15 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         HTTP_METHODS.PATCH,
         HTTP_METHODS.DELETE
       ];
+      // Type is number in DB but might be string in some contexts, safely parse it
       const typeIndex = typeof initialData.type === 'string' ? parseInt(initialData.type) : initialData.type;
       const mappedMethod = methods[typeIndex] || HTTP_METHODS.GET;
-      
+
       reset({
         name: initialData.name,
         path: initialData.path,
         type: initialData.type,
         method: mappedMethod,
-        description: '', // Not in backend
         is_active: initialData.is_active,
         feature_mst_id: initialData.feature_mst_id,
       });
@@ -84,9 +85,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       reset({
         name: '',
         path: '',
-        type: 0,
         method: HTTP_METHODS.GET,
-        description: '',
         is_active: true,
         feature_mst_id: 0,
       });
@@ -138,7 +137,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           {tLabels('feature')} <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={currentFeatureId.toString()}
+          value={currentFeatureId ? String(currentFeatureId) : ''}
           onValueChange={(value) => {
             if (value && value.trim() !== '') {
               setValue('feature_mst_id', Number(value));
@@ -150,9 +149,11 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
           </SelectTrigger>
           <SelectContent>
             {features.map((feature) => (
-              <SelectItem key={feature.id} value={feature.id.toString()}>
-                {feature.name}
-              </SelectItem>
+              feature.id ? (
+                <SelectItem key={feature.id} value={feature.id.toString()}>
+                  {feature.name}
+                </SelectItem>
+              ) : null
             ))}
           </SelectContent>
         </Select>
@@ -226,10 +227,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">{tLabels('description')}</Label>
-        <Textarea id="description" {...register('description')} rows={3} />
-      </div>
+
 
       <div className="space-y-2">
         <Label htmlFor="is_active">

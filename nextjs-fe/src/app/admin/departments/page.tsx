@@ -102,6 +102,10 @@ export default function DepartmentListPage() {
     }
   };
 
+
+
+
+
   const columns: Column<DepartmentMst>[] = [
     { key: 'id', label: tFields('id'), sortable: true },
     { key: 'code', label: tFields('code'), sortable: true },
@@ -110,11 +114,13 @@ export default function DepartmentListPage() {
       key: 'status',
       label: tFields('status'),
       sortable: true,
-      render: (dept) => (
-        <Badge variant={dept.status === DepartmentStatus.ACTIVE ? 'default' : 'secondary'}>
-          {DepartmentStatusLabels[dept.status as DepartmentStatus]}
-        </Badge>
-      ),
+      render: (dept) => {
+        return (
+          <Badge variant={dept.status === DepartmentStatus.ACTIVE ? 'default' : 'secondary'}>
+            {DepartmentStatusLabels[dept.status] || dept.status}
+          </Badge>
+        );
+      },
     },
     { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];
@@ -127,8 +133,8 @@ export default function DepartmentListPage() {
       label: tFields('status'),
       type: 'select',
       options: [
-        { value: DepartmentStatus.ACTIVE.toString(), label: DepartmentStatusLabels[DepartmentStatus.ACTIVE] },
         { value: DepartmentStatus.INACTIVE.toString(), label: DepartmentStatusLabels[DepartmentStatus.INACTIVE] },
+        { value: DepartmentStatus.ACTIVE.toString(), label: DepartmentStatusLabels[DepartmentStatus.ACTIVE] },
         { value: DepartmentStatus.DRAFT.toString(), label: DepartmentStatusLabels[DepartmentStatus.DRAFT] },
         { value: DepartmentStatus.ARCHIVED.toString(), label: DepartmentStatusLabels[DepartmentStatus.ARCHIVED] },
       ],
@@ -280,6 +286,7 @@ export default function DepartmentListPage() {
             </DialogDescription>
           </DialogHeader>
           <DepartmentForm
+            key={editingDepartment?.id || 'create'}
             initialData={editingDepartment}
             onSuccess={handleFormSuccess}
             onCancel={() => setFormDialogOpen(false)}

@@ -24,6 +24,8 @@ import { IsActive, DepartmentStatus, DepartmentStatusLabels } from '@/shared/enu
 import { getDepartmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
 import type { DepartmentFormProps } from './types';
 
+
+
 export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentFormProps) {
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
@@ -42,26 +44,11 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
   } = useForm<DepartmentFormData>({
     resolver: zodResolver(getDepartmentSchema(tValidation)),
     defaultValues: {
-      status: DepartmentStatus.ACTIVE as unknown as IsActive,
+      code: initialData?.code || '',
+      name: initialData?.name || '',
+      status: initialData ? initialData.status : DepartmentStatus.ACTIVE,
     },
   });
-
-
-  useEffect(() => {
-    if (initialData) {
-      reset({
-        code: initialData.code || '',
-        name: initialData.name,
-        status: initialData.status,
-      });
-    } else {
-      reset({
-        code: '',
-        name: '',
-        status: DepartmentStatus.ACTIVE as unknown as IsActive,
-      });
-    }
-  }, [initialData, reset]);
 
   const onSubmit = async (data: DepartmentFormData) => {
     try {
@@ -128,19 +115,27 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
         </Label>
         <Select
           value={statusValue?.toString()}
-          onValueChange={(value) => setValue('status', Number(value) as unknown as IsActive)}
+          onValueChange={(value) => setValue('status', Number(value))}
         >
-          <SelectTrigger>
+          <SelectTrigger className={errors.status ? 'border-red-500' : ''}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={DepartmentStatus.ACTIVE.toString()}>{DepartmentStatusLabels[DepartmentStatus.ACTIVE]}</SelectItem>
             <SelectItem value={DepartmentStatus.INACTIVE.toString()}>{DepartmentStatusLabels[DepartmentStatus.INACTIVE]}</SelectItem>
+            <SelectItem value={DepartmentStatus.ACTIVE.toString()}>{DepartmentStatusLabels[DepartmentStatus.ACTIVE]}</SelectItem>
             <SelectItem value={DepartmentStatus.DRAFT.toString()}>{DepartmentStatusLabels[DepartmentStatus.DRAFT]}</SelectItem>
             <SelectItem value={DepartmentStatus.ARCHIVED.toString()}>{DepartmentStatusLabels[DepartmentStatus.ARCHIVED]}</SelectItem>
+            {/* Fallback for other existing values if any */}
+            {!Object.values(DepartmentStatus).includes(Number(statusValue)) && statusValue && (
+              <SelectItem value={statusValue.toString()}>{statusValue}</SelectItem>
+            )}
           </SelectContent>
         </Select>
+        {errors.status && (
+          <p className="text-sm text-red-500">{errors.status.message}</p>
+        )}
       </div>
+
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>

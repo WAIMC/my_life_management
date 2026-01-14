@@ -33,13 +33,13 @@ export function ImageUpload({
 
     // Validate file type
     if (!file.type.startsWith(MIME_TYPE_PREFIX.IMAGE)) {
-      toast.error(t('validation.selectImageFile'));
+      toast.error(t('media.invalidFileType', { accept: 'image/*' }));
       return;
     }
 
     // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
-      toast.error(t('validation.fileSizeExceeded', { maxSize }));
+      toast.error(t('media.fileSizeExceeded', { maxSize }));
       return;
     }
 

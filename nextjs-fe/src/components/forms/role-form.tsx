@@ -121,8 +121,8 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
             {tLabels('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={isActiveValue?.toString()}
-            onValueChange={(value) => setValue('is_active', value === 'true')}
+            value={isActiveValue ? IsActive.TRUE.toString() : IsActive.FALSE.toString()}
+            onValueChange={(value) => setValue('is_active', value === IsActive.TRUE.toString())}
           >
             <SelectTrigger>
               <SelectValue />

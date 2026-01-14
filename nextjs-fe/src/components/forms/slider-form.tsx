@@ -55,7 +55,8 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
         image: initialData.image || '',
         link: initialData.link || '',
         slug: initialData.slug || '',
-        status: initialData.status,
+
+        status: initialData.status !== undefined ? Number(initialData.status) : IsActive.TRUE,
       });
     } else {
       reset({
@@ -129,7 +130,7 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
             <Label htmlFor="status">{tCommon('status')} <span className="text-red-500">*</span></Label>
-            <Select value={statusValue?.toString()} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
+            <Select key={`status-${String(statusValue)}`} value={statusValue !== undefined && statusValue !== null ? String(statusValue) : ''} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>

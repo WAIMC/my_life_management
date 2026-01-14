@@ -131,7 +131,6 @@ class RootAccountSeeder extends Seeder
             ['name' => $controllerName],
             [
               'group_name' => $this->adminGroup,
-              'description' => '',
               'status' => 1,
               'created_at' => now(),
               'updated_at' => now(),

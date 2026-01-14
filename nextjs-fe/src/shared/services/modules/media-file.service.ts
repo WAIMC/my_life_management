@@ -3,7 +3,6 @@
  * Handles all API calls for media file management
  */
 
-import { InternalAxiosRequestConfig } from 'axios';
 import { apiClient } from '@/shared/api/client';
 import { ENDPOINTS } from '@/shared/api';
 import { MIME_TYPE_PREFIX, FILE_SIZE_UNITS } from '@/shared/config/constant';
@@ -45,7 +44,7 @@ class MediaFileService {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      } as unknown as InternalAxiosRequestConfig
+      }
     );
     return response.data;
   }
@@ -56,9 +55,9 @@ class MediaFileService {
   async list(params?: ListFilesParams): Promise<MediaApiListResponse> {
     const response = await apiClient.get<MediaApiListResponse>(
       `${this.baseUrl}${API_PATHS.LIST}`,
-      { params } as unknown as InternalAxiosRequestConfig
+      { params }
     );
-    return response as unknown as MediaApiListResponse;
+    return response;
   }
 
   /**
@@ -132,7 +131,7 @@ class MediaFileService {
     const firstId = params.ids[0];
     await apiClient.delete(
       `${this.baseUrl}/delete/${firstId}`,
-      { data: { ids: params.ids } } as unknown as InternalAxiosRequestConfig
+      { data: { ids: params.ids } }
     );
   }
 
@@ -191,9 +190,9 @@ class MediaFileService {
   async listFolders(params?: ListFilesParams): Promise<MediaApiListResponse> {
     const response = await apiClient.get<MediaApiListResponse>(
       `${this.baseUrl}${API_PATHS.LIST}`,
-      { params: { ...params, is_file: false } } as unknown as InternalAxiosRequestConfig
+      { params: { ...params, is_file: 0 } }
     );
-    return response as unknown as MediaApiListResponse;
+    return response;
   }
 
   /**

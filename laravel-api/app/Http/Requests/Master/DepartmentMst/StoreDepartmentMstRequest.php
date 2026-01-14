@@ -7,30 +7,18 @@ use App\Constants\CommonVal;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\Master\DepartmentMst;
+use App\Enums\DepartmentStatus;
 use App\Enums\IsDelete;
-use App\Enums\StatusEnum;
 
 class StoreDepartmentMstRequest extends FormRequest
 {
-  /**
-   * Determine if the user is authorized to make this request.
-   */
-  public function authorize(): bool
-  {
-    return true;
-  }
-
-  /**
-   * Get the validation rules that apply to the request.
-   *
-   * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-   */
+  // ...
   public function rules(): array
   {
     return [
       'code' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50', Rule::unique('department_mst', 'code')->where(fn($query) => $query->where('is_delete', IsDelete::FALSE))],
       'name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
-      'status' => ['required', new Enum(StatusEnum::class),],
+      'status' => ['required', new Enum(DepartmentStatus::class),],
       'is_delete' => ['required', new Enum(IsDelete::class),],
     ];
   }

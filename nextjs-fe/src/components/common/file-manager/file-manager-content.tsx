@@ -301,6 +301,7 @@ export function FileManagerContent() {
         count={targetFile ? 1 : selectedFiles.length}
         onConfirm={handleMoveCopyConfirm}
         currentPath={currentPath}
+        selectedFileIds={targetFile ? [targetFile.id] : selectedFiles}
       />
 
       <PreviewModal

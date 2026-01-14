@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Gender, Status, AdminStatus, CategoryStatus } from '@/shared/enums';
+import { Gender, StatusEnum, AdminStatus, CategoryStatus, DepartmentStatus, FeatureStatus } from '@/shared/enums';
 import { ValidationRules } from './validation-rules';
 
 type Translator = (key: string, params?: Record<string, string | number>) => string;
@@ -38,16 +38,19 @@ export const getAvatarValidation = (t: Translator) => z.string()
   .max(ValidationRules.AVATAR_MAX, t('avatar.maxLength', { max: ValidationRules.AVATAR_MAX }))
   .optional();
 
-export const genderValidation = z.nativeEnum(Gender);
-export const statusValidation = z.nativeEnum(Status);
-export const adminStatusValidation = z.nativeEnum(AdminStatus);
-export const categoryStatusValidation = z.nativeEnum(CategoryStatus);
+// Forced casting to ZodType to ensure TS infers the Enum type instead of unknown
+export const genderValidation = z.preprocess((val) => Number(val), z.nativeEnum(Gender)) as z.ZodType<Gender>;
+export const statusValidation = z.preprocess((val) => Number(val), z.nativeEnum(StatusEnum)) as z.ZodType<StatusEnum>;
+export const adminStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(AdminStatus)) as z.ZodType<AdminStatus>;
+export const categoryStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(CategoryStatus)) as z.ZodType<CategoryStatus>;
+export const departmentStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(DepartmentStatus)) as z.ZodType<DepartmentStatus>;
+export const featureStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(FeatureStatus)) as z.ZodType<FeatureStatus>;
 
 // Admin schema matching StoreAdminMstRequest
 export const getAdminSchema = (t: Translator) => z.object({
   email: getEmailValidation(t),
   user_name: getUsernameValidation(t),
-  password: getPasswordValidation(t).optional(),
+  password: z.union([getPasswordValidation(t), z.literal('')]).optional(),
   first_name: getFirstNameValidation(t),
   last_name: getLastNameValidation(t),
   address: getAddressValidation(t),
@@ -65,7 +68,7 @@ export type AdminFormData = z.infer<ReturnType<typeof getAdminSchema>>;
 export const getUserSchema = (t: Translator) => z.object({
   email: getEmailValidation(t),
   user_name: getUsernameValidation(t),
-  password: getPasswordValidation(t).optional(),
+  password: z.union([getPasswordValidation(t), z.literal('')]).optional(),
   first_name: getFirstNameValidation(t),
   last_name: getLastNameValidation(t),
   address: getAddressValidation(t),
@@ -115,7 +118,7 @@ export type RoleFormData = z.infer<ReturnType<typeof getRoleSchema>>;
 export const getDepartmentSchema = (t: Translator) => z.object({
   code: z.string().min(1, t('code.required')).max(50, t('code.maxLength', { max: 50 })),
   name: z.string().min(1, t('name.required')),
-  status: statusValidation,
+  status: departmentStatusValidation,
 });
 
 export type DepartmentFormData = z.infer<ReturnType<typeof getDepartmentSchema>>;
@@ -136,9 +139,8 @@ export type BannerFormData = z.infer<ReturnType<typeof getBannerSchema>>;
 // Feature schema
 export const getFeatureSchema = (t: Translator) => z.object({
   name: z.string().min(1, t('name.required')),
-  group_name: z.string().optional(),
-  description: z.string().optional(),
-  status: statusValidation,
+  group_name: z.string().min(1, t('groupName.required')).max(50, t('groupName.maxLength', { max: 50 })),
+  status: featureStatusValidation,
 });
 
 export type FeatureFormData = z.infer<ReturnType<typeof getFeatureSchema>>;

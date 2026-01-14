@@ -9,6 +9,7 @@ import { apiClient } from '@/shared/api/client';
 import type { PaginatedResponse, UseHistoryOptions, UseHistoryReturn } from '@/shared/types/api';
 import type { BaseHistory, HistoryFilterOptions, HistoryDiff } from '@/shared/types/models/history';
 import { PAGINATION } from '@/shared/config/constant';
+import { getPaginationInfo } from '@/shared/utils/pagination';
 
 export function useHistory<T extends BaseHistory = BaseHistory>({
   baseUrl,
@@ -42,14 +43,15 @@ export function useHistory<T extends BaseHistory = BaseHistory>({
 
         const response = await apiClient.get<PaginatedResponse<T>>(
           `${baseUrl}/list`,
-          params
+          { params }
         );
 
         setHistory(response.data.data);
+        const paginationInfo = getPaginationInfo(response.data);
         setPagination({
-          page: response.data.current_page,
-          perPage: response.data.per_page,
-          total: response.data.total,
+          page: paginationInfo.currentPage,
+          perPage: paginationInfo.perPage,
+          total: paginationInfo.total,
         });
       } catch (err) {
         setError(err instanceof Error ? err : new Error(t('failedToFetchHistory')));

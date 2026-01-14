@@ -31,6 +31,7 @@ export const MoveCopyDialog = ({
   count,
   onConfirm,
   currentPath,
+  selectedFileIds,
 }: MoveCopyDialogProps) => {
   const t = useTranslations('fileManager.dialogs');
   const [folders, setFolders] = useState<FolderType[]>([]);
@@ -68,7 +69,10 @@ export const MoveCopyDialog = ({
              };
           });
 
-          setFolders(mappedFolders.filter(f => f.path !== currentPath));
+          // Filter out: current path AND folders that are being moved (prevent moving folder into itself)
+          setFolders(mappedFolders.filter(f => 
+            f.path !== currentPath && !selectedFileIds.includes(f.id)
+          ));
           setSelectedPath('');
         } catch {
         } finally {
@@ -77,7 +81,7 @@ export const MoveCopyDialog = ({
       };
       fetchFolders();
     }
-  }, [open, currentPath]);
+  }, [open, currentPath, selectedFileIds]);
 
   const handleConfirm = async () => {
     if (!selectedPath) return;
