@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Gender, StatusEnum, AdminStatus, CategoryStatus, DepartmentStatus, FeatureStatus } from '@/shared/enums';
+import { Gender, StatusEnum, AdminStatus, UserStatus, CategoryStatus, DepartmentStatus, FeatureStatus } from '@/shared/enums';
 import { ValidationRules } from './validation-rules';
 
 type Translator = (key: string, params?: Record<string, string | number>) => string;
@@ -39,12 +39,13 @@ export const getAvatarValidation = (t: Translator) => z.string()
   .optional();
 
 // Forced casting to ZodType to ensure TS infers the Enum type instead of unknown
-export const genderValidation = z.preprocess((val) => Number(val), z.nativeEnum(Gender)) as z.ZodType<Gender>;
-export const statusValidation = z.preprocess((val) => Number(val), z.nativeEnum(StatusEnum)) as z.ZodType<StatusEnum>;
-export const adminStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(AdminStatus)) as z.ZodType<AdminStatus>;
-export const categoryStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(CategoryStatus)) as z.ZodType<CategoryStatus>;
-export const departmentStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(DepartmentStatus)) as z.ZodType<DepartmentStatus>;
-export const featureStatusValidation = z.preprocess((val) => Number(val), z.nativeEnum(FeatureStatus)) as z.ZodType<FeatureStatus>;
+export const genderValidation = z.nativeEnum(Gender);
+export const statusValidation = z.nativeEnum(StatusEnum);
+export const adminStatusValidation = z.nativeEnum(AdminStatus);
+export const categoryStatusValidation = z.nativeEnum(CategoryStatus);
+export const departmentStatusValidation = z.nativeEnum(DepartmentStatus);
+export const featureStatusValidation = z.nativeEnum(FeatureStatus);
+export const userStatusValidation = z.nativeEnum(UserStatus);
 
 // Admin schema matching StoreAdminMstRequest
 export const getAdminSchema = (t: Translator) => z.object({
@@ -68,14 +69,14 @@ export type AdminFormData = z.infer<ReturnType<typeof getAdminSchema>>;
 export const getUserSchema = (t: Translator) => z.object({
   email: getEmailValidation(t),
   user_name: getUsernameValidation(t),
-  password: z.union([getPasswordValidation(t), z.literal('')]).optional(),
+  password: z.union([getPasswordValidation(t), z.literal('')]).optional().nullable(),
   first_name: getFirstNameValidation(t),
   last_name: getLastNameValidation(t),
   address: getAddressValidation(t),
   phone_number: getPhoneValidation(t),
   birth: z.string().optional(),
   gender: genderValidation,
-  status: statusValidation,
+  status: userStatusValidation,
   is_active: z.boolean(),
   avatar: getAvatarValidation(t),
 });
@@ -84,12 +85,14 @@ export type UserFormData = z.infer<ReturnType<typeof getUserSchema>>;
 
 // Category schema
 export const getCategorySchema = (t: Translator) => z.object({
+  parent_id: z.number().default(0),
   name: z.string().min(1, t('name.required')),
+  slug: z.string().min(1, t('slug.required')),
   description: z.string().optional(),
-  slug: z.string().optional(),
-  rank_order: z.number().min(0, t('order.min', { min: 0 })),
   status: categoryStatusValidation,
-  is_display: z.boolean().optional(),
+  is_display: z.boolean(),
+  rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
+  is_delete: z.boolean().default(false),
 });
 
 export type CategoryFormData = z.infer<ReturnType<typeof getCategorySchema>>;
@@ -98,7 +101,7 @@ export type CategoryFormData = z.infer<ReturnType<typeof getCategorySchema>>;
 export const getSkillSchema = (t: Translator) => z.object({
   name: z.string().min(1, t('name.required')),
   slug: z.string().optional(),
-  rank_order: z.number().min(0, t('order.min', { min: 0 })),
+  rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
@@ -126,11 +129,11 @@ export type DepartmentFormData = z.infer<ReturnType<typeof getDepartmentSchema>>
 // Banner schema
 export const getBannerSchema = (t: Translator) => z.object({
   title: z.string().min(1, t('title.required')),
-  slug: z.string().optional(),
-  description: z.string().optional(),
-  link: z.string().optional(),
-  image: z.string().optional(),
-  position: z.string().optional(),
+  slug: z.string().min(1, t('slug.required')),
+  description: z.string().min(1, t('description.required')),
+  link: z.string().min(1, t('link.required')),
+  image: z.string().min(1, t('image.required')),
+  position: z.string().min(1, t('position.required')),
   status: statusValidation,
 });
 
@@ -162,7 +165,7 @@ export const getSocialSchema = (t: Translator) => z.object({
   slug: z.string().optional(),
   link: z.string().url(t('url.invalid')),
   image: z.string().optional(),
-  rank_order: z.number().min(0, t('order.min', { min: 0 })),
+  rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_display: z.boolean().optional(),
 });
@@ -172,6 +175,7 @@ export type SocialFormData = z.infer<ReturnType<typeof getSocialSchema>>;
 // Skill Description schema
 export const getSkillDescriptionSchema = (t: Translator) => z.object({
   skill_mgmt_id: z.number().min(1, t('skill.required')),
+  parent_id: z.number().int().min(0),
   title: z.string().min(1, t('title.required')),
   summary: z.string().optional(),
   article: z.string().optional(),
@@ -210,7 +214,7 @@ export const getSettingLinkSchema = (t: Translator) => z.object({
   name: z.string().min(1, t('name.required')),
   url: z.string().url(t('url.invalid')),
   description: z.string().optional(),
-  rank_order: z.number().min(0, t('order.min', { min: 0 })),
+  rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
   status: statusValidation,
   is_active: z.boolean(),
 });

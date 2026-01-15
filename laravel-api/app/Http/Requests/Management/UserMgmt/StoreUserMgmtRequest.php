@@ -10,7 +10,7 @@ use App\Models\Management\UserMgmt;
 use App\Enums\Gender;
 use App\Enums\IsActive;
 use App\Enums\IsDelete;
-use App\Enums\StatusEnum;
+use App\Enums\UserStatus;
 
 class StoreUserMgmtRequest extends FormRequest
 {
@@ -31,15 +31,15 @@ class StoreUserMgmtRequest extends FormRequest
   {
     return [
       'email' => ['required', 'email:rfc,dns', 'min:' . CommonVal::MIN_VARCHAR, 'max:30', Rule::unique(UserMgmt::class, 'email'),],
-      'user_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
+      'user_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50', Rule::unique(UserMgmt::class, 'user_name'),],
       'password' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
       'first_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:20',],
       'last_name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:20',],
       'address' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
       'phone_number' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_PHONE_NUMBER,],
       'birth' => ['nullable', 'date_format:' . CommonVal::DATE_FORMAT, 'after_or_equal:' . CommonVal::MIN_DATE, 'before_or_equal:' . CommonVal::MAX_DATE,],
-      'gender' => [new Enum(Gender::class),],
-      'status' => [new Enum(StatusEnum::class),],
+      'gender' => ['required', new Enum(Gender::class),],
+      'status' => ['required', new Enum(UserStatus::class),],
       'is_active' => ['required', new Enum(IsActive::class),],
       'avatar' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:30',],
       'is_delete' => ['required', new Enum(IsDelete::class),],

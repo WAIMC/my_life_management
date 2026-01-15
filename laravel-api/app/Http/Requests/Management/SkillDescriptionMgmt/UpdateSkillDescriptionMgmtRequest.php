@@ -38,7 +38,7 @@ class UpdateSkillDescriptionMgmtRequest extends FormRequest
       'is_display' => ['required', 'boolean',],
       'rank_order' => ['required', 'integer',],
       'skill_mgmt_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER, Rule::exists(SkillMgmt::class, 'id'),],
-      'is_delete' => ['required', new Enum(IsDelete::class),],
+      'is_delete' => ['nullable', new Enum(IsDelete::class),],
     ];
   }
 

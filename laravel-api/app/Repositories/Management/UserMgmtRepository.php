@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Repositories\Management;
 
+use App\Constants\CommonVal;
 use App\Enums\IsDelete;
 use App\Interfaces\Management\UserMgmtInterface;
 use App\Models\Management\UserMgmt;
 use App\Repositories\BaseRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class UserMgmtRepository extends BaseRepository implements UserMgmtInterface
@@ -85,14 +87,19 @@ class UserMgmtRepository extends BaseRepository implements UserMgmtInterface
    */
   public function executeStore(array $payload): int
   {
-    // Hash password if provided
-    if (isset($payload['password']) && $payload['password']) {
-      $payload['password'] = Hash::make($payload['password']);
+    // Format birth date if provided
+    if (isset($payload['birth']) && !empty($payload['birth'])) {
+      $payload['birth'] = Carbon::createFromFormat(CommonVal::DATE_FORMAT, $payload['birth'])->format('Y-m-d');
     }
 
     $model = $this->model->fill(
       Arr::only($payload, $this->model->getFillable())
     );
+
+    // Hash password if provided
+    if (isset($payload['password']) && !empty($payload['password'])) {
+      $model->password = Hash::make($payload['password']);
+    }
 
     $model->save();
 
@@ -114,12 +121,18 @@ class UserMgmtRepository extends BaseRepository implements UserMgmtInterface
       throw new \LogicException('Cannot update deleted record');
     }
 
-    // Hash password if provided
-    if (isset($payload['password']) && $payload['password']) {
-      $payload['password'] = Hash::make($payload['password']);
+    // Format birth date if provided
+    if (isset($payload['birth']) && !empty($payload['birth'])) {
+      $payload['birth'] = Carbon::createFromFormat(CommonVal::DATE_FORMAT, $payload['birth'])->format('Y-m-d');
     }
 
     $model->fill(Arr::only($payload, $this->model->getFillable()));
+
+    // Hash password if provided
+    if (isset($payload['password']) && !empty($payload['password'])) {
+      $model->password = Hash::make($payload['password']);
+    }
+
     $model->save();
 
     return $model->id;

@@ -29,7 +29,7 @@ class UserMgmtHistRepository extends BaseRepository implements UserMgmtHistInter
   {
     $query = $this->model->query()
       ->select(['id', 'user_mgmt_id', 'email', 'user_name', 'first_name', 'last_name', 'address', 'phone_number', 'birth', 'gender', 'status', 'is_active', 'avatar', 'action', 'author_id'])
-      ->with(['userMgmt:id,email,user_name', 'author:id,username']);
+      ->with(['userMgmt:id,email,user_name', 'author:id,user_name']);
     $this->applyFilters($query, $payload, ['user_mgmt_id', 'email', 'phone_number', 'birth', 'gender', 'status', 'is_active', 'avatar', 'action', 'author_id'], ['user_name', 'first_name', 'last_name', 'address']);
     $this->applyDateRange($query, $payload);
     $this->applySorting($query, $payload);

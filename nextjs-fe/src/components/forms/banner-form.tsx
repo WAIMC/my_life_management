@@ -9,6 +9,7 @@ import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -19,8 +20,11 @@ import {
 import { ImageUpload } from '@/components/common/image-upload';
 import type { BannerMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, IsActiveLabels } from '@/shared/enums';
+import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
+import { UPLOAD_CONFIG } from '@/shared/config/constant';
 import { getBannerSchema, type BannerFormData } from '@/shared/validation/validation';
+import { mediaFileService } from '@/shared/services/modules/media-file.service';
+import { slugify } from '@/shared/utils/string-utils';
 import type { BannerFormProps } from './types';
 
 export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps) {
@@ -30,9 +34,10 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
   const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  
   const [imagePreview, setImagePreview] = useState<string | null>(() => initialData?.image || null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
 
   const {
     register,
@@ -42,12 +47,21 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
     control,
     reset,
     setError,
+    watch,
   } = useForm<BannerFormData>({
     resolver: zodResolver(getBannerSchema(tValidation)),
     defaultValues: {
-      status: IsActive.TRUE,
+      status: StatusEnum.PUBLISHED,
     },
   });
+
+  // Watch title to auto-generate slug
+  const titleValue = watch('title');
+  useEffect(() => {
+    if (titleValue && !isEdit) {
+        setValue('slug', slugify(titleValue));
+    }
+  }, [titleValue, isEdit, setValue]);
 
   useEffect(() => {
     if (initialData) {
@@ -60,6 +74,7 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
         position: initialData.position || '',
         status: initialData.status,
       });
+      setImagePreview(initialData.image || null);
     } else {
       reset({
         title: '',
@@ -68,18 +83,54 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
         link: '',
         image: '',
         position: '',
-        status: IsActive.TRUE,
+        status: StatusEnum.PUBLISHED,
       });
     }
   }, [initialData, reset]);
 
+  const handleImageChange = async (file: File | null, preview: string | null) => {
+    setImagePreview(preview);
+    
+    // If file is cleared
+    if (!file) {
+        setValue('image', '');
+        return;
+    }
+
+    // Auto upload when file selected
+    try {
+        setIsUploading(true);
+        const uploadedId = await mediaFileService.upload({
+            file: file,
+            workspace_id: 1, // Default workspace or from context
+            parent_path: UPLOAD_CONFIG.TEMP_UPLOAD_PATH, // Upload to temp folder first
+        });
+        
+        setUploadedMediaId(uploadedId);
+        
+        const fileDetails = await mediaFileService.get(uploadedId);
+        if (fileDetails.url) {
+            setValue('image', fileDetails.url);
+        } else {
+             console.error('No URL returned for uploaded image');
+        }
+    } catch (err) {
+        console.error('Upload failed', err);
+    } finally {
+        setIsUploading(false);
+    }
+  };
+
+
   const onSubmit = async (data: BannerFormData) => {
     try {
+      if (isUploading) return; // Prevent submit while uploading
+
       const payload = { ...data };
-      
-      // TODO: Handle Image Upload properly if API supports it
-      // Currently generic placeholder logic
-      
+      if (uploadedMediaId) {
+        (payload as any).media_id = uploadedMediaId;
+      }
+
       if (isEdit && initialData) {
         await update(initialData.id, payload);
       } else {
@@ -105,16 +156,15 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
           <ImageUpload
             label="Banner Image"
             value={imagePreview ?? undefined}
-            onChange={(file, preview) => {
-              setImageFile(file);
-              setImagePreview(preview);
-              // if preview is a blob url, we might need to upload it. 
-              // For now assuming existing URL is string.
-            }}
+            onChange={handleImageChange}
             maxSize={10}
             shape="rectangle"
             aspectRatio="aspect-video"
           />
+           {isUploading && <p className="text-sm text-yellow-600 mt-1">Uploading image...</p>}
+           {!imagePreview && errors.image && <p className="text-sm text-red-500">{tValidation('image.required')}</p>}
+           {/* Hidden input to register image field for validation */}
+           <input type="hidden" {...register('image')} />
         </div>
         
         <div className="space-y-4">
@@ -124,26 +174,45 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
             {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="link">{tLabels('linkUrl')}</Label>
-            <Input id="link" {...register('link')} placeholder={tForms('urlExample')} />
+           <div className="space-y-2">
+            <Label htmlFor="slug">{tLabels('slug')} <span className="text-red-500">*</span></Label>
+            <Input id="slug" {...register('slug')} className={errors.slug ? 'border-red-500' : ''} />
+            {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="position">{tLabels('position')}</Label>
-            <Input id="position" {...register('position')} />
+            <Label htmlFor="link">{tLabels('linkUrl')} <span className="text-red-500">*</span></Label>
+            <Input id="link" {...register('link')} placeholder={tForms('urlExample')} className={errors.link ? 'border-red-500' : ''} />
+             {errors.link && <p className="text-sm text-red-500">{errors.link.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="position">{tLabels('position')} <span className="text-red-500">*</span></Label>
+            <Input id="position" {...register('position')} className={errors.position ? 'border-red-500' : ''} />
+             {errors.position && <p className="text-sm text-red-500">{errors.position.message}</p>}
           </div>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">{tLabels('description')} <span className="text-red-500">*</span></Label>
+        <Textarea id="description" {...register('description')} className={errors.description ? 'border-red-500' : ''} />
+        {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
             <Label htmlFor="status">{tLabels('status')} <span className="text-red-500">*</span></Label>
-            <Select value={statusValue?.toString()} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
+            <Select value={statusValue?.toString()} onValueChange={(value) => setValue('status', Number(value) as StatusEnum)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
-                <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
+                {Object.values(StatusEnum)
+                    .filter((value) => typeof value === 'number')
+                    .map((value) => (
+                      <SelectItem key={value} value={value.toString()}>
+                        {StatusEnumLabels[value as StatusEnum]}
+                      </SelectItem>
+                    ))}
               </SelectContent>
             </Select>
           </div>
@@ -153,8 +222,8 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
         <Button type="button" variant="outline" onClick={onCancel}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isUploading}>
+          {loading || isUploading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

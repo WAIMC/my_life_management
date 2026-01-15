@@ -10,7 +10,7 @@ use App\Models\Management\UserMgmt;
 use App\Enums\Gender;
 use App\Enums\IsActive;
 use App\Enums\IsDelete;
-use App\Enums\StatusEnum;
+use App\Enums\UserStatus;
 
 class DeleteUserMgmtRequest extends FormRequest
 {

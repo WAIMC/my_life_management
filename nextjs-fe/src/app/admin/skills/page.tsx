@@ -10,6 +10,7 @@ import { Pagination } from '@/components/common/data-table/pagination';
 import { FilterPanel, type FilterField } from '@/components/common/data-table/filter-panel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import type { SkillMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { 
@@ -19,6 +20,7 @@ import {
   PAGINATION, 
   ADMIN_ROUTES 
 } from '@/shared/config';
+import { IsDisplay, IsDisplayLabels } from '@/shared/enums/enums';
 import { AdvancedSearch } from '@/components/common/advanced-search';
 import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
@@ -105,6 +107,16 @@ export default function SkillListPage() {
     { key: 'rank_order', label: tFields('order'), sortable: true },
     { key: 'name', label: tFields('name'), sortable: true },
     { key: 'slug', label: tFields('slug') },
+    {
+      key: 'is_display',
+      label: tCommon('isDisplay'),
+      sortable: true,
+      render: (skill) => (
+        <Badge variant={skill.is_display ? 'default' : 'secondary'}>
+          {IsDisplayLabels[skill.is_display ? IsDisplay.TRUE : IsDisplay.FALSE]}
+        </Badge>
+      ),
+    },
     { key: 'status', label: tFields('status'), sortable: true },
     { key: 'updated_at', label: tFields('updatedAt'), sortable: true },
   ];

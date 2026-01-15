@@ -180,6 +180,7 @@ export const UPLOAD_CONFIG = {
   MAX_PROGRESS: 90,
   COMPLETE: 100,
   COMPLETE_DELAY_MS: 500,
+  TEMP_UPLOAD_PATH: 'temp-uploads',
 } as const;
 
 // Media file categories & extensions

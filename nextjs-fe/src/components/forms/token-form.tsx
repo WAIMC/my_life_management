@@ -22,6 +22,7 @@ import { ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, PAGINATION } from '@/shared/config/constant';
 import { getTokenSchema, type TokenFormData } from '@/shared/validation/validation';
 import type { TokenFormProps } from './types';
+import { formatDateForBackend } from '@/shared/utils/date-formatter';
 
 export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) {
   const tCommon = useTranslations('common');
@@ -77,6 +78,8 @@ export function TokenForm({ initialData, onSuccess, onCancel }: TokenFormProps) 
       const payload = {
         ...data,
         account_id: Number(data.account_id),
+        // Format date to dd/MM/yyyy for backend
+        expired_at: data.expired_at ? formatDateForBackend(data.expired_at) : '',
       };
       
       if (isEdit && initialData) {

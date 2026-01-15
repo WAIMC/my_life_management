@@ -21,7 +21,7 @@ import {
 import type { SkillDescriptionMgmt, SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, SORT_FIELDS, PAGINATION, FORM_DEFAULTS } from '@/shared/config/constant';
-import { IsActive, IsActiveLabels } from '@/shared/enums';
+import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
 import { getSkillDescriptionSchema, type SkillDescriptionFormData } from '@/shared/validation/validation';
 import type { SkillDescriptionFormProps } from './types';
 
@@ -40,6 +40,34 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     { page: PAGINATION.DEFAULT_PAGE, per_page: PAGINATION.MAX_PER_PAGE, sort_by: SORT_FIELDS.NAME, sort_order: SORT_ORDER.ASC }
   );
 
+  // Transform initial data to form data
+  const getFormValues = (data: typeof initialData): SkillDescriptionFormData => {
+    if (data) {
+      return {
+        skill_mgmt_id: Number(data.skill_mgmt_id),
+        parent_id: data.parent_id !== null ? Number(data.parent_id) : 0,
+        title: data.title,
+        summary: data.summary || '',
+        article: data.article || '',
+        rank_order: Number(data.rank_order),
+        status: Number(data.status) as StatusEnum,
+        is_display: Boolean(data.is_display),
+      };
+    }
+    return {
+      skill_mgmt_id: 0, // Using 0 as default for number input, though validation requires min 1
+      parent_id: 0,
+      title: '',
+      summary: '',
+      article: '',
+      rank_order: FORM_DEFAULTS.RANK_ORDER,
+      status: StatusEnum.PUBLISHED,
+      is_display: true,
+    };
+  };
+
+  const defaultValues = getFormValues(initialData);
+
   const {
     register,
     handleSubmit,
@@ -50,35 +78,11 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     setError,
   } = useForm<SkillDescriptionFormData>({
     resolver: zodResolver(getSkillDescriptionSchema(tValidation)),
-    defaultValues: {
-      rank_order: FORM_DEFAULTS.RANK_ORDER,
-      status: IsActive.TRUE,
-      is_display: true,
-    },
+    defaultValues: defaultValues,
   });
 
   useEffect(() => {
-    if (initialData) {
-      reset({
-        skill_mgmt_id: initialData.skill_mgmt_id,
-        title: initialData.title,
-        summary: initialData.summary || '',
-        article: initialData.article || '',
-        rank_order: initialData.rank_order,
-        status: initialData.status,
-        is_display: initialData.is_display,
-      });
-    } else {
-      reset({
-        skill_mgmt_id: 0,
-        title: '',
-        summary: '',
-        article: '',
-        rank_order: FORM_DEFAULTS.RANK_ORDER,
-        status: IsActive.TRUE,
-        is_display: true,
-      });
-    }
+    reset(getFormValues(initialData));
   }, [initialData, reset]);
 
   const onSubmit = async (data: SkillDescriptionFormData) => {
@@ -87,6 +91,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       const payload = {
         ...data,
         skill_mgmt_id: Number(data.skill_mgmt_id),
+        parent_id: Number(data.parent_id ?? 0),
         rank_order: Number(data.rank_order),
       };
       
@@ -112,11 +117,22 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
+        <Label htmlFor="parent_id">
+          {tCommon('parentId')}
+        </Label>
+        <Input
+          id="parent_id"
+          type="number"
+          {...register('parent_id', { valueAsNumber: true })}
+        />
+      </div>
+      
+      <div className="space-y-2">
         <Label htmlFor="skill_mgmt_id">
           {tCommon('skill')} <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={skillMgmtIdValue?.toString()}
+          value={skillMgmtIdValue ? String(skillMgmtIdValue) : ''}
           onValueChange={(value) => setValue('skill_mgmt_id', Number(value))}
           disabled={skillsLoading}
         >
@@ -176,7 +192,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
           <Input
             id="rank_order"
             type="number"
-            {...register('rank_order')}
+            {...register('rank_order', { valueAsNumber: true })}
           />
         </div>
 
@@ -185,15 +201,16 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
             {tCommon('status')} <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={statusValue?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
+            value={statusValue !== undefined ? String(statusValue) : ''}
+            onValueChange={(value) => setValue('status', Number(value) as StatusEnum)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
-              <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
+              <SelectItem value={String(StatusEnum.PUBLISHED)}>{StatusEnumLabels[StatusEnum.PUBLISHED]}</SelectItem>
+              <SelectItem value={String(StatusEnum.DRAFT)}>{StatusEnumLabels[StatusEnum.DRAFT]}</SelectItem>
+              <SelectItem value={String(StatusEnum.ARCHIVED)}>{StatusEnumLabels[StatusEnum.ARCHIVED]}</SelectItem>
             </SelectContent>
           </Select>
         </div>

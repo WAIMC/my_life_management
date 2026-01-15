@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import type { UserMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, SORT_FIELDS, type SortOrder, ADMIN_ROUTES, PAGINATION } from '@/shared/config';
-import { IsActive, IsActiveLabels, Gender, GenderLabels } from '@/shared/enums';
+import { IsActive, IsActiveLabels, Gender, GenderLabels, UserStatus, UserStatusLabels } from '@/shared/enums/enums';
 import { AdvancedSearch } from '@/components/common/advanced-search';
 import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
@@ -116,8 +116,8 @@ export default function UsersPage() {
       label: tFields('status'),
       sortable: true,
       render: (user) => (
-        <Badge variant={user.is_active ? 'default' : 'secondary'}>
-          {user.is_active ? tCommon('active') : tCommon('inactive')}
+        <Badge variant={user.status === UserStatus.ACTIVE ? 'default' : 'secondary'}>
+          {UserStatusLabels[user.status as UserStatus] || tCommon('unknown')}
         </Badge>
       ),
     },
@@ -142,10 +142,10 @@ export default function UsersPage() {
       key: 'status',
       label: tFields('status'),
       type: 'select',
-      options: [
-        { value: IsActive.TRUE, label: IsActiveLabels[IsActive.TRUE] },
-        { value: IsActive.FALSE, label: IsActiveLabels[IsActive.FALSE] },
-      ],
+      options: Object.entries(UserStatusLabels).map(([value, label]) => ({
+        value: Number(value),
+        label
+      })),
     },
   ];
 
@@ -157,7 +157,7 @@ export default function UsersPage() {
       key: 'status',
       label: tFields('status'),
       type: 'select',
-      options: Object.entries(IsActiveLabels).map(([value, label]) => ({
+      options: Object.entries(UserStatusLabels).map(([value, label]) => ({
         value: value.toString(),
         label
       }))

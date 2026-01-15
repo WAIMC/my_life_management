@@ -75,7 +75,8 @@
     "skillsManagementComingSoon": "Skills Management Coming Soon",
     "policyDepartments": "Policy Departments",
     "junctionManagementComingSoon": "Junction Management Coming Soon",
-    "skill": "Skill"
+    "skill": "Skill",
+    "parentId": "Parent ID"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -611,6 +612,18 @@
     },
     "slug": {
       "required": "Slug is required"
+    },
+    "description": {
+      "required": "Description is required"
+    },
+    "link": {
+      "required": "Link is required"
+    },
+    "image": {
+      "required": "Image is required"
+    },
+    "position": {
+      "required": "Position is required"
     },
     "url": {
       "required": "URL is required",

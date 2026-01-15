@@ -47,6 +47,9 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       rank_order: 0,
       status: CategoryStatus.ACTIVE,
       is_display: true,
+      parent_id: 0,
+      slug: '',
+      is_delete: false,
     },
   });
 
@@ -55,10 +58,12 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       reset({
         name: initialData.name,
         description: initialData.description || '',
-        slug: initialData.slug || '',
+        slug: initialData.slug,
         rank_order: initialData.rank_order,
         status: initialData.status,
         is_display: initialData.is_display,
+        parent_id: initialData.parent_id,
+        is_delete: initialData.is_delete,
       });
     } else {
       reset({
@@ -68,25 +73,27 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         rank_order: 0,
         status: CategoryStatus.ACTIVE,
         is_display: true,
+        parent_id: 0,
+        is_delete: false,
+        slug: '',
       });
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: CategoryFormData) => {
     try {
-      // Convert string to number for rank_order
+      // Convert string to number for rank_order and handle boolean to number for Enums
       const payload = {
         ...data,
         rank_order: Number(data.rank_order),
-      };
+        is_display: data.is_display ? 1 : 0,
+        is_delete: data.is_delete ? 1 : 0,
+      } as any;
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
       } else {
-        await create({
-          ...payload,
-          is_delete: false,
-        });
+        await create(payload);
       }
       onSuccess();
     } catch (error: unknown) {
@@ -121,12 +128,16 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="slug">{tLabels('slug')}</Label>
+          <Label htmlFor="slug">{tLabels('slug')} <span className="text-red-500">*</span></Label>
           <Input
             id="slug"
             {...register('slug')}
             placeholder={tForms('slugExample')}
+            className={errors.slug ? 'border-red-500' : ''}
           />
+           {errors.slug && (
+            <p className="text-sm text-red-500">{errors.slug.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -136,7 +147,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
           <Input
             id="rank_order"
             type="number"
-            {...register('rank_order')}
+            {...register('rank_order', { valueAsNumber: true })}
             className={errors.rank_order ? 'border-red-500' : ''}
           />
           {errors.rank_order && (

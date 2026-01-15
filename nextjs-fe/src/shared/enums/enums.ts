@@ -20,6 +20,24 @@ export const StatusEnumLabels: Record<StatusEnum, string> = {
 };
 
 // ==========================================
+// UserStatus (app/Enums/UserStatus.php)
+// Status for User users
+// ==========================================
+export enum UserStatus {
+  INACTIVE = 0,
+  ACTIVE = 1,
+  WAITING = 2,
+  SUSPENDED = 3,
+}
+
+export const UserStatusLabels: Record<UserStatus, string> = {
+  [UserStatus.INACTIVE]: 'Inactive',
+  [UserStatus.ACTIVE]: 'Active',
+  [UserStatus.WAITING]: 'Waiting',
+  [UserStatus.SUSPENDED]: 'Suspended',
+};
+
+// ==========================================
 // AdminStatus (app/Enums/AdminStatus.php)
 // Status for Admin users
 // ==========================================
@@ -205,3 +223,17 @@ export const TypeOfMethodLabels: Record<TypeOfMethod, string> = {
 export const Status = IsActive;
 /** @deprecated Use IsActiveLabels or specific status labels */
 export const StatusLabels = IsActiveLabels;
+
+// ==========================================
+// IsDisplay (app/Enums/IsDisplay.php)
+// Boolean-like status for display visibility
+// ==========================================
+export enum IsDisplay {
+  FALSE = 0,
+  TRUE = 1,
+}
+
+export const IsDisplayLabels: Record<IsDisplay, string> = {
+  [IsDisplay.FALSE]: 'Hidden',
+  [IsDisplay.TRUE]: 'Visible',
+};

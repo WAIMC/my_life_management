@@ -3,6 +3,9 @@
 namespace App\Models\History\Management;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Management\UserMgmt;
+use App\Models\Master\AdminMst;
 
 class UserMgmtHist extends Model
 {
@@ -60,4 +63,19 @@ class UserMgmtHist extends Model
     'author_id' => 'integer',
     'created_at' => 'datetime',
   ];
+  /**
+   * Get the user management record.
+   */
+  public function userMgmt(): BelongsTo
+  {
+    return $this->belongsTo(UserMgmt::class, 'user_mgmt_id');
+  }
+
+  /**
+   * Get the author (admin) who performed the action.
+   */
+  public function author(): BelongsTo
+  {
+    return $this->belongsTo(AdminMst::class, 'author_id');
+  }
 }

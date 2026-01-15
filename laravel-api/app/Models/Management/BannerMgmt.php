@@ -26,11 +26,13 @@ class BannerMgmt extends Model
     'title',
     'slug',
     'description',
-    'link',
-    'image',
     'position',
     'status',
     'is_delete',
+    'media_id',
+    'status',
+    'is_delete',
+    'media_id',
   ];
 
   /**
@@ -43,11 +45,11 @@ class BannerMgmt extends Model
     'title' => 'string',
     'slug' => 'string',
     'description' => 'string',
-    'link' => 'string',
-    'image' => 'string',
+    'position' => 'string',
     'position' => 'string',
     'status' => 'integer',
     'is_delete' => 'boolean',
+    'media_id' => 'integer',
     'created_at' => 'datetime',
     'updated_at' => 'datetime',
   ];
@@ -60,5 +62,13 @@ class BannerMgmt extends Model
   public function history(): HasMany
   {
     return $this->hasMany(BannerMgmtHist::class, 'banner_mgmt_id');
+  }
+
+  /**
+   * Get the media record.
+   */
+  public function media()
+  {
+    return $this->belongsTo(\App\Models\Management\MediaMgmt::class, 'media_id');
   }
 }

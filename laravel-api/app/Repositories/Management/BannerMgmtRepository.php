@@ -29,23 +29,27 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
   {
     $query = $this->model->query()
       ->select([
-        'id',
-        'title',
-        'image',
-        'link',
-        'status',
-        'updated_at',
+        'banner_mgmt.id',
+        'banner_mgmt.title',
+        'media_files.url as image', // Alias as image to match Resource expectation
+        // 'link' Removed
+        'banner_mgmt.status',
+        'banner_mgmt.updated_at',
+        'banner_mgmt.position',
+        'banner_mgmt.media_id',
+        'banner_mgmt.slug',
+        'banner_mgmt.description',
+        'banner_mgmt.is_delete',
       ])
-      ->notDeleted(); // No relationships for simple model
+      ->leftJoin('media_files', 'banner_mgmt.media_id', '=', 'media_files.id')
+      ->notDeleted();
 
     // Apply filters
     $this->applyFilters($query, $payload, [
-      'id',
-      'status',
-      'is_display',
+      'banner_mgmt.id',
+      'banner_mgmt.status',
     ], [
-      'title',
-      'link',
+      'banner_mgmt.title',
     ]);
 
     // Apply date range

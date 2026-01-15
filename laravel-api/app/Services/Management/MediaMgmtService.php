@@ -99,6 +99,50 @@ class MediaMgmtService extends BaseService
   }
 
   /**
+   * Commit media from temporary to official storage
+   */
+  public function commitMedia(int $mediaId, string $targetFolder = MediaConst::MEDIA_PATH_OFFICIAL): string
+  {
+    $media = $this->mediaMgmt->find($mediaId);
+
+    if (!$media || !$media->isFile()) {
+      return '';
+    }
+
+    // Check if media is in temporary storage
+    if (!str_starts_with($media->storage_path, MediaConst::MEDIA_PATH_TEMP)) {
+      return $media->url ?? '';
+    }
+
+    // Calculate new storage path
+    // Replace "temp-uploads/" with "{targetFolder}/" (e.g. "banners/")
+    $newStoragePath = preg_replace(
+      '/^' . preg_quote(MediaConst::MEDIA_PATH_TEMP, '/') . '/',
+      trim($targetFolder, '/'),
+      $media->storage_path,
+      1
+    );
+
+    // Move in MinIO
+    if ($this->minioService->move($media->storage_path, $newStoragePath)) {
+      $newUrl = $this->minioService->getPublicUrl($newStoragePath);
+
+      // Update DB
+      $this->mediaMgmt->executeUpdate([
+        'id' => $media->id,
+        'storage_path' => $newStoragePath,
+        'url' => $newUrl,
+        // Update virtual path as well to match
+        'virtual_path' => str_replace(MediaConst::MEDIA_PATH_TEMP, trim($targetFolder, '/'), $media->virtual_path)
+      ]);
+
+      return $newUrl;
+    }
+
+    return $media->url ?? '';
+  }
+
+  /**
    * Create folder (internal method)
    */
   protected function createFolder(array $payload): int
@@ -128,8 +172,11 @@ class MediaMgmtService extends BaseService
     $parentPath = $payload['parent_path'] ?? '/';
     $workspaceId = $payload['workspace_id'] ?? null;
 
+    // Use parent_path as prefix for physical storage to support temp uploads
+    $prefix = trim($parentPath, '/');
+
     // Upload to MinIO
-    $uploadResult = $this->minioService->upload($file, $workspaceId);
+    $uploadResult = $this->minioService->upload($file, $workspaceId, $prefix);
 
     // Extract metadata
     $metadata = $this->extractMetadata($file);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { X, Image as ImageIcon } from 'lucide-react';
@@ -23,6 +23,10 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(value || null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPreview(value || null);
+  }, [value]);
 
   const handleFileChange = (file: File | null) => {
     if (!file) {

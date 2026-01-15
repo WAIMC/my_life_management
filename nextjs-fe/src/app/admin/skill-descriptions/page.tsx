@@ -11,6 +11,7 @@ import { FilterPanel, type FilterField } from '@/components/common/data-table/fi
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import type { SkillDescriptionMgmt } from '@/shared/types/api';
+import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
 import { API_ENDPOINTS } from '@/shared/api';
 import { 
   SORT_ORDER, 
@@ -102,10 +103,19 @@ export default function SkillDescriptionListPage() {
 
   const columns: Column<SkillDescriptionMgmt>[] = [
     { key: 'id', label: tFields('id'), sortable: true },
-    { 
-      key: 'skill_mgmt_id', 
-      label: tFields('skillId'), 
-      sortable: true 
+    {
+      key: 'status',
+      label: tFields('status'),
+      sortable: true,
+      render: (item) => (
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          item.status === StatusEnum.PUBLISHED ? 'bg-green-100 text-green-800' : 
+          item.status === StatusEnum.ARCHIVED ? 'bg-gray-100 text-gray-800' : 
+          'bg-yellow-100 text-yellow-800'
+        }`}>
+          {StatusEnumLabels[item.status as StatusEnum] || tCommon('unknown')}
+        </span>
+      ),
     },
     { 
       key: 'title', 

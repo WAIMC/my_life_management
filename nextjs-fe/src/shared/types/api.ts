@@ -285,12 +285,12 @@ export interface BannerMgmt {
 
 export interface CategoryMgmt {
   id: number;
-  parent_id?: number;
+  parent_id: number;
   name: string;
-  slug?: string;
+  slug: string;
   description?: string;
   status: number;
-  is_display?: boolean;
+  is_display: boolean;
   rank_order: number;
   is_delete: boolean;
   updated_at: string;

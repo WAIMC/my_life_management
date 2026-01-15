@@ -23,7 +23,7 @@ import { HistoryViewer } from '@/components/features/history/history-viewer';
 import { AvatarUpload } from '@/components/common/avatar-upload';
 import type { UserMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, Gender, GenderLabels, IsActiveLabels } from '@/shared/enums';
+import { Gender, GenderLabels, UserStatus, UserStatusLabels } from '@/shared/enums/enums';
 import { FILE_UPLOAD } from '@/shared/config/constant';
 import { getUserSchema, type UserFormData } from '@/shared/validation/validation';
 import type { UserFormProps } from './types';
@@ -50,7 +50,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     resolver: zodResolver(getUserSchema(tValidation)),
     defaultValues: {
       gender: Gender.MALE,
-      status: IsActive.TRUE,
+      status: UserStatus.ACTIVE,
       is_active: true,
     },
   });
@@ -64,10 +64,10 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         last_name: initialData.last_name,
         address: initialData.address || '',
         phone_number: initialData.phone_number || '',
-        birth: initialData.birth || '',
+        birth: initialData.birth ? initialData.birth.slice(0, 10) : '',
 
         gender: initialData.gender ? Number(initialData.gender) : Gender.MALE,
-        status: initialData.status !== undefined ? Number(initialData.status) : IsActive.TRUE,
+        status: initialData.status !== undefined ? Number(initialData.status) : UserStatus.ACTIVE,
         is_active: initialData.is_active,
         password: '',
       });
@@ -81,7 +81,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         phone_number: '',
         birth: '',
         gender: Gender.MALE,
-        status: IsActive.TRUE,
+        status: UserStatus.ACTIVE,
         is_active: true,
         password: '',
       });
@@ -90,10 +90,11 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
 
   const onSubmit = async (data: UserFormData) => {
     try {
-      const payload = { ...data };
-      
-      if (isEdit && (!data.password || data.password === '')) {
-        delete payload.password;
+      const { password, ...otherData } = data;
+      const payload: Partial<UserMgmt> = { ...otherData };
+
+      if (password) {
+        payload.password = password;
       }
 
       if (data.birth) {
@@ -275,14 +276,17 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
           <Select
             key={`status-${String(statusValue)}`}
             value={statusValue !== undefined && statusValue !== null ? String(statusValue) : ''}
-            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
+            onValueChange={(value) => setValue('status', Number(value) as UserStatus)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
-              <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
+              {Object.entries(UserStatusLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value.toString()}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
