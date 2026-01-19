@@ -1,22 +1,56 @@
 ################ KHỞI TẠO
 khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hiện việc đầu tiên là khởi tạo, thực hiện khi build env: 
 
-- Tạo 2 bucket để lưu trữ dữ liệu:
-	+ Official: lưu trữ dữ liệu dài hạn	
-		* MinIO sử dụng dấu / để mô phỏng cấu trúc thư mục. Nếu dồn quá nhiều đối tượng vào 1 prefix duy nhất sẽ gây áp lực truy vấn list và head. Khuyến nghị giữ đối tượng <10.000 đối tượng/prefix. Có thể chia thành nhiều prefix theo năm/tháng/ngày hoặc theo hash của object id.
-		* Do đó, setting lifecycle tự động move media xuống tier lưu trữ thấp hơn, các media này là các media ít được sử dụng or lâu rồi không sử dụng or tần xuất truy cập ít và không muốn xóa, di chuyển nó xuống tier thấp hơn nhứ SSD -> HDD or cloude rẻ để tối ưu chi phí lưu trữ, truy vấn. Toàn bộ giao tiếp với dữ liệu đều thông qua giao thức HTTP(S) restful.
+- Tạo 3 bucket để lưu trữ dữ liệu:
+  + media-official: chứa dữ liệu riêng tư như thông tin cá nhân, tài liệu nhạy cảm, ...
     * Cần đánh dấu versioning để backup
     * Setting rule cho phép tồn tại file trong 30 ngày để có thể rollback, sau 30 ngày -> hard delete. 
     * Setting rule để dọn delete marker dư thừa
-	+ Temp: là lưu trữ dữ liệu tạm thời
-		* Bucket lưu trữ tạm thời setting lifecycle độc lập xóa dữ liệu tự động mỗi ngày, thường vài tiếng nó sẽ scan object với modified_time > 1 ngày -> xóa object
+  + media-temp: chứa dữ liệu tạm thời, có set clear theo ngày
+    * Bucket lưu trữ tạm thời setting lifecycle độc lập xóa dữ liệu tự động mỗi ngày, thường vài tiếng nó sẽ scan object với modified_time > 1 ngày -> xóa object
     * Không versioning để tiết kiệm chi phí lưu trữ vì không tạo delete marker, tự động clear dữ liệu mà không tồn rác
 
-- Khi upload sẽ chia thành nhiều part để upload, mặc định, mọi multiparts upload bị hủy (không hoàn tất) sẽ tự động bị xóa sau 24H và tần xuất quét xóa mặc định là 6H -> Nếu không cần thay đổi thiết lập thì việc này cũng tự động rồi
+  + Lưu trữ media sẽ theo format: '{workspace}/{year}/{month}/{uuid}.{extension}';
+  vd: media-official/2026/01/16/abc.jpg
+  + Riêng upload media temp sẽ theo format: 'bucket/{uuid}.{extension}';
+
+
+
+- Note:
+  + MinIO sử dụng dấu / để mô phỏng cấu trúc thư mục. Nếu dồn quá nhiều đối tượng vào 1 prefix duy nhất sẽ gây áp lực truy vấn list và head. Khuyến nghị giữ đối tượng <10.000 đối tượng/prefix. Có thể chia thành nhiều prefix theo năm/tháng/ngày hoặc theo hash của object id.
+  + Do đó, setting lifecycle tự động move media xuống tier lưu trữ thấp hơn, các media này là các media ít được sử dụng or lâu rồi không sử dụng or tần xuất truy cập ít và không muốn xóa, di chuyển nó xuống tier thấp hơn nhứ SSD -> HDD or cloud rẻ để tối ưu chi phí lưu trữ, truy vấn. Toàn bộ giao tiếp với dữ liệu đều thông qua giao thức HTTP(S) restful.
+
+- Khi upload sẽ chia thành nhiều part để upload. Mặc định, mọi multiparts upload bị hủy (không hoàn tất) sẽ tự động bị xóa sau 24H và tần xuất quét xóa mặc định là 6H -> Nếu không cần thay đổi thiết lập thì việc này cũng tự động rồi
 
 - Cơ chế delete marker và xóa đối tượng: Nếu bucket bật tính năng versioning, thì mỗi khi xóa object đó chỉ là soft delete. Nó tạo delete marker để đánh dấu lại object đó. Client sẽ không nhìn thấy object đã xóa, nhưng thực tế chúng vẫn còn đang lưu trữ ở disk. Chức năng này có mục đích khôi phục dữ liệu, khi nhầm lẫn xóa object (do người dùng, lỗi logic delete) thì có thể khôi phục lại bằng cách xóa đánh dấu delete marker (current version). Vấn đề là object và delete marker lại không có liên kết ràng buộc lẫn nhau, nó tồn tại độc lập, nên khi xóa object thật vĩnh viễn thì delete marker vẫn còn tồn tại, lúc này delete marker là rác vì nó không đánh dấu cho object nào cả. Do đó cần setting rule để xóa vĩnh viễn delete marker. Vì bật tính năng versioning để cho mục đích khôi phục, nên cần setting rule như cái thùng rác, sẽ tự động xóa vĩnh viễn object sau x/ngày không khôi phục. Để đảm bảo quản lý, lưu trữ dữ liệu tối ưu.
 
 - Setting IAM/policy để có thể có quyền thay đổi dữ liệu: upload, read-only, temp-only. Không dùng root access key cho app, giảm rủi do nhầm lẫn, tăng bảo mật.
+  + Tạo file policy.json: Cho phép get, put, delete object phần resource bucket temp và official
+  + Apply policy bằng lệnh mc policy add
+  + Tạo user và apply policy bằng lệnh mc admin user add, đây chính là access key, secret key
+  + Lấy giá trị này và tạo key + apply value vào file 
+  + Kiểm tra có tồn tại /home/vinhdv/projects/my_life_management/laravel-api/.env thì tìm value access và secret key và thay thế value vào file .env, nếu không thì tạo mới access và secret key. Nếu không có file .env thì làm tương tự với file /home/vinhdv/projects/my_life_management/laravel-api/.env.example
+  VD: cấu hình .env dùng key
+    AWS_ACCESS_KEY_ID=backend-user
+    AWS_SECRET_ACCESS_KEY=strong-backend-password
+    AWS_DEFAULT_REGION=us-east-1
+    AWS_BUCKET=media
+    AWS_ENDPOINT=http://minio:9000
+    AWS_USE_PATH_STYLE_ENDPOINT=true
+  + Thực hiện cấu hình trong file config/filesystem.php
+    'disks' => [
+        's3' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+        ],
+    ],
+  + Kiể tra lại luồng xử lý back-end, refactor lại sử dụng key này để thao tác dũ liệu thông qua minio
 
 - Tiering: là tính năng của minio để tự động di chuyển dữ liệu giữa các tier lưu trữ khác nhau, ví dụ: SSD -> HDD or cloude rẻ để tối ưu chi phí lưu trữ, truy vấn. hiện tại bỏ qua làm mặc định phần này, mount 1 disk, chạy MinIO docker single-node. Trong tương lai sẽ chia ra các tier khác nhau để lưu trữ.
   + Pool SSD (hot)
@@ -113,4 +147,10 @@ Nếu khác network docker, thì phải thêm access_key và secret_key cho mỗ
   + Pause: Browser tự ngắt TCP
   + Seek, next, back: Browser gửi request với range tương ứng
   + Resume: Browser gửi range tiếp
-- Logic khác: multiple videp, playlist thì cần đổi src. Adaptive streaming (HLS/DASH)
+  + Phóng to|thu nhỏ: css/player thực hiện
+  + Chất lượng đồ họa: Player (HLS/DASH)
+  + Âm Lượng: browser thực hiện
+  + Thời giản phát: browser
+  + Speed: Browser
+- Logic khác: multiple videp, playlist thì cần đổi src. Adaptive streaming (HLS/DASH). Hầu hết các control video thì browser nó đã hỗ trợ sẵn, chỉ cần đảm bảo
+gửi|nhận accept-ranges: bytes, trả đúng content-range, không buffer, stream ổn định thôi. Nếu cần control nhưng thứ đó có thể custom ở front-end

@@ -62,8 +62,6 @@ class CommonVal
   public const HTTP_SERVICE_UNAVAILABLE = 503;
 
   public const DATE_FORMAT = 'd/m/Y';
-  public const BLACKLIST_ACCESS_TOKEN = 'blacklist_access_token';
-  public const BLACKLIST_REFRESH_TOKEN = 'blacklist_refresh_token';
 
   public const MIN_INTEGER = 0;
   public const MAX_INTEGER = 2147483647;

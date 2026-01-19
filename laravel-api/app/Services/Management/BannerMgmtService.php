@@ -55,16 +55,7 @@ class BannerMgmtService extends BaseService
     $id = $this->bannerMgmt->executeStore($payload);
     $this->recordHistory($id, ActionType::CREATE, $payload);
 
-    if (isset($payload['media_id'])) {
-      $mediaId = $payload['media_id'];
-      DB::afterCommit(function () use ($id, $mediaId) {
-        try {
-          $this->mediaService->commitMedia($mediaId, 'banners');
-        } catch (\Exception $e) {
-          Log::error("Failed to commit media for Banner ID: $id", ['error' => $e->getMessage()]);
-        }
-      });
-    }
+
 
     return $id;
   }
@@ -81,16 +72,7 @@ class BannerMgmtService extends BaseService
     $affected = $this->bannerMgmt->executeUpdate($payload);
     $this->recordHistory($id, ActionType::UPDATE, $payload);
 
-    if (isset($payload['media_id'])) {
-      $mediaId = $payload['media_id'];
-      DB::afterCommit(function () use ($id, $mediaId) {
-        try {
-          $this->mediaService->commitMedia($mediaId, 'banners');
-        } catch (\Exception $e) {
-          Log::error("Failed to commit media for Banner ID: $id", ['error' => $e->getMessage()]);
-        }
-      });
-    }
+
 
     return $affected;
   }

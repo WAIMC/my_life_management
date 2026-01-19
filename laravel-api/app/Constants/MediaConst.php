@@ -30,9 +30,12 @@ class MediaConst
   public const ALLOWED_ARCHIVE_EXTENSIONS = ['zip', 'rar', '7z', 'tar', 'gz'];
 
   // Storage path patterns
-  public const STORAGE_PATH_PATTERN = '{workspace}/{category}/{year}/{month}/{uuid}.{extension}';
+  public const STORAGE_PATH_STANDARD = '{workspace}/{year}/{month}/{uuid}.{extension}';
+  public const STORAGE_PATH_TEMP = '{uuid}.{extension}';
 
-  // Paths
-  public const MEDIA_PATH_TEMP = 'temp-uploads';
-  public const MEDIA_PATH_OFFICIAL = 'official';
+  // Disks
+
+  public const DISK_OFFICIAL = 'minio_official';
+  public const DISK_TEMP = 'minio_temp';
+  public const PRESIGNED_UPLOAD_TTL = 5; // Seconds
 }

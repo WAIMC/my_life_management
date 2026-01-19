@@ -17,17 +17,87 @@ import type {
   CreateFolderParams,
   CopyFilesParams,
   MediaApiListResponse,
+  PresignedUploadResponse, 
 } from '@/shared/types/media-file.types';
 
 class MediaFileService {
   private baseUrl = ENDPOINTS.MEDIA.FILES;
 
+
+
   /**
-   * Upload file to server
+   * Upload file to MinIO via Presigned URL
+   * Returns metadata to be used for storing in DB
    */
-  async upload(params: UploadFileParams): Promise<number> {
+  async uploadToMinio(params: UploadFileParams): Promise<{ key: string; original_name: string; extension: string; mime_type: string; size: number } | null> {
+    try {
+      // 0. Client-side Validation
+      // Use config or props for validation.
+
+      
+      // Let's rely on the passed constraint or a default.
+      
+      // 1. Get Presigned URL
+      const extension = params.file.name.split('.').pop() || '';
+      const presignedRes = await apiClient.post<PresignedUploadResponse>(
+        `${this.baseUrl}/prepare-upload`,
+        {
+          extension,
+          mime_type: params.file.type,
+          original_name: params.file.name,
+          size: params.file.size
+        }
+      );
+      
+      if (!presignedRes.data) {
+        throw new Error('Failed to generate upload URL');
+      }
+
+      const { upload_url, key, headers } = presignedRes.data;
+
+      // 2. Upload to MinIO
+      const uploadResponse = await fetch(upload_url, {
+        method: 'PUT',
+        headers: headers,
+        body: params.file
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Storage upload failed with status: ${uploadResponse.status}`);
+      }
+
+      // 3. Return metadata
+      return {
+        key,
+        original_name: params.file.name,
+        extension,
+        mime_type: params.file.type,
+        size: params.file.size
+      };
+
+    } catch (error) {
+      console.error('Upload to MinIO failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Upload file to server (Updated to support Store from Temp)
+   */
+  async upload(params: UploadFileParams & { key?: string, original_name?: string, extension?: string, mime_type?: string, size?: number }): Promise<number> {
     const formData = new FormData();
-    formData.append('file', params.file);
+    
+    // If key is present, we are storing from temp
+    if (params.key) {
+        formData.append('key', params.key);
+        if (params.original_name) formData.append('original_name', params.original_name);
+        if (params.extension) formData.append('extension', params.extension);
+        if (params.mime_type) formData.append('mime_type', params.mime_type);
+        if (params.size) formData.append('size', params.size.toString());
+    } else {
+        // Fallback: Direct upload
+        formData.append('file', params.file);
+    }
     
     if (params.parent_path) {
       formData.append('parent_path', params.parent_path);
@@ -52,12 +122,12 @@ class MediaFileService {
   /**
    * Get list of media files
    */
-  async list(params?: ListFilesParams): Promise<MediaApiListResponse> {
+  async list(params?: ListFilesParams, config?: { signal?: AbortSignal }): Promise<MediaApiListResponse> {
     const response = await apiClient.get<MediaApiListResponse>(
       `${this.baseUrl}${API_PATHS.LIST}`,
-      { params }
+      { params, signal: config?.signal }
     );
-    return response;
+    return response.data;
   }
 
   /**
@@ -192,7 +262,7 @@ class MediaFileService {
       `${this.baseUrl}${API_PATHS.LIST}`,
       { params: { ...params, is_file: 0 } }
     );
-    return response;
+    return response.data;
   }
 
   /**

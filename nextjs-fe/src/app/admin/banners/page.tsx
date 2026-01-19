@@ -60,7 +60,7 @@ export default function BannerListPage() {
 
   const { data, loading, pagination, refetch } = useApiData<BannerMgmt>(
     API_ENDPOINTS.MANAGEMENT.BANNER,
-    { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder }
+    { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder, staleTime: 5000 }
   );
 
   const { remove } = useCrud<BannerMgmt>(API_ENDPOINTS.MANAGEMENT.BANNER);
@@ -77,7 +77,7 @@ export default function BannerListPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
-    refetch();
+    // refetch() not needed, useCrud invalidates query automatically
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -90,7 +90,6 @@ export default function BannerListPage() {
     setSelectedIds([]);
     setDeleteIds([]);
     setDeleteDialogOpen(false);
-    refetch();
   };
 
   const handleSort = (column: string) => {
@@ -126,25 +125,7 @@ export default function BannerListPage() {
       ),
     },
     { key: 'title', label: tFields('title'), sortable: true },
-    { 
-      key: 'link', 
-      label: tFields('link'),
-      render: (banner) => {
-        if (!banner.link) {
-          return <span className="text-gray-400">-</span>;
-        }
-        return (
-          <a 
-            href={banner.link} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline truncate max-w-xs block"
-          >
-            {banner.link}
-          </a>
-        );
-      },
-    },
+
     { key: 'rank_order', label: tFields('order'), sortable: true },
     {
       key: 'status',
@@ -178,7 +159,7 @@ export default function BannerListPage() {
   ];
   const searchFields: SearchField[] = [
     { key: 'title', label: tFields('title'), type: 'text' },
-    { key: 'link', label: tFields('link'), type: 'text' },
+
     {
       key: 'status',
       label: tFields('status'),
@@ -197,7 +178,6 @@ export default function BannerListPage() {
       variant: 'destructive', 
       onClick: async (ids) => { 
         await remove(ids); 
-        refetch(); 
       }, 
       confirmMessage: tCrud('deleteConfirm', { 
         count: selectedIds.length, 

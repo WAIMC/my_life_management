@@ -17,27 +17,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ImageUpload } from '@/components/common/image-upload';
+import { MediaSelectorModal } from '@/components/common/media-selector-modal';
 import type { BannerMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
-import { UPLOAD_CONFIG } from '@/shared/config/constant';
 import { getBannerSchema, type BannerFormData } from '@/shared/validation/validation';
-import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import { slugify } from '@/shared/utils/string-utils';
 import type { BannerFormProps } from './types';
+import Image from 'next/image';
+import { Image as ImageIcon, X } from 'lucide-react';
+import type { MediaFile } from '@/shared/types/media-file.types';
 
 export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps) {
   const tCommon = useTranslations('common');
-  const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
   const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
   
-  const [imagePreview, setImagePreview] = useState<string | null>(() => initialData?.image || null);
-  const [isUploading, setIsUploading] = useState(false);
+  
   const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
+  const [mediaSelectorOpen, setMediaSelectorOpen] = useState(false);
 
   const {
     register,
@@ -47,7 +47,6 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
     control,
     reset,
     setError,
-    watch,
   } = useForm<BannerFormData>({
     resolver: zodResolver(getBannerSchema(tValidation)),
     defaultValues: {
@@ -56,12 +55,28 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
   });
 
   // Watch title to auto-generate slug
-  const titleValue = watch('title');
+  // Use useWatch to avoid React Compiler warning
+  const titleValue = useWatch({ control, name: 'title' });
+  
+  // Watch image for preview
+  const imagePreview = useWatch({ control, name: 'image' });
+
   useEffect(() => {
-    if (titleValue && !isEdit) {
-        setValue('slug', slugify(titleValue));
+    // Synchronize slug with title in both create and edit modes
+    // Only auto-update if strictly needed or just always mirror for now if that's what user wants
+    // User said "update modal seems not synchronous with create modal"
+    // So we enable it for both.
+    // However, to prevent overwriting existing custom slugs in Edit mode on load, 
+    // we should strictly check if title changed.
+    // Since titleValue updates on mount from defaultValues, this might overwrite.
+    // But defaultValues come from initialData.
+    // So if initialData.slug exists and matches slugify(initialData.title), it is fine.
+    // If it doesn't match, we might overwrite it. 
+    // Let's rely on user intention: "Synchronize slug function".
+    if (titleValue) {
+        setValue('slug', slugify(titleValue), { shouldDirty: true });
     }
-  }, [titleValue, isEdit, setValue]);
+  }, [titleValue, setValue]);
 
   useEffect(() => {
     if (initialData) {
@@ -69,18 +84,16 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
         title: initialData.title,
         slug: initialData.slug || '',
         description: initialData.description || '',
-        link: initialData.link || '',
         image: initialData.image || '',
         position: initialData.position || '',
         status: initialData.status,
       });
-      setImagePreview(initialData.image || null);
+      // Ensure media_id is preserved if we were editing handling logic here
     } else {
       reset({
         title: '',
         slug: '',
         description: '',
-        link: '',
         image: '',
         position: '',
         status: StatusEnum.PUBLISHED,
@@ -88,47 +101,23 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
     }
   }, [initialData, reset]);
 
-  const handleImageChange = async (file: File | null, preview: string | null) => {
-    setImagePreview(preview);
-    
-    // If file is cleared
-    if (!file) {
-        setValue('image', '');
-        return;
-    }
-
-    // Auto upload when file selected
-    try {
-        setIsUploading(true);
-        const uploadedId = await mediaFileService.upload({
-            file: file,
-            workspace_id: 1, // Default workspace or from context
-            parent_path: UPLOAD_CONFIG.TEMP_UPLOAD_PATH, // Upload to temp folder first
-        });
-        
-        setUploadedMediaId(uploadedId);
-        
-        const fileDetails = await mediaFileService.get(uploadedId);
-        if (fileDetails.url) {
-            setValue('image', fileDetails.url);
-        } else {
-             console.error('No URL returned for uploaded image');
-        }
-    } catch (err) {
-        console.error('Upload failed', err);
-    } finally {
-        setIsUploading(false);
+  const handleMediaSelect = (media: MediaFile) => {
+    if (media.url) {
+        setValue('image', media.url);
+        setUploadedMediaId(media.id);
     }
   };
 
+  const handleRemoveImage = () => {
+      setValue('image', '');
+      setUploadedMediaId(null);
+  };
 
   const onSubmit = async (data: BannerFormData) => {
     try {
-      if (isUploading) return; // Prevent submit while uploading
-
-      const payload = { ...data };
+      const payload: BannerFormData & { media_id?: number } = { ...data };
       if (uploadedMediaId) {
-        (payload as any).media_id = uploadedMediaId;
+        payload.media_id = uploadedMediaId;
       }
 
       if (isEdit && initialData) {
@@ -152,19 +141,80 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <ImageUpload
-            label="Banner Image"
-            value={imagePreview ?? undefined}
-            onChange={handleImageChange}
-            maxSize={10}
-            shape="rectangle"
-            aspectRatio="aspect-video"
-          />
-           {isUploading && <p className="text-sm text-yellow-600 mt-1">Uploading image...</p>}
-           {!imagePreview && errors.image && <p className="text-sm text-red-500">{tValidation('image.required')}</p>}
-           {/* Hidden input to register image field for validation */}
-           <input type="hidden" {...register('image')} />
+        <div className="space-y-2">
+            <Label>Banner Image <span className="text-red-500">*</span></Label>
+            
+            <div 
+                className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px] relative bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
+                onClick={() => setMediaSelectorOpen(true)}
+            >
+                {imagePreview ? (
+                    <div className="relative w-full h-full min-h-[200px] flex items-center justify-center">
+                        <Image 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            fill 
+                            className="object-contain" 
+                            unoptimized 
+                        />
+                        <div className="absolute top-2 right-2 flex gap-2">
+                            <Button 
+                                type="button" 
+                                variant="destructive" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-full shadow-md"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveImage();
+                                }}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="absolute bottom-2 right-2">
+                             <Button 
+                                type="button" 
+                                variant="secondary" 
+                                size="sm" 
+                                className="shadow-md"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMediaSelectorOpen(true);
+                                }}
+                            >
+                                Change Image
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="p-4 bg-background rounded-full shadow-sm">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <div className="text-center space-y-1">
+                            <p className="text-sm font-medium">No image selected</p>
+                            <p className="text-xs text-muted-foreground">Click to select an image from library</p>
+                        </div>
+                        <Button type="button" variant="outline" onClick={(e) => {
+                            e.stopPropagation();
+                            setMediaSelectorOpen(true);
+                        }}>
+                            Select Image
+                        </Button>
+                    </div>
+                )}
+            </div>
+            
+            {errors.image && <p className="text-sm text-red-500">{tValidation('image.required')}</p>}
+            {/* Hidden input to register image field for validation */}
+            <input type="hidden" {...register('image')} />
+            
+            <MediaSelectorModal 
+                open={mediaSelectorOpen} 
+                onClose={() => setMediaSelectorOpen(false)} 
+                onSelect={handleMediaSelect}
+                allowedMimeTypes={['image/']}
+            />
         </div>
         
         <div className="space-y-4">
@@ -178,12 +228,6 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
             <Label htmlFor="slug">{tLabels('slug')} <span className="text-red-500">*</span></Label>
             <Input id="slug" {...register('slug')} className={errors.slug ? 'border-red-500' : ''} />
             {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="link">{tLabels('linkUrl')} <span className="text-red-500">*</span></Label>
-            <Input id="link" {...register('link')} placeholder={tForms('urlExample')} className={errors.link ? 'border-red-500' : ''} />
-             {errors.link && <p className="text-sm text-red-500">{errors.link.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -222,8 +266,8 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
         <Button type="button" variant="outline" onClick={onCancel}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading || isUploading}>
-          {loading || isUploading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading}>
+          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

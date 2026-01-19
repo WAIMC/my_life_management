@@ -2,66 +2,50 @@
 
 namespace App\Services;
 
-use Aws\S3\S3Client;
 use App\Constants\MediaConst;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Config;
 
 class MinioService
 {
-  protected S3Client $client;
-  protected string $bucket;
-  protected string $previewBucket;
-  protected string $publicUrl;
-
-  public function __construct()
-  {
-    $endpoint = config('minio.endpoint');
-    $accessKey = config('minio.access_key');
-    $secretKey = config('minio.secret_key');
-
-    $this->client = new S3Client([
-      'version' => 'latest',
-      'region' => config('minio.region', 'us-east-1'),
-      'endpoint' => $endpoint,
-      'use_path_style_endpoint' => true,
-      'credentials' => [
-        'key' => $accessKey,
-        'secret' => $secretKey,
-      ],
-    ]);
-
-    $this->bucket = config('minio.bucket', 'media');
-    $this->previewBucket = config('minio.preview_bucket', 'media-previews');
-    $this->publicUrl = config('minio.public_url');
-  }
-
   /**
-   * Upload file to MinIO (flat structure)
+   * Upload file to MinIO
+   *
+   * @param UploadedFile $file
+   * @param string $disk One of MediaConst::DISK_*
+   * @param int|null $workspaceId
+   * @param string $prefix
+   * @return array
+   * @throws \Exception
    */
-  public function upload(UploadedFile $file, ?int $workspaceId = null, string $prefix = ''): array
+  public function upload(UploadedFile $file, string $disk, ?int $workspaceId = null): array
   {
-    $storagePath = $this->generateStoragePath($file, $workspaceId, $prefix);
+    $storagePath = $this->generateStoragePath($file->getClientOriginalExtension(), $disk, $workspaceId);
 
     try {
-      $result = $this->client->putObject([
-        'Bucket' => $this->bucket,
-        'Key' => $storagePath,
-        'Body' => fopen($file->getRealPath(), 'r'),
-        'ContentType' => $file->getMimeType(),
+      $result = Storage::disk($disk)->put($storagePath, fopen($file->getRealPath(), 'r'), [
         'Metadata' => [
           'original-name' => $file->getClientOriginalName(),
         ],
       ]);
 
+      if (!$result) {
+        throw new \Exception('Failed to upload file to storage.');
+      }
+
+      $filesystem = Storage::disk($disk);
+      /** @var \Illuminate\Filesystem\FilesystemAdapter $filesystem */
+
       return [
-        'bucket' => $this->bucket,
+        'disk' => $disk,
         'storage_path' => $storagePath,
         'object_key' => $storagePath,
-        'etag' => trim($result['ETag'], '"'),
-        'url' => $this->getPublicUrl($storagePath),
+        'url' => $filesystem->url($storagePath),
         'size' => $file->getSize(),
+        'mime_type' => $file->getMimeType(),
       ];
     } catch (\Exception $e) {
       Log::error('MinIO upload failed', ['error' => $e->getMessage()]);
@@ -72,20 +56,19 @@ class MinioService
   /**
    * Move file in MinIO (Copy + Delete)
    */
-  public function move(string $sourceKey, string $destKey): bool
+  public function move(string $sourceDisk, string $sourceKey, string $destDisk, string $destKey): bool
   {
     try {
-      // Copy
-      $this->client->copyObject([
-        'Bucket' => $this->bucket,
-        'Key' => $destKey,
-        'CopySource' => "{$this->bucket}/{$sourceKey}",
-      ]);
+      // If disks are different or we want to be safe, we can use streams
+      // Ideally if on same S3 driver/server, we might want to do copyObject but
+      // Storage facade standard copy is for same disk.
+      // Cross-disk move usually requires readStream -> writeStream -> delete
 
-      // Delete original
-      $this->delete($sourceKey);
+      if (Storage::disk($destDisk)->put($destKey, Storage::disk($sourceDisk)->readStream($sourceKey))) {
+        return Storage::disk($sourceDisk)->delete($sourceKey);
+      }
 
-      return true;
+      return false;
     } catch (\Exception $e) {
       Log::error('MinIO move failed', ['error' => $e->getMessage()]);
       return false;
@@ -95,14 +78,10 @@ class MinioService
   /**
    * Delete file from MinIO
    */
-  public function delete(string $objectKey): bool
+  public function delete(string $disk, string $objectKey): bool
   {
     try {
-      $this->client->deleteObject([
-        'Bucket' => $this->bucket,
-        'Key' => $objectKey,
-      ]);
-      return true;
+      return Storage::disk($disk)->delete($objectKey);
     } catch (\Exception $e) {
       Log::error('MinIO delete failed', ['error' => $e->getMessage()]);
       return false;
@@ -112,65 +91,99 @@ class MinioService
   /**
    * Get public URL
    */
-  public function getPublicUrl(string $objectKey): string
+  public function getPublicUrl(string $disk, string $objectKey): string
   {
-    return rtrim($this->publicUrl, '/') . '/' . $this->bucket . '/' . ltrim($objectKey, '/');
+    /** @var \Illuminate\Filesystem\FilesystemAdapter $filesystem */
+    $filesystem = Storage::disk($disk);
+    return $filesystem->url($objectKey);
   }
 
   /**
-   * Generate storage path (flat structure like S3)
-   * Pattern: {prefix}/{workspace}/{category}/{year}/{month}/{uuid}.{ext}
+   * Generate storage path
+   * Standard: {workspace}/{year}/{month}/{uuid}.{ext}
+   * Temp: {uuid}.{ext}
    */
-  protected function generateStoragePath(UploadedFile $file, ?int $workspaceId, string $prefix = ''): string
+  public function generateStoragePath(string $extension, string $disk, ?int $workspaceId = null): string
   {
-    $category = $this->getCategoryFromMime($file->getMimeType());
+    $uuid = Str::uuid();
+
+    if ($disk === MediaConst::DISK_TEMP) {
+      return str_replace(
+        ['{uuid}', '{extension}'],
+        [$uuid, $extension],
+        MediaConst::STORAGE_PATH_TEMP
+      );
+    }
+
     $year = date('Y');
     $month = date('m');
-    $uuid = Str::uuid();
-    $extension = $file->getClientOriginalExtension();
-
     $workspace = $workspaceId ? "workspace-{$workspaceId}" : 'default';
 
-    $path = "{$workspace}/{$category}/{$year}/{$month}/{$uuid}.{$extension}";
-
-    if ($prefix) {
-      $path = rtrim($prefix, '/') . '/' . $path;
-    }
-
-    return $path;
+    return str_replace(
+      ['{workspace}', '{year}', '{month}', '{uuid}', '{extension}'],
+      [$workspace, $year, $month, $uuid, $extension],
+      MediaConst::STORAGE_PATH_STANDARD
+    );
   }
 
   /**
-   * Get category from MIME type
+   * Generate Presigned Upload URL (PUT)
+   * 
+   * @param string $extension
+   * @param string $disk
+   * @param int $expirySeconds TTL in seconds
+   * @return array
    */
-  protected function getCategoryFromMime(string $mimeType): string
+  public function generatePresignedUploadUrl(string $extension, string $disk = MediaConst::DISK_TEMP, int $expirySeconds = 300): array
   {
-    if (str_starts_with($mimeType, 'image/')) {
-      return MediaConst::CATEGORY_IMAGE;
-    } elseif (str_starts_with($mimeType, 'video/')) {
-      return MediaConst::CATEGORY_VIDEO;
-    } elseif (in_array($mimeType, ['application/pdf', 'application/msword', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])) {
-      return MediaConst::CATEGORY_DOCUMENT;
-    } elseif (str_starts_with($mimeType, 'application/zip') || str_starts_with($mimeType, 'application/x-rar')) {
-      return MediaConst::CATEGORY_ARCHIVE;
-    }
+    $key = $this->generateStoragePath($extension, $disk);
 
-    return MediaConst::CATEGORY_OTHER;
+    // We need to use a custom S3Client with the PUBLIC endpoint for signing
+    // to ensure the Host header in the signature matches what the browser sends (e.g., localhost).
+    // If we use the default client, it signs with the internal docker host (ml-minio), causing a mismatch.
+    $publicEndpoint = config('filesystems.disks.s3.url'); // e.g., http://localhost:9100
+
+    $config = [
+      'region' => config("filesystems.disks.{$disk}.region"),
+      'version' => 'latest',
+      'endpoint' => $publicEndpoint,
+      'use_path_style_endpoint' => true,
+      'credentials' => [
+        'key' => config("filesystems.disks.{$disk}.key"),
+        'secret' => config("filesystems.disks.{$disk}.secret"),
+      ],
+    ];
+
+    $client = new \Aws\S3\S3Client($config);
+    $bucket = config("filesystems.disks.{$disk}.bucket");
+
+    // Create the command
+    $cmd = $client->getCommand('PutObject', [
+      'Bucket' => $bucket,
+      'Key' => $key,
+      'ACL' => 'private',
+    ]);
+
+    // Create the presigned request
+    $request = $client->createPresignedRequest($cmd, "+{$expirySeconds} seconds");
+
+    return [
+      'upload_url' => (string) $request->getUri(),
+      'method' => 'PUT',
+      'key' => $key,
+      'uuid' => basename($key, ".{$extension}"), // Extract UUID from key (temp path is {uuid}.ext)
+      'headers' => [
+        'Content-Type' => 'application/octet-stream',
+      ],
+      'expires_in' => $expirySeconds,
+    ];
   }
 
   /**
    * Check if file exists
    */
-  public function exists(string $objectKey): bool
+  public function exists(string $disk, string $objectKey): bool
   {
-    try {
-      $this->client->headObject([
-        'Bucket' => $this->bucket,
-        'Key' => $objectKey,
-      ]);
-      return true;
-    } catch (\Exception $e) {
-      return false;
-    }
+    return Storage::disk($disk)->exists($objectKey);
   }
 }

@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\Management\BannerMgmt;
 use App\Enums\IsDelete;
+use App\Rules\IsImageMedia;
 use App\Enums\StatusEnum;
 
 class UpdateBannerMgmtRequest extends FormRequest
@@ -34,8 +35,7 @@ class UpdateBannerMgmtRequest extends FormRequest
       'description' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:255',],
       'position' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'status' => ['required', new Enum(StatusEnum::class),],
-      'is_delete' => ['required', new Enum(IsDelete::class),],
-      'media_id' => ['nullable', 'integer', 'exists:media_files,id'],
+      'media_id' => ['nullable', 'integer', 'exists:media_mgmt,id', new IsImageMedia],
     ];
   }
 
@@ -45,7 +45,6 @@ class UpdateBannerMgmtRequest extends FormRequest
       'title' => __('messages.title'),
       'slug' => __('messages.slug'),
       'description' => __('messages.description'),
-      'link' => __('messages.link'),
       'image' => __('messages.image'),
       'position' => __('messages.position'),
       'status' => __('messages.status'),

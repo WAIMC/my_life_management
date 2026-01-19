@@ -31,7 +31,7 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
       ->select([
         'banner_mgmt.id',
         'banner_mgmt.title',
-        'media_files.url as image', // Alias as image to match Resource expectation
+        'media_mgmt.url as image', // Alias as image to match Resource expectation
         // 'link' Removed
         'banner_mgmt.status',
         'banner_mgmt.updated_at',
@@ -41,8 +41,8 @@ class BannerMgmtRepository extends BaseRepository implements BannerMgmtInterface
         'banner_mgmt.description',
         'banner_mgmt.is_delete',
       ])
-      ->leftJoin('media_files', 'banner_mgmt.media_id', '=', 'media_files.id')
-      ->notDeleted();
+      ->leftJoin('media_mgmt', 'banner_mgmt.media_id', '=', 'media_mgmt.id')
+      ->where('banner_mgmt.is_delete', IsDelete::FALSE->value);
 
     // Apply filters
     $this->applyFilters($query, $payload, [

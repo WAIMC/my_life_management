@@ -197,6 +197,7 @@ Route::prefix('admin')
 
         // Media Management (MinIO-based File Manager)
         Route::get('media-mgmt/list', [MediaMgmtController::class, 'list']);
+        Route::post('media-mgmt/prepare-upload', [MediaMgmtController::class, 'prepareUpload']);
         Route::post('media-mgmt/store', [MediaMgmtController::class, 'store']);
         Route::put('media-mgmt/update/{id}', [MediaMgmtController::class, 'update']);
         Route::delete('media-mgmt/delete/{id}', [MediaMgmtController::class, 'delete']);

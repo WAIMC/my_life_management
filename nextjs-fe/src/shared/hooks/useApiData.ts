@@ -34,6 +34,7 @@ export function useApiData<T>(
     from_date,
     to_date,
     enabled = true,
+    staleTime,
   } = options;
 
   // Build query key for caching
@@ -76,6 +77,7 @@ export function useApiData<T>(
     queryKey,
     queryFn: fetchData,
     enabled,
+    staleTime,
     // Keep previous data while fetching new page
     placeholderData: (previousData) => previousData,
   });

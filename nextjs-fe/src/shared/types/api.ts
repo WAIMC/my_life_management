@@ -88,6 +88,7 @@ export interface UseApiDataOptions {
   to_date?: string;
   filters?: Record<string, FilterValue>;
   enabled?: boolean; // If false, don't fetch automatically
+  staleTime?: number;
 }
 
 export interface UseApiDataReturn<T> {
@@ -275,7 +276,6 @@ export interface BannerMgmt {
   title: string;
   slug?: string;
   description?: string;
-  link?: string;
   image?: string;
   position?: string;
   status: number;

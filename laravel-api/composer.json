@@ -13,9 +13,9 @@
         "firebase/php-jwt": "6.10.2",
         "google/apiclient": "^2.15",
         "laravel/framework": "11.34.2",
-
         "laravel/sanctum": "4.0.5",
         "laravel/tinker": "2.10.0",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "predis/predis": "2.3.0"
     },
     "require-dev": {

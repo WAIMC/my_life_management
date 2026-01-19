@@ -129,3 +129,12 @@ export interface MediaApiListResponse {
   total?: number;
   per_page?: number;
 }
+
+export interface PresignedUploadResponse {
+  upload_url: string;
+  method: string;
+  key: string;
+  uuid: string;
+  headers: Record<string, string>;
+  expires_in: number;
+}

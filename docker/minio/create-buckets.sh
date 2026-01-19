@@ -1,53 +1,132 @@
 #!/bin/sh
 set -e
 
-# Wait for MinIO to be ready
-echo "Waiting for MinIO..."
-# Using a loop to ensure MinIO is responsive before attempting alias set
-# We try up to 30 times (30 seconds)
-i=0
-until mc alias set myminio http://ml-minio:${MINIO_PORT_INSIDE_ENV} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
-  echo "MinIO not ready, retrying in 1s..."
-  sleep 1
-  i=$((i+1))
-  if [ $i -ge 30 ]; then
-    echo "Timeout waiting for MinIO"
-    exit 1
-  fi
+# Install dependencies
+if command -v apk &> /dev/null; then
+    apk add --no-cache curl sed
+fi
+
+# Install mc if not present (Cache it in the mounted volume)
+MC_PATH="/minio/mc"
+if [ ! -f "$MC_PATH" ]; then
+    echo "Downloading MinIO Client (mc)..."
+    curl -o "$MC_PATH" https://dl.min.io/client/mc/release/linux-amd64/mc
+    chmod +x "$MC_PATH"
+fi
+
+# Add simple alias/function or add to PATH
+export PATH=$PATH:/minio
+
+# Wait for MinIO to be ready and set alias
+echo "Waiting for MinIO to be ready..."
+until "$MC_PATH" alias set myminio http://ml-minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
+  echo "MinIO is unavailable - sleeping"
+  sleep 2
 done
 
-echo "MinIO is ready. Configuring buckets..."
+echo "MinIO alias set successfully."
 
-# Create legacy/env-defined buckets (ignore if they exist)
-if [ ! -z "${MINIO_BUCKET}" ]; then
-  mc mb myminio/${MINIO_BUCKET} --ignore-existing
-  mc anonymous set download myminio/${MINIO_BUCKET}
+# Variables
+IAM_USER="${MINIO_IAM_USER:-backend-user}"
+IAM_PASSWORD="${MINIO_IAM_PASSWORD:-strong-backend-password}"
+BUCKET_OFFICIAL="${MINIO_BUCKET_OFFICIAL:-media-official}"
+BUCKET_TEMP="${MINIO_BUCKET_TEMP:-media-temp}"
+
+echo "Using Bucket Names: Official=$BUCKET_OFFICIAL, Temp=$BUCKET_TEMP"
+echo "Using IAM User: $IAM_USER"
+
+# 1. Create Buckets
+echo "Creating buckets..."
+mc mb --ignore-existing "myminio/$BUCKET_OFFICIAL"
+mc mb --ignore-existing "myminio/$BUCKET_TEMP"
+
+# 2. Versioning Configuration
+echo "Configuring versioning..."
+mc version enable "myminio/$BUCKET_OFFICIAL"
+mc version suspend "myminio/$BUCKET_TEMP"
+
+# Set public download policy for official bucket
+echo "Setting public download policy for $BUCKET_OFFICIAL..."
+mc anonymous set download "myminio/$BUCKET_OFFICIAL"
+
+
+# 3. Lifecycle Configuration
+echo "Configuring lifecycle rules..."
+# Apply history retention (30 days) to official
+if [ -f /minio/ilm-history.json ]; then
+    mc ilm import "myminio/$BUCKET_OFFICIAL" < /minio/ilm-history.json
+else
+    echo "Warning: /minio/ilm-history.json not found"
 fi
 
-if [ ! -z "${MINIO_PREVIEW_BUCKET}" ]; then
-  mc mb myminio/${MINIO_PREVIEW_BUCKET} --ignore-existing
-  mc anonymous set download myminio/${MINIO_PREVIEW_BUCKET}
+# Apply temp cleanup (1 day) to temp
+if [ -f /minio/ilm-temp.json ]; then
+    mc ilm import "myminio/$BUCKET_TEMP" < /minio/ilm-temp.json
+else
+    echo "Warning: /minio/ilm-temp.json not found"
 fi
 
-# Create requested specific buckets
-echo "Creating '${MINIO_BUCKET_OFFICIAL}' and '${MINIO_BUCKET_TEMP}' buckets..."
-mc mb myminio/${MINIO_BUCKET_OFFICIAL} --ignore-existing
-mc mb myminio/${MINIO_BUCKET_TEMP} --ignore-existing
+# 4. Policy and User Setup
+echo "Generating policy.json..."
+cat <<EOF > /tmp/policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:ListBucket",
+                "s3:ListBucketMultipartUploads",
+                "s3:AbortMultipartUpload"
+            ],
+            "Resource": [
+                "arn:aws:s3:::$BUCKET_OFFICIAL",
+                "arn:aws:s3:::$BUCKET_OFFICIAL/*",
+                "arn:aws:s3:::$BUCKET_TEMP",
+                "arn:aws:s3:::$BUCKET_TEMP/*"
+            ]
+        }
+    ]
+}
+EOF
 
-# Set public download policies
-mc anonymous set download myminio/${MINIO_BUCKET_OFFICIAL}
-# Note: temp-uploads might not need public download, but setting it for consistency with user's likely need for temporary media serving.
-mc anonymous set download myminio/${MINIO_BUCKET_TEMP}
+echo "Setting up access control..."
 
-# Configure Lifecycle for temp-uploads
-echo "Configuring lifecycle for ${MINIO_BUCKET_TEMP} (1 day expiry)..."
+# Create policy
+mc admin policy create myminio backend-policy /tmp/policy.json
 
-# Remove existing rules to strictly enforce the current policy (idempotency)
-# The previous --id command failed, and remove requires --all --force to clean up
-mc ilm rule remove myminio/${MINIO_BUCKET_TEMP} --all --force || true
+# Create user
+if ! mc admin user info myminio "$IAM_USER" > /dev/null 2>&1; then
+    echo "Creating user $IAM_USER..."
+    mc admin user add myminio "$IAM_USER" "$IAM_PASSWORD"
+else
+    echo "User $IAM_USER already exists. updating password..."
+    mc admin user add myminio "$IAM_USER" "$IAM_PASSWORD"
+fi
 
-# Add the rule (without --id which caused errors)
-mc ilm rule add myminio/${MINIO_BUCKET_TEMP} --expire-days 1
+# Assign policy to user
+mc admin policy attach myminio backend-policy --user "$IAM_USER"
 
-echo "MinIO setup script completed successfully."
-exit 0
+# 5. Update Laravel env
+echo "Updating Laravel .env.example..."
+if [ -f /laravel-api/.env.example ]; then
+    # Escape special characters for sed
+    SAFE_USER=$(echo "$IAM_USER" | sed 's/[\/&]/\\&/g')
+    SAFE_PASS=$(echo "$IAM_PASSWORD" | sed 's/[\/&]/\\&/g')
+
+    # Replace Access Key
+    sed -i "s/^AWS_ACCESS_KEY_ID=.*/AWS_ACCESS_KEY_ID=$SAFE_USER/" /laravel-api/.env.example
+    
+    # Replace Secret Key
+    sed -i "s/^AWS_SECRET_ACCESS_KEY=.*/AWS_SECRET_ACCESS_KEY=$SAFE_PASS/" /laravel-api/.env.example
+    
+    echo "Laravel .env.example updated with new MinIO credentials."
+else
+    echo "Warning: /laravel-api/.env.example not found. Skipping auto-config."
+fi
+
+echo "MinIO Setup Complete!"

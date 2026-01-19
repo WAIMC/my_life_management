@@ -36,16 +36,32 @@ export const useFileManager = (): FileManagerContextType => {
   const [pagination, setPagination] = useState<PaginationState>(INITIAL_PAGINATION);
 
   // Fetch files from API (only when path changes)
-  const fetchFiles = useCallback(async () => {
+  const fetchFiles = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
     try {
       const response = await mediaFileService.list({
         parent_path: currentPath || '/'
-        // No search, sort, or filter params - get ALL files and handle on client
-      });
+      }, { signal });
+      
+      // If the signal is aborted, stop processing
+      if (signal?.aborted) {
+         return;
+      }
+
+      // Handle response format: Check if response itself is the array
+      // based on logs: API Response: [{...}]
+      let listData: unknown[] = [];
+      
+      if (Array.isArray(response)) {
+        listData = response;
+      } else if (response && typeof response === 'object' && 'data' in response && Array.isArray((response as {data: unknown[]}).data)) {
+        listData = (response as {data: unknown[]}).data;
+      } else {
+        listData = [];
+      }
       
       // Transform and cache raw data
-      const transformedFiles: MediaFile[] = ((response.data || []) as unknown[]).map((fileData: unknown) => {
+      const transformedFiles: MediaFile[] = listData.map((fileData: unknown) => {
         const file = fileData as Record<string, unknown>;
         const mimeType = (file.mime_type as string | null | undefined) || '';
         return {
@@ -66,16 +82,24 @@ export const useFileManager = (): FileManagerContextType => {
       
       setRawFiles(transformedFiles);
     } catch {
+      if (signal?.aborted) return;
       toast.error(t('listError'));
       setRawFiles([]);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [currentPath, t]);
 
   // Fetch files only when path changes
   useEffect(() => {
-    fetchFiles();
+    const controller = new AbortController();
+    fetchFiles(controller.signal);
+    
+    return () => {
+      controller.abort();
+    };
   }, [currentPath, fetchFiles]);
 
   // Apply client-side filtering, sorting, and searching
@@ -177,16 +201,52 @@ export const useFileManager = (): FileManagerContextType => {
 
   const uploadFiles = useCallback(async (filesToUpload: File[]) => {
     try {
+      setIsLoading(true);
       for (const file of filesToUpload) {
-        await mediaFileService.upload({ 
-          file,
-          parent_path: currentPath
-        });
+        // Check if file already has temp metadata (from auto-upload)
+        const fileWithMeta = file as File & { 
+          tempKey?: string;
+          tempMetadata?: {
+            original_name: string;
+            extension: string;
+            mime_type: string;
+            size: number;
+          };
+        };
+
+        if (fileWithMeta.tempKey && fileWithMeta.tempMetadata) {
+          // File already uploaded to temp, just commit to official
+          await mediaFileService.upload({
+            file, // Pass to satisfy type, won't be used
+            parent_path: currentPath,
+            key: fileWithMeta.tempKey,
+            ...fileWithMeta.tempMetadata
+          });
+        } else {
+          // Fallback: Upload to temp first, then commit
+          const metadata = await mediaFileService.uploadToMinio({ file });
+
+          if (metadata) {
+            // Call API to store (Move to Official)
+            await mediaFileService.upload({
+              file, // Pass file just to satisfy type, but won't be used if key is present
+              parent_path: currentPath,
+              ...metadata
+            });
+          }
+        }
       }
-      toast.success(`${t('uploadSuccess')} ${filesToUpload.length} file`);
-      await fetchFiles();
-    } catch {
-      toast.error(t('uploadError'));
+      if (filesToUpload.length > 0) {
+        toast.success(`${t('uploadSuccess')} ${filesToUpload.length} file(s)`);
+        await fetchFiles();
+      }
+    } catch (error) {
+      console.error("Upload error sequence:", error);
+      // Extract message if possible
+      const msg = error instanceof Error ? error.message : t('uploadError');
+      toast.error(`${t('uploadError')}: ${msg}`);
+    } finally {
+      setIsLoading(false);
     }
   }, [currentPath, fetchFiles, t]);
 

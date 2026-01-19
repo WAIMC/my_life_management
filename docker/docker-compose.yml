@@ -98,6 +98,8 @@ services:
         condition: service_healthy
       ml-redis:
         condition: service_healthy
+      ml-minio-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "php-fpm -t || exit 1"]
       interval: 30s
@@ -238,22 +240,28 @@ services:
           memory: 128M
 
   # MinIO client - auto init buckets
+  # MinIO client - auto init buckets
   ml-minio-init:
     container_name: ml-minio-init
-    image: minio/mc:latest
+    image: alpine:latest
     depends_on:
-      - ml-minio
+      ml-minio:
+        condition: service_healthy
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_PORT_INSIDE_ENV: ${MINIO_PORT_INSIDE_ENV}
-      MINIO_BUCKET: ${MINIO_BUCKET}
-      MINIO_PREVIEW_BUCKET: ${MINIO_PREVIEW_BUCKET}
+
       MINIO_BUCKET_OFFICIAL: ${MINIO_BUCKET_OFFICIAL}
+
       MINIO_BUCKET_TEMP: ${MINIO_BUCKET_TEMP}
+
+      # IAM User
+      MINIO_IAM_USER: ${MINIO_IAM_USER}
+      MINIO_IAM_PASSWORD: ${MINIO_IAM_PASSWORD}
     volumes:
-      - ./minio/create-buckets.sh:/create-buckets.sh
-    entrypoint: /bin/sh /create-buckets.sh
+      - ./minio:/minio
+      - ../laravel-api:/laravel-api
+    entrypoint: /bin/sh /minio/create-buckets.sh
     networks:
       - app-network
 

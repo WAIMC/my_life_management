@@ -7,8 +7,9 @@ use App\Services\MinioService;
 use App\Interfaces\Management\MediaMgmtInterface;
 use App\Constants\MediaConst;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\UploadedFile;
+
 use Exception;
+use App\Http\Resources\Management\MediaFileResource;
 
 class MediaMgmtService extends BaseService
 {
@@ -36,18 +37,21 @@ class MediaMgmtService extends BaseService
 
     // Manually transform to array to avoid ResourceCollection pagination wrapper
     return $list->map(function ($item) {
-      return (new \App\Http\Resources\Management\MediaFileResource($item))->resolve();
+      return (new MediaFileResource($item))->resolve();
     })->values()->all();
   }
 
   /**
    * Store media (file upload or folder creation)
    */
-  public function store(array $payload, ?UploadedFile $file = null): int
+  /**
+   * Store media (file from temp or folder creation)
+   */
+  public function store(array $payload): int
   {
-    // If file is provided, upload file
-    if ($file) {
-      return $this->uploadFile($file, $payload);
+    // If key is provided, move from temp
+    if (isset($payload['key'])) {
+      return $this->storeFromTemp($payload);
     }
 
     // Otherwise, create folder
@@ -90,56 +94,12 @@ class MediaMgmtService extends BaseService
 
       if ($media && $media->isFile() && $media->storage_path) {
         // Delete from MinIO
-        $this->minioService->delete($media->storage_path);
+        $this->minioService->delete($media->minio_bucket, $media->storage_path);
       }
     }
 
     // Soft delete in DB
     $this->mediaMgmt->executeDelete($ids);
-  }
-
-  /**
-   * Commit media from temporary to official storage
-   */
-  public function commitMedia(int $mediaId, string $targetFolder = MediaConst::MEDIA_PATH_OFFICIAL): string
-  {
-    $media = $this->mediaMgmt->find($mediaId);
-
-    if (!$media || !$media->isFile()) {
-      return '';
-    }
-
-    // Check if media is in temporary storage
-    if (!str_starts_with($media->storage_path, MediaConst::MEDIA_PATH_TEMP)) {
-      return $media->url ?? '';
-    }
-
-    // Calculate new storage path
-    // Replace "temp-uploads/" with "{targetFolder}/" (e.g. "banners/")
-    $newStoragePath = preg_replace(
-      '/^' . preg_quote(MediaConst::MEDIA_PATH_TEMP, '/') . '/',
-      trim($targetFolder, '/'),
-      $media->storage_path,
-      1
-    );
-
-    // Move in MinIO
-    if ($this->minioService->move($media->storage_path, $newStoragePath)) {
-      $newUrl = $this->minioService->getPublicUrl($newStoragePath);
-
-      // Update DB
-      $this->mediaMgmt->executeUpdate([
-        'id' => $media->id,
-        'storage_path' => $newStoragePath,
-        'url' => $newUrl,
-        // Update virtual path as well to match
-        'virtual_path' => str_replace(MediaConst::MEDIA_PATH_TEMP, trim($targetFolder, '/'), $media->virtual_path)
-      ]);
-
-      return $newUrl;
-    }
-
-    return $media->url ?? '';
   }
 
   /**
@@ -165,42 +125,60 @@ class MediaMgmtService extends BaseService
   }
 
   /**
-   * Upload file (internal method)
+   * Prepare upload (Generate Presigned URL)
    */
-  protected function uploadFile(UploadedFile $file, array $payload): int
+  public function prepareUpload(array $payload): array
   {
-    $parentPath = $payload['parent_path'] ?? '/';
+    $extension = $payload['extension'];
+    $ttl = MediaConst::PRESIGNED_UPLOAD_TTL; // 5 seconds
+
+    return $this->minioService->generatePresignedUploadUrl($extension, MediaConst::DISK_TEMP, $ttl);
+  }
+
+  /**
+   * Store file from Temp (Move to Official + Create DB Record)
+   */
+  public function storeFromTemp(array $payload): int
+  {
+    $tempKey = $payload['key']; // This is the path in temp bucket: {uuid}.{ext}
+    $extension = $payload['extension'];
     $workspaceId = $payload['workspace_id'] ?? null;
+    $parentPath = $payload['parent_path'] ?? '/';
+    $originalName = $payload['original_name'];
 
-    // Use parent_path as prefix for physical storage to support temp uploads
-    $prefix = trim($parentPath, '/');
+    // 1. Verify file exists in Temp (Optional but recommended)
+    if (!$this->minioService->exists(MediaConst::DISK_TEMP, $tempKey)) {
+      throw new Exception("File not found in temporary storage: {$tempKey}");
+    }
 
-    // Upload to MinIO
-    $uploadResult = $this->minioService->upload($file, $workspaceId, $prefix);
+    // 2. Generate new storage path for Official bucket
+    // Format: {workspace}/{year}/{month}/{uuid}.{ext}
+    $officialDisk = MediaConst::DISK_OFFICIAL;
+    $officialPath = $this->minioService->generateStoragePath($extension, $officialDisk, $workspaceId);
 
-    // Extract metadata
-    $metadata = $this->extractMetadata($file);
+    // 3. Move file from Temp to Official
+    if (!$this->minioService->move(MediaConst::DISK_TEMP, $tempKey, $officialDisk, $officialPath)) {
+      throw new Exception("Failed to move file from temp to official storage.");
+    }
 
-    // Virtual path
-    $virtualPath = rtrim($parentPath, '/') . '/' . $file->getClientOriginalName();
+    // 4. Create DB Record
+    $virtualPath = rtrim($parentPath, '/') . '/' . $originalName;
 
     $data = [
       'workspace_id' => $workspaceId,
       'is_file' => MediaConst::TYPE_FILE,
       'virtual_path' => $virtualPath,
-      'storage_path' => $uploadResult['storage_path'],
-      'original_name' => $file->getClientOriginalName(),
-      'extension' => $file->getClientOriginalExtension(),
-      'mime_type' => $file->getMimeType(),
-      'size' => $uploadResult['size'],
-      'minio_bucket' => $uploadResult['bucket'],
-      'minio_object_key' => $uploadResult['object_key'],
-      'minio_etag' => $uploadResult['etag'],
-      'url' => $uploadResult['url'],
-      'width' => $metadata['width'] ?? null,
-      'height' => $metadata['height'] ?? null,
-      'duration' => $metadata['duration'] ?? null,
+      'storage_path' => $officialPath,
+      'original_name' => $originalName,
+      'extension' => $extension,
+      'mime_type' => $payload['mime_type'] ?? null, // optional
+      'size' => $payload['size'] ?? 0, // optional, but better if provided
+      'minio_bucket' => $officialDisk,
+      'minio_object_key' => $officialPath,
+      'url' => $this->minioService->getPublicUrl($officialDisk, $officialPath),
       'is_delete' => false,
+      // Metadata like width/height is harder to extract without downloading, 
+      // but client can send it if needed, or we use a lambda/worker later.
     ];
 
     return $this->mediaMgmt->executeStore($data);
@@ -243,15 +221,12 @@ class MediaMgmtService extends BaseService
       $newVirtualPath .= '/';
 
       // IMPORTANT: Prevent moving folder into itself or its own subfolder
-      // If new path starts with current path, it means we're trying to move inside itself
-      // Example: moving /documents/ to /documents/subfolder/ would create: /documents/subfolder/documents/
-      // This would make the folder disappear from the original location
       if (str_starts_with($newVirtualPath, $currentVirtualPath)) {
         throw new Exception('Cannot move folder into itself or its subfolder');
       }
     }
 
-    // Additional check: if new path equals current path, no need to move (keep original position)
+    // Additional check: if new path equals current path, no need to move
     if ($newVirtualPath === $currentVirtualPath) {
       return $media->id; // Return same ID, no changes needed
     }
@@ -262,23 +237,5 @@ class MediaMgmtService extends BaseService
     ];
 
     return $this->mediaMgmt->executeUpdate($updateData);
-  }
-
-  /**
-   * Extract metadata from file
-   */
-  protected function extractMetadata(UploadedFile $file): array
-  {
-    $metadata = [];
-
-    if (str_starts_with($file->getMimeType(), 'image/')) {
-      $imageInfo = getimagesize($file->getRealPath());
-      if ($imageInfo) {
-        $metadata['width'] = $imageInfo[0];
-        $metadata['height'] = $imageInfo[1];
-      }
-    }
-
-    return $metadata;
   }
 }

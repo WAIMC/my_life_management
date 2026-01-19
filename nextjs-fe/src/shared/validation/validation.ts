@@ -131,7 +131,6 @@ export const getBannerSchema = (t: Translator) => z.object({
   title: z.string().min(1, t('title.required')),
   slug: z.string().min(1, t('slug.required')),
   description: z.string().min(1, t('description.required')),
-  link: z.string().min(1, t('link.required')),
   image: z.string().min(1, t('image.required')),
   position: z.string().min(1, t('position.required')),
   status: statusValidation,
