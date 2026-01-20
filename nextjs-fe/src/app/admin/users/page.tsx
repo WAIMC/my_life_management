@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -13,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { UserMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, type SortOrder, ADMIN_ROUTES, PAGINATION } from '@/shared/config';
-import { IsActive, IsActiveLabels, Gender, GenderLabels, UserStatus, UserStatusLabels } from '@/shared/enums/enums';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, ADMIN_ROUTES, PAGINATION, UI_CONSTANTS } from '@/shared/config';
+import { Gender, GenderLabels, UserStatus, UserStatusLabels } from '@/shared/enums/enums';
 import { AdvancedSearch } from '@/components/common/advanced-search';
 import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
 import { SavedFilters } from '@/components/common/saved-filters';
@@ -71,7 +72,6 @@ export default function UsersPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
-    refetch();
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -79,12 +79,19 @@ export default function UsersPage() {
     setDeleteDialogOpen(true);
   };
 
+  const { execute, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const confirmDelete = async () => {
-    await remove(deleteIds);
-    setSelectedIds([]);
-    setDeleteIds([]);
-    setDeleteDialogOpen(false);
-    refetch();
+    try {
+      await execute(async () => {
+        await remove(deleteIds);
+        setSelectedIds([]);
+        setDeleteIds([]);
+        setDeleteDialogOpen(false);
+      });
+    } catch {
+      // Global Error Handler will pick it up
+    }
   };
 
   const handleSort = (column: string) => {
@@ -170,19 +177,19 @@ export default function UsersPage() {
       label: tBulkActions('deleteSelected'),
       icon: <Trash2 className="h-4 w-4" />,
       variant: 'destructive',
-      onClick: async (_ids) => { await remove(_ids); refetch(); },
+      onClick: async (_ids) => { await remove(_ids); },
       confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('user').toLowerCase() }),
       confirmTitle: tCrud('deleteEntity', { entity: tEntities('users') }),
     },
     {
       label: tBulkActions('activateSelected'),
       icon: <CheckCircle className="h-4 w-4" />,
-      onClick: async () => { refetch(); },
+      onClick: async () => { /* Implement activate */ },
     },
     {
       label: tBulkActions('deactivateSelected'),
       icon: <XCircle className="h-4 w-4" />,
-      onClick: async () => { refetch(); },
+      onClick: async () => { /* Implement deactivate */ },
     },
   ];
 
@@ -286,6 +293,7 @@ export default function UsersPage() {
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
         variant="destructive"
+        isLoading={isDeleteProcessing}
       />
     </AdminLayout>
   );

@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useApiData } from '@/shared/hooks/useApiData';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,23 +27,7 @@ import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
 import { getSkillDescriptionSchema, type SkillDescriptionFormData } from '@/shared/validation/validation';
 import type { SkillDescriptionFormProps } from './types';
 
-export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: SkillDescriptionFormProps) {
-  const tCommon = useTranslations('common');
-  const tForms = useTranslations('forms.placeholders');
-  const tValidation = useTranslations('validation');
-  const isEdit = !!initialData;
-  const { create, update, loading } = useCrud<SkillDescriptionMgmt>(ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
-
-  // Fetch skills for the dropdown
-  // We'll fetch all active skills (no pagination effectively, or big page size)
-  // For simplicity assuming reasonable number of skills
-  const { data: skills, loading: skillsLoading } = useApiData<SkillMgmt>(
-    ENDPOINTS.MANAGEMENT.SKILL,
-    { page: PAGINATION.DEFAULT_PAGE, per_page: PAGINATION.MAX_PER_PAGE, sort_by: SORT_FIELDS.NAME, sort_order: SORT_ORDER.ASC }
-  );
-
-  // Transform initial data to form data
-  const getFormValues = (data: typeof initialData): SkillDescriptionFormData => {
+const getFormValues = (data: SkillDescriptionFormProps['initialData']): SkillDescriptionFormData => {
     if (data) {
       return {
         skill_mgmt_id: Number(data.skill_mgmt_id),
@@ -66,6 +52,21 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     };
   };
 
+export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: SkillDescriptionFormProps) {
+  const tCommon = useTranslations('common');
+  const tForms = useTranslations('forms.placeholders');
+  const tValidation = useTranslations('validation');
+  const isEdit = !!initialData;
+  const { create, update, loading } = useCrud<SkillDescriptionMgmt>(ENDPOINTS.MANAGEMENT.SKILL_DESCRIPTION);
+
+  // Fetch skills for the dropdown
+  // We'll fetch all active skills (no pagination effectively, or big page size)
+  // For simplicity assuming reasonable number of skills
+  const { data: skills, loading: skillsLoading } = useApiData<SkillMgmt>(
+    ENDPOINTS.MANAGEMENT.SKILL,
+    { page: PAGINATION.DEFAULT_PAGE, per_page: PAGINATION.MAX_PER_PAGE, sort_by: SORT_FIELDS.NAME, sort_order: SORT_ORDER.ASC }
+  );
+
   const defaultValues = getFormValues(initialData);
 
   const {
@@ -85,9 +86,12 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
     reset(getFormValues(initialData));
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: SkillDescriptionFormData) => {
-    try {
-      // Convert string to number for numeric fields
+    await execute(async () => {
+      try {
+        // Convert string to number for numeric fields
       const payload = {
         ...data,
         skill_mgmt_id: Number(data.skill_mgmt_id),
@@ -108,6 +112,7 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -227,11 +232,11 @@ export function SkillDescriptionForm({ initialData, onSuccess, onCancel }: Skill
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

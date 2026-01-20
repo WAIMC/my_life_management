@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -17,7 +18,8 @@ import {
   SORT_FIELDS, 
   type SortOrder, 
   PAGINATION, 
-  ADMIN_ROUTES 
+  ADMIN_ROUTES,
+  UI_CONSTANTS 
 } from '@/shared/config';
 import { AdvancedSearch } from '@/components/common/advanced-search';
 import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
@@ -75,7 +77,6 @@ export default function TokenListPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
-    refetch();
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -83,12 +84,19 @@ export default function TokenListPage() {
     setDeleteDialogOpen(true);
   };
 
+  const { execute, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const confirmDelete = async () => {
-    await remove(deleteIds);
-    setSelectedIds([]);
-    setDeleteIds([]);
-    setDeleteDialogOpen(false);
-    refetch();
+    try {
+      await execute(async () => {
+        await remove(deleteIds);
+        setSelectedIds([]);
+        setDeleteIds([]);
+        setDeleteDialogOpen(false);
+      });
+    } catch {
+      // Global Error Handler will pick it up
+    }
   };
 
   const handleSort = (column: string) => {
@@ -124,19 +132,19 @@ export default function TokenListPage() {
       label: tBulkActions('deleteSelected'), 
       icon: <Trash2 className="h-4 w-4" />, 
       variant: 'destructive', 
-      onClick: async (ids) => { await remove(ids); refetch(); }, 
+      onClick: async (ids) => { await remove(ids); }, 
       confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('token').toLowerCase() }), 
       confirmTitle: tCrud('deleteEntity', { entity: tEntities('tokens') }) 
     }, 
     { 
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
-      onClick: async () => { refetch(); } 
+      onClick: async () => { /* Implement activate */ } 
     }, 
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
-      onClick: async () => { refetch(); } 
+      onClick: async () => { /* Implement deactivate */ } 
     }
   ];
 
@@ -246,7 +254,9 @@ export default function TokenListPage() {
         description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('token').toLowerCase() })}
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
+
         variant="destructive"
+        isLoading={isDeleteProcessing}
       />
     </AdminLayout>
   );

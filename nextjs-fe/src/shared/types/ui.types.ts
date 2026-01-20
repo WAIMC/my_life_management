@@ -2,16 +2,37 @@
  * UI Components Types
  */
 
+import { Button } from '@/components/ui/button';
+
 export interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
+  isLoading?: boolean;
+}
+
+type ButtonProps = React.ComponentProps<typeof Button>;
+
+export interface SafeButtonProps extends Omit<ButtonProps, 'onClick'> {
+  /**
+   * The async action to execute when clicked.
+   */
+  onSafeClick?: () => Promise<unknown>;
+  /**
+   * Optional standard onClick handler (will be ignored if onSafeClick is provided).
+   */
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  /**
+   * Whether to show a loading spinner when the action is executing.
+   * Default: true
+   */
+  showLoading?: boolean;
 }
 
 export type LoadingSpinnerSize = 'sm' | 'md' | 'lg';
@@ -21,6 +42,11 @@ export interface LoadingSpinnerProps {
 }
 
 export interface LoadingOverlayProps {
+  message?: string;
+}
+
+export interface ScreenBlockerProps {
+  isVisible: boolean;
   message?: string;
 }
 
@@ -129,4 +155,15 @@ export interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement
   src: string;
   alt: string;
   className?: string;
+}
+
+/**
+ * Image Picker Props
+ */
+export interface ImagePickerProps {
+  value?: string | null;
+  onChange: (url: string, id?: number) => void;
+  error?: string;
+  label?: string;
+  required?: boolean;
 }

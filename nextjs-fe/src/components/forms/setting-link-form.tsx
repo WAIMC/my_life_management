@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import type { SettingLinkMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, IsActiveLabels } from '@/shared/enums';
+import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
 import { getSettingLinkSchema, type SettingLinkFormData } from '@/shared/validation/validation';
 import type { SettingLinkFormProps } from './types';
 
@@ -39,10 +41,11 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
     reset,
     setError,
   } = useForm<SettingLinkFormData>({
-    resolver: zodResolver(getSettingLinkSchema(tValidation)),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(getSettingLinkSchema(tValidation)) as any,
     defaultValues: {
       rank_order: 0,
-      status: IsActive.TRUE,
+      status: StatusEnum.PUBLISHED,
       is_active: true,
     },
   });
@@ -63,16 +66,19 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
         url: '',
         description: '',
         rank_order: 0,
-        status: IsActive.TRUE,
+        status: StatusEnum.PUBLISHED,
         is_active: true,
       });
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: SettingLinkFormData) => {
-    try {
-      // Convert string to number for rank_order
-      const payload = {
+    await execute(async () => {
+      try {
+        // Convert string to number for rank_order
+        const payload = {
         ...data,
         rank_order: Number(data.rank_order),
       };
@@ -90,6 +96,7 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -150,14 +157,15 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
           </Label>
           <Select
             value={statusValue?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
+            onValueChange={(value) => setValue('status', Number(value) as StatusEnum)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
-              <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
+              <SelectItem value={StatusEnum.PUBLISHED.toString()}>{StatusEnumLabels[StatusEnum.PUBLISHED]}</SelectItem>
+              <SelectItem value={StatusEnum.DRAFT.toString()}>{StatusEnumLabels[StatusEnum.DRAFT]}</SelectItem>
+              <SelectItem value={StatusEnum.ARCHIVED.toString()}>{StatusEnumLabels[StatusEnum.ARCHIVED]}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -174,11 +182,11 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

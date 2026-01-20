@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -17,7 +18,9 @@ import {
   SORT_ORDER, 
   type SortOrder, 
   PAGINATION, 
-  ADMIN_ROUTES 
+  ADMIN_ROUTES,
+  TIME_CONSTANTS,
+  UI_CONSTANTS
 } from '@/shared/config';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import Image from 'next/image';
@@ -60,7 +63,7 @@ export default function BannerListPage() {
 
   const { data, loading, pagination, refetch } = useApiData<BannerMgmt>(
     API_ENDPOINTS.MANAGEMENT.BANNER,
-    { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder, staleTime: 5000 }
+    { page, per_page: perPage, filters, sort_by: sortBy, sort_order: sortOrder, staleTime: TIME_CONSTANTS.STALE_TIME }
   );
 
   const { remove } = useCrud<BannerMgmt>(API_ENDPOINTS.MANAGEMENT.BANNER);
@@ -85,11 +88,19 @@ export default function BannerListPage() {
     setDeleteDialogOpen(true);
   };
 
+  const { execute, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const confirmDelete = async () => {
-    await remove(deleteIds);
-    setSelectedIds([]);
-    setDeleteIds([]);
-    setDeleteDialogOpen(false);
+    try {
+      await execute(async () => {
+          await remove(deleteIds);
+          setSelectedIds([]);
+          setDeleteIds([]);
+          setDeleteDialogOpen(false);
+      });
+    } catch {
+       // Global Error Handler will pick it up
+    }
   };
 
   const handleSort = (column: string) => {
@@ -318,6 +329,7 @@ export default function BannerListPage() {
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
         variant="destructive"
+        isLoading={isDeleteProcessing}
       />
     </AdminLayout>
   );

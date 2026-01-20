@@ -18,10 +18,13 @@ export function LoadingSpinner({ size = 'md' }: LoadingSpinnerProps) {
   );
 }
 
-export function LoadingOverlay({ message }: LoadingOverlayProps) {
+export function LoadingOverlay({ message, variant = 'fixed' }: LoadingOverlayProps & { variant?: 'fixed' | 'absolute' }) {
   const t = useTranslations('common');
+  
+  const positionClass = variant === 'fixed' ? 'fixed inset-0 z-50' : 'absolute inset-0 z-10 rounded-[inherit]';
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className={`${positionClass} bg-black/50 flex items-center justify-center backdrop-blur-[1px]`}>
       <div className="bg-white dark:bg-slate-900 rounded-lg p-6 shadow-xl">
         <div className="flex flex-col items-center gap-4">
           <LoadingSpinner size="lg" />

@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +21,7 @@ import {
 import { ImageUpload } from '@/components/common/image-upload';
 import type { SliderMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, IsActiveLabels } from '@/shared/enums';
+import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
 import { getSliderSchema, type SliderFormData } from '@/shared/validation/validation';
 import type { SliderFormProps } from './types';
 
@@ -44,7 +46,7 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
   } = useForm<SliderFormData>({
     resolver: zodResolver(getSliderSchema(tValidation)),
     defaultValues: {
-      status: IsActive.TRUE,
+      status: StatusEnum.PUBLISHED,
     },
   });
 
@@ -56,7 +58,7 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
         link: initialData.link || '',
         slug: initialData.slug || '',
 
-        status: initialData.status !== undefined ? Number(initialData.status) : IsActive.TRUE,
+        status: initialData.status !== undefined ? Number(initialData.status) : StatusEnum.PUBLISHED,
       });
     } else {
       reset({
@@ -64,14 +66,17 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
         image: '',
         link: '',
         slug: '',
-        status: IsActive.TRUE,
+        status: StatusEnum.PUBLISHED,
       });
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: SliderFormData) => {
-    try {
-      const payload = { ...data };
+    await execute(async () => {
+      try {
+        const payload = { ...data };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
@@ -86,6 +91,7 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -130,11 +136,12 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
             <Label htmlFor="status">{tCommon('status')} <span className="text-red-500">*</span></Label>
-            <Select key={`status-${String(statusValue)}`} value={statusValue !== undefined && statusValue !== null ? String(statusValue) : ''} onValueChange={(value) => setValue('status', Number(value) as IsActive)}>
+            <Select key={`status-${String(statusValue)}`} value={statusValue !== undefined && statusValue !== null ? String(statusValue) : ''} onValueChange={(value) => setValue('status', Number(value) as StatusEnum)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={IsActive.TRUE.toString()}>{IsActiveLabels[IsActive.TRUE]}</SelectItem>
-                <SelectItem value={IsActive.FALSE.toString()}>{IsActiveLabels[IsActive.FALSE]}</SelectItem>
+                <SelectItem value={StatusEnum.PUBLISHED.toString()}>{StatusEnumLabels[StatusEnum.PUBLISHED]}</SelectItem>
+                <SelectItem value={StatusEnum.DRAFT.toString()}>{StatusEnumLabels[StatusEnum.DRAFT]}</SelectItem>
+                <SelectItem value={StatusEnum.ARCHIVED.toString()}>{StatusEnumLabels[StatusEnum.ARCHIVED]}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -142,11 +149,11 @@ export function SliderForm({ initialData, onSuccess, onCancel }: SliderFormProps
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

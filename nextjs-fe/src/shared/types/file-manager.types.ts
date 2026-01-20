@@ -147,6 +147,7 @@ export interface NewFolderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateFolder: (name: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
 export interface RenameDialogProps {
@@ -154,6 +155,7 @@ export interface RenameDialogProps {
   onOpenChange: (open: boolean) => void;
   file: MediaFile | null;
   onRename: (file: MediaFile, newName: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
 export interface UploadDialogProps {
@@ -161,6 +163,7 @@ export interface UploadDialogProps {
   onOpenChange: (open: boolean) => void;
   onUpload: (files: File[]) => Promise<void>;
   currentPath: string;
+  isLoading?: boolean;
 }
 
 /**

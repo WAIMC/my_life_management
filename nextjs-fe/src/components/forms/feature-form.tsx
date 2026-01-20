@@ -5,11 +5,12 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -53,7 +54,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
       reset({
         name: initialData.name,
         group_name: initialData.group_name || '',
-        status: initialData.status,
+        status: Number(initialData.status),
       });
     } else {
       reset({
@@ -64,9 +65,12 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: FeatureFormData) => {
-    try {
-      const payload = { ...data };
+    await execute(async () => {
+      try {
+        const payload = { ...data };
 
       if (isEdit && initialData) {
         if (!initialData) return;
@@ -86,6 +90,7 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -145,11 +150,11 @@ export function FeatureForm({ initialData, onSuccess, onCancel }: FeatureFormPro
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

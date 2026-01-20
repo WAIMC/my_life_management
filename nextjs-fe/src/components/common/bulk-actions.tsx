@@ -22,6 +22,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
 import type { BulkAction, BulkActionsProps } from '@/shared/types/data-table.types';
+import { useGlobalLoading } from '@/shared/context/global-loading-context';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 
 export type { BulkAction } from '@/shared/types/data-table.types';
 
@@ -32,9 +35,11 @@ export function BulkActions({
   isLoading = false,
 }: BulkActionsProps) {
   const [confirmAction, setConfirmAction] = useState<BulkAction | null>(null);
-  const [isExecuting, setIsExecuting] = useState(false);
+  const { showGlobalLoading, hideGlobalLoading } = useGlobalLoading();
   const t = useTranslations('bulkActions');
   const tCommon = useTranslations('common');
+
+  const { execute, isLoading: isExecuting } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
 
   const handleActionClick = (action: BulkAction) => {
     if (action.confirmMessage) {
@@ -45,16 +50,18 @@ export function BulkActions({
   };
 
   const executeAction = async (action: BulkAction) => {
-    setIsExecuting(true);
-    try {
-      await action.onClick(selectedIds);
-      onClearSelection();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
-    } finally {
-      setIsExecuting(false);
-      setConfirmAction(null);
-    }
+    await execute(async () => {
+      showGlobalLoading();
+      try {
+        await action.onClick(selectedIds);
+        onClearSelection();
+        setConfirmAction(null);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_error) {
+      } finally {
+        hideGlobalLoading();
+      }
+    });
   };
 
   if (selectedIds.length === 0) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,18 +20,13 @@ export const NewFolderDialog = ({
   open,
   onOpenChange,
   onCreateFolder,
+  isLoading = false,
 }: NewFolderDialogProps) => {
   const t = useTranslations('fileManager.dialogs');
   const [folderName, setFolderName] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setFolderName('');
-      setError('');
-    }
-  }, [open]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,14 +41,11 @@ export const NewFolderDialog = ({
       return;
     }
 
-    setIsLoading(true);
     try {
       await onCreateFolder(folderName);
       onOpenChange(false);
     } catch {
       setError(t('newFolder.createError'));
-    } finally {
-      setIsLoading(false);
     }
   };
 

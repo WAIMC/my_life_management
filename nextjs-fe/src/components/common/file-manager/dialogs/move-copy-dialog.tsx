@@ -32,7 +32,8 @@ export const MoveCopyDialog = ({
   onConfirm,
   currentPath,
   selectedFileIds,
-}: MoveCopyDialogProps) => {
+  isLoading: isExternalLoading,
+}: MoveCopyDialogProps & { isLoading?: boolean }) => {
   const t = useTranslations('fileManager.dialogs');
   const [folders, setFolders] = useState<FolderType[]>([]);
   const [selectedPath, setSelectedPath] = useState<string>('');
@@ -115,7 +116,7 @@ export const MoveCopyDialog = ({
             <Select
               value={selectedPath}
               onValueChange={setSelectedPath}
-              disabled={isFetching || isLoading}
+              disabled={isFetching || isLoading || isExternalLoading}
             >
               <SelectTrigger>
                 <SelectValue placeholder={t('moveCopy.selectFolder')} />
@@ -147,15 +148,15 @@ export const MoveCopyDialog = ({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isLoading}
+            disabled={isLoading || isExternalLoading}
           >
             {t('cancel')}
           </Button>
           <Button 
             onClick={handleConfirm} 
-            disabled={!selectedPath || isLoading}
+            disabled={!selectedPath || isLoading || isExternalLoading}
           >
-            {isLoading ? t('processing') : action}
+            {isLoading || isExternalLoading ? t('processing') : action}
           </Button>
         </DialogFooter>
       </DialogContent>

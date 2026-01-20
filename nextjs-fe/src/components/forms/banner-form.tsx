@@ -17,27 +17,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MediaSelectorModal } from '@/components/common/media-selector-modal';
+import { SafeButton } from '@/components/common/safe-button';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { ImagePicker } from '@/components/common/form/image-picker';
 import type { BannerMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
 import { getBannerSchema, type BannerFormData } from '@/shared/validation/validation';
 import { slugify } from '@/shared/utils/string-utils';
+import { LoadingOverlay } from '@/components/ui/loading';
+import { UI_CONSTANTS } from '@/shared/config';
 import type { BannerFormProps } from './types';
-import Image from 'next/image';
-import { Image as ImageIcon, X } from 'lucide-react';
-import type { MediaFile } from '@/shared/types/media-file.types';
 
 export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps) {
   const tCommon = useTranslations('common');
   const tLabels = useTranslations('forms.labels');
+  const tFields = useTranslations('fields');
   const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<BannerMgmt>(ENDPOINTS.MANAGEMENT.BANNER);
   
   
   const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
-  const [mediaSelectorOpen, setMediaSelectorOpen] = useState(false);
 
   const {
     register,
@@ -101,121 +102,66 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
     }
   }, [initialData, reset]);
 
-  const handleMediaSelect = (media: MediaFile) => {
-    if (media.url) {
-        setValue('image', media.url);
-        setUploadedMediaId(media.id);
-    }
-  };
 
-  const handleRemoveImage = () => {
-      setValue('image', '');
-      setUploadedMediaId(null);
-  };
+
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
 
   const onSubmit = async (data: BannerFormData) => {
-    try {
-      const payload: BannerFormData & { media_id?: number } = { ...data };
-      if (uploadedMediaId) {
-        payload.media_id = uploadedMediaId;
-      }
+    await execute(async () => {
+        try {
+        const payload: BannerFormData & { media_id?: number } = { ...data };
+        if (uploadedMediaId) {
+            payload.media_id = uploadedMediaId;
+        }
 
-      if (isEdit && initialData) {
-        await update(initialData.id, payload);
-      } else {
-        await create({
-          ...payload,
-          is_delete: false,
-        });
-      }
-      onSuccess();
-    } catch (error: unknown) {
-      console.error(error);
-      handleBindErrors(error, setError);
-    }
+        if (isEdit && initialData) {
+            await update(initialData.id, payload);
+        } else {
+            await create({
+            ...payload,
+            is_delete: false,
+            });
+        }
+        onSuccess();
+        } catch (error: unknown) {
+        console.error(error);
+        handleBindErrors(error, setError);
+        }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
   const statusValue = useWatch({ control, name: 'status' });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="relative">
+      {isActionProcessing && <LoadingOverlay variant="absolute" />}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-            <Label>Banner Image <span className="text-red-500">*</span></Label>
-            
-            <div 
-                className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px] relative bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
-                onClick={() => setMediaSelectorOpen(true)}
-            >
-                {imagePreview ? (
-                    <div className="relative w-full h-full min-h-[200px] flex items-center justify-center">
-                        <Image 
-                            src={imagePreview} 
-                            alt="Preview" 
-                            fill 
-                            className="object-contain" 
-                            unoptimized 
-                        />
-                        <div className="absolute top-2 right-2 flex gap-2">
-                            <Button 
-                                type="button" 
-                                variant="destructive" 
-                                size="icon" 
-                                className="h-8 w-8 rounded-full shadow-md"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveImage();
-                                }}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div className="absolute bottom-2 right-2">
-                             <Button 
-                                type="button" 
-                                variant="secondary" 
-                                size="sm" 
-                                className="shadow-md"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setMediaSelectorOpen(true);
-                                }}
-                            >
-                                Change Image
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="p-4 bg-background rounded-full shadow-sm">
-                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <div className="text-center space-y-1">
-                            <p className="text-sm font-medium">No image selected</p>
-                            <p className="text-xs text-muted-foreground">Click to select an image from library</p>
-                        </div>
-                        <Button type="button" variant="outline" onClick={(e) => {
-                            e.stopPropagation();
-                            setMediaSelectorOpen(true);
-                        }}>
-                            Select Image
-                        </Button>
-                    </div>
-                )}
-            </div>
-            
-            {errors.image && <p className="text-sm text-red-500">{tValidation('image.required')}</p>}
-            {/* Hidden input to register image field for validation */}
-            <input type="hidden" {...register('image')} />
-            
-            <MediaSelectorModal 
-                open={mediaSelectorOpen} 
-                onClose={() => setMediaSelectorOpen(false)} 
-                onSelect={handleMediaSelect}
-                allowedMimeTypes={['image/']}
+            <ImagePicker 
+              label={tFields('image')}
+              required
+              value={imagePreview}
+              onChange={(url, id) => {
+                setValue('image', url);
+                if (id) setUploadedMediaId(id);
+                else setUploadedMediaId(null);
+              }}
+              error={errors.image ? tValidation('image.required') : undefined}
             />
+            {/* Hidden input to register image field for validation - wait, ImagePicker handles visual feedback, but react-hook-form needs registration? 
+                ActuallysetValue updates the form state. But 'register' was creating a ref. 
+                With 'setValue', we are manually handling it. 
+                Let's keep the hidden input just in case validation relies on ref being present OR simply rely on setValue and standard RHF validation.
+                If I remove <input ...register('image') />, I might lose focus management on error? 
+                But for a custom component, we usually use Controller or just manual setValue.
+                The previous code had: <input type="hidden" {...register('image')} />.
+                I will keep it or rely on Controller. Since I'm using setValue, register is less critical for value tracking but good for validation mode 'onChange'.
+            */}
+            <input type="hidden" {...register('image')} />
         </div>
+
         
         <div className="space-y-4">
           <div className="space-y-2">
@@ -263,13 +209,18 @@ export function BannerForm({ initialData, onSuccess, onCancel }: BannerFormProps
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
-        </Button>
+        <SafeButton 
+          type="submit" 
+          disabled={loading || isActionProcessing}
+          // Note: We use standard type="submit" here but the form onSubmit is handled wrapped
+        >
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        </SafeButton>
       </div>
     </form>
+    </div>
   );
 }

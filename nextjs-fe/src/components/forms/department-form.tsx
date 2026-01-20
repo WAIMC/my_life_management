@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { DepartmentMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { IsActive, DepartmentStatus, DepartmentStatusLabels } from '@/shared/enums';
+import { DepartmentStatus, DepartmentStatusLabels } from '@/shared/enums';
 import { getDepartmentSchema, type DepartmentFormData } from '@/shared/validation/validation';
 import type { DepartmentFormProps } from './types';
 
@@ -46,13 +48,32 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
     defaultValues: {
       code: initialData?.code || '',
       name: initialData?.name || '',
-      status: initialData ? initialData.status : DepartmentStatus.ACTIVE,
+      status: initialData ? Number(initialData.status) : DepartmentStatus.ACTIVE,
     },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        code: initialData.code,
+        name: initialData.name,
+        status: Number(initialData.status),
+      });
+    } else {
+      reset({
+        code: '',
+        name: '',
+        status: DepartmentStatus.ACTIVE,
+      });
+    }
+  }, [initialData, reset]);
+
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: DepartmentFormData) => {
-    try {
-      const payload = { ...data };
+    await execute(async () => {
+      try {
+        const payload = { ...data };
       
       if (isEdit && initialData) {
         if (!initialData) return;
@@ -66,11 +87,12 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
           is_delete: false,
         });
       }
-      onSuccess();
-    } catch (error: unknown) {
-      console.error(error);
-      handleBindErrors(error, setError);
-    }
+        onSuccess();
+      } catch (error: unknown) {
+        console.error(error);
+        handleBindErrors(error, setError);
+      }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -138,11 +160,11 @@ export function DepartmentForm({ initialData, onSuccess, onCancel }: DepartmentF
 
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

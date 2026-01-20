@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,18 +21,13 @@ export const RenameDialog = ({
   onOpenChange,
   file,
   onRename,
+  isLoading = false,
 }: RenameDialogProps) => {
   const t = useTranslations('fileManager.dialogs');
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState(file?.name || '');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (open && file) {
-      setNewName(file.name);
-      setError('');
-    }
-  }, [open, file]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,14 +48,11 @@ export const RenameDialog = ({
       return;
     }
 
-    setIsLoading(true);
     try {
       await onRename(file, newName);
       onOpenChange(false);
     } catch {
       setError(t('rename.renameError'));
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -5,13 +5,12 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { handleBindErrors } from '@/shared/utils/error-handler';
-import { apiClient } from '@/shared/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -21,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import type { ApiMst, FeatureMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
+import { UI_CONSTANTS } from '@/shared/config';
 import { SORT_ORDER, SORT_FIELDS, HTTP_METHODS } from '@/shared/config/constant';
 import { IsActive, IsActiveLabels, TypeOfMethod } from '@/shared/enums';
 import { getApiSchema, type ApiFormData } from '@/shared/validation/validation';
@@ -55,6 +55,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       name: '',
       path: '',
       method: 'GET',
+      type: 0,
       is_active: true,
       feature_mst_id: 0,
     },
@@ -86,15 +87,19 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
         name: '',
         path: '',
         method: HTTP_METHODS.GET,
+        type: 0,
         is_active: true,
         feature_mst_id: 0,
       });
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: ApiFormData) => {
-    try {
-      const methodMap: Record<string, number> = {
+    await execute(async () => {
+      try {
+        const methodMap: Record<string, number> = {
         [HTTP_METHODS.GET]: TypeOfMethod.GET,
         [HTTP_METHODS.POST]: TypeOfMethod.POST,
         [HTTP_METHODS.PUT]: TypeOfMethod.PUT,
@@ -123,6 +128,7 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -208,6 +214,15 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
             ];
             if (value && validMethods.includes(value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE')) {
               setValue('method', value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE');
+              
+              const methodMap: Record<string, number> = {
+                [HTTP_METHODS.GET]: TypeOfMethod.GET,
+                [HTTP_METHODS.POST]: TypeOfMethod.POST,
+                [HTTP_METHODS.PUT]: TypeOfMethod.PUT,
+                [HTTP_METHODS.PATCH]: TypeOfMethod.PATCH,
+                [HTTP_METHODS.DELETE]: TypeOfMethod.DELETE
+              };
+              setValue('type', methodMap[value] ?? TypeOfMethod.GET);
             }
           }}
         >
@@ -249,11 +264,11 @@ export function ApiForm({ initialData, onSuccess, onCancel }: ApiFormProps) {
 
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

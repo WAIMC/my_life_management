@@ -11,41 +11,56 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useTranslations } from 'next-intl';
-import type { DeleteConfirmDialogProps } from '@/shared/types/file-manager.types';
 
-export const DeleteConfirmDialog = ({
+interface DeleteConfirmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  count: number;
+  itemName?: string;
+  isLoading?: boolean;
+}
+
+export function DeleteConfirmDialog({
   open,
   onOpenChange,
   onConfirm,
   count,
   itemName,
-}: DeleteConfirmDialogProps) => {
-  const t = useTranslations('fileManager.dialogs');
+  isLoading,
+}: DeleteConfirmDialogProps) {
+  const t = useTranslations('fileManager.dialogs.delete');
+  const tCommon = useTranslations('common');
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={isLoading ? undefined : onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t('deleteConfirm.title')}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {count === 1 && itemName 
+              ? t('titleStart') + ` "${itemName}"?`
+              : t('titleStart') + ` ${count} ` + t('items') + '?'}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            {count === 1
-              ? t('deleteConfirm.singleMessage', { name: itemName || '' })
-              : t('deleteConfirm.multipleMessage', { count })}
+            {t('description')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>
+            {tCommon('cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              onConfirm().then(() => onOpenChange(false));
+              onConfirm();
             }}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={isLoading}
           >
-            {t('delete')}
+            {isLoading ? tCommon('processing') : tCommon('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+}

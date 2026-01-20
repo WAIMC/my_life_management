@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { SliderMgmt } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES } from '@/shared/config';
+import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES, UI_CONSTANTS } from '@/shared/config';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import Image from 'next/image';
 import { AdvancedSearch } from '@/components/common/advanced-search';
@@ -72,7 +73,6 @@ export default function SliderListPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
-    refetch();
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -80,12 +80,19 @@ export default function SliderListPage() {
     setDeleteDialogOpen(true);
   };
 
+  const { execute, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const confirmDelete = async () => {
-    await remove(deleteIds);
-    setSelectedIds([]);
-    setDeleteIds([]);
-    setDeleteDialogOpen(false);
-    refetch();
+    try {
+      await execute(async () => {
+        await remove(deleteIds);
+        setSelectedIds([]);
+        setDeleteIds([]);
+        setDeleteDialogOpen(false);
+      });
+    } catch {
+      // Global Error Handler will pick it up
+    }
   };
 
   const handleSort = (column: string) => {
@@ -189,7 +196,7 @@ export default function SliderListPage() {
       label: tBulkActions('deleteSelected'), 
       icon: <Trash2 className="h-4 w-4" />, 
       variant: 'destructive', 
-      onClick: async (ids) => { await remove(ids); refetch(); }, 
+      onClick: async (ids) => { await remove(ids); }, 
       confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('slider').toLowerCase() }), 
       confirmTitle: tCrud('deleteEntity', { entity: tEntities('sliders') }) 
     }, 
@@ -310,7 +317,9 @@ export default function SliderListPage() {
         description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('slider').toLowerCase() })}
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
+
         variant="destructive"
+        isLoading={isDeleteProcessing}
       />
     </AdminLayout>
   );

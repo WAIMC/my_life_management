@@ -10,8 +10,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { ConfirmDialogProps } from '@/shared/types';
+import { LoadingOverlay } from '@/components/ui/loading';
 import { useTranslations } from 'next-intl';
+
+import { ConfirmDialogProps } from '@/shared/types';
 
 export function ConfirmDialog({
   open,
@@ -19,44 +21,38 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
-  onCancel,
-  confirmText,
-  cancelText,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
   variant = 'default',
+  isLoading = false,
 }: ConfirmDialogProps) {
   const t = useTranslations('common');
-  const handleConfirm = () => {
-    onConfirm();
-    onOpenChange(false);
-  };
 
-  const handleCancel = () => {
-    onCancel?.();
-    onOpenChange(false);
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await onConfirm();
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={isLoading ? undefined : onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>
-            {cancelText || t('cancel')}
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>{cancelText || t('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
-            className={
-              variant === 'destructive'
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : ''
-            }
+            className={variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            disabled={isLoading}
           >
             {confirmText || t('confirm')}
           </AlertDialogAction>
         </AlertDialogFooter>
+
+        {/* Component Lock */}
+        {isLoading && <LoadingOverlay variant="absolute" message={t('processing')} />}
       </AlertDialogContent>
     </AlertDialog>
   );

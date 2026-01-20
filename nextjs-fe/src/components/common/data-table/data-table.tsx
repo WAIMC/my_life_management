@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpDown, Edit, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Column, DataTableProps } from '@/shared/types';
+import { LoadingOverlay } from '@/components/ui/loading';
 
 export type { Column };
 
@@ -58,24 +59,14 @@ export function DataTable<T>({
     />
   );
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-        <p className="mt-4 text-slate-600 dark:text-slate-400">{t('loading')}</p>
-      </div>
-    );
-  }
+  // No early return for loading
 
-  if (data.length === 0) {
-    return (
-      <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-        <p className="text-slate-600 dark:text-slate-400">{t('noData')}</p>
-      </div>
-    );
-  }
 
-  return (
+  const content = data.length === 0 ? (
+    <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+      <p className="text-slate-600 dark:text-slate-400">{t('noData')}</p>
+    </div>
+  ) : (
     <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
       <Table>
         <TableHeader>
@@ -156,6 +147,13 @@ export function DataTable<T>({
           })}
         </TableBody>
       </Table>
+    </div>
+  );
+
+  return (
+    <div className="relative min-h-[100px]">
+      {loading && <LoadingOverlay variant="absolute" />}
+      {content}
     </div>
   );
 }

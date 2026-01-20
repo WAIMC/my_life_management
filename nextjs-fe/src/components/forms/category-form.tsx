@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +24,7 @@ import type { CategoryMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { CategoryStatus, CategoryStatusLabels } from '@/shared/enums';
 import { getCategorySchema, type CategoryFormData } from '@/shared/validation/validation';
+import { slugify } from '@/shared/utils/string-utils';
 import type { CategoryFormProps } from './types';
 
 export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormProps) {
@@ -75,20 +78,20 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         is_display: true,
         parent_id: 0,
         is_delete: false,
-        slug: '',
       });
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: CategoryFormData) => {
-    try {
-      // Convert string to number for rank_order and handle boolean to number for Enums
-      const payload = {
-        ...data,
-        rank_order: Number(data.rank_order),
-        is_display: data.is_display ? 1 : 0,
-        is_delete: data.is_delete ? 1 : 0,
-      } as any;
+    await execute(async () => {
+      try {
+        // Convert string to number for rank_order and handle boolean to number for Enums
+        const payload = {
+          ...data,
+          rank_order: Number(data.rank_order),
+        };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
@@ -100,6 +103,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -113,7 +117,11 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         </Label>
         <Input
           id="name"
-          {...register('name')}
+          {...register('name', {
+            onChange: (e) => {
+              setValue('slug', slugify(e.target.value), { shouldValidate: true });
+            },
+          })}
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
@@ -187,11 +195,11 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFileManager } from './context';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { Toolbar } from './toolbar';
 import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
@@ -11,13 +12,13 @@ import { buildBreadcrumb } from './utils';
 import { UploadDialog } from './dialogs/upload-dialog';
 import { NewFolderDialog } from './dialogs/new-folder-dialog';
 import { RenameDialog } from './dialogs/rename-dialog';
-import { DeleteConfirmDialog } from './dialogs/delete-confirm-dialog';
+import { DeleteConfirmDialog } from '@/components/common/file-manager/dialogs/delete-confirm-dialog';
 import { MoveCopyDialog } from './dialogs/move-copy-dialog';
 import type { MediaFile, FilterType, SortField, MoveCopyMode } from '@/shared/types/file-manager.types';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
 import { SORT_ORDER } from '@/shared/config/constant';
-import { FILE_MANAGER_SORT_FIELDS, FILTER_TYPE, VIEW_MODE, FILE_TYPE, MOVE_COPY_MODE } from '@/shared/config/constant';
+import { FILE_MANAGER_SORT_FIELDS, FILTER_TYPE, VIEW_MODE, FILE_TYPE, MOVE_COPY_MODE, UI_CONSTANTS } from '@/shared/config/constant';
 
 export function FileManagerContent() {
   const {
@@ -57,6 +58,13 @@ export function FileManagerContent() {
   // Selection state for operations
   const [targetFile, setTargetFile] = useState<MediaFile | null>(null);
   const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
+  
+  // Locking hooks
+  const { execute: executeDelete, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+  const { execute: executeMoveCopy, isLoading: isMoveCopyProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+  const { execute: executeUpload, isLoading: isUploadProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+  const { execute: executeCreateFolder, isLoading: isCreateFolderProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+  const { execute: executeRename, isLoading: isRenameProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
 
   const breadcrumbItems = buildBreadcrumb(currentPath);
 
@@ -74,27 +82,31 @@ export function FileManagerContent() {
   };
 
   const handleUpload = async (filesToUpload: File[]) => {
-    try {
-      if (uploadFiles) {
-        await uploadFiles(filesToUpload);
-      } else {
-        toast.error(t('featureUnavailable'));
+    await executeUpload(async () => {
+      try {
+        if (uploadFiles) {
+          await uploadFiles(filesToUpload);
+        } else {
+          toast.error(t('featureUnavailable'));
+        }
+      } catch {
+        // Error handled in hook
       }
-    } catch {
-      // Error handled in hook
-    }
+    });
   };
 
   const handleCreateFolder = async (name: string) => {
-    try {
-      if (createFolder) {
-        await createFolder(name);
-      } else {
-        toast.error(t('featureUnavailable'));
+    await executeCreateFolder(async () => {
+      try {
+        if (createFolder) {
+          await createFolder(name);
+        } else {
+          toast.error(t('featureUnavailable'));
+        }
+      } catch {
+        // Error handled in hook
       }
-    } catch {
-      // Error handled in hook
-    }
+    });
   };
 
   const handleRename = (file: MediaFile) => {
@@ -103,15 +115,17 @@ export function FileManagerContent() {
   };
 
   const handleRenameSubmit = async (file: MediaFile, newName: string) => {
-    try {
-      if (renameFile) {
-        await renameFile(file.id, newName);
-      } else {
-        toast.error(t('featureUnavailable'));
+    await executeRename(async () => {
+      try {
+        if (renameFile) {
+          await renameFile(file.id, newName);
+        } else {
+          toast.error(t('featureUnavailable'));
+        }
+      } catch {
+        // Error handled in hook
       }
-    } catch {
-      // Error handled in hook
-    }
+    });
   };
 
   const handleDelete = (file?: MediaFile) => {
@@ -124,17 +138,20 @@ export function FileManagerContent() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      const idsToDelete = targetFile ? [targetFile.id] : selectedFiles;
-      if (deleteFiles) {
-        await deleteFiles(idsToDelete);
-      } else {
-        toast.error(t('featureUnavailable'));
+    await executeDelete(async () => {
+      try {
+        const idsToDelete = targetFile ? [targetFile.id] : selectedFiles;
+        if (deleteFiles) {
+          await deleteFiles(idsToDelete);
+        } else {
+          toast.error(t('featureUnavailable'));
+        }
+        setTargetFile(null);
+        setIsDeleteOpen(false);
+      } catch {
+        // Error handled in hook
       }
-      setTargetFile(null);
-    } catch {
-      // Error handled in hook
-    }
+    });
   };
 
   const handleMove = (file?: MediaFile) => {
@@ -152,25 +169,28 @@ export function FileManagerContent() {
   };
 
   const handleMoveCopyConfirm = async (targetPath: string) => {
-    try {
-      const idsToProcess = targetFile ? [targetFile.id] : selectedFiles;
-      if (moveCopyMode === MOVE_COPY_MODE.MOVE) {
-        if (moveFiles) {
-          await moveFiles(idsToProcess, targetPath);
+    await executeMoveCopy(async () => {
+      try {
+        const idsToProcess = targetFile ? [targetFile.id] : selectedFiles;
+        if (moveCopyMode === MOVE_COPY_MODE.MOVE) {
+          if (moveFiles) {
+            await moveFiles(idsToProcess, targetPath);
+          } else {
+            toast.error(t('featureUnavailable'));
+          }
         } else {
-          toast.error(t('featureUnavailable'));
+          if (copyFiles) {
+            await copyFiles(idsToProcess, targetPath);
+          } else {
+            toast.error(t('featureUnavailable'));
+          }
         }
-      } else {
-        if (copyFiles) {
-          await copyFiles(idsToProcess, targetPath);
-        } else {
-          toast.error(t('featureUnavailable'));
-        }
+        setTargetFile(null);
+        setIsMoveCopyOpen(false);
+      } catch {
+        // Error handled in hook
       }
-      setTargetFile(null);
-    } catch {
-      // Error handled in hook
-    }
+    });
   };
 
   const handleDownload = (file: MediaFile) => {
@@ -271,19 +291,24 @@ export function FileManagerContent() {
         onOpenChange={setIsUploadOpen}
         onUpload={handleUpload}
         currentPath={currentPath}
+        isLoading={isUploadProcessing}
       />
 
       <NewFolderDialog
+        key={isNewFolderOpen ? 'new-folder-open' : 'new-folder-closed'}
         open={isNewFolderOpen}
         onOpenChange={setIsNewFolderOpen}
         onCreateFolder={handleCreateFolder}
+        isLoading={isCreateFolderProcessing}
       />
 
       <RenameDialog
+        key={isRenameOpen ? `rename-open-${targetFile?.id}` : 'rename-closed'}
         open={isRenameOpen}
         onOpenChange={setIsRenameOpen}
         file={targetFile}
         onRename={handleRenameSubmit}
+        isLoading={isRenameProcessing}
       />
 
       <DeleteConfirmDialog
@@ -292,6 +317,7 @@ export function FileManagerContent() {
         onConfirm={handleDeleteConfirm}
         count={targetFile ? 1 : selectedFiles.length}
         itemName={targetFile?.name}
+        isLoading={isDeleteProcessing}
       />
 
       <MoveCopyDialog
@@ -302,6 +328,7 @@ export function FileManagerContent() {
         onConfirm={handleMoveCopyConfirm}
         currentPath={currentPath}
         selectedFileIds={targetFile ? [targetFile.id] : selectedFiles}
+        isLoading={isMoveCopyProcessing}
       />
 
       <PreviewModal

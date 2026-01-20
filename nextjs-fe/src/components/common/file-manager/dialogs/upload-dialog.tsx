@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, X, File, AlertCircle, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { cn } from "@/shared/utils";
 import type { UploadDialogProps } from '@/shared/types/file-manager.types';
@@ -43,7 +44,8 @@ export const UploadDialog = ({
   onOpenChange,
   onUpload,
   currentPath,
-}: UploadDialogProps) => {
+  isLoading: isExternalLoading,
+}: UploadDialogProps & { isLoading?: boolean }) => {
   const t = useTranslations('fileManager.dialogs');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
@@ -299,7 +301,7 @@ export const UploadDialog = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !(committing || isAnyFileUploading || isExternalLoading) && fileInputRef.current?.click()}
           >
             <input
               ref={fileInputRef}
@@ -307,7 +309,7 @@ export const UploadDialog = ({
               multiple
               className="hidden"
               onChange={handleFileSelect}
-              disabled={committing || isAnyFileUploading}
+              disabled={committing || isAnyFileUploading || isExternalLoading}
             />
             <div className="flex flex-col items-center gap-2 cursor-pointer">
               <div className="rounded-full bg-primary/10 p-4">
@@ -335,7 +337,14 @@ export const UploadDialog = ({
                     {uploadedFile.uploading ? (
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     ) : uploadedFile.preview ? (
-                      <img src={uploadedFile.preview} alt={uploadedFile.file.name} className="w-full h-full object-cover" />
+                      <div className="relative w-full h-full">
+                        <Image 
+                          src={uploadedFile.preview} 
+                          alt={uploadedFile.file.name} 
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     ) : uploadedFile.uploaded ? (
                       <ImageIcon className="h-5 w-5 text-muted-foreground" />
                     ) : (
@@ -427,15 +436,15 @@ export const UploadDialog = ({
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={committing || isAnyFileUploading}
+              disabled={committing || isAnyFileUploading || isExternalLoading}
             >
               {t('cancel')}
             </Button>
             <Button
               onClick={handleCommit}
-              disabled={!hasValidFiles || committing || isAnyFileUploading || !allFilesUploaded}
+              disabled={!hasValidFiles || committing || isAnyFileUploading || !allFilesUploaded || isExternalLoading}
             >
-              {committing ? 'Uploading...' : t('upload.uploadButton')}
+              {committing || isExternalLoading ? 'Uploading...' : t('upload.uploadButton')}
             </Button>
           </div>
         </div>

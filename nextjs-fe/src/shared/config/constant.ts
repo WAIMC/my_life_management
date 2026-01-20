@@ -69,6 +69,7 @@ export const TIME_CONSTANTS = {
   ONE_HOUR: 3600000,
   TWO_DAYS: 172800000,
   ONE_DAY: 86400000,
+  STALE_TIME: 5000,
 } as const;
 
 // ============================================================================
@@ -363,6 +364,7 @@ export const UI_CONSTANTS = {
   POPOVER_WIDTH: 72, // w-72 in Tailwind = 18rem = 288px
   DROPDOWN_MENU_SIDE_OFFSET: 4,
   LOADING_SKELETON_COUNT: 10, // For file manager
+  ACTION_DELAY_MS: 300,
 } as const;
 
 // Keyboard keys

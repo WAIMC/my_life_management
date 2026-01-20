@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Gender, StatusEnum, AdminStatus, UserStatus, CategoryStatus, DepartmentStatus, FeatureStatus } from '@/shared/enums';
+import { Gender, StatusEnum, AdminStatus, UserStatus, CategoryStatus, DepartmentStatus, FeatureStatus, SkillStatus, SocialStatus } from '@/shared/enums';
 import { ValidationRules } from './validation-rules';
 
 type Translator = (key: string, params?: Record<string, string | number>) => string;
@@ -46,6 +46,8 @@ export const categoryStatusValidation = z.nativeEnum(CategoryStatus);
 export const departmentStatusValidation = z.nativeEnum(DepartmentStatus);
 export const featureStatusValidation = z.nativeEnum(FeatureStatus);
 export const userStatusValidation = z.nativeEnum(UserStatus);
+export const skillStatusValidation = z.nativeEnum(SkillStatus);
+export const socialStatusValidation = z.nativeEnum(SocialStatus);
 
 // Admin schema matching StoreAdminMstRequest
 export const getAdminSchema = (t: Translator) => z.object({
@@ -85,14 +87,14 @@ export type UserFormData = z.infer<ReturnType<typeof getUserSchema>>;
 
 // Category schema
 export const getCategorySchema = (t: Translator) => z.object({
-  parent_id: z.number().default(0),
+  parent_id: z.number(),
   name: z.string().min(1, t('name.required')),
   slug: z.string().min(1, t('slug.required')),
   description: z.string().optional(),
   status: categoryStatusValidation,
   is_display: z.boolean(),
-  rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
-  is_delete: z.boolean().default(false),
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
+  is_delete: z.boolean(),
 });
 
 export type CategoryFormData = z.infer<ReturnType<typeof getCategorySchema>>;
@@ -101,8 +103,8 @@ export type CategoryFormData = z.infer<ReturnType<typeof getCategorySchema>>;
 export const getSkillSchema = (t: Translator) => z.object({
   name: z.string().min(1, t('name.required')),
   slug: z.string().optional(),
-  rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
-  status: statusValidation,
+  rank_order: z.number().min(0, t('order.min', { min: 0 })),
+  status: skillStatusValidation,
   is_display: z.boolean().optional(),
 });
 
@@ -165,7 +167,7 @@ export const getSocialSchema = (t: Translator) => z.object({
   link: z.string().url(t('url.invalid')),
   image: z.string().optional(),
   rank_order: z.coerce.number().min(0, t('order.min', { min: 0 })),
-  status: statusValidation,
+  status: socialStatusValidation,
   is_display: z.boolean().optional(),
 });
 

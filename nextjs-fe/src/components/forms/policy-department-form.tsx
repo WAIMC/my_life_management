@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,10 +49,13 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: PolicyDepartmentFormData) => {
-    try {
-      // Convert string to number for row_id
-      const payload = {
+    await execute(async () => {
+      try {
+        // Convert string to number for row_id
+        const payload = {
         ...data,
         row_id: Number(data.row_id),
       };
@@ -68,6 +73,7 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   return (
@@ -103,11 +109,11 @@ export function PolicyDepartmentForm({ initialData, onSuccess, onCancel }: Polic
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

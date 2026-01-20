@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import type { SocialMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { SocialStatus, SocialStatusLabels, IsActive } from '@/shared/enums';
+import { SocialStatus, SocialStatusLabels } from '@/shared/enums';
 import { getSocialSchema, type SocialFormData } from '@/shared/validation/validation';
 import type { SocialFormProps } from './types';
 
@@ -39,10 +41,11 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
     reset,
     setError,
   } = useForm<SocialFormData>({
-    resolver: zodResolver(getSocialSchema(tValidation)),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(getSocialSchema(tValidation)) as any,
     defaultValues: {
       rank_order: 0,
-      status: IsActive.TRUE,
+      status: SocialStatus.ACTIVE,
     },
   });
 
@@ -53,7 +56,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
         link: initialData.link,
         image: initialData.image || '',
         rank_order: initialData.rank_order,
-        status: initialData.status,
+        status: Number(initialData.status),
         is_display: initialData.is_display,
       });
     } else {
@@ -62,16 +65,19 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
         link: '',
         image: '',
         rank_order: 0,
-        status: IsActive.TRUE,
+        status: SocialStatus.ACTIVE,
         is_display: true,
       });
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: SocialFormData) => {
-    try {
-      // Convert string to number for rank_order
-      const payload = {
+    await execute(async () => {
+      try {
+        // Convert string to number for rank_order
+        const payload = {
         ...data,
         rank_order: Number(data.rank_order),
       };
@@ -89,6 +95,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -159,7 +166,7 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
           </Label>
           <Select
             value={statusValue?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
+            onValueChange={(value) => setValue('status', Number(value) as SocialStatus)}
           >
             <SelectTrigger>
               <SelectValue />
@@ -183,11 +190,11 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

@@ -42,6 +42,7 @@ function NavigationProvider() {
 }
 
 import { AuthProvider } from '@/providers/auth-provider';
+import { GlobalLoadingProvider } from '@/shared/providers/global-loading-provider';
 
 export function Providers({ 
   children,
@@ -101,8 +102,10 @@ export function Providers({
             enableSystem
             disableTransitionOnChange={false}
           >
-            <NavigationProvider />
-            {children}
+            <GlobalLoadingProvider>
+              <NavigationProvider />
+              {children}
+            </GlobalLoadingProvider>
             <Toaster
               position="top-right"
               reverseOrder={false}

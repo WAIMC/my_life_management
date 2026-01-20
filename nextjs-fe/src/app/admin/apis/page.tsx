@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -19,7 +20,8 @@ import {
   SORT_FIELDS, 
   type SortOrder, 
   PAGINATION, 
-  ADMIN_ROUTES 
+  ADMIN_ROUTES,
+  UI_CONSTANTS 
 } from '@/shared/config';
 import { IsActive, IsActiveLabels } from '@/shared/enums/enums';
 import { AdvancedSearch } from '@/components/common/advanced-search';
@@ -78,7 +80,6 @@ export default function ApiListPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
-    refetch();
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -86,12 +87,19 @@ export default function ApiListPage() {
     setDeleteDialogOpen(true);
   };
 
+  const { execute, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const confirmDelete = async () => {
-    await remove(deleteIds);
-    setSelectedIds([]);
-    setDeleteIds([]);
-    setDeleteDialogOpen(false);
-    refetch();
+    try {
+      await execute(async () => {
+        await remove(deleteIds);
+        setSelectedIds([]);
+        setDeleteIds([]);
+        setDeleteDialogOpen(false);
+      });
+    } catch {
+      // Global Error Handler will pick it up
+    }
   };
 
   const handleSort = (column: string) => {
@@ -152,7 +160,6 @@ export default function ApiListPage() {
       variant: 'destructive', 
       onClick: async (ids) => { 
         await remove(ids); 
-        refetch(); 
       }, 
       confirmMessage: tCrud('deleteConfirm', { 
         count: selectedIds.length, 
@@ -164,14 +171,14 @@ export default function ApiListPage() {
       label: tBulkActions('activateSelected'), 
       icon: <CheckCircle className="h-4 w-4" />, 
       onClick: async () => { 
-        refetch(); 
+        /* Implement activate */ 
       } 
     }, 
     { 
       label: tBulkActions('deactivateSelected'), 
       icon: <XCircle className="h-4 w-4" />, 
       onClick: async () => { 
-        refetch(); 
+        /* Implement deactivate */ 
       } 
     }
   ];
@@ -282,7 +289,9 @@ export default function ApiListPage() {
         description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('api').toLowerCase() })}
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
+
         variant="destructive"
+        isLoading={isDeleteProcessing}
       />
     </AdminLayout>
   );

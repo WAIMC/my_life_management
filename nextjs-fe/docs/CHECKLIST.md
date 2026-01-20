@@ -203,3 +203,29 @@ All foundation components are in place and working perfectly. You can now start 
 **React Version**: 19.2.0
 **Tailwind CSS**: 4
 **Status**: Production Ready 🚀
+
+
+--- anti multiple click button
+- Lớp 1: UI/UX Sử dụng flag là state của button:
+  + Thuộc tính disabled: Khi click, lập tức set disabled={true}. Trình duyệt sẽ tự động ngăn chặn mọi event click tiếp theo vào element đó.
+  + Local Loading vs Global Loading: * Local: Hiển thị spinner ngay bên trong button. Người dùng vẫn xem được các thông tin khác trên trang.
+    * Global: Chỉ dùng cho các tác vụ cực kỳ quan trọng (như xử lý thanh toán) để tránh người dùng chuyển trang giữa chừng.
+
+- Lớp 2: Debouncing & Throttling
+  + Debounce: Đợi người dùng ngừng click trong X miligiây mới thực thi (thường dùng cho Search box).
+  + Throttle: Chỉ thực thi 1 lần duy nhất trong khoảng thời gian X miligiây, mặc cho người dùng click bao nhiêu lần (phù hợp để chống click nhanh).
+
+- Triển khai Common utility
+  + Điểm quan trọng:
+    * Không cho phép overlap async
+    * Không phụ thuộc setTimeout mơ hồ
+    * Không gây memory leak
+
+- Cần có cơ chế chặn ngay trong call stack hiện tại thay vì đợi react update lại state thì mới có thể check,
+trong thời gian nhỏ đó có thể nhận action nhiều lần và chúng sẽ by pass check vì state chưa kịp update.
+Có thể sử dụng công cụ phù hợp như: useref, native dom, syncchronous lock
+
+- Chia thành 3 loại lock: button, component, screen. tùy phạm vi ứng dụng của action để chọn lock phù hợp
+vd: delete 1 item -> lock button. form confirm/cancel -> lock component. delete all, payment, migrate -> lock screen
+sử dụng cho các button dạng: bất đồng bộ, timmer, refresh, load more, 
+Có thể multiple click vào button, khi nó chưa hoàn thành render như trước và sau render: ví dụ hiển thị form click save liên tục, click save đầu tiên thành công chưa kịp đóng modal thì có click thứ 2 trong ms thời gian và nó có thể gây ra hành vi không mong muốn

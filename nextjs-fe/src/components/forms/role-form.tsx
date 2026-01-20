@@ -5,7 +5,9 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
 import { handleBindErrors } from '@/shared/utils/error-handler';
+import { UI_CONSTANTS } from '@/shared/config';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,24 +64,28 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: RoleFormData) => {
-    try {
-      if (isEdit && initialData) {
-        await update(initialData.id, {
-          ...data,
-          is_delete: false,
-        });
-      } else {
-        await create({
-          ...data,
-          is_delete: false,
-        });
+    await execute(async () => {
+      try {
+        if (isEdit && initialData) {
+          await update(initialData.id, {
+            ...data,
+            is_delete: false,
+          });
+        } else {
+          await create({
+            ...data,
+            is_delete: false,
+          });
+        }
+        onSuccess();
+      } catch (error: unknown) {
+        console.error(error);
+        handleBindErrors(error, setError);
       }
-      onSuccess();
-    } catch (error: unknown) {
-      console.error(error);
-      handleBindErrors(error, setError);
-    }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -139,11 +145,11 @@ export function RoleForm({ initialData, onSuccess, onCancel }: RoleFormProps) {
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

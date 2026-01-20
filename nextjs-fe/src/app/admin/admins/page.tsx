@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { apiClient } from '@/shared/api/client';
+import { notification } from '@/shared/utils/notification';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -19,7 +22,8 @@ import {
   SORT_FIELDS, 
   type SortOrder, 
   PAGINATION, 
-  ADMIN_ROUTES 
+  ADMIN_ROUTES,
+  UI_CONSTANTS
 } from '@/shared/config';
 import { AdvancedSearch } from '@/components/common/advanced-search';
 import type { SearchField, SearchCriteria } from '@/shared/types/data-table.types';
@@ -77,7 +81,6 @@ export default function AdminListPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
-    refetch();
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -85,12 +88,38 @@ export default function AdminListPage() {
     setDeleteDialogOpen(true);
   };
 
+  const { execute, isLoading: isDeleteProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const confirmDelete = async () => {
-    await remove(deleteIds);
-    setSelectedIds([]);
-    setDeleteIds([]);
-    setDeleteDialogOpen(false);
-    refetch();
+    try {
+      await execute(async () => {
+        await remove(deleteIds);
+        setSelectedIds([]);
+        setDeleteIds([]);
+        setDeleteDialogOpen(false);
+      });
+    } catch {
+      // Global Error Handler will pick it up
+    }
+  };
+
+  const handleBulkStatusChange = async (ids: number[], isActive: boolean) => {
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          apiClient.put(`${API_ENDPOINTS.MASTER.ADMIN}/update/${id}`, {
+            id,
+            is_active: isActive,
+          })
+        )
+      );
+      notification.success(
+        tCommon('updatedSuccessfully')
+      );
+      refetch();
+    } catch (error) {
+       notification.error(tCommon('somethingWentWrong'));
+    }
   };
 
   const handleSort = (column: string) => {
@@ -154,15 +183,22 @@ export default function AdminListPage() {
       label: tBulkActions('deleteSelected'),
       icon: <Trash2 className="h-4 w-4" />,
       variant: 'destructive',
-      onClick: async (_ids) => { await remove(_ids); refetch(); },
+      onClick: async (_ids) => { await remove(_ids); },
       confirmMessage: tCrud('deleteConfirm', { count: selectedIds.length, entity: tEntities('admin').toLowerCase() }),
       confirmTitle: tCrud('deleteEntity', { entity: tEntities('admins') }),
     },
-    // TODO: Implement activate/deactivate logic
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    { label: tBulkActions('activateSelected'), icon: <CheckCircle className="h-4 w-4" />, onClick: async (_ids) => { refetch(); } },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    { label: tBulkActions('deactivateSelected'), icon: <XCircle className="h-4 w-4" />, onClick: async (_ids) => { refetch(); } },
+    { 
+      label: tBulkActions('activateSelected'), 
+      icon: <CheckCircle className="h-4 w-4" />, 
+      onClick: async (ids) => handleBulkStatusChange(ids, true),
+      confirmMessage: tBulkActions('activateConfirm', { count: selectedIds.length }),
+    },
+    { 
+      label: tBulkActions('deactivateSelected'), 
+      icon: <XCircle className="h-4 w-4" />, 
+      onClick: async (ids) => handleBulkStatusChange(ids, false),
+      confirmMessage: tBulkActions('deactivateConfirm', { count: selectedIds.length }),
+    },
   ];
 
   const handleAdvancedSearch = (criteria: SearchCriteria[]) => {
@@ -282,7 +318,9 @@ export default function AdminListPage() {
         description={tCrud('deleteConfirm', { count: deleteIds.length, entity: tEntities('admin').toLowerCase() })}
         onConfirm={confirmDelete}
         confirmText={tCommon('delete')}
+
         variant="destructive"
+        isLoading={isDeleteProcessing}
       />
     </AdminLayout>
   );

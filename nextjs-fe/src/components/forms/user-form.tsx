@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { formatDateForBackend } from '@/shared/utils/date-formatter';
 import { Button } from '@/components/ui/button';
@@ -88,9 +90,12 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: UserFormData) => {
-    try {
-      const { password, ...otherData } = data;
+    await execute(async () => {
+      try {
+        const { password, ...otherData } = data;
       const payload: Partial<UserMgmt> = { ...otherData };
 
       if (password) {
@@ -118,6 +123,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
       console.error(error);
       handleBindErrors(error, setError);
     }
+   });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -303,11 +309,11 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>

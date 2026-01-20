@@ -5,6 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
+import { useActionLock } from '@/shared/hooks/useActionLock';
+import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +23,9 @@ import { HistoryViewer } from '@/components/features/history/history-viewer';
 import type { SkillMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { FORM_DEFAULTS } from '@/shared/config/constant';
-import { SkillStatus, SkillStatusLabels, IsActive } from '@/shared/enums';
+import { SkillStatus, SkillStatusLabels } from '@/shared/enums';
 import { getSkillSchema, type SkillFormData } from '@/shared/validation/validation';
+import { slugify } from '@/shared/utils/string-utils';
 import type { SkillFormProps } from './types';
 
 export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) {
@@ -44,7 +47,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
     resolver: zodResolver(getSkillSchema(tValidation)),
     defaultValues: {
       rank_order: FORM_DEFAULTS.RANK_ORDER,
-      status: SkillStatus.ACTIVE as unknown as IsActive,
+      status: SkillStatus.ACTIVE,
       is_display: true,
     },
   });
@@ -63,19 +66,22 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
         name: '',
         slug: '',
         rank_order: FORM_DEFAULTS.RANK_ORDER,
-        status: SkillStatus.ACTIVE as unknown as IsActive,
+        status: SkillStatus.ACTIVE,
         is_display: true,
       });
     }
   }, [initialData, reset]);
 
+  const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
+
   const onSubmit = async (data: SkillFormData) => {
-    try {
-      // Convert string to number for rank_order
-      const payload = {
-        ...data,
-        rank_order: Number(data.rank_order),
-      };
+    await execute(async () => {
+      try {
+        const payload = {
+          ...data,
+          // rank_order is already a number from strict validation/input but ensuring consistency
+          rank_order: Number(data.rank_order),
+        };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
@@ -90,6 +96,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
       console.error(error);
       handleBindErrors(error, setError);
     }
+    });
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
@@ -103,7 +110,11 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
         </Label>
         <Input
           id="name"
-          {...register('name')}
+          {...register('name', {
+            onChange: (e) => {
+              setValue('slug', slugify(e.target.value), { shouldValidate: true });
+            },
+          })}
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
@@ -124,7 +135,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
           <Input
             id="rank_order"
             type="number"
-            {...register('rank_order')}
+            {...register('rank_order', { valueAsNumber: true })}
             className={errors.rank_order ? 'border-red-500' : ''}
           />
           {errors.rank_order && (
@@ -138,7 +149,7 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
           </Label>
           <Select
             value={statusValue?.toString()}
-            onValueChange={(value) => setValue('status', Number(value) as IsActive)}
+            onValueChange={(value) => setValue('status', Number(value) as SkillStatus)}
           >
             <SelectTrigger>
               <SelectValue />
@@ -162,11 +173,11 @@ export function SkillForm({ initialData, onSuccess, onCancel }: SkillFormProps) 
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
         </Button>
       </div>
     </form>
