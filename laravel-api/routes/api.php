@@ -53,13 +53,15 @@ Route::prefix('admin')
   ->group(function () {
     Route::prefix('credential')->group(function () {
       Route::post('login', [CredentialController::class, 'login']);
+      Route::prefix('trust')->group(function () {
+            Route::post('refresh-token', [CredentialController::class, 'refreshToken']);
+      });
     });
 
     Route::middleware(AdminMiddleware::class)
       ->group(function () {
         Route::prefix('credential')->group(function () {
           Route::prefix('trust')->group(function () {
-            Route::post('refresh-token', [CredentialController::class, 'refreshToken']);
             Route::post('logout', [CredentialController::class, 'logout']);
           });
           Route::get('me', [CredentialController::class, 'me']);
