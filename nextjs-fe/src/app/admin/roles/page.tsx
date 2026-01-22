@@ -21,14 +21,8 @@ import { Trash2, CheckCircle, XCircle, Plus } from 'lucide-react';
 import type { RoleMst } from '@/shared/types/api';
 import { API_ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, SORT_FIELDS, type SortOrder, PAGINATION, ADMIN_ROUTES, UI_CONSTANTS } from '@/shared/config';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { RoleForm } from '@/components/forms/role-form';
+import { RoleWizardDialog } from '@/components/forms/role-wizard-dialog';
 import { useTranslations } from 'next-intl';
 
 export default function RoleListPage() {
@@ -71,6 +65,7 @@ export default function RoleListPage() {
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
+    refetch();
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -233,22 +228,13 @@ export default function RoleListPage() {
         />
       </div>
 
-      {/* Create/Edit Role Modal */}
-      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingRole ? tCrud('editEntity', { entity: tEntities('role') }) : tCrud('createEntity', { entity: tEntities('role') })}</DialogTitle>
-            <DialogDescription>
-              {editingRole ? tCrud('editDescription', { entity: tEntities('role').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('role').toLowerCase() })}
-            </DialogDescription>
-          </DialogHeader>
-          <RoleForm
-            initialData={editingRole}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Create/Edit Role Modal - using RoleWizardDialog */}
+      <RoleWizardDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        initialData={editingRole}
+        onSuccess={handleFormSuccess}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
