@@ -21,6 +21,8 @@ import { getPaginationInfo } from '@/shared/utils/pagination';
  * - Better loading states (initial load vs refetch)
  * - Automatic retry on failure
  */
+
+const EMPTY_ARRAY: never[] = [];
 export function useApiData<T>(
   endpoint: string,
   options: UseApiDataOptions = {}
@@ -78,6 +80,7 @@ export function useApiData<T>(
     queryFn: fetchData,
     enabled,
     staleTime,
+    refetchOnMount: options.refetchOnMount,
     // Keep previous data while fetching new page
     placeholderData: (previousData) => previousData,
   });
@@ -91,7 +94,7 @@ export function useApiData<T>(
   const paginationInfo = getPaginationInfo(responseData);
 
   return {
-    data: responseData?.data || [],
+    data: responseData?.data || EMPTY_ARRAY,
     loading: query.isLoading,
     error: query.error as Error | null,
     pagination: paginationInfo,

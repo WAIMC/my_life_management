@@ -89,6 +89,7 @@ export interface UseApiDataOptions {
   filters?: Record<string, FilterValue>;
   enabled?: boolean; // If false, don't fetch automatically
   staleTime?: number;
+  refetchOnMount?: boolean | 'always';
 }
 
 export interface UseApiDataReturn<T> {

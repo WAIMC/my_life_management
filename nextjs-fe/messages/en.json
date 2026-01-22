@@ -477,6 +477,7 @@
   },
   "forms": {
     "labels": {
+      "roles": "Roles",
       "firstName": "First Name",
       "lastName": "Last Name",
       "username": "Username",
@@ -532,7 +533,8 @@
       "selectSkill": "Select Skill",
       "selectAccount": "Select Account",
       "deviceName": "Device Name",
-      "ipAddress": "IP Address"
+      "ipAddress": "IP Address",
+      "selectRoles": "Select roles"
     }
   },
   "history": {

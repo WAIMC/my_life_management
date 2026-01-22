@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useCrud } from '@/shared/hooks/useCrud';
@@ -19,8 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MultiSelect } from '@/components/common/multi-select';
 import { AvatarUpload } from '@/components/common/avatar-upload';
-import type { AdminMst } from '@/shared/types/api';
+import { apiClient } from '@/shared/api/client';
+import { useApiData } from '@/shared/hooks/useApiData';
+import type { AdminMst, RoleMst } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { AdminStatus, Gender, GenderLabels, AdminStatusLabels } from '@/shared/enums';
 import { UPLOAD_CONFIG } from '@/shared/config/constant';
@@ -33,10 +37,60 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
   const tLabels = useTranslations('forms.labels');
   const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
-  const { create, update, loading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN);
+  const queryClient = useQueryClient();
+  const { create, update, loading } = useCrud<AdminMst>(ENDPOINTS.MASTER.ADMIN, {
+    invalidateKeys: [], // Disable auto-invalidation to ensure sequence: Create/Update -> Role Update -> List Refresh
+  });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(() => initialData?.avatar ?? null);
+
+  // Role data
+  const { data: roles } = useApiData<RoleMst>(ENDPOINTS.MASTER.ROLE, {
+    page: 1,
+    per_page: 100,
+    sort_by: 'created_at',
+    sort_order: 'desc',
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
+
+  // Fetch assigned roles for Edit mode
+  const { data: assignedRoles } = useApiData<{ admin_mst_id: number; role_mst_id: number }>(
+    ENDPOINTS.JUNCTION.ADMIN_ROLE,
+    {
+      filters: {
+        admin_mst_id: initialData?.id,
+      },
+      enabled: isEdit && !!initialData?.id,
+      staleTime: 0,
+      refetchOnMount: 'always',
+    }
+  );
+
+  const [selectedRoleIds, setSelectedRoleIds] = useState<(string | number)[]>([]);
+  const [initialRoleIds, setInitialRoleIds] = useState<number[]>([]);
+
+  // Initialize selected roles when data is fetched
+  useEffect(() => {
+    if (assignedRoles && isEdit) {
+      const roleIds = assignedRoles.map(item => item.role_mst_id);
+      
+      // Use JSON.stringify for array comparison to prevent infinite loops
+      // caused by unstable object references from useApiData
+      if (JSON.stringify(roleIds) !== JSON.stringify(initialRoleIds)) {
+        setSelectedRoleIds(roleIds);
+        setInitialRoleIds(roleIds);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignedRoles, isEdit]); // Exclude initialRoleIds to prevent potential cycles if calculations are slightly off, though check guards it.
+
+  const roleOptions = roles.map(role => ({
+    value: role.id,
+    label: role.name
+  }));
 
   const {
     register,
@@ -85,6 +139,8 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         is_active: true,
         avatar: '',
       });
+      setSelectedRoleIds([]);
+      setInitialRoleIds([]);
     }
   }, [initialData, reset]);
 
@@ -98,35 +154,90 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
       }
 
       try {
-      // TODO: Handle avatar upload if avatarFile is present
-      // For now, we'll just pass the data. Real implementation would look like:
-      // if (avatarFile) {
-      //   const uploadData = await upload(avatarFile);
-      //   data.avatar = uploadData.url;
-      // }
+        // TODO: Handle avatar upload if avatarFile is present
+        // For now, we'll just pass the data. Real implementation would look like:
+        // if (avatarFile) {
+        //   const uploadData = await upload(avatarFile);
+        //   data.avatar = uploadData.url;
+        // }
 
-      const payload = { ...data };
+        const payload = { ...data };
 
-      if (data.birth) {
-        (payload as AdminFormData & { birth?: string }).birth = formatDateForBackend(data.birth);
-      }
-
-      if (isEdit && initialData) {
-        if (!payload.password) {
-          delete (payload as AdminFormData & { password?: string }).password;
+        if (data.birth) {
+          (payload as AdminFormData & { birth?: string }).birth = formatDateForBackend(data.birth);
         }
-        await update(initialData.id, payload);
-      } else {
-        await create({
-          ...payload,
-          is_delete: false,
-        } as AdminFormData & { is_delete: boolean });
+
+        let adminId: number | undefined;
+
+        if (isEdit && initialData) {
+          if (!payload.password) {
+            delete (payload as AdminFormData & { password?: string }).password;
+          }
+          await update(initialData.id, payload);
+          adminId = initialData.id;
+        } else {
+          adminId = await create({
+            ...payload,
+            is_delete: false,
+          } as AdminFormData & { is_delete: boolean });
+        }
+
+        // Handle role assignment
+        if (adminId) {
+            try {
+                const currentRoleIds = selectedRoleIds.map(Number);
+                
+                if (isEdit) {
+                    // Calculate diffs for Edit mode
+                    const toInsert = currentRoleIds
+                        .filter(id => !initialRoleIds.includes(id))
+                        .map(roleId => ({
+                            admin_mst_id: adminId!,
+                            role_mst_id: roleId
+                        }));
+
+                    const toDelete = initialRoleIds
+                        .filter(id => !currentRoleIds.includes(id))
+                        .map(roleId => ({
+                            admin_mst_id: adminId!,
+                            role_mst_id: roleId
+                        }));
+
+                    if (toInsert.length > 0 || toDelete.length > 0) {
+                        await apiClient.put(`${ENDPOINTS.JUNCTION.ADMIN_ROLE}/update`, {
+                            insert: toInsert.length > 0 ? toInsert : undefined,
+                            delete: toDelete.length > 0 ? toDelete : undefined,
+                        });
+                        // Update initial state after successful save
+                        setInitialRoleIds(currentRoleIds); 
+                    }
+                } else if (selectedRoleIds.length > 0) {
+                    // Create mode - only insert
+                    await apiClient.put(`${ENDPOINTS.JUNCTION.ADMIN_ROLE}/update`, {
+                      insert: selectedRoleIds.map(roleId => ({
+                        admin_mst_id: adminId!,
+                        role_mst_id: Number(roleId)
+                      }))
+                    });
+                }
+            } catch (roleError) {
+                console.error('Failed to assign roles:', roleError);
+                // We don't block success if role assignment fails
+            }
+        }
+
+
+
+        // Manually invalidate list query after all operations (admin + roles) are complete
+        await Promise.all([
+            queryClient.invalidateQueries({ queryKey: [ENDPOINTS.MASTER.ADMIN] }),
+            queryClient.invalidateQueries({ queryKey: [ENDPOINTS.JUNCTION.ADMIN_ROLE] })
+        ]);
+        onSuccess();
+      } catch (error: unknown) {
+        console.error(error);
+        handleBindErrors(error, setError);
       }
-      onSuccess();
-    } catch (error: unknown) {
-      console.error(error);
-      handleBindErrors(error, setError);
-    }
     });
   };
 
@@ -307,6 +418,16 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
             <p className="text-sm text-red-500">{errors.status.message}</p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <MultiSelect
+          label={tLabels('roles')}
+          placeholder={tForms('selectRoles')}
+          options={roleOptions}
+          value={selectedRoleIds}
+          onChange={setSelectedRoleIds}
+        />
       </div>
 
       <div className="flex items-center gap-2 mt-4">

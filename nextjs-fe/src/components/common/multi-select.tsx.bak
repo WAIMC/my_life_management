@@ -131,7 +131,7 @@ export function MultiSelect({
                     key={option.value}
                     value={option.label}
                     onSelect={() => handleSelect(option.value)}
-                    className="cursor-pointer !pointer-events-auto !opacity-100"
+                    className="cursor-pointer"
                   >
                     <Check
                       className={cn(
