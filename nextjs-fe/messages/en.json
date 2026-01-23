@@ -85,7 +85,9 @@
     "review": "Review",
     "next": "Next",
     "back": "Back",
-    "continue": "Continue"
+    "continue": "Continue",
+    "show": "Show",
+    "hide": "Hide"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -431,6 +433,7 @@
         "title": "Delete Item(s)",
         "singleMessage": "Are you sure you want to delete \"{name}\"?",
         "multipleMessage": "Are you sure you want to delete {count} items?",
+        "description": "This action cannot be undone.",
         "delete": "Delete"
       },
       "delete": "Delete",

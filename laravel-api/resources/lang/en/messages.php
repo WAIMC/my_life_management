@@ -57,7 +57,7 @@ return [
     'admin_role_id' => 'AdminMst RoleMst ID',
     'admin_role_mst' => 'AdminMst RoleMst Master',
     'item_id' => 'Item ID',
-    'api_role_id' => 'API RoleMst ID',
+    'role_mst_id' => 'API RoleMst ID',
     'api_role_mst' => 'API RoleMst Master',
     'type_of_method' => 'Type of method',
     'path' => 'path',

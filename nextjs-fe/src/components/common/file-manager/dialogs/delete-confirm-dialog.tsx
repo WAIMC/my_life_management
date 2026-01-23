@@ -29,7 +29,7 @@ export function DeleteConfirmDialog({
   itemName,
   isLoading,
 }: DeleteConfirmDialogProps) {
-  const t = useTranslations('fileManager.dialogs.delete');
+  const t = useTranslations('fileManager.dialogs.deleteConfirm');
   const tCommon = useTranslations('common');
 
   return (
@@ -38,8 +38,8 @@ export function DeleteConfirmDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>
             {count === 1 && itemName 
-              ? t('titleStart') + ` "${itemName}"?`
-              : t('titleStart') + ` ${count} ` + t('items') + '?'}
+              ? t('singleMessage', { name: itemName })
+              : t('multipleMessage', { count })}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t('description')}

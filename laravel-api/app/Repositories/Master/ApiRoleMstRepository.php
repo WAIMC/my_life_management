@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories\Master;
 
-use App\Enums\IsDelete;
 use App\Interfaces\Master\ApiRoleMstInterface;
 use App\Models\Master\ApiRoleMst;
 use App\Repositories\BaseRepository;
@@ -62,8 +61,18 @@ class ApiRoleMstRepository extends BaseRepository implements ApiRoleMstInterface
    */
   public function executeStore(array $payload): void
   {
+    $now = now();
+    $records = [];
+
     foreach ($payload as $record) {
-      $this->model->create($record);
+      $records[] = array_merge($record, [
+        'created_at' => $now,
+        'updated_at' => $now,
+      ]);
+    }
+
+    if (!empty($records)) {
+      $this->model->insert($records);
     }
   }
 

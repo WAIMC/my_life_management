@@ -172,16 +172,8 @@ export function Step2PermissionSetup({
   const isLoading = apisLoading || featuresLoading;
 
   return (
-    <div className="w-full flex flex-col space-y-4 overflow-hidden" style={{ height: 'calc(80vh - 280px)' }}>
-      {/* Header with count */}
-      <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border shrink-0">
-        <div className="text-sm font-semibold">
-          {tWizard('selectedApis')}: <span className="text-primary">{selectedCount}</span> / {totalApis}
-        </div>
-        <Badge variant={selectedCount > 0 ? 'default' : 'secondary'}>
-          {((selectedCount / totalApis) * 100).toFixed(0)}% {tWizard('selected')}
-        </Badge>
-      </div>
+    <div className="w-full flex flex-col space-y-4 overflow-hidden h-full">
+
 
       {/* Main content with dual layout */}
       <div className="flex gap-4 flex-1 border rounded-lg overflow-hidden min-h-0" style={{ minHeight: 0 }}>
@@ -241,17 +233,18 @@ export function Step2PermissionSetup({
         {/* Right panel - APIs (70%) */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Search and Filters */}
+          {/* Search and Filters */}
           <div className="p-3 border-b space-y-3 shrink-0">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={tWizard('searchApi')}
-                value={searchApi}
-                onChange={(e) => setSearchApi(e.target.value)}
-                className="pl-8 text-sm"
-              />
-            </div>
             <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={tWizard('searchApi')}
+                  value={searchApi}
+                  onChange={(e) => setSearchApi(e.target.value)}
+                  className="pl-8 text-sm"
+                />
+              </div>
               <Select value={methodFilter} onValueChange={setMethodFilter}>
                 <SelectTrigger className="w-[150px] h-9 text-sm">
                   <SelectValue placeholder={tWizard('filterByMethod')} />
@@ -265,6 +258,40 @@ export function Step2PermissionSetup({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-2">
+                 <Checkbox 
+                    id="toggle-all-visible" 
+                    checked={
+                      Object.keys(filteredGroupedApis).length > 0 &&
+                      Object.values(filteredGroupedApis).every(({ apis }) =>
+                        apis.every(api => selectedApiIds.includes(api.id))
+                      )
+                    }
+                    onCheckedChange={(checked) => {
+                      const allVisibleApis = Object.values(filteredGroupedApis).flatMap(g => g.apis);
+                      const allVisibleApiIds = allVisibleApis.map(api => api.id);
+                      
+                      if (checked) {
+                        // Select all visible
+                        const newSelected = Array.from(new Set([...selectedApiIds, ...allVisibleApiIds]));
+                        onSelectedApisChange(newSelected);
+                      } else {
+                         // Deselect all visible
+                         const newSelected = selectedApiIds.filter(id => !allVisibleApiIds.includes(id));
+                         onSelectedApisChange(newSelected);
+                      }
+                    }}
+                 />
+                 <label htmlFor="toggle-all-visible" className="text-sm font-medium cursor-pointer">
+                   {tWizard('all')}
+                 </label>
+               </div>
+
+               <div className="flex h-9 items-center justify-center px-3 rounded-md border text-sm min-w-[80px]">
+                 <span className="font-semibold">{selectedCount}</span> <span className="text-muted-foreground mx-1">/</span> <span className="font-semibold">{totalApis}</span>
+              </div>
             </div>
           </div>
 
@@ -297,8 +324,8 @@ export function Step2PermissionSetup({
                     <div className="flex items-center gap-2 mb-3">
                       <Checkbox
                         id={`feature-${feature.id}`}
-                        checked={allChecked || someChecked}
-                        onChange={() => handleToggleFeature(parseInt(featureId))}
+                        checked={allChecked}
+                        onCheckedChange={() => handleToggleFeature(parseInt(featureId))}
                       />
                       <label
                         htmlFor={`feature-${feature.id}`}
@@ -329,7 +356,7 @@ export function Step2PermissionSetup({
                             <Checkbox
                               id={`api-${api.id}`}
                               checked={isChecked}
-                              onChange={() => handleToggleApi(api.id)}
+                              onCheckedChange={() => handleToggleApi(api.id)}
                               className="mt-1"
                             />
                             <label
@@ -363,11 +390,7 @@ export function Step2PermissionSetup({
       </div>
 
       {/* Info box */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <p className="text-sm text-amber-800">
-          {tWizard('step2Info')}
-        </p>
-      </div>
+
     </div>
   );
 }

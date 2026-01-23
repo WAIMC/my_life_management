@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,9 @@ export function Step3ReviewConfirm({
     { per_page: 1000 }
   );
 
+  // State for collapsible features
+  const [expandedFeatures, setExpandedFeatures] = useState<number[]>([]);
+
   // Build selected APIs list and group by feature
   const apisByFeature = useMemo(() => {
     const selected = allApis.filter((api) => selectedApiIds.includes(api.id));
@@ -51,7 +54,7 @@ export function Step3ReviewConfirm({
   }, [allApis, allFeatures, selectedApiIds]);
 
   return (
-    <div className="space-y-6 max-h-[600px] overflow-y-auto pr-4">
+    <div className="space-y-6">
       {/* Role Information Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -125,18 +128,49 @@ export function Step3ReviewConfirm({
           </div>
         ) : (
           <div className="space-y-4">
-            {Array.from(apisByFeature.values()).map((group) => (
+            {Array.from(apisByFeature.values()).map((group) => {
+              const isExpanded = expandedFeatures.includes(group.feature.id);
+              
+              const toggleFeature = () => {
+                setExpandedFeatures(prev => 
+                  isExpanded 
+                    ? prev.filter(id => id !== group.feature.id)
+                    : [...prev, group.feature.id]
+                );
+              };
+
+              return (
               <div key={group.feature.id} className="space-y-2">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <h4 className="font-semibold text-sm text-blue-900">
-                    {group.feature.name}
-                  </h4>
-                  <p className="text-xs text-blue-700 mt-1">
-                    {group.apis.length} {tWizard('apisInThisFeature')}
-                  </p>
+                <div 
+                  className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
+                  onClick={toggleFeature}
+                >
+                  <div>
+                    <h4 className="font-semibold text-sm text-blue-900">
+                      {group.feature.name}
+                    </h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                      {group.apis.length} {tWizard('apisInThisFeature')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <Badge variant="secondary" className="bg-white/50 text-blue-900">
+                        {isExpanded ? tCommon('hide') : tCommon('show')}
+                     </Badge>
+                     <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className={`h-5 w-5 text-blue-800 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                     >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                     </svg>
+                  </div>
                 </div>
 
-                <div className="space-y-2 pl-2">
+                {isExpanded && (
+                  <div className="space-y-2 pl-2 animate-in slide-in-from-top-2 duration-200">
                   {group.apis.map((api) => {
                     const methodName = API_TYPE_TO_METHOD[api.type] || 'GET';
                     const methodInfo = HTTP_METHOD_LABELS[methodName] || {
@@ -168,9 +202,11 @@ export function Step3ReviewConfirm({
                       </div>
                     );
                   })}
-                </div>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

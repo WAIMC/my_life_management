@@ -47,21 +47,30 @@ class ApiRoleMstService extends BaseJunctionService
       $this->validateExistence(
         $payload['delete'],
         fn($values) => $this->apiRoleMst->getApiRoleMstId($values),
-        'api_role_id',
-        'api_role_mst'
+        'role_mst_id',
+        'api_mst_id'
       );
       $this->apiRoleMst->executeDelete($payload['delete']);
     }
 
     // Insert api role mst
     if (!empty($payload['insert'])) {
-      $this->validateNonExistence(
-        $payload['insert'],
-        fn($values) => $this->apiRoleMst->getApiRoleMstId($values),
-        'api_role_id',
-        'api_role_mst'
-      );
-      $this->apiRoleMst->executeStore($payload['insert']);
+      $existingRecords = $this->apiRoleMst->getApiRoleMstId($payload['insert']);
+      $existingKeys = [];
+      foreach ($existingRecords as $record) {
+        $existingKeys[(int)$record[0] . '-' . (int)$record[1]] = true;
+      }
+
+      $inserts = [];
+      foreach ($payload['insert'] as $item) {
+        if (!isset($existingKeys[(int)$item['api_mst_id'] . '-' . (int)$item['role_mst_id']])) {
+          $inserts[] = $item;
+        }
+      }
+
+      if (!empty($inserts)) {
+        $this->apiRoleMst->executeStore($inserts);
+      }
     }
 
     return true;
