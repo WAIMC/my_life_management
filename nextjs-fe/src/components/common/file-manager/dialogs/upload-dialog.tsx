@@ -13,31 +13,12 @@ import { Progress } from '@/components/ui/progress';
 import { Upload, X, File, AlertCircle, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { UPLOAD_CONFIG } from '@/shared/config/constant';
 import { cn } from "@/shared/utils";
-import type { UploadDialogProps } from '@/shared/types/file-manager.types';
+import type { UploadDialogProps, ExtendedFile, UploadedFileData } from '@/shared/types/file-manager.types';
 import { formatFileSize } from '../utils';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
-
-const UPLOAD_PROGRESS_UPDATE_INTERVAL = 200;
-const UPLOAD_PROGRESS_MAX_BEFORE_COMPLETION = 90;
-const UPLOAD_PROGRESS_INCREMENT = 10;
-const UPLOAD_SUCCESS_DELAY = 500;
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-
-interface UploadedFileData {
-  file: File;
-  key: string;
-  preview?: string;
-  uploading: boolean;
-  uploaded: boolean;
-  error?: string;
-  metadata: {
-    original_name: string;
-    extension: string;
-    mime_type: string;
-    size: number;
-  };
-}
+import { MultipartUploader } from '@/shared/services/multipart-uploader';
 
 export const UploadDialog = ({
   open,
@@ -78,11 +59,12 @@ export const UploadDialog = ({
     setIsDragging(false);
   }, []);
 
-  const validateFile = (file: File): string | null => {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  const validateFile = (_file: File): string | null => {
     // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      return `File too large. Maximum size is ${formatFileSize(MAX_FILE_SIZE)}`;
-    }
+    // if (file.size > MAX_FILE_SIZE) {
+    //   return `File too large. Maximum size is ${formatFileSize(MAX_FILE_SIZE)}`;
+    // }
     
     // Add more validation as needed (file type, etc.)
     
@@ -148,39 +130,83 @@ export const UploadDialog = ({
     }]);
 
     try {
-      // Upload to temp bucket via presigned URL
-      const metadata = await mediaFileService.uploadToMinio({ file });
-
-      if (!metadata) {
-        throw new Error('Failed to upload file to temporary storage');
-      }
-
       // Generate preview for images
       const preview = await generatePreview(file);
 
-      // Update file with success state
-      setUploadedFiles(prev => prev.map(uf => {
-        const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
-        if (id === fileId) {
-          return {
-            ...uf,
-            key: metadata.key,
-            preview,
-            uploading: false,
-            uploaded: true,
-            metadata: {
-              original_name: metadata.original_name,
-              extension: metadata.extension,
-              mime_type: metadata.mime_type,
-              size: metadata.size,
+      if (file.size > UPLOAD_CONFIG.HEAVY_FILE_THRESHOLD_BYTES) {
+        // Heavy File Upload Flow
+        const uploader = new MultipartUploader(file, (progress) => {
+             // Update progress
+             setUploadedFiles(prev => prev.map(uf => {
+               const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
+               if (id === fileId) {
+                 return { ...uf, progress: progress.percentage };
+               }
+               return uf;
+             }));
+        }, undefined, currentPath);
+
+        const result = await uploader.start();
+        
+        // Mark as uploaded and isHeavyUploaded
+        setUploadedFiles(prev => prev.map(uf => {
+            const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
+            if (id === fileId) {
+              // Attach flags to file object for useFileManager
+              const extendedFile = uf.file as ExtendedFile;
+              extendedFile.isHeavyUploaded = true;
+              extendedFile.tempKey = result.key; // Use real key from backend
+
+              return {
+                ...uf,
+                key: result.key, // Use real key from backend
+                preview,
+                uploading: false,
+                uploaded: true,
+                metadata: {
+                  original_name: result.original_name,
+                  extension: result.extension,
+                  mime_type: result.mime_type,
+                  size: result.size,
+                }
+              };
             }
-          };
+            return uf;
+        }));
+
+      } else {
+        // Normal Upload Flow
+        // Upload to temp bucket via presigned URL
+        const metadata = await mediaFileService.uploadToMinio({ file });
+
+        if (!metadata) {
+            throw new Error(t('upload.failedToUploadToTemp'));
         }
-        return uf;
-      }));
+
+        // Update file with success state
+        setUploadedFiles(prev => prev.map(uf => {
+            const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
+            if (id === fileId) {
+            return {
+                ...uf,
+                key: metadata.key,
+                preview,
+                uploading: false,
+                uploaded: true,
+                metadata: {
+                original_name: metadata.original_name,
+                extension: metadata.extension,
+                mime_type: metadata.mime_type,
+                size: metadata.size,
+                }
+            };
+            }
+            return uf;
+        }));
+      }
     } catch (err) {
-      console.error('Auto-upload error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      console.error(t('upload.autoUploadError'), err);
+      const errorMessage = err instanceof Error ? err.message : t('upload.uploadFailed');
       
       // Update file with error state
       setUploadedFiles(prev => prev.map(uf => {
@@ -196,7 +222,7 @@ export const UploadDialog = ({
         return uf;
       }));
     }
-  }, [uploadedFiles]);
+  }, [uploadedFiles, currentPath, t]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -232,10 +258,10 @@ export const UploadDialog = ({
     // Simulate progress
     const interval = setInterval(() => {
       setCommitProgress(prev => {
-        if (prev >= UPLOAD_PROGRESS_MAX_BEFORE_COMPLETION) return prev;
-        return prev + UPLOAD_PROGRESS_INCREMENT;
+        if (prev >= UPLOAD_CONFIG.MAX_PROGRESS) return prev;
+        return prev + UPLOAD_CONFIG.PROGRESS_INCREMENT;
       });
-    }, UPLOAD_PROGRESS_UPDATE_INTERVAL);
+    }, UPLOAD_CONFIG.PROGRESS_INTERVAL_MS);
 
     try {
       // Get only successfully uploaded files
@@ -262,7 +288,7 @@ export const UploadDialog = ({
         setCommitting(false);
         setCommitProgress(0);
         onOpenChange(false);
-      }, UPLOAD_SUCCESS_DELAY);
+      }, UPLOAD_CONFIG.COMPLETE_DELAY_MS);
     } catch (err: unknown) {
       setCommitting(false);
       setCommitProgress(0);
@@ -274,7 +300,7 @@ export const UploadDialog = ({
       }
       
       setError(errorMessage);
-      console.error('Commit error:', err);
+      console.error(t('upload.commitError'), err);
     } finally {
       clearInterval(interval);
     }
@@ -393,7 +419,7 @@ export const UploadDialog = ({
                     
                     {/* Uploading Status */}
                     {uploadedFile.uploading && (
-                      <p className="text-xs text-primary mt-1">Uploading to temp storage...</p>
+                      <p className="text-xs text-primary mt-1">{t('upload.uploadingToTemp')}</p>
                     )}
                   </div>
                 </div>
@@ -424,7 +450,7 @@ export const UploadDialog = ({
           {committing && (
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span>Finalizing upload...</span>
+                <span>{t('upload.finalizing')}</span>
                 <span>{commitProgress}%</span>
               </div>
               <Progress value={commitProgress} className="h-2" />
@@ -444,7 +470,7 @@ export const UploadDialog = ({
               onClick={handleCommit}
               disabled={!hasValidFiles || committing || isAnyFileUploading || !allFilesUploaded || isExternalLoading}
             >
-              {committing || isExternalLoading ? 'Uploading...' : t('upload.uploadButton')}
+              {committing || isExternalLoading ? t('upload.uploading') : t('upload.uploadButton')}
             </Button>
           </div>
         </div>

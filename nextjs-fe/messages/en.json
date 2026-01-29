@@ -127,6 +127,9 @@
     "E0503": "Service Unavailable",
     "E0504": "Gateway Timeout",
     "E1000": "Cannot connect to server. Please check your network connection.",
+    "failedToGenerateUploadUrl": "Failed to generate upload URL",
+    "storageUploadFailed": "Storage upload failed with status: {status}",
+    "uploadToMinioFailed": "Upload to MinIO failed:",
     "support": "Support"
   },
   "header": {
@@ -331,7 +334,15 @@
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {page} of {totalPages}",
-    "changeImage": "Change Image"
+    "changeImage": "Change Image",
+    "multipart": {
+      "noEtag": "No ETag in response",
+      "uploadFailedStatus": "Upload failed with status {status}",
+      "networkError": "Network error",
+      "timeout": "Timeout",
+      "partFailedMaxRetries": "Part {partNumber} failed after {maxRetries} attempts",
+      "partFailedRetry": "Part {partNumber} failed, retrying in {delay}ms"
+    }
   },
   "savedFilters": {
     "filterName": "Filter name",
@@ -447,7 +458,12 @@
         "uploadButton": "Upload",
         "uploading": "Uploading...",
         "uploadFailed": "Upload failed",
-        "uploadError": "An error occurred while uploading"
+        "uploadError": "An error occurred while uploading",
+        "uploadingToTemp": "Uploading to temporary storage...",
+        "finalizing": "Finalizing upload...",
+        "failedToUploadToTemp": "Failed to upload file to temporary storage",
+        "autoUploadError": "Auto-upload error",
+        "commitError": "Commit error"
       },
       "newFolder": {
         "title": "New Folder",

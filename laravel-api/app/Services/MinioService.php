@@ -7,7 +7,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Config;
+use Aws\S3\S3Client;
+use Exception;
 
 class MinioService
 {
@@ -19,7 +20,7 @@ class MinioService
    * @param int|null $workspaceId
    * @param string $prefix
    * @return array
-   * @throws \Exception
+   * @throws Exception
    */
   public function upload(UploadedFile $file, string $disk, ?int $workspaceId = null): array
   {
@@ -33,7 +34,7 @@ class MinioService
       ]);
 
       if (!$result) {
-        throw new \Exception('Failed to upload file to storage.');
+        throw new Exception(__('minio.upload_file_to_storage_failed'));
       }
 
       $filesystem = Storage::disk($disk);
@@ -47,8 +48,8 @@ class MinioService
         'size' => $file->getSize(),
         'mime_type' => $file->getMimeType(),
       ];
-    } catch (\Exception $e) {
-      Log::error('MinIO upload failed', ['error' => $e->getMessage()]);
+    } catch (Exception $e) {
+      Log::error(__('minio.upload_failed'), ['error' => $e->getMessage()]);
       throw $e;
     }
   }
@@ -56,21 +57,44 @@ class MinioService
   /**
    * Move file in MinIO (Copy + Delete)
    */
+  /**
+   * Move file in MinIO (Copy + Delete) using internal S3 CopyObject
+   */
   public function move(string $sourceDisk, string $sourceKey, string $destDisk, string $destKey): bool
   {
     try {
-      // If disks are different or we want to be safe, we can use streams
-      // Ideally if on same S3 driver/server, we might want to do copyObject but
-      // Storage facade standard copy is for same disk.
-      // Cross-disk move usually requires readStream -> writeStream -> delete
-
-      if (Storage::disk($destDisk)->put($destKey, Storage::disk($sourceDisk)->readStream($sourceKey))) {
-        return Storage::disk($sourceDisk)->delete($sourceKey);
+      if ($this->copyKey($sourceDisk, $sourceKey, $destDisk, $destKey)) {
+        return $this->delete($sourceDisk, $sourceKey);
       }
-
       return false;
-    } catch (\Exception $e) {
-      Log::error('MinIO move failed', ['error' => $e->getMessage()]);
+    } catch (Exception $e) {
+      Log::error(__('minio.move_failed'), ['error' => $e->getMessage()]);
+      return false;
+    }
+  }
+
+  /**
+   * Copy file using S3 CopyObject (internal server-side copy)
+   */
+  public function copyKey(string $sourceDisk, string $sourceKey, string $destDisk, string $destKey): bool
+  {
+    try {
+      $client = $this->getS3Client($destDisk, true);
+      $destBucket = config("filesystems.disks.{$destDisk}.bucket");
+      $sourceBucket = config("filesystems.disks.{$sourceDisk}.bucket");
+
+      // Use high-level copy helper to handle files > 5GB (Multipart Copy)
+      // This automatically handles multipart copying for large files
+      $client->copy(
+        $sourceBucket,
+        $sourceKey,
+        $destBucket,
+        $destKey
+      );
+
+      return true;
+    } catch (Exception $e) {
+      Log::error(__('minio.copy_failed'), ['error' => $e->getMessage()]);
       return false;
     }
   }
@@ -81,9 +105,17 @@ class MinioService
   public function delete(string $disk, string $objectKey): bool
   {
     try {
-      return Storage::disk($disk)->delete($objectKey);
-    } catch (\Exception $e) {
-      Log::error('MinIO delete failed', ['error' => $e->getMessage()]);
+      $client = $this->getS3Client($disk, true);
+      $bucket = config("filesystems.disks.{$disk}.bucket");
+
+      $client->deleteObject([
+        'Bucket' => $bucket,
+        'Key' => $objectKey,
+      ]);
+
+      return true;
+    } catch (Exception $e) {
+      Log::error(__('minio.delete_failed'), ['error' => $e->getMessage()]);
       return false;
     }
   }
@@ -134,27 +166,11 @@ class MinioService
    * @param int $expirySeconds TTL in seconds
    * @return array
    */
-  public function generatePresignedUploadUrl(string $extension, string $disk = MediaConst::DISK_TEMP, int $expirySeconds = 300): array
+  public function generatePresignedUploadUrl(string $extension, string $disk = MediaConst::DISK_TEMP, int $expirySeconds = MediaConst::PRESIGNED_UPLOAD_DEFAULT_EXPIRY): array
   {
     $key = $this->generateStoragePath($extension, $disk);
 
-    // We need to use a custom S3Client with the PUBLIC endpoint for signing
-    // to ensure the Host header in the signature matches what the browser sends (e.g., localhost).
-    // If we use the default client, it signs with the internal docker host (ml-minio), causing a mismatch.
-    $publicEndpoint = config('filesystems.disks.s3.url'); // e.g., http://localhost:9100
-
-    $config = [
-      'region' => config("filesystems.disks.{$disk}.region"),
-      'version' => 'latest',
-      'endpoint' => $publicEndpoint,
-      'use_path_style_endpoint' => true,
-      'credentials' => [
-        'key' => config("filesystems.disks.{$disk}.key"),
-        'secret' => config("filesystems.disks.{$disk}.secret"),
-      ],
-    ];
-
-    $client = new \Aws\S3\S3Client($config);
+    $client = $this->getS3Client($disk, false);
     $bucket = config("filesystems.disks.{$disk}.bucket");
 
     // Create the command
@@ -184,6 +200,122 @@ class MinioService
    */
   public function exists(string $disk, string $objectKey): bool
   {
-    return Storage::disk($disk)->exists($objectKey);
+    try {
+      $client = $this->getS3Client($disk, true);
+      $bucket = config("filesystems.disks.{$disk}.bucket");
+
+      return $client->doesObjectExist($bucket, $objectKey);
+    } catch (Exception $e) {
+      Log::error(__('minio.exists_failed'), ['error' => $e->getMessage()]);
+      return false;
+    }
+  }
+
+  /**
+   * Create Multipart Upload
+   */
+  public function createMultipartUpload(string $extension, string $disk = MediaConst::DISK_TEMP): array
+  {
+    $key = $this->generateStoragePath($extension, $disk);
+    $client = $this->getS3Client($disk, true);
+    $bucket = config("filesystems.disks.{$disk}.bucket");
+
+    $result = $client->createMultipartUpload([
+      'Bucket' => $bucket,
+      'Key' => $key,
+      'ACL' => 'private',
+      'ContentType' => 'application/octet-stream', // Important for parts
+    ]);
+
+    return [
+      'upload_id' => $result['UploadId'],
+      'key' => $key,
+      'uuid' => basename($key, ".{$extension}"),
+    ];
+  }
+
+  /**
+   * Generate Presigned URL for Upload Part
+   */
+  public function generatePresignedUploadPartUrl(
+    string $disk,
+    string $key,
+    string $uploadId,
+    int $partNumber,
+    int $expirySeconds = MediaConst::PRESIGNED_UPLOAD_DEFAULT_EXPIRY
+  ): string {
+    $client = $this->getS3Client($disk, false);
+    $bucket = config("filesystems.disks.{$disk}.bucket");
+
+    $cmd = $client->getCommand('UploadPart', [
+      'Bucket' => $bucket,
+      'Key' => $key,
+      'UploadId' => $uploadId,
+      'PartNumber' => $partNumber,
+    ]);
+
+    $request = $client->createPresignedRequest($cmd, "+{$expirySeconds} seconds");
+
+    return (string) $request->getUri();
+  }
+
+  /**
+   * Complete Multipart Upload
+   */
+  public function completeMultipartUpload(
+    string $disk,
+    string $key,
+    string $uploadId,
+    array $parts
+  ): void {
+    $client = $this->getS3Client($disk, true);
+    $bucket = config("filesystems.disks.{$disk}.bucket");
+
+    $client->completeMultipartUpload([
+      'Bucket' => $bucket,
+      'Key' => $key,
+      'UploadId' => $uploadId,
+      'MultipartUpload' => [
+        'Parts' => $parts,
+      ],
+    ]);
+  }
+
+  /**
+   * Abort Multipart Upload
+   */
+  public function abortMultipartUpload(string $disk, string $key, string $uploadId): void
+  {
+    $client = $this->getS3Client($disk, true);
+    $bucket = config("filesystems.disks.{$disk}.bucket");
+
+    $client->abortMultipartUpload([
+      'Bucket' => $bucket,
+      'Key' => $key,
+      'UploadId' => $uploadId,
+    ]);
+  }
+
+  /**
+   * Get configured S3 Client
+   */
+  private function getS3Client(string $disk, bool $useInternalEndpoint = false): S3Client
+  {
+    $endpoint = $useInternalEndpoint
+      ? config("filesystems.disks.{$disk}.endpoint")
+      : config('filesystems.disks.s3.url');
+
+    $config = [
+      'region' => config("filesystems.disks.{$disk}.region"),
+      'version' => 'latest',
+      'endpoint' => $endpoint,
+      'use_path_style_endpoint' => true,
+      'credentials' => [
+        'key' => config("filesystems.disks.{$disk}.key"),
+        'secret' => config("filesystems.disks.{$disk}.secret"),
+      ],
+    ];
+
+    return new S3Client($config);
   }
 }

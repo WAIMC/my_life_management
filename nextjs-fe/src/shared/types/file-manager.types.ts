@@ -64,6 +64,33 @@ export interface UploadState {
   isUploading: boolean;
 }
 
+export interface ExtendedFile extends File {
+  tempKey?: string;
+  isHeavyUploaded?: boolean;
+  tempMetadata?: {
+    original_name: string;
+    extension: string;
+    mime_type: string;
+    size: number;
+  };
+}
+
+export interface UploadedFileData {
+  file: ExtendedFile | File;
+  key: string;
+  preview?: string;
+  uploading: boolean;
+  progress?: number;
+  uploaded: boolean;
+  error?: string;
+  metadata: {
+    original_name: string;
+    extension: string;
+    mime_type: string;
+    size: number;
+  };
+}
+
 export interface FilterOptions {
   type: FilterType;
   dateFrom?: Date;

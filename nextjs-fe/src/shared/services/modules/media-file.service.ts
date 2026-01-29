@@ -5,8 +5,9 @@
 
 import { apiClient } from '@/shared/api/client';
 import { ENDPOINTS } from '@/shared/api';
-import { MIME_TYPE_PREFIX, FILE_SIZE_UNITS } from '@/shared/config/constant';
+import { MIME_TYPE_PREFIX, FILE_SIZE_UNITS, FILE_SIZE_MULTIPLIER } from '@/shared/config/constant';
 import { API_PATHS } from '@/shared/types/api';
+import messages from '../../../../messages/en.json';
 import type {
   MediaFile,
   UploadFileParams,
@@ -16,14 +17,15 @@ import type {
   DeleteFilesParams,
   CreateFolderParams,
   CopyFilesParams,
-  MediaApiListResponse,
-  PresignedUploadResponse, 
+  MediaApiListResponse,  PresignedUploadResponse,
+  InitMultipartUploadResponse,
+  GetMultipartUrlResponse,
+  MultipartPart,
+  HeavyUploadResult, 
 } from '@/shared/types/media-file.types';
 
 class MediaFileService {
   private baseUrl = ENDPOINTS.MEDIA.FILES;
-
-
 
   /**
    * Upload file to MinIO via Presigned URL
@@ -40,7 +42,7 @@ class MediaFileService {
       // 1. Get Presigned URL
       const extension = params.file.name.split('.').pop() || '';
       const presignedRes = await apiClient.post<PresignedUploadResponse>(
-        `${this.baseUrl}/prepare-upload`,
+        `${this.baseUrl}${API_PATHS.PREPARE_UPLOAD}`,
         {
           extension,
           mime_type: params.file.type,
@@ -50,7 +52,7 @@ class MediaFileService {
       );
       
       if (!presignedRes.data) {
-        throw new Error('Failed to generate upload URL');
+        throw new Error(messages.errors.failedToGenerateUploadUrl);
       }
 
       const { upload_url, key, headers } = presignedRes.data;
@@ -63,7 +65,7 @@ class MediaFileService {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`Storage upload failed with status: ${uploadResponse.status}`);
+        throw new Error(messages.errors.storageUploadFailed.replace('{status}', uploadResponse.status.toString()));
       }
 
       // 3. Return metadata
@@ -76,7 +78,7 @@ class MediaFileService {
       };
 
     } catch (error) {
-      console.error('Upload to MinIO failed:', error);
+      console.error(messages.errors.uploadToMinioFailed, error);
       throw error;
     }
   }
@@ -200,7 +202,7 @@ class MediaFileService {
     // For batch delete, use first ID in route and send all IDs in body
     const firstId = params.ids[0];
     await apiClient.delete(
-      `${this.baseUrl}/delete/${firstId}`,
+      `${this.baseUrl}${API_PATHS.DELETE}/${firstId}`,
       { data: { ids: params.ids } }
     );
   }
@@ -231,8 +233,8 @@ class MediaFileService {
     let size = bytes;
     let unitIndex = 0;
     
-    while (size >= 1024 && unitIndex < FILE_SIZE_UNITS.length - 1) {
-      size /= 1024;
+    while (size >= FILE_SIZE_MULTIPLIER && unitIndex < FILE_SIZE_UNITS.length - 1) {
+      size /= FILE_SIZE_MULTIPLIER;
       unitIndex++;
     }
     
@@ -272,7 +274,50 @@ class MediaFileService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async copy(_params: CopyFilesParams): Promise<{ copied_count: number; copied_ids: number[] }> {
     // This is a placeholder for future implementation
-    throw new Error('Copy functionality not yet implemented in backend');
+    throw new Error(messages.errors.copyNotImplemented);
+  }
+
+  /**
+   * Initialize Multipart Upload
+   */
+  async initMultipartUpload(params: { extension: string; size: number; mime_type: string; original_name: string }): Promise<InitMultipartUploadResponse> {
+    const response = await apiClient.post<InitMultipartUploadResponse>(
+      `${this.baseUrl}${API_PATHS.INIT_MULTIPART_UPLOAD}`,
+      params
+    );
+    return response.data;
+  }
+
+  /**
+   * Get Multipart Presigned URL
+   */
+  async getMultipartPresignedUrl(params: { key: string; upload_id: string; part_number: number; size: number }): Promise<GetMultipartUrlResponse> {
+    const response = await apiClient.post<GetMultipartUrlResponse>(
+      `${this.baseUrl}${API_PATHS.GET_MULTIPART_URL}`,
+      params
+    );
+    return response.data;
+  }
+
+  /**
+   * Complete Multipart Upload
+   */
+  async completeMultipartUpload(params: { 
+    key: string; 
+    upload_id: string; 
+    parts: MultipartPart[]; 
+    original_name: string;
+    extension: string;
+    size: number;
+    mime_type: string;
+    workspace_id?: number;
+    parent_path?: string;
+  }): Promise<HeavyUploadResult> {
+    const response = await apiClient.post<HeavyUploadResult>(
+      `${this.baseUrl}${API_PATHS.COMPLETE_MULTIPART_UPLOAD}`,
+      params
+    );
+    return response.data;
   }
 }
 

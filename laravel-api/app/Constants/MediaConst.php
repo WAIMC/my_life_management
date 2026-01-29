@@ -20,7 +20,7 @@ class MediaConst
   public const CATEGORY_OTHER = 'other';
 
   // Max file size (100MB)
-  public const MAX_FILE_SIZE = 104857600;
+  public const MAX_FILE_SIZE = 107374182400;
 
   // Allowed extensions
   public const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
@@ -37,5 +37,24 @@ class MediaConst
 
   public const DISK_OFFICIAL = 'minio_official';
   public const DISK_TEMP = 'minio_temp';
-  public const PRESIGNED_UPLOAD_TTL = 5; // Seconds
+  public const PRESIGNED_UPLOAD_TTL = 300; // 5 minutes
+  public const PRESIGNED_UPLOAD_DEFAULT_EXPIRY = 300; // 5 minutes
+
+  // Multipart Upload Constraints
+  public const MULTIPART_MIN_SIZE_16MB = 16 * 1024 * 1024;
+  public const MULTIPART_MIN_SIZE_32MB = 32 * 1024 * 1024;
+  public const MULTIPART_MIN_SIZE_64MB = 64 * 1024 * 1024;
+  public const MULTIPART_MIN_SIZE_128MB = 128 * 1024 * 1024;
+
+  public const SIZE_100MB = 100 * 1024 * 1024;
+  public const SIZE_500MB = 500 * 1024 * 1024;
+  public const SIZE_10GB = 10 * 1024 * 1024 * 1024;
+  public const SIZE_100GB = 100 * 1024 * 1024 * 1024;
+
+  public const MULTIPART_MAX_PARTS = 10000;
+
+  // Multipart TTLs
+  public const MULTIPART_TTL_SMALL = 300;   // <= 100MB
+  public const MULTIPART_TTL_MEDIUM = 60;   // 100MB - 10GB
+  public const MULTIPART_TTL_LARGE = 120;   // > 10GB
 }

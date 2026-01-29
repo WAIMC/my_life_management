@@ -472,6 +472,10 @@ export const API_PATHS = {
   DOWNLOAD: '/download',
   EXPORT: '/export',
   IMPORT: '/import',
+  PREPARE_UPLOAD: '/prepare-upload',
+  INIT_MULTIPART_UPLOAD: '/init-multipart-upload',
+  GET_MULTIPART_URL: '/get-multipart-url',
+  COMPLETE_MULTIPART_UPLOAD: '/complete-multipart-upload',
 } as const;
 
 /**

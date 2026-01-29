@@ -29,7 +29,7 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
   * Tạo user và apply policy bằng lệnh mc admin user add, đây chính là access key, secret key
   * Lấy giá trị này và tạo key + apply value vào file 
   * Kiểm tra có tồn tại /home/vinhdv/projects/my_life_management/laravel-api/.env thì tìm value access và secret key và thay thế value vào file .env, nếu không thì tạo mới access và secret key. Nếu không có file .env thì làm tương tự với file /home/vinhdv/projects/my_life_management/laravel-api/.env.example
-  VD: cấu hình .env dùng key
+  * VD: cấu hình .env dùng key
     AWS_ACCESS_KEY_ID=backend-user
     AWS_SECRET_ACCESS_KEY=strong-backend-password
     AWS_DEFAULT_REGION=us-east-1
@@ -59,7 +59,9 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
 * Tương lai sẽ thực hiện sau các thành phần: Backup & Disaster Recovery, Monitoring & Alert
 
 
-================================================
+#########################################################################################
+#########################################################################################
+#########################################################################################
 
 # Phân loại và cách thức xử lý từng loại dữ liệu
 
@@ -77,7 +79,9 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
 
 * Với streaming : Client request -> BE xử lý, hỗ trợ range header -> store minio để lấy -> response client. Bắt buộc hỗ trợ http range
 
-=================================================
+#########################################################################################
+#########################################################################################
+#########################################################################################
 
 # Steaming
 
@@ -295,18 +299,30 @@ gửi|nhận accept-ranges: bytes, trả đúng content-range, không buffer, st
     * Validate: Payload gửi lên
     * Gọi CompleteMultipartUpload (không cần presigned URL) minio, với payload là payload của client gửi, để commit tất cả các part lại thành 1 file hoàn chỉnh.
     * Call service để scan virus file vừa upload xong. Nếu file bị nhiễm virus thì thông báo lỗi cho user và xóa file. `Cái này tương lai xử lý sau`.
-    * Xử lý dữ liệu, store lại thông tin, move file mới upload từ bucket temp vào bucket chính official.
     * Response về kết quả cho client.
   
   * Client:
-    * Nhận response từ back-end. Kết thúc xử lý và thông báo kết quả cuối cùng.
+    * Nhận response từ back-end. Nếu lỗi thì thông báo lỗi cho user, nếu thành công thì thông báo cho user đã sẵn sàng để submit upload.
+    * Khi user submit upload, thì client gọi api submit upload. Call api gửi thông tin metadata của file.
+
+  * Back-end:
+    * Nhận response từ client. Nếu lỗi thì thông báo lỗi cho user, nếu thành công thì thông báo cho user đã sẵn sàng để submit upload.
+    * Xử lý dữ liệu, store lại thông tin, move file mới upload từ bucket temp vào bucket chính official.
+    * Response về kết quả cho client.
+    
+  * Client:
+    * Kết thúc xử lý và thông báo kết quả cuối cùng.
 
 Note: 
 * Trường hợp upload dở dang mà user reload, close tab, close browser, sleep, turn off,... thì sẽ không hoàn thành upload, các part đã upload sẽ không được merge thành file hoàn chỉnh. Nó sẽ được dọn dẹp bằng lifecycle của minio.
 
 * Kiểm tra web server (nginx, apache, caddy, ...) dùng giao thức HTTP version bao nhiêu để chọn giải pháp xử lý request đồng thời theo công thức `Tính toán số lượng part song song`. Nhưng cũng cần cân nhắc đến khả năng xử lý của client, trình duyệt, thiết bị, đường truyền, ... để chọn giải pháp phù hợp.
 
-===========
+
+#########################################################################################
+#########################################################################################
+#########################################################################################
+
 # ý nghĩa & nguyên lý hoạt động của một số công nghệ
 
 * Băng thông: Năng lực xử lý tối đa của đường truyền.

@@ -206,6 +206,7 @@ export const useFileManager = (): FileManagerContextType => {
         // Check if file already has temp metadata (from auto-upload)
         const fileWithMeta = file as File & { 
           tempKey?: string;
+          isHeavyUploaded?: boolean;
           tempMetadata?: {
             original_name: string;
             extension: string;
@@ -213,6 +214,8 @@ export const useFileManager = (): FileManagerContextType => {
             size: number;
           };
         };
+
+
 
         if (fileWithMeta.tempKey && fileWithMeta.tempMetadata) {
           // File already uploaded to temp, just commit to official

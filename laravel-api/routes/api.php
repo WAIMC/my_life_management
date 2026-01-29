@@ -54,7 +54,7 @@ Route::prefix('admin')
     Route::prefix('credential')->group(function () {
       Route::post('login', [CredentialController::class, 'login']);
       Route::prefix('trust')->group(function () {
-            Route::post('refresh-token', [CredentialController::class, 'refreshToken']);
+        Route::post('refresh-token', [CredentialController::class, 'refreshToken']);
       });
     });
 
@@ -200,6 +200,12 @@ Route::prefix('admin')
         // Media Management (MinIO-based File Manager)
         Route::get('media-mgmt/list', [MediaMgmtController::class, 'list']);
         Route::post('media-mgmt/prepare-upload', [MediaMgmtController::class, 'prepareUpload']);
+
+        // Multipart Upload Routes
+        Route::post('media-mgmt/init-multipart-upload', [MediaMgmtController::class, 'initMultipartUpload']);
+        Route::post('media-mgmt/get-multipart-url', [MediaMgmtController::class, 'getMultipartUrl']);
+        Route::post('media-mgmt/complete-multipart-upload', [MediaMgmtController::class, 'completeMultipartUpload']);
+
         Route::post('media-mgmt/store', [MediaMgmtController::class, 'store']);
         Route::put('media-mgmt/update/{id}', [MediaMgmtController::class, 'update']);
         Route::delete('media-mgmt/delete/{id}', [MediaMgmtController::class, 'delete']);

@@ -8,6 +8,9 @@ use App\Http\Requests\Management\MediaMgmt\StoreMediaMgmtRequest;
 use App\Http\Requests\Management\MediaMgmt\UpdateMediaMgmtRequest;
 use App\Http\Requests\Management\MediaMgmt\DeleteMediaMgmtRequest;
 use App\Http\Requests\Media\PrepareUploadRequest;
+use App\Http\Requests\Management\MediaMgmt\InitMultipartUploadRequest;
+use App\Http\Requests\Management\MediaMgmt\GetMultipartUrlRequest;
+use App\Http\Requests\Management\MediaMgmt\CompleteMultipartUploadRequest;
 use App\Services\Management\MediaMgmtService;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -59,5 +62,29 @@ class MediaMgmtController extends Controller
   public function prepareUpload(PrepareUploadRequest $request): array
   {
     return $this->mediaMgmt->prepareUpload($request->validated());
+  }
+
+  /**
+   * Initialize Multipart Upload
+   */
+  public function initMultipartUpload(InitMultipartUploadRequest $request): array
+  {
+    return $this->mediaMgmt->initMultipartUpload($request->validated());
+  }
+
+  /**
+   * Get Multipart Presigned URL
+   */
+  public function getMultipartUrl(GetMultipartUrlRequest $request): array
+  {
+    return $this->mediaMgmt->getMultipartPresignedUrl($request->validated());
+  }
+
+  /**
+   * Complete Multipart Upload
+   */
+  public function completeMultipartUpload(CompleteMultipartUploadRequest $request): array
+  {
+    return $this->mediaMgmt->completeMultipartUpload($request->validated());
   }
 }

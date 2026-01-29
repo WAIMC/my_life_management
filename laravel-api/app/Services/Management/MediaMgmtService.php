@@ -6,7 +6,6 @@ use App\Services\BaseService;
 use App\Services\MinioService;
 use App\Interfaces\Management\MediaMgmtInterface;
 use App\Constants\MediaConst;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 use Exception;
 use App\Http\Resources\Management\MediaFileResource;
@@ -66,7 +65,7 @@ class MediaMgmtService extends BaseService
     $media = $this->mediaMgmt->find($payload['id']);
 
     if (!$media) {
-      throw new Exception('Media not found');
+      throw new Exception(__('messages.media.not_found'));
     }
 
     // If new_parent_path is provided, it's a move operation
@@ -79,7 +78,7 @@ class MediaMgmtService extends BaseService
       return $this->rename($payload, $media);
     }
 
-    throw new Exception('Either name or new_parent_path must be provided');
+    throw new Exception(__('messages.media.name_or_parent_required'));
   }
 
   /**
@@ -136,6 +135,114 @@ class MediaMgmtService extends BaseService
   }
 
   /**
+   * Initialize Multipart Upload
+   */
+  public function initMultipartUpload(array $payload): array
+  {
+    $size = $payload['size'];
+    $extension = $payload['extension'];
+
+    // Calculate Part Size
+    // 100MB - 500MB: 16MB
+    // 500MB - 10GB: 32MB
+    // 10GB - 100GB: 64MB
+    // >100GB: 128MB
+
+    $partSize = MediaConst::MULTIPART_MIN_SIZE_16MB; // Default 16MB
+    if ($size > MediaConst::SIZE_100GB) { // > 100GB
+      $partSize = MediaConst::MULTIPART_MIN_SIZE_128MB;
+    } elseif ($size > MediaConst::SIZE_10GB) { // > 10GB
+      $partSize = MediaConst::MULTIPART_MIN_SIZE_64MB;
+    } elseif ($size > MediaConst::SIZE_500MB) { // > 500MB
+      $partSize = MediaConst::MULTIPART_MIN_SIZE_32MB;
+    }
+
+    // Ensure within 10000 parts limit
+    $calculatedPartSize = ceil($size / MediaConst::MULTIPART_MAX_PARTS);
+    $partSize = max($partSize, $calculatedPartSize);
+
+    // Call Minio to create multipart upload
+    $result = $this->minioService->createMultipartUpload($extension, MediaConst::DISK_TEMP);
+
+    return [
+      'upload_id' => $result['upload_id'],
+      'key' => $result['key'],
+      'part_size' => $partSize,
+      'parts_count' => ceil($size / $partSize),
+    ];
+  }
+
+  /**
+   * Get Presigned URL for a Part
+   */
+  /**
+   * Get Presigned URL for a Part
+   */
+  public function getMultipartPresignedUrl(array $payload): array
+  {
+    $key = $payload['key'];
+    $uploadId = $payload['upload_id'];
+    $partNumber = $payload['part_number'];
+    $size = $payload['size'] ?? 0;
+
+    // Calculate TTL based on file size
+    if ($size <= MediaConst::SIZE_100MB) {
+      $ttl = MediaConst::MULTIPART_TTL_SMALL; // 300s
+    } elseif ($size <= MediaConst::SIZE_10GB) {
+      $ttl = MediaConst::MULTIPART_TTL_MEDIUM; // 60s
+    } elseif ($size <= MediaConst::SIZE_100GB) {
+      $ttl = MediaConst::MULTIPART_TTL_LARGE; // 120s
+    } else {
+      $ttl = MediaConst::MULTIPART_TTL_LARGE; // 120s
+    }
+
+    $url = $this->minioService->generatePresignedUploadPartUrl(MediaConst::DISK_TEMP, $key, $uploadId, $partNumber, $ttl);
+
+    return [
+      'url' => $url,
+      'part_number' => $partNumber,
+      'expires_in' => $ttl
+    ];
+  }
+
+  /**
+   * Complete Multipart Upload
+   */
+  public function completeMultipartUpload(array $payload): array
+  {
+    $key = $payload['key'];
+    $uploadId = $payload['upload_id'];
+    $parts = $payload['parts']; // Array of ['PartNumber' => x, 'ETag' => y]
+    $originalName = $payload['original_name'];
+    $extension = $payload['extension'];
+    $workspaceId = $payload['workspace_id'] ?? null;
+    $parentPath = $payload['parent_path'] ?? '/';
+    $size = $payload['size'] ?? 0;
+
+    // 1. Complete on Minio
+    $formattedParts = [];
+    foreach ($parts as $part) {
+      $formattedParts[] = [
+        'PartNumber' => $part['part_number'],
+        'ETag' => $part['etag'],
+      ];
+    }
+
+    $this->minioService->completeMultipartUpload(MediaConst::DISK_TEMP, $key, $uploadId, $formattedParts);
+
+    // 2. Return success with temp file info
+    return [
+      'key' => $key,
+      'original_name' => $originalName,
+      'extension' => $extension,
+      'mime_type' => $payload['mime_type'] ?? null,
+      'size' => $size,
+      'parent_path' => $parentPath,
+      'workspace_id' => $workspaceId,
+    ];
+  }
+
+  /**
    * Store file from Temp (Move to Official + Create DB Record)
    */
   public function storeFromTemp(array $payload): int
@@ -148,7 +255,7 @@ class MediaMgmtService extends BaseService
 
     // 1. Verify file exists in Temp (Optional but recommended)
     if (!$this->minioService->exists(MediaConst::DISK_TEMP, $tempKey)) {
-      throw new Exception("File not found in temporary storage: {$tempKey}");
+      throw new Exception(__('messages.media.file_not_found_temp', ['key' => $tempKey]));
     }
 
     // 2. Generate new storage path for Official bucket
@@ -158,7 +265,7 @@ class MediaMgmtService extends BaseService
 
     // 3. Move file from Temp to Official
     if (!$this->minioService->move(MediaConst::DISK_TEMP, $tempKey, $officialDisk, $officialPath)) {
-      throw new Exception("Failed to move file from temp to official storage.");
+      throw new Exception(__('messages.media.move_temp_failed'));
     }
 
     // 4. Create DB Record
@@ -222,7 +329,7 @@ class MediaMgmtService extends BaseService
 
       // IMPORTANT: Prevent moving folder into itself or its own subfolder
       if (str_starts_with($newVirtualPath, $currentVirtualPath)) {
-        throw new Exception('Cannot move folder into itself or its subfolder');
+        throw new Exception(__('messages.media.move_folder_recursion'));
       }
     }
 

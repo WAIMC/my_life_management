@@ -138,3 +138,45 @@ export interface PresignedUploadResponse {
   headers: Record<string, string>;
   expires_in: number;
 }
+
+export interface InitMultipartUploadResponse {
+  upload_id: string;
+  key: string;
+  part_size: number;
+  parts_count: number;
+}
+
+export interface GetMultipartUrlResponse {
+  url: string;
+  part_number: number;
+  expires_in: number;
+}
+
+export interface MultipartPart {
+  part_number: number;
+  etag: string;
+}
+
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+export interface Part {
+  partNumber: number;
+  start: number;
+  end: number;
+  blob: Blob;
+  url?: string;
+  etag?: string;
+  attempts: number;
+}
+
+export interface HeavyUploadResult {
+  original_name: string;
+  extension: string;
+  mime_type: string;
+  size: number;
+  key: string;
+}

@@ -172,7 +172,7 @@ export const FILE_UPLOAD = {
 // Upload progress & configuration
 export const UPLOAD_CONFIG = {
   DEFAULT_ACCEPT: 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx',
-  DEFAULT_MAX_SIZE_MB: 50,               // 50MB
+  DEFAULT_MAX_SIZE_MB: 102400,               // 100GB
   DEFAULT_IMAGE_MAX_SIZE_MB: 5,          // 5MB (same as FILE_UPLOAD.MAX_IMAGE_SIZE_MB)
   DEFAULT_AVATAR_MAX_SIZE_MB: 5,         // 5MB (same as FILE_UPLOAD.MAX_AVATAR_SIZE_MB)
   PROGRESS_INCREMENT: 10,
@@ -182,6 +182,16 @@ export const UPLOAD_CONFIG = {
   COMPLETE: 100,
   COMPLETE_DELAY_MS: 500,
   TEMP_UPLOAD_PATH: 'temp-uploads',
+  HEAVY_FILE_THRESHOLD_BYTES: 100 * 1024 * 1024, // 100MB
+} as const;
+
+export const MULTIPART_UPLOAD_CONFIG = {
+  MAX_RETRIES: 3,
+  CONCURRENT_UPLOADS: 6,
+  RETRY_DELAY_BASE: 1000,
+  RETRY_JITTER: 100,
+  HTTP_STATUS_OK_MIN: 200,
+  HTTP_STATUS_OK_MAX: 300,
 } as const;
 
 // Media file categories & extensions
@@ -189,7 +199,7 @@ export const MEDIA = {
   TYPE_FILE: true,
   TYPE_FOLDER: false,
   
-  MAX_FILE_SIZE: 104857600, // 100MB
+  MAX_FILE_SIZE: 107374182400, // 100GB
   
   // Categories
   CATEGORY_IMAGE: 'image',
@@ -246,6 +256,8 @@ export const MIME_TYPE_PREFIX = {
 
 // File size units
 export const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+
+export const FILE_SIZE_MULTIPLIER = 1024;
 
 
 // MIME type labels
