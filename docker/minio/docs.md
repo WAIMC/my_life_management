@@ -2,14 +2,20 @@
 
 khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hiện việc đầu tiên là khởi tạo, thực hiện khi build env: 
 
-* Tạo 3 bucket để lưu trữ dữ liệu:
+* Cách minio scan clear: nó chạy một lần định kỳ mỗi 24H (mặc định), sau đó chúng mới thực hiện clear. Như vậy các file đã hết hạn vd rule quy định 24H, file đó đã tồn tại quá thời gian quy định nhưng chưa đến chu trình scan thì nó vẫn tồn tại.
+
+* Tạo 2 bucket để lưu trữ dữ liệu:
   * media-official: chứa dữ liệu riêng tư như thông tin cá nhân, tài liệu nhạy cảm, ...
     * Cần đánh dấu versioning để backup
     * Setting rule cho phép tồn tại file trong 30 ngày để có thể rollback, sau 30 ngày -> hard delete. 
     * Setting rule để dọn delete marker dư thừa
+    * Setting rule để dọn các multipart upload thừa chưa hoàn tất. Thời gian 24H
+    * Setting rule Expire Non-current Versions: chỉ giữ lại tối đa 3-5 phiên bản gần nhất. Xóa vĩnh viễn các phiên bản cũ hơn.
+    * Nếu muốn khôi phục bất chế độ show version trên UI minio or dùng lệnh.
   * media-temp: chứa dữ liệu tạm thời, có set clear theo ngày
     * Bucket lưu trữ tạm thời setting lifecycle độc lập xóa dữ liệu tự động mỗi ngày, thường vài tiếng nó sẽ scan object với modified_time > 1 ngày -> xóa object
     * Không versioning để tiết kiệm chi phí lưu trữ vì không tạo delete marker, tự động clear dữ liệu mà không tồn rác
+    * Setting rule để dọn các multipart upload thừa chưa hoàn tất. Thời gian 24H
 
   * Lưu trữ media sẽ theo format: '{workspace}/{year}/{month}/{uuid}.{extension}';
   * vd: media-official/2026/01/16/abc.jpg
@@ -19,7 +25,7 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
   * MinIO sử dụng dấu / để mô phỏng cấu trúc thư mục. Nếu dồn quá nhiều đối tượng vào 1 prefix duy nhất sẽ gây áp lực truy vấn list và head. Khuyến nghị giữ đối tượng <10.000 đối tượng/prefix. Có thể chia thành nhiều prefix theo năm/tháng/ngày hoặc theo hash của object id.
   * Do đó, setting lifecycle tự động move media xuống tier lưu trữ thấp hơn, các media này là các media ít được sử dụng or lâu rồi không sử dụng or tần xuất truy cập ít và không muốn xóa, di chuyển nó xuống tier thấp hơn nhứ SSD -> HDD or cloud rẻ để tối ưu chi phí lưu trữ, truy vấn. Toàn bộ giao tiếp với dữ liệu đều thông qua giao thức HTTP(S) restful.
 
-* Khi upload sẽ chia thành nhiều part để upload. Mặc định, mọi multiparts upload bị hủy (không hoàn tất) sẽ tự động bị xóa sau 24H và tần xuất quét xóa mặc định là 6H -> Nếu không cần thay đổi thiết lập thì việc này cũng tự động rồi
+* Khi upload sẽ chia thành nhiều part để upload. Mặc định, mọi multipart upload bị hủy (không hoàn tất) sẽ tự động bị xóa sau 24H và tần xuất quét xóa mặc định là 6H -> Nếu không cần thay đổi thiết lập thì việc này cũng tự động rồi
 
 * Cơ chế delete marker và xóa đối tượng: Nếu bucket bật tính năng versioning, thì mỗi khi xóa object đó chỉ là soft delete. Nó tạo delete marker để đánh dấu lại object đó. Client sẽ không nhìn thấy object đã xóa, nhưng thực tế chúng vẫn còn đang lưu trữ ở disk. Chức năng này có mục đích khôi phục dữ liệu, khi nhầm lẫn xóa object (do người dùng, lỗi logic delete) thì có thể khôi phục lại bằng cách xóa đánh dấu delete marker (current version). Vấn đề là object và delete marker lại không có liên kết ràng buộc lẫn nhau, nó tồn tại độc lập, nên khi xóa object thật vĩnh viễn thì delete marker vẫn còn tồn tại, lúc này delete marker là rác vì nó không đánh dấu cho object nào cả. Do đó cần setting rule để xóa vĩnh viễn delete marker. Vì bật tính năng versioning để cho mục đích khôi phục, nên cần setting rule như cái thùng rác, sẽ tự động xóa vĩnh viễn object sau x/ngày không khôi phục. Để đảm bảo quản lý, lưu trữ dữ liệu tối ưu.
 
@@ -79,76 +85,8 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
 
 * Với streaming : Client request -> BE xử lý, hỗ trợ range header -> store minio để lấy -> response client. Bắt buộc hỗ trợ http range
 
-#########################################################################################
-#########################################################################################
-#########################################################################################
-
-# Steaming
-
-- Client
-  + Gửi request vd
-    GET /media/stream/{file_id}
-    Cookie: access_token
-    Range: bytes=1048576-
-
-- nginx
-  + Proxy request đến api xác thực
-
-- API
-  + Xác thực token + check permission
-  + return response status code
-  + không response body, stream, gọi minio
-  + Lấy request client bóc tách xử lý để lấy path đến minio, trả về header X-Object-Key: videos/2025/01/16/abc.mp4
-
-- Nginx
-  + Check response request status code
-  + Nếu status code = 200, proxy request đến minio
-  + Lấy header X-Object-Key từ response API, tạo và gửi request đến minio
-  vd :  GET /my-bucket/videos/abc.mp4 HTTP/1.1
-        Host: minio:9000
-        Range: bytes=1048576-
-        Authorization: AWS <access_key>:<signature>
-
-      or 
-      proxy_pass http://minio:9000/media/$object_key;
-
-  range header giữ nguyên từ client
-  + Nếu status code != 200, return response
-
-- Minio:
-  + Nhận request range
-  + Tìm object
-  + Đọc đoạn byte tương ứng
-  + return response vd:
-    HTTP/1.1 206 Partial Content
-    Content-Range: bytes 1048576-2097151/987654321
-    Content-Type: video/mp4
-    body: <binary chunk>
-
-- Nginx: trả vể client
-
-- Client: nhận response -> browser tự xử lý video (bufer, decode, seek, play)
-  HTTP/1.1 206 Partial Content
-  Content-Type: video/mp4
-  Accept-Ranges: bytes
-
-
-################
-- Các action stream
-  + play: browser gửi request với range từ 0-
-  + Pause: Browser tự ngắt TCP
-  + Seek, next, back: Browser gửi request với range tương ứng
-  + Resume: Browser gửi range tiếp
-  + Phóng to|thu nhỏ: css/player thực hiện
-  + Chất lượng đồ họa: Player (HLS/DASH)
-  + Âm Lượng: browser thực hiện
-  + Thời giản phát: browser
-  + Speed: Browser
-
-- Logic khác: multiple videp, playlist thì cần đổi src. Adaptive streaming (HLS/DASH). Hầu hết các control video thì browser nó đã hỗ trợ sẵn, chỉ cần đảm bảo
-gửi|nhận accept-ranges: bytes, trả đúng content-range, không buffer, stream ổn định thôi. Nếu cần control nhưng thứ đó có thể custom ở front-end
-
 ============================================
+
 * Vấn đề upload:
   * Php/laravel không phù hợp để xử lý file, stream, dễ bottleneck, dễ lỗi 429, chậm.
   * Nguyên tắc: laravel/php (api), chỉ đóng vai trò xác thực, một số chức năng oneshot, xử lý lưu trữ quản lý dữ liệu metadata. Còn lại xử lý file, stream, multipart upload, virus scan, backup, cleanup, ... sử dụng các cơ chế khác để thực hiện như: batch, queue, worker, cron, ...
@@ -352,3 +290,140 @@ Note:
   * 4G (20-100 Mbps)
   * 5G (187-393 Mbps)
   * 1 MB (megabyte) = 8Mb (megabit)
+
+* Web worker: là một script chạy ở nền tảng background, chạy độc lập và song song với UI thread, không ảnh hưởng đến UI thread.
+Nó không ảnh hưởng đến hiệu suất giao diện. Hạn chế là nó chạy riêng biệt nên không có quyền truy cập trực tiếp vào DOM.
+Nó hoạt động đa luồng, triển khai thông qua việc nhận tin nhắn và gửi tin nhắn.
+
+#########################################################################################
+#########################################################################################
+#########################################################################################
+
+# Steaming
+
+* Nguyên tắc: Khi stream không gửi yêu cầu và nhận response hẳn 1 file để stream, vì nó có dung lượng lớn, cản trở băng thông, tốc độ xử lý, dung lượng lưu trữ. Ảnh hưởng trực tiếp đến stream realtime. Nên video được encode và chia thành nhiều sements nhỏ (vd 10s/segment) để stream. Trình phát sẽ tài dần từng đoạn.
+
+* Lựa chọn chất lượng video: Đầu tiên là độ phân giải nguyên bản của video đó. Sau đó là bitrate, fps, codec, ...
+
+* Adaptive Bitrate: Tự động điều chỉnh chất lượng video dựa trên tốc độ mạng, CPU, GPU, ...
+
+* CDN caching video: Cache video trên CDN để giảm tải cho server.
+
+* FFmpeg transcoding: Framework multimedia, nó là mã nguồn mở, dùng để xử lý decode, encode, transcode, mux, demux, stream, filter, và play audio/video và hầu hết mọi định dạng dữ liệu được tạo ra. 1 vài ví dụ: chuyển đổi định dạng từ video mov -> mp4, video -> file nhạc mp3. Nén dung lượng giảm kích thước file. Cắt ghép video, thêm hiệu ứng, watermark. Trích xuất âm thanh từ video. Live streaming. Đổi đuôi file,... Sử dụng FFmpeg trực tiếp khó và nhiều rủi do. Nên sử dụng công cụ chuyên dụng.
+Riêng việc live stream, nó đóng vai trò :
+  + Nén dữ liệu: Mã hóa video sang H.264, H.265, ... 
+  + Chuyển mã: Chuyển video gốc sang nhiều bản với chất lượng khác nhau
+  + Chia đoạn (segment): Cắt các phiên bản đó thành các đoạn nhỏ (vd 10s/segment)
+  + Tạo file chỉ mục (Manifest): Tạo ra file .m3u8 (cho HLS) hoặc .mpd (cho DASH). Bên trong các file đó là một tập hợp danh sách các file .ts (segment cho HLS) hoặc .m4s (segment cho DASH) cùng playlist. Đây là "bản đồ" or file menu, để trình phát biết cần lấy đoạn video nào tiếp theo.
+
+* HLS (m3u8, ts), DASH (mpd): Trước đây mỗi khi muốn stream video, client phải tải toàn bộ file video về, sau đó trình phát mới phát. Điều này gây lãng phí băng thông, tốc độ xử lý, dung lượng lưu trữ. Ảnh hưởng trực tiếp đến stream realtime. Việc này rất bất tiện.
+Do đó HLS (apple) và DASH (mpeg) ra đời để giải quyết vấn đề này. Chúng là 1 dạng giao thức phân phối video. Chúng thực hiện điều khiển các đoạn nhỏ (segment) của video. Điều khiển thay đổi chất lượng video khác nhau, đã có sẵn. Nếu mạng yếu, trình phát tự động sẽ giảm chất lượng video xuống để quá trình stream giảm tối đa tiến độ stream. Nhờ vậy, user có thể load video và xem nhanh chóng, cảm giác như liên tục mà không cần phải tải hết toàn bộ video về một lần. Sau khi hoàn tất nó trả về luồng video qua HLS hoặc DASH.
+
+* Player: Trình phát video, có các chức năng điều khiển video một cách trực quan. Các action sẽ thực hiện serve qua HTTP. Player sẽ đọc file manifest và tải các segment tương ứng thông qua giao thức HLS|DASH. Nó sẽ tự xử lý Adaptive bitrate switching, Buffering strategy, Segment fetching, Fallback network.
+
+* VOD: Trong stream video là công nghệ cho phép user xem các nội dung video được lưu trữ sẵn bất cứ lúc nào, thay vì tuân theeo lịch phát sóng cố định. Người dùng có thể điều khiển nội dung video theo ý muốn.
+
+* Các file có đuôi mp4, mp3, webm,... là cái hộp chứa dữ liệu. Browser không quan tâm đuôi file, nó quan tâm codec bên trong có được hỗ trợ hay không.
+Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác nhau, OS hardware decode khác nhau, thiết bị có cấu hình CPU GPU RAM khác nhau, tốc độ mạng khác nhau, ...
+
+* Video.js: thư viện javascript để phát video. Nó hỗ trợ nhiều định dạng video, bao gồm HLS và DASH. Nó cũng hỗ trợ nhiều tính năng, bao gồm adaptive bitrate switching, buffering strategy, segment fetching, fallback network. Nó là một player thuần, không có tính năng transcoding. Sử dụng ở front-end.
+
+* Nginx
+  * Cấu hình client_max_body_size: giới hạn kích thước request body. Dùng cho path /upload tương ứng, các path khác không bị ảnh hưởng.
+  * Cấu hình proxy_buffering, proxy_request_buffering : tắt buffering request body. Dùng cho path /stream tương ứng, các path khác không bị ảnh hưởng.
+
+* Các hướng triển khai:
+  * Tự Host: cái này phức tạp và mất nhiều thời gian để cân nhắc nghiên cứu và triển khai sau.
+    * Giai đoạn xử lý: User upload file video thí dụ upload file format mp4 lên bucket
+    * Giai đoạn xử lý (transcoding)
+      * Tự viết worker (node.js, python, go) lắng nghe event khi có file video mới được upload
+      * Sử dụng ffmpeg để chuyển đổi file .mp4 thành định dạng HLS(file .m3u8 và mảnh .ts)/DASH(file .mpd và mảnh .m4s)
+      * Đẩy tất cả các file đã xử lý ngược lại lưu vào minio, sửa lại path để có thể truy cập stream video
+    * Giai đoạn phát (stream)
+      * Sử dụng web server hoặc dùng tính năng static website hostting của minio để serve các file .m3u8 và .ts
+      * Ở client, sử dụng thư viện video.js, hls.js,... để phát
+  * Sử dụng các dịch vụ cloud, platform: cái này thì không có tiền bù lại tiện và nhanh
+  * Sử dụng media server: ant media, wowza, red5,... dính bản quyền, khó custom sâu. Cấu hình để chúng lấy file từ minio, tự động convert và stream
+  * Webserver + vod: sử dụng nginx-vod-module. Nó là transcoding on-the-fly. nginx sẽ tự động convert video đó thành các định dạng stream và có thể sử dụng giao thức HLS hoặc DASH để stream video. Nó không cần lưu trữ các file đã convert. Tốc độ chậm hơn so với convert lưu trước chỉ việc call để sử dụng.
+
+* Tự host: Phức tạp tốn thời gian, rủi do nhiều => không hiệu quả nếu không chuyên sâu
+  * User request stream: browser gửi request với range tương ứng
+  * Transcode: Chạy job ffmpeg ngay lúc đó hoặc thực hiện trước để sử dụng
+    * Convert codec:
+      Video: → H.264
+      Audio: → AAC
+    * Tạo nhiều bitrate:
+      240p / 360p / 720p / 1080p
+    * Chia segment:
+      2–6 giây / segment
+  * Output: Server phải chuẩn bị sẵn các công nghệ đề hỗ trợ trên các platform khác nhau
+    * HLS:
+      index.m3u8
+      chunk_000.ts
+    * DASH or HLS + JS:
+      manifest.mpd
+      segment_001.m4s
+  * Lưu vào minio: Chỉ là storage, không quan tâm định dạng, ko biết stream là gì.
+  * Client tự chọn protocal phù hợp, không phải server
+    Thiết bị|Công nghệ
+    Safari | iOS	HLS native
+    Chrome | Firefox	hls.js
+    Smart TV / Android|DASH / ExoPlayer
+
+* Dùng video html5 với URL connect của minio. File khá lớn 7GB, nó đang sử dụng cơ chế Progressive MP4 Streaming via HTTP Range Requests để stream file. Triển khai cực đơn giản.
+
+|Tiêu chí|Progressive MP4 (HTTP Range)|nginx-vod|
+|---|---|---|
+|Protocol|hỗ trợ	Chỉ MP4 đơn giản qua Range Requests|DASH, HLS, HDS, MSS adaptive|
+|Adaptive Bitrate|Không|Có, multi-bitrate tự động|
+|Độ trễ|Thấp (low latency), phù hợp VOD nhanh|Cao hơn do segmenting, nhưng linh hoạt live |
+|Lưu trữ|Hiệu quả (1 file duy nhất) |Overhead segment, nhưng cache tốt|
+|Seek chính xác|Cao, byte-level |Tốt, nhưng phụ thuộc segment duration|
+|Tính năng nâng cao|Cơ bản (clipping thủ công)|Track selection, encryption (DRM, AES), thumbnail, subtitles |
+|Phức tạp triển khai|Thấp (chỉ config Nginx add_header Accept-Ranges bytes) |Cao (compile module, config modes: local/remote/mapped) |
+|Hiệu suất|Cao cho single stream, ít CPU |Tối ưu với cache (metadata/response), ~26MB/s trên 4-core AWS |
+|Use case lý tưởng|VOD đơn giản, low-latency, ít thiết bị |Adaptive streaming, live sim, multi-device, enterprise |
+
+
+* Lựa chọn triển khai: Sử dụng minio để lưu trữ file, sử dụng nginx-vod-module đóng vai trò streaming server, nó đọc file từ storage (minio) qua giao thức HTTP sau đó nó tự convert on-the-fly thành HLS hoặc DASH để trình duyệt phát được. Sử dụng video.js làm trình phát video ở client.
+
+* Luồng xử lý nghiệp vụ:
+  * Step 1: client upload file lên minio thông qua presigned url. **Lưu ý:** lưu file dưới dạng fragmented MP4 or Fast start để nginx-vod đọc nhanh mà không cần tải toàn bộ file về RAM
+  * Step 2: BE lưu thông tin metadata của video vào database
+  * Step 3: Yêu cầu phát video
+    * Client click play, FE không call trực tiếp link minio. Thay vào đó, FE call một URL có cấu trúc đặc biệt tới nginx-vod. Ví dụ: http://nginx-vod/vod/video.mp4/playlist.m3u8
+  * Step 4: Xử lý tại nginx-vod 
+    * Ánh xạ: Nginx-vod nhận được request, nó sẽ sử dụng chế độ mapped mode. Nó gửi truy vấn nội bộ để xác định xem file video đó đang nằm ở đâu trong minio.
+    * Lấy dữ liệu: Nginx kết nối tới minio qua HTTP/s3 để đọc các byte dữ liệu cần thiết của file gốc.
+    * Đóng gói: Nginx-vod cắt file .mp4 thành các segement và tạo file danh sách phát ngay trong bộ nhớ.
+    * Nginx-vod trả về luồng video qua HLS hoặc DASH cho client.
+  * Step 5: Client sử dụng video.js để phát video.
+    * Các action stream
+      * play: browser gửi request với range từ 0-
+      * Pause: Browser tự ngắt TCP
+      * Seek, next, back: Browser gửi request với range tương ứng
+      * Resume: Browser gửi range tiếp
+      * Phóng to|thu nhỏ: css/player thực hiện
+      * Chất lượng đồ họa: Player (HLS/DASH)
+      * Âm Lượng: browser thực hiện
+      * Thời giản phát: browser
+      * Speed: Browser
+  * Step 6: Tạo một event timeUpdate của video khi chạy định kỳ mỗi 5s, gọi webworker để lưu thời điểm hiện tại của video, id video vào indexDB để tránh block UI. Khi reload or truy cập lại video, kiểm tra video đó trước đây đã xem đến đâu bằng cách kiểm tra và lấy dữ liệu trong indexDB, nếu có thì set thời gian hiện tại của video bằng thời gian đã lưu (range). Event này chỉ chạy khi user xem video, còn không thì clear.
+
+* Cách thức triển khai:
+  * Chế độ mapped mode: Tạo file json mô tả vị trí trên minio. nginx-vod sẽ đọc file JSON và biết lấy dữ liệu ở đâu. Giúp link minio gốc không lộ ra ngoài
+  * Cấu hình header  & CORS: vì FE và webserver có thể nằm trên các domain|subdomain khác nhau. Nên cần cấu hình CORS để trình phát video đọc được các segment
+  * Phân quyền: BE sẽ tạo ra presigned url or token 1 lần để nginx kiểm tra token trước khi bắt đầu đóng gói video từ minio. Đảm bảo bảo mật.
+  * Băng thông: Nginx-vod sẽ hỗ trợ adaptive bitrate. Nếu cho nhiều phiên bản chất lượng cùng một 1 video, nginx-vod sẽ tự động chuyển đổi giữa chúng tùy theo tốc độ mạng giữa chúng tùy theo tốc độ mạng của người dùng.
+  * CPU: Việc đóng gói tốn CPU của server nginx. Nếu lượng người dùng cực lớn, cần có chiến lược cache các phần đoạn video đã được cắt.
+  * Truy cập Minio: 
+    * Truy cập nội bộ cấu hình nginx-vod để nó tự thêm header xác thực (access, secret key) để call tới minio. Không cần presigned url. Không cần quản lý refresh url.
+    * Tạo presigned url để nginx-vod call tới minio. Cần quản lý refresh url.
+  * Lưu trữ dữ liệu xử lý: Nginx-vod đọc 1 lượng nhỏ dữ liệu từ minio vào bộ nhớ đệm (ram), sau đó đóng gói thành định dạng HLS/DASH và đẩy về phía user thông qua kết nối HTTP. Không lưu trữ lại dữ liệu đã xử lý.
+  * Xử lý file lớn: Nó yêu cầu minio trả về các byte cụ thể mà nó cần để tạo ra phân đoạn trong video. Do đó 100MB hay 100GB không khác biệt nhiều. Nếu file video được tối ưu tốt đưa moov atom lên đầu, nginx-vod tiêu thụ RAM sẽ hoạt động cực nhanh, cực nhẹ. Vì chỉ đóng gói lại mà không cần giải mã/nén lại luồng, nên CPU tốn rất ít so với việc dùng FFmpeg để convert.
+  * Xử lý nhiều request cùng lúc: Nginx-vod hoạt động dựa trên mô hình non-blocking của nginx. Nó có thể xử lý hàng ngàn kết nối đồng thời. Tuy nhiên, mỗi kết nối active sẽ chiếm một lượng RAM nhất định để lưu trữ buffer và metadata của segment. Nếu có quá nhiều request, RAM có thể bị quá tải. Nên cần có cơ chế nginx proxy cache kết hợp với nginx-vod để giảm tải cho nginx-vod.
+
+
++ Đối với file nặng, mà cần move file từ bucket này qua bucket khác, thì thực hiện server-side Multipart Copy + Parallel Threads + batch job, thêm column đánh dấu trạng thái tình trạng hoàn thành, cập nhật column này là processing. Thông báo cho user "File của bạn đang được xử lý hệ thống. Chúng tôi sẽ thông báo khi file sẵn sàng.", sau đó tắt modal or dialog để cho user tiếp tục thực hiện trên web. Sau đó job sẽ chạy sau đó thực hiện xử lý ngầm, khi move hoàn thành thì thực hiện update lại status là upload completed. Tận dụng sức mạnh tối đa đa luồng, phần cứng của minio. Khi bị fail thì retry lại theo chiến lược thời gian giữa các đợt retry dãn dần ra để tình trạng mạng phục hồi lại. Giới hạn số lần retry là 5 lần. Nếu quá số lần retry thì update fail.
+
++ Để thông báo kết quả upload file đến người dùng, sử dụng websocket. Client tham gia một room theo ID. BE xử lý xong job gửi message cho user theo room ID. CLient nhận được tín hiệu sẽ thực hiện hiển thị thông báo kết quả.
