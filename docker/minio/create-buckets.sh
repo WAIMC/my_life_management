@@ -3,7 +3,7 @@ set -e
 
 # Install dependencies
 if command -v apk &> /dev/null; then
-    apk add --no-cache curl sed
+    apk add --no-cache curl sed aws-cli
 fi
 
 # Install mc if not present (Cache it in the mounted volume)
@@ -51,17 +51,31 @@ mc anonymous set download "myminio/$BUCKET_OFFICIAL"
 
 
 # 3. Lifecycle Configuration
-echo "Configuring lifecycle rules..."
+echo "Configuring lifecycle rules using AWS CLI..."
+
+# Configure AWS CLI environment variables
+export AWS_ACCESS_KEY_ID="$MINIO_ROOT_USER"
+export AWS_SECRET_ACCESS_KEY="$MINIO_ROOT_PASSWORD"
+export AWS_DEFAULT_REGION="us-east-1" 
+
 # Apply history retention (30 days) to official
 if [ -f /minio/ilm-history.json ]; then
-    mc ilm import "myminio/$BUCKET_OFFICIAL" < /minio/ilm-history.json
+    echo "Applying lifecycle to $BUCKET_OFFICIAL..."
+    aws s3api put-bucket-lifecycle-configuration \
+        --bucket "$BUCKET_OFFICIAL" \
+        --lifecycle-configuration file:///minio/ilm-history.json \
+        --endpoint-url http://ml-minio:9000
 else
     echo "Warning: /minio/ilm-history.json not found"
 fi
 
 # Apply temp cleanup (1 day) to temp
 if [ -f /minio/ilm-temp.json ]; then
-    mc ilm import "myminio/$BUCKET_TEMP" < /minio/ilm-temp.json
+    echo "Applying lifecycle to $BUCKET_TEMP..."
+    aws s3api put-bucket-lifecycle-configuration \
+        --bucket "$BUCKET_TEMP" \
+        --lifecycle-configuration file:///minio/ilm-temp.json \
+        --endpoint-url http://ml-minio:9000
 else
     echo "Warning: /minio/ilm-temp.json not found"
 fi

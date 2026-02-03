@@ -424,6 +424,60 @@ Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác n
   * Xử lý nhiều request cùng lúc: Nginx-vod hoạt động dựa trên mô hình non-blocking của nginx. Nó có thể xử lý hàng ngàn kết nối đồng thời. Tuy nhiên, mỗi kết nối active sẽ chiếm một lượng RAM nhất định để lưu trữ buffer và metadata của segment. Nếu có quá nhiều request, RAM có thể bị quá tải. Nên cần có cơ chế nginx proxy cache kết hợp với nginx-vod để giảm tải cho nginx-vod.
 
 
-+ Đối với file nặng, mà cần move file từ bucket này qua bucket khác, thì thực hiện server-side Multipart Copy + Parallel Threads + batch job, thêm column đánh dấu trạng thái tình trạng hoàn thành, cập nhật column này là processing. Thông báo cho user "File của bạn đang được xử lý hệ thống. Chúng tôi sẽ thông báo khi file sẵn sàng.", sau đó tắt modal or dialog để cho user tiếp tục thực hiện trên web. Sau đó job sẽ chạy sau đó thực hiện xử lý ngầm, khi move hoàn thành thì thực hiện update lại status là upload completed. Tận dụng sức mạnh tối đa đa luồng, phần cứng của minio. Khi bị fail thì retry lại theo chiến lược thời gian giữa các đợt retry dãn dần ra để tình trạng mạng phục hồi lại. Giới hạn số lần retry là 5 lần. Nếu quá số lần retry thì update fail.
+* Đối với file nặng, mà cần move file từ bucket này qua bucket khác, thì thực hiện server-side Multipart Copy + Parallel Threads + batch job, thêm column đánh dấu trạng thái tình trạng hoàn thành, cập nhật column này là processing. Thông báo cho user "File của bạn đang được xử lý hệ thống. Chúng tôi sẽ thông báo khi file sẵn sàng.", sau đó tắt modal or dialog để cho user tiếp tục thực hiện trên web. Sau đó job sẽ chạy sau đó thực hiện xử lý ngầm, khi move hoàn thành thì thực hiện update lại status là upload completed. Tận dụng sức mạnh tối đa đa luồng, phần cứng của minio. Khi bị fail thì retry lại theo chiến lược thời gian giữa các đợt retry dãn dần ra để tình trạng mạng phục hồi lại. Giới hạn số lần retry là 5 lần. Nếu quá số lần retry thì update fail.
 
-+ Để thông báo kết quả upload file đến người dùng, sử dụng websocket. Client tham gia một room theo ID. BE xử lý xong job gửi message cho user theo room ID. CLient nhận được tín hiệu sẽ thực hiện hiển thị thông báo kết quả.
+* Để thông báo kết quả upload file đến người dùng, sử dụng websocket. Client tham gia một room theo ID. BE xử lý xong job gửi message cho user theo room ID. CLient nhận được tín hiệu sẽ thực hiện hiển thị thông báo kết quả.
+
+* Websocket: là application-layer protocol, chạy trên TCP, không phải thay thế TCP. Giao thức truyền tải dữ liệu cho phép thiết lập một kênh liên lạc 2 chiều, duy trì liên tục giữa trình duyệt và máy chủ qua 1 kết nối TCP duy nhất. Khác với giao thức HTTP truyền thống, client hỏi và nhận phản hồi từ server, websocket cho phép cả 2 đều có thể chủ động gửi thông tin cho bên kia bất kỳ lúc nào sau khi kết nối.
+
+  * Định nghĩa các thành phần:
+    * Client: Là 1 socket id duy nhất, mỗi client tự lưu trữ room id trong bộ nhớ để xác định gửi, nhận, rời room tương ứng. Mỗi client có thể đăng ký nhiều server websocket khác nhau, khi gửi tin nhắn cần chọn server websocket id để gửi, nội dung gửi cần có room id để gửi đúng room, nội dung message là thông tin cần gửi.
+    * Room: Là không gian chung cho nhiều client có thể theo dõi message của nhau. Ban đầu thiết lập kết nối mới, nó sẽ thực hiện tạo các đường dẫn đến client tương ứng và kết nối liên tục. KHi có tin nhắn chúng sẽ gửi tin nhắn đó đến các client trong room, trừ client gửi, khác với giao thức HTTP khi gửi dữ liệu cần có địa chỉ IP server. Mặc định các server websocket sẽ tự clear các room khi không có client nào.
+    * server Websocket: là máy chủ quản lý danh sách các room và socket id trong ram. CLient join room thì nó sẽ lưu trữ socket id của client đó vào trong room đó. Khi client rời room nó sẽ xóa socket id khỏi room đó. 
+
+  * Cách thức hoạt động:
+    * Handshake: client gửi request http đặc biệt tới server với yêu cầu kết nối websocket.
+    * Open connection: Nếu server đồng ý, kết nối được thiết lập. Lúc này, giao thức chuyển từ HTTP -> websocket.
+    * Data trasnfer: Cả 2 đều có thể gửi dữ liệu cho nhau theo frame. Cực nhẹ mà ko cần gửi lại các thông tin header rườm rà.
+    * Close: 1 trong 2 có thể đóng kết nối bất kỳ khi nào.
+
+  * Cách ứng dụng:
+    * Tự xây dựng 1 server websocket:
+      * Ngôn ngữ lập trình: nodejs, go, python, php, java, c#
+      * Framework: socket.io, ws, websocket, ...
+    * Sử dụng dịch vụ websocket:
+      * pusher, pubnub, ...
+    * Xác thực kết nối: Tạo 1 danh sách các địa chỉ tin cậy (white list), nếu địa chỉ request có trong danh sách này thì có thể trực tiếp kết nối tới server websocket ví dụ như các service trong cùng mạng nội bộ. Nếu không sẽ cần qua một api xác thực, xác thực fail thì reject request, đúng thì trả về 1 token để client đó sử dụng kết nối trực tiếp đến server websocket trong lần đầu tiên. Websocket sẽ xác thực token nếu hợp lệ nó sẽ thực hiện cho join room request tương ứng, nếu không thì reject request.
+    * Cách thức kết nối:
+      * Socket ID: 1 kết nối được thiết lập, server sẽ gán cho kết nối đó 1 ID duy nhất
+      * Găn định danh (auth): Thông thường, sau khi kết nối, client sẽ gửi package chứa mã token để server biết user nào
+      * Lưu trữ: Server sẽ giữ danh sách (thường là trong ram) để ánh xạ: user id -> socket id. Có nghĩa auth xong mới có socket id.
+    * Pub/sub: Mỗi khi có request join room để tham gia, Khi một bên gửi thông tin nên đây chúng sẽ được broadcasting copy tin nhắn gửi cho tất cả các client trong room đó trừ người gủi.
+
+  * Flow hoàn chỉnh
+    * Client sử dụng 1 chức năng nào đó cần có websocket, nó sẽ gủi request join room lên api, trong request có đính kèm access token trong cookie header request
+    * API verify request, nếu hợp lệ thì tìm kiếm token đó trong redis và thêm room_id cho token user tương ứng, sau đó trả về response success cho client
+    + Client nhận được response thành công, sẽ thực hiện request đến domain wss yêu cầu kết nối và join room id. Tại vì các thành phần FE và wss có cùng domain lên khi gửi request chúng sẽ tự đính kèm access token cookie trong request. Trường hợp khác domain thì setting lại or gửi token qua query string: ws://api.com?token=abc. URL có thể bị lưu trong log server or có thể truy cập ở đâu đó, trường hợp này tạo one-time token với thời gian cực ngắn khoảng 30s để đảm bảo an toàn.
+    + WSS: Viết script thực hiện lấy access token từ cookie or query string. Sau đó, request truy cập đến redis, tìm kiếm token và room id có tồn tại không ? nếu có chứng tỏ chúng được api cấp phép và tạo trước đó, trường hợp này tạo room nếu chưa có và thêm socket id (user) vào, tạo kết nối trực tiếp đến user để gửi nhận message, duy trì kết nối.
+
+
+    + API: Viết logic PUBLISH tin nhắn lên REDIS, nội dung bao gồm wss id + room id + message.
+    + WSS: Viết script thực hiện subcribe kênh trên redis, khi có tin nhắn thì chúng thực hiện so khớp thông tin wss id + room id, nếu khớp thì gửi tin nhắn đến socket id (user) trong room đó.
+    + WSS: Viết script thực hiện lấy access token từ cookie or query string. Sau đó, request truy cập đến redis, tìm kiếm token và room id có tồn tại không ? nếu có chứng tỏ chúng được api cấp phép và tạo trước đó, trường hợp này tạo room nếu chưa có và thêm socket id (user) vào, tạo kết nối trực tiếp đến user để gửi nhận message, duy trì kết nối.
+    + WSS: Mặc định không có ai trong room thì nó tự xóa. Nhưng có những trường hợp nhận dạng tin nhắn và xóa ngay, như chức năng gửi kết quả tình trạng upload, sau khi nhận tin nhắn từ api và gửi chúng đến socket id (user) trong room, sau khi gửi xong thì viết script để xóa room ngay lúc đó.
+    + WSS: Viết script thực hiện tổng hợp các socket id đang quản lý, theo định kỳ gửi ping đển các socket id này, nếu các socket id đó còn hoạt động chúng sẽ thực hiện phản hồi là pong, thì không làm gì cả. Nếu không có phản hồi thì thử lại với thời gian ngẫu nhiên trong thời gian ngắn sau đó, mong đợi socket id đó kết nối lại, sau vài lần không phản hồi thì thực hiện xóa socket id đó ở tất cả các room đang quản lý.
+    + Front-end: Nếu connect wss thất bại, thử reconnect lại vài lần, mỗi lần thử lại thời gian chờ theo lũy thừa giãn ra. Nếu quá số lần thất bại thì thông báo lỗi connect cho user, thành công thì báo reconnect thành công. FE sẽ lưu last_message_id để đánh dấu message gần nhất đã nhận.
+    + WSS: Khi nhận được last_message_id từ FE, wss kiểm tra last_messsage_id đó ở đâu ? nếu là mới nhất thì không làm gì cả, nếu nó bị cũ thì gửi thêm cho socket id đó những message bị miss từ đó đến message mới nhất.
+
+
+    + Note: Tùy thuộc vào chức năng khác nhau và ở client or api sẽ thực hiện close connection or xóa room tương ứng.
+    vd:
+      - Chức năng upload file nặng: Quá trình diễn ra ngầm. Client cần nhận thông tin kết quả upload file ngầm và thông báo cho user cuối. Lúc này api chạy job ngầm xong thông báo kết quả lên bảng tin (redis). WSS sẽ viết script, có một event theo dõi, nếu có thông tin khớp thì chúng thực hiện gửi tin nhắn đến các socket id (client) trong room, sau khi gửi xong thì viết script để xóa room ngay lúc đó. Vì client chỉ follow kết quả xong thì thông báo cho người dùng cuối thôi không cần thiết lưu trữ dữ liệu room, dữ liệu trên bảng tin làm gì.
+      - Chức năng đợi xếp hàng truy cập mua vé: Cần cập nhật vị trí sếp hàng thời gian thực và liên tục đến khi hết đợi xếp hàng. Nó chỉ sử dụng trong quá trình đợi xếp hàng thôi, nên xếp hàng xong or không xếp hàng thì xóa socket id (user) ra khỏi room. KHi không có ai trong room xếp hàng thì room tự xóa để đảm bảo clean.
+      - Chức năng thông báo: Khi user follow một chức năng nào đó như User X, thì user sẽ được add vào room chứa những socket id (user) theo dõi user X. Khi user X có thông tin mới đây vào room chúng sẽ được gửi đến các socket id có trong room để hiển thị thông báo mới. Quá trình này sẽ diễn ra liên tục đến khi user unfollow user X (remove khỏi room)
+
+
+    + Cần định nghĩa các room theo rule: 
+      - Chức năng riêng tư: user_id + tên chức năng ví dụ: 123_noti_upload_file (gửi thông báo upload file đến riêng user có id là 123)
+      - Chức năng chung: tên chức năng ví dụ: new_deal_noti (gửi thông báo deal mới đến tất cả các socket id đang follow deal)
+    + Các thành phần liên quan cùng định nghĩa room theo rule chung, các logic chức năng cũng follow theo rule này để thực hiện.

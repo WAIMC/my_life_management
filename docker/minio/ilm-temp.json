@@ -3,6 +3,9 @@
         {
             "ID": "Expire-Temp-1-Day",
             "Status": "Enabled",
+            "Filter": {
+                "Prefix": ""
+            },
             "Expiration": {
                 "Days": 1
             }
