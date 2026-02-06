@@ -36,24 +36,22 @@ class MediaMgmtService extends BaseService
 
     // Manually transform to array to avoid ResourceCollection pagination wrapper
     return $list->map(function ($item) {
-      return (new MediaFileResource($item))->resolve();
+      return MediaFileResource::make($item)->resolve();
     })->values()->all();
   }
 
   /**
    * Store media (file upload or folder creation)
+   * Returns int (folder ID) or array (file upload with room_id)
    */
-  /**
-   * Store media (file from temp or folder creation)
-   */
-  public function store(array $payload): int
+  public function store(array $payload): int|array
   {
-    // If key is provided, move from temp
+    // If key is provided, move from temp (returns array with room_id)
     if (isset($payload['key'])) {
       return $this->storeFromTemp($payload);
     }
 
-    // Otherwise, create folder
+    // Otherwise, create folder (returns int)
     return $this->createFolder($payload);
   }
 
@@ -244,17 +242,16 @@ class MediaMgmtService extends BaseService
 
   /**
    * Store file from Temp (Move to Official + Create DB Record)
+   * Returns array with media_id, status, and optionally room_id for heavy files
    */
-  /**
-   * Store file from Temp (Move to Official + Create DB Record)
-   */
-  public function storeFromTemp(array $payload): int
+  public function storeFromTemp(array $payload): array
   {
     $tempKey = $payload['key']; // This is the path in temp bucket: {uuid}.{ext}
     $extension = $payload['extension'];
     $workspaceId = $payload['workspace_id'] ?? null;
     $parentPath = $payload['parent_path'] ?? '/';
     $originalName = $payload['original_name'];
+    $fileSize = $payload['size'] ?? 0;
 
     // 1. Verify file exists in Temp (Optional but recommended)
     if (!$this->minioService->exists(MediaConst::DISK_TEMP, $tempKey)) {
@@ -266,8 +263,14 @@ class MediaMgmtService extends BaseService
     $officialDisk = MediaConst::DISK_OFFICIAL;
     $officialPath = $this->minioService->generateStoragePath($extension, $officialDisk, $workspaceId);
 
-    // 3. Create DB Record (Processing)
+    // 3. Create DB Record
     $virtualPath = rtrim($parentPath, '/') . '/' . $originalName;
+
+    // Check if file is heavy (>= 100MB) or light
+    $isHeavyFile = $fileSize >= MediaConst::SIZE_100MB;
+
+    // Get current user ID for audit
+    $currentUserId = request()->attributes->get('current_admin_id');
 
     $data = [
       'workspace_id' => $workspaceId,
@@ -277,23 +280,70 @@ class MediaMgmtService extends BaseService
       'original_name' => $originalName,
       'extension' => $extension,
       'mime_type' => $payload['mime_type'] ?? null,
-      'size' => $payload['size'] ?? 0,
+      'size' => $fileSize,
       'minio_bucket' => $officialDisk,
       'minio_object_key' => $officialPath,
       'url' => $this->minioService->getPublicUrl($officialDisk, $officialPath),
       'is_delete' => false,
-      'minio_object_key' => $officialPath,
-      'url' => $this->minioService->getPublicUrl($officialDisk, $officialPath),
-      'upload_status' => \App\Enums\UploadStatus::PROCESSING, // Mark as processing
+      'upload_status' => $isHeavyFile ? \App\Enums\UploadStatus::PROCESSING : \App\Enums\UploadStatus::COMPLETED,
+      'created_by' => $currentUserId,
     ];
 
     $mediaId = $this->mediaMgmt->executeStore($data);
     $media = $this->mediaMgmt->find($mediaId);
 
-    // 4. Dispatch Job to Process File (Move + Notify)
-    \App\Jobs\Media\ProcessLargeFile::dispatch($media, $tempKey);
+    // 4. Process based on file size
+    if ($isHeavyFile) {
+      // Heavy file: Dispatch async job
+      // Generate room ID for WebSocket notification
+      // Format: {uuid}_{userId}_upload_file
+      $uuid = \Illuminate\Support\Str::uuid()->toString();
+      // Get userId from JWT token that was decoded in AdminMiddleware
+      $userId = request()->attributes->get('current_admin_id') ?? $media->created_by ?? null;
+      
+      if (!$userId) {
+        throw new \Exception('User ID not found in JWT token. Ensure AdminMiddleware is applied.');
+      }
+      
+      $roomId = "{$uuid}_{$userId}_upload_file";
 
-    return $media->id;
+      // Dispatch Job to Process File (Move + Notify)
+      \App\Jobs\Media\ProcessLargeFile::dispatch($media, $tempKey, $roomId);
+
+      return [
+        'media_id' => $media->id,
+        'room_id' => $roomId,
+        'status' => \App\Enums\UploadStatus::PROCESSING->value,
+        'message' => 'File is being processed. You will be notified when it is ready.',
+      ];
+    } else {
+      // Light file: Move synchronously
+      try {
+        // Move from temp to official bucket
+        $moveSuccess = $this->minioService->move(
+          MediaConst::DISK_TEMP,
+          $tempKey,
+          MediaConst::DISK_OFFICIAL,
+          $officialPath,
+          $fileSize
+        );
+
+        if (!$moveSuccess) {
+          throw new Exception('Failed to move file from temp to official bucket');
+        }
+
+        return [
+          'media_id' => $media->id,
+          'room_id' => null,
+          'status' => \App\Enums\UploadStatus::COMPLETED->value,
+          'message' => 'File uploaded successfully.',
+        ];
+      } catch (\Exception $e) {
+        // If move fails, mark as failed and delete DB record
+        $this->mediaMgmt->executeDelete([$mediaId]);
+        throw new Exception(__('messages.media.move_file_failed') . ': ' . $e->getMessage());
+      }
+    }
   }
 
   /**

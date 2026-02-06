@@ -141,7 +141,8 @@ class MinioService
       $startTime = microtime(true);
 
       // Use optimized copy with dynamic configuration
-      $client->copy($sourceBucket, $sourceKey, $destBucket, $destKey, [
+      // ACL must be passed as 5th parameter (string), options as 6th parameter (array)
+      $client->copy($sourceBucket, $sourceKey, $destBucket, $destKey, 'private', [
         'params' => [
           'StorageClass' => 'STANDARD',
         ],

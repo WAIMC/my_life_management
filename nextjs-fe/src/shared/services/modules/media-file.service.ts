@@ -21,7 +21,8 @@ import type {
   InitMultipartUploadResponse,
   GetMultipartUrlResponse,
   MultipartPart,
-  HeavyUploadResult, 
+  HeavyUploadResult,
+  UploadResponse, 
 } from '@/shared/types/media-file.types';
 
 class MediaFileService {
@@ -31,7 +32,7 @@ class MediaFileService {
    * Upload file to MinIO via Presigned URL
    * Returns metadata to be used for storing in DB
    */
-  async uploadToMinio(params: UploadFileParams): Promise<{ key: string; original_name: string; extension: string; mime_type: string; size: number } | null> {
+  async uploadToMinio(params: UploadFileParams & { onProgress?: (percentage: number) => void }): Promise<{ key: string; original_name: string; extension: string; mime_type: string; size: number } | null> {
     try {
       // 0. Client-side Validation
       // Use config or props for validation.
@@ -57,11 +58,43 @@ class MediaFileService {
 
       const { upload_url, key, headers } = presignedRes.data;
 
-      // 2. Upload to MinIO
-      const uploadResponse = await fetch(upload_url, {
-        method: 'PUT',
-        headers: headers,
-        body: params.file
+      // 2. Upload to MinIO with progress tracking
+      const uploadResponse = await new Promise<Response>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        if (params.onProgress) {
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const percentage = Math.round((e.loaded / e.total) * 100);
+              params.onProgress?.(percentage);
+            }
+          });
+        }
+        
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(new Response(xhr.response, {
+              status: xhr.status,
+              statusText: xhr.statusText,
+            }));
+          } else {
+            reject(new Error(messages.errors.storageUploadFailed.replace('{status}', xhr.status.toString())));
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload failed'));
+        });
+        
+        xhr.open('PUT', upload_url);
+        
+        // Set headers
+        Object.entries(headers).forEach(([name, value]) => {
+          xhr.setRequestHeader(name, value);
+        });
+        
+        xhr.send(params.file);
       });
 
       if (!uploadResponse.ok) {
@@ -85,8 +118,9 @@ class MediaFileService {
 
   /**
    * Upload file to server (Updated to support Store from Temp)
+   * Returns unified UploadResponse for both light and heavy files
    */
-  async upload(params: UploadFileParams & { key?: string, original_name?: string, extension?: string, mime_type?: string, size?: number }): Promise<number> {
+  async upload(params: UploadFileParams & { key?: string, original_name?: string, extension?: string, mime_type?: string, size?: number }): Promise<UploadResponse> {
     const formData = new FormData();
     
     // If key is present, we are storing from temp
@@ -109,7 +143,7 @@ class MediaFileService {
       formData.append('workspace_id', params.workspace_id.toString());
     }
 
-    const response = await apiClient.post<number>(
+    const response = await apiClient.post<UploadResponse>(
       `${this.baseUrl}${API_PATHS.STORE}`,
       formData,
       {

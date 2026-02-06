@@ -5,9 +5,12 @@
 import { SORT_ORDER } from '../config/constant';
 
 export interface ApiResponse<T> {
-  success: boolean;
   data: T;
-  message?: string;
+  error: {
+    status: boolean;
+    code: number;
+    messages: string | string[] | null;
+  };
 }
 
 export interface ApiErrorResponse {

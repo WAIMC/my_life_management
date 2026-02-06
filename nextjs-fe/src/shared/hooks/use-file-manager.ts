@@ -13,6 +13,7 @@ import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import toast from 'react-hot-toast';
 import { FILTER_TYPE, FILE_MANAGER_SORT_FIELDS, SORT_ORDER, INITIAL_PAGINATION, FILE_TYPE, MIME_TYPE_PREFIX, PAGINATION } from '@/shared/config/constant';
 import { useTranslations } from 'next-intl';
+import { UploadStatus } from '@/shared/enums/enums';
 
 export const useFileManager = (): FileManagerContextType => {
   const t = useTranslations('fileManager');
@@ -34,6 +35,11 @@ export const useFileManager = (): FileManagerContextType => {
   });
 
   const [pagination, setPagination] = useState<PaginationState>(INITIAL_PAGINATION);
+  
+  // State to track heavy file uploads for WebSocket notifications
+  // Note: Not persisted to localStorage - if user refreshes/closes tab, 
+  // MinIO lifecycle will auto-cleanup incomplete parts and user can re-upload if needed
+  const [heavyUploads, setHeavyUploads] = useState<Array<{ roomId: string; fileName: string }>>([]);
 
   // Fetch files from API (only when path changes)
   const fetchFiles = useCallback(async (signal?: AbortSignal) => {
@@ -202,45 +208,114 @@ export const useFileManager = (): FileManagerContextType => {
   const uploadFiles = useCallback(async (filesToUpload: File[]) => {
     try {
       setIsLoading(true);
-      for (const file of filesToUpload) {
-        // Check if file already has temp metadata (from auto-upload)
-        const fileWithMeta = file as File & { 
-          tempKey?: string;
-          isHeavyUploaded?: boolean;
-          tempMetadata?: {
-            original_name: string;
-            extension: string;
-            mime_type: string;
-            size: number;
+      const heavyFileUploads: Array<{ roomId: string; fileName: string }> = [];
+      
+      // Process files in parallel instead of sequential for better performance
+      const uploadPromises = filesToUpload.map(async (file) => {
+        try {
+          // Check if file already has temp metadata (from auto-upload)
+          const fileWithMeta = file as File & { 
+            tempKey?: string;
+            isHeavyUploaded?: boolean;
+            tempMetadata?: {
+              original_name: string;
+              extension: string;
+              mime_type: string;
+              size: number;
+            };
           };
-        };
 
-
-
-        if (fileWithMeta.tempKey && fileWithMeta.tempMetadata) {
-          // File already uploaded to temp, just commit to official
-          await mediaFileService.upload({
-            file, // Pass to satisfy type, won't be used
-            parent_path: currentPath,
-            key: fileWithMeta.tempKey,
-            ...fileWithMeta.tempMetadata
-          });
-        } else {
-          // Fallback: Upload to temp first, then commit
-          const metadata = await mediaFileService.uploadToMinio({ file });
-
-          if (metadata) {
-            // Call API to store (Move to Official)
-            await mediaFileService.upload({
-              file, // Pass file just to satisfy type, but won't be used if key is present
+          if (fileWithMeta.tempKey && fileWithMeta.tempMetadata) {
+            // File already uploaded to temp, just commit to official
+            const result = await mediaFileService.upload({
+              file, // Pass to satisfy type, won't be used
               parent_path: currentPath,
-              ...metadata
+              key: fileWithMeta.tempKey,
+              ...fileWithMeta.tempMetadata
             });
+            
+            console.log('[useFileManager] Upload result:', result);
+            console.log('[useFileManager] result.status:', result.status);
+            console.log('[useFileManager] result.room_id:', result.room_id);
+            console.log('[useFileManager] UploadStatus.PROCESSING:', UploadStatus.PROCESSING);
+            
+            // Check if result is heavy upload (status = PROCESSING)
+            if (result.status === UploadStatus.PROCESSING && result.room_id) {
+              heavyFileUploads.push({ 
+                roomId: result.room_id, 
+                fileName: fileWithMeta.tempMetadata.original_name 
+              });
+              toast.success(result.message);
+              return { type: 'heavy', fileName: fileWithMeta.tempMetadata.original_name };
+            }
+            // Light file (status = COMPLETED)
+            return { type: 'immediate', fileName: fileWithMeta.tempMetadata.original_name };
+          } else {
+            // Fallback: Upload to temp first, then commit
+            const metadata = await mediaFileService.uploadToMinio({ file });
+
+            if (metadata) {
+              // Call API to store (Move to Official)
+              const result = await mediaFileService.upload({
+                file, // Pass file just to satisfy type, but won't be used if key is present
+                parent_path: currentPath,
+                ...metadata
+              });
+              
+              console.log('[useFileManager] Upload result (fallback):', result);
+              console.log('[useFileManager] result.status:', result.status);
+              console.log('[useFileManager] result.room_id:', result.room_id);
+              
+              // Check if result is heavy upload (status = PROCESSING)
+              if (result.status === UploadStatus.PROCESSING && result.room_id) {
+                heavyFileUploads.push({ 
+                  roomId: result.room_id, 
+                  fileName: metadata.original_name 
+                });
+                toast.success(result.message);
+                return { type: 'heavy', fileName: metadata.original_name };
+              }
+              // Light file (status = COMPLETED)
+              return { type: 'immediate', fileName: metadata.original_name };
+            }
           }
+          return { type: 'error', fileName: file.name };
+        } catch (error) {
+          console.error(`Failed to upload ${file.name}:`, error);
+          const msg = error instanceof Error ? error.message : 'Unknown error';
+          toast.error(`${file.name}: ${msg}`);
+          return { type: 'error', fileName: file.name };
         }
+      });
+      
+      // Wait for all uploads to complete
+      const results = await Promise.all(uploadPromises);
+      
+      // Update heavy uploads state for parent component to subscribe to WebSocket
+      if (heavyFileUploads.length > 0) {
+        console.log('[useFileManager] Adding heavy uploads to state:', heavyFileUploads);
+        setHeavyUploads(prev => {
+          const updated = [...prev, ...heavyFileUploads];
+          console.log('[useFileManager] Updated heavyUploads state:', updated);
+          return updated;
+        });
       }
-      if (filesToUpload.length > 0) {
-        toast.success(`${t('uploadSuccess')} ${filesToUpload.length} file(s)`);
+      
+      // Show success for files that were processed immediately (not heavy uploads)
+      const immediateUploads = results.filter(r => r.type === 'immediate').length;
+      const failedUploads = results.filter(r => r.type === 'error').length;
+      
+      if (immediateUploads > 0) {
+        toast.success(`${t('uploadSuccess')} ${immediateUploads} file(s)`);
+      }
+      
+      if (failedUploads > 0) {
+        toast.error(`${failedUploads} file(s) failed to upload`);
+      }
+      
+      // Note: Don't fetchFiles here for heavy uploads - will be refreshed when WSS notification arrives
+      // Only fetch if there were immediate uploads
+      if (immediateUploads > 0) {
         await fetchFiles();
       }
     } catch (error) {
@@ -248,6 +323,7 @@ export const useFileManager = (): FileManagerContextType => {
       // Extract message if possible
       const msg = error instanceof Error ? error.message : t('uploadError');
       toast.error(`${t('uploadError')}: ${msg}`);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -300,6 +376,11 @@ export const useFileManager = (): FileManagerContextType => {
     }
   }, [fetchFiles, t]);
 
+  // Clear a specific heavy upload from the list (after WSS notification received)
+  const clearHeavyUpload = useCallback((roomId: string) => {
+    setHeavyUploads(prev => prev.filter(upload => upload.roomId !== roomId));
+  }, []);
+
   return {
     currentPath,
     setCurrentPath,
@@ -331,6 +412,8 @@ export const useFileManager = (): FileManagerContextType => {
     setFilterType: (type: string) => setFilterOptions(prev => ({ ...prev, type: type as FilterType })),
     sortBy: sortOptions.field,
     setSortBy: (field: SortField) => setSortOptions(prev => ({ ...prev, field })),
-    copyFiles
+    copyFiles,
+    heavyUploads,
+    clearHeavyUpload,
   };
 };

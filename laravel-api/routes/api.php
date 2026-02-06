@@ -47,10 +47,14 @@ use App\Http\Controllers\History\Management\SkillMgmtHistController;
 use App\Http\Controllers\History\Management\SliderMgmtHistController;
 use App\Http\Controllers\History\Management\SocialMgmtHistController;
 use App\Http\Controllers\History\Management\UserMgmtHistController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::prefix('admin')
-  ->middleware(GenerateResponseMiddleware::class, TransactionMiddleware::class)
+  ->middleware([GenerateResponseMiddleware::class, TransactionMiddleware::class])
   ->group(function () {
+    // Broadcasting auth endpoint for WebSocket (Reverb)
+    // Placed here to match cookie path /api/admin
+    Broadcast::routes(['middleware' => ['api', AdminMiddleware::class]]);
     Route::prefix('credential')->group(function () {
       Route::post('login', [CredentialController::class, 'login']);
       Route::prefix('trust')->group(function () {

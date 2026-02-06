@@ -469,6 +469,7 @@ Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác n
     + Front-end: Nếu connect wss thất bại, thử reconnect lại vài lần, mỗi lần thử lại thời gian chờ theo lũy thừa giãn ra. Nếu quá số lần thất bại thì thông báo lỗi connect cho user, thành công thì báo reconnect thành công. FE sẽ lưu last_message_id để đánh dấu message gần nhất đã nhận.
     + WSS: Khi nhận được last_message_id từ FE, wss kiểm tra last_messsage_id đó ở đâu ? nếu là mới nhất thì không làm gì cả, nếu nó bị cũ thì gửi thêm cho socket id đó những message bị miss từ đó đến message mới nhất.
     + API: Đăng thông tin tin nhắn lên redis, thông tin bao gồm wss id + room id + message. WSS sẽ follow và thực hiện gửi tin nhắn đến các socket id. Khi không dùng client gửi out room, room không có ai nó tự xóa.
+    + API: Tạo job tự động clean các record có status inprogress với update time >24H so với hiện tại, chạy định kỳ hàng ngày 1 lần. Để tránh rác dũ liệu.
 
 
     + Note: Tùy thuộc vào chức năng khác nhau và ở client or api sẽ thực hiện close connection or xóa room tương ứng.

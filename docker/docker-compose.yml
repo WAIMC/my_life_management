@@ -123,6 +123,72 @@ services:
           memory: 512M # Increased from 256M
           cpus: "2"
 
+  # Laravel Queue Worker
+  ml-queue-worker:
+    container_name: ml-queue-worker
+    build:
+      context: ../laravel-api
+      dockerfile: ../docker/laravel/Dockerfile
+      target: development
+      args:
+        PHP_VERSION: "8.3"
+    restart: unless-stopped
+    working_dir: /var/www/laravel-api
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=600", "--memory=512", "--sleep=3"]
+    volumes:
+      - ../laravel-api:/var/www/laravel-api
+      - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    environment:
+      # Database
+      DB_CONNECTION: pgsql
+      DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
+      DB_PORT: ${POSTGRES_PORT_INSIDE_ENV}
+      DB_DATABASE: ${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Redis
+      REDIS_HOST: ${REDIS_HOST_INSIDE_ENV}
+      REDIS_PORT: ${REDIS_PORT_INSIDE_ENV}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # Laravel
+      APP_ENV: local
+      APP_DEBUG: "true"
+      QUEUE_CONNECTION: database
+
+      # MinIO (for job access)
+      MINIO_ENDPOINT: http://${MINIO_HOST_INSIDE_ENV}:${MINIO_PORT_INSIDE_ENV}
+      MINIO_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET: ${MINIO_ROOT_PASSWORD}
+
+      # Reverb (for broadcasting)
+      REVERB_APP_ID: my-app-id
+      REVERB_APP_KEY: my-app-key
+      REVERB_APP_SECRET: my-app-secret
+      REVERB_HOST: ml-reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+    depends_on:
+      ml-postgres:
+        condition: service_healthy
+      ml-redis:
+        condition: service_healthy
+      ml-php:
+        condition: service_healthy
+      ml-minio:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "4"
+        reservations:
+          memory: 256M
+          cpus: "1"
+
   # Laravel Reverb Server
   ml-reverb:
     container_name: ml-reverb

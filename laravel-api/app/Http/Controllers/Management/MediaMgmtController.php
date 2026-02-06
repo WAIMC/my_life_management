@@ -31,7 +31,7 @@ class MediaMgmtController extends Controller
   /**
    * Store media (file upload or folder creation)
    */
-  public function store(StoreMediaMgmtRequest $request): int
+  public function store(StoreMediaMgmtRequest $request): int|array
   {
     return $this->mediaMgmt->store($request->validated());
   }

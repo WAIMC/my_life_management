@@ -192,6 +192,7 @@ export const MULTIPART_UPLOAD_CONFIG = {
   RETRY_JITTER: 500,                 // Increased for better distribution
   HTTP_STATUS_OK_MIN: 200,
   HTTP_STATUS_OK_MAX: 300,
+  TIMEOUT_MS: 90000,                 // 90 seconds timeout per part (increased for large parts)
   
   // HTTP version-based concurrency limits
   HTTP_VERSION_LIMITS: {

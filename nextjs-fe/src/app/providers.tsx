@@ -44,7 +44,8 @@ function NavigationProvider() {
 import { AuthProvider } from '@/providers/auth-provider';
 import { GlobalLoadingProvider } from '@/shared/providers/global-loading-provider';
 
-import { WebSocketNotification } from '@/components/common/WebSocketNotification';
+// WebSocketNotification removed - WebSocket connections are now handled
+// per upload session in HeavyUploadNotification component
 
 export function Providers({ 
   children,
@@ -98,7 +99,6 @@ export function Providers({
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WebSocketNotification />
         <NextIntlClientProvider messages={currentMessages} locale={currentLocale} timeZone="UTC">
           <ThemeProvider
             attribute="class"

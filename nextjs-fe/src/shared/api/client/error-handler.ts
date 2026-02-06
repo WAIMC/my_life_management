@@ -1,10 +1,26 @@
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast/headless';
 import { HTTP_STATUS } from '@/shared/config/constant';
+import { ApiResponse } from '@/shared/types/api';
 
-const getErrorMessage = (error: AxiosError<{ message?: string }>): string => {
-  if (error.response?.data?.message) {
-    return error.response.data.message;
+const getErrorMessage = (error: AxiosError<ApiResponse<unknown> | { message?: string }>): string => {
+  const responseData = error.response?.data;
+  
+  // Check if it's ApiResponse format
+  if (responseData && typeof responseData === 'object' && 'error' in responseData) {
+    const apiResponse = responseData as ApiResponse<unknown>;
+    if (apiResponse.error?.messages) {
+      const messages = apiResponse.error.messages;
+      return Array.isArray(messages) ? messages.join(', ') : messages;
+    }
+  }
+  
+  // Fallback to old format
+  if (responseData && typeof responseData === 'object' && 'message' in responseData) {
+    const oldFormat = responseData as { message?: string };
+    if (oldFormat.message) {
+      return oldFormat.message;
+    }
   }
 
   if (error.message) {
@@ -14,7 +30,7 @@ const getErrorMessage = (error: AxiosError<{ message?: string }>): string => {
   return 'errors.E0005';
 };
 
-export const handleCommonError = (error: AxiosError<{ message?: string }>) => {
+export const handleCommonError = (error: AxiosError<ApiResponse<unknown> | { message?: string }>) => {
   if (!error.response) {
     toast.error('errors.E0004');
     return Promise.reject(error);

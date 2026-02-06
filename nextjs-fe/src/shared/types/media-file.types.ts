@@ -179,4 +179,18 @@ export interface HeavyUploadResult {
   mime_type: string;
   size: number;
   key: string;
+  media_id?: number;
+  room_id?: string;
+  status?: number;
+  message?: string;
+}
+
+/**
+ * Unified upload response for both light and heavy files
+ */
+export interface UploadResponse {
+  media_id: number;
+  room_id: string | null;
+  status: number; // 1 = PROCESSING, 2 = COMPLETED, 3 = FAILED
+  message: string;
 }

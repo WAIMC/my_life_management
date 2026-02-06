@@ -19,7 +19,7 @@ class UploadStatusUpdated implements ShouldBroadcast
    * Create a new event instance.
    */
   public function __construct(
-    public int $userId,
+    public ?int $userId,
     public string $roomId,
     public int $status,
     public string $message,

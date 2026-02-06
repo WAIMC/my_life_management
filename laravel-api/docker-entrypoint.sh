@@ -38,15 +38,22 @@ echo ""
 # Step 2: Fresh Composer Install
 echo -e "${YELLOW}[2/6] Managing Composer packages...${NC}"
 
-echo -e "${BLUE}  -> Removing vendor directory and composer.lock...${NC}"
-rm -rf vendor composer.lock
+if [ ! -d "vendor" ]; then
+    echo -e "${BLUE}  -> No vendor directory found, will perform fresh install...${NC}"
+else
+    echo -e "${BLUE}  -> Vendor directory exists, will update...${NC}"
+fi
 
-echo -e "${BLUE}  -> Installing dependencies...${NC}"
+echo -e "${BLUE}  -> Configuring Composer settings...${NC}"
+composer config --global process-timeout 600
+composer config --global cache-files-maxsize 512MiB
+
+echo -e "${BLUE}  -> Installing dependencies (this may take a while)...${NC}"
 if composer install \
     --no-interaction \
-    --no-progress \
     --prefer-dist \
-    --optimize-autoloader; then
+    --optimize-autoloader \
+    --ignore-platform-req=ext-awscrt; then
     
     echo -e "${GREEN}  ✓ Composer packages installed successfully${NC}"
 else
@@ -133,9 +140,16 @@ echo "  ✓ Database: migrations completed"
 echo "  ✓ Permissions: synced"
 echo ""
 echo "============================================"
-echo "  Starting PHP-FPM..."
+echo "  Starting service..."
 echo "============================================"
 echo ""
 
-# Start PHP-FPM
-exec php-fpm
+# Execute the command passed to the container
+# If no command is provided, default to php-fpm
+if [ $# -eq 0 ]; then
+    echo "No command provided, starting PHP-FPM..."
+    exec php-fpm
+else
+    echo "Executing command: $@"
+    exec "$@"
+fi

@@ -73,6 +73,12 @@ class AdminMiddleware
     // Set current admin ID for Service consumption
     $request->attributes->set('current_admin_id', $credentials['id']);
 
+    // Set a pseudo user object for broadcasting auth
+    // Broadcasting authorization expects $user parameter
+    $request->setUserResolver(function () use ($credentials) {
+      return (object) ['id' => $credentials['id'], 'type' => $credentials['type']];
+    });
+
     return $next($request);
   }
 }

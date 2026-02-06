@@ -124,13 +124,14 @@ export class MultipartUploader {
             const xhr = new XMLHttpRequest();
             await new Promise((res, rej) => {
                 xhr.open('PUT', part.url!, true);
+                xhr.timeout = MULTIPART_UPLOAD_CONFIG.TIMEOUT_MS;
                 
                 // Track progress
                 xhr.upload.onprogress = (e) => {
-                   if (e.lengthComputable) {
-                       this.loadedBytesByPart[part.partNumber] = e.loaded;
-                       this.updateProgress();
-                   }
+                  if (e.lengthComputable) {
+                      this.loadedBytesByPart[part.partNumber] = e.loaded;
+                      this.updateProgress();
+                  }
                 };
 
                 xhr.onload = () => {
@@ -169,16 +170,30 @@ export class MultipartUploader {
             this.activeUploads--;
             part.attempts++;
             
+            // Log the error details for debugging
+            const errorDetails = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`[MultipartUploader] Part ${part.partNumber} failed (attempt ${part.attempts}/${MULTIPART_UPLOAD_CONFIG.MAX_RETRIES}):`, errorDetails);
+            
             if (part.attempts >= MULTIPART_UPLOAD_CONFIG.MAX_RETRIES) {
                 this.failed = true;
-                const message = en.media.multipart.partFailedMaxRetries
+                
+                // Provide user-friendly error message based on error type
+                let userMessage = en.media.multipart.partFailedMaxRetries
                     .replace('{partNumber}', part.partNumber.toString())
                     .replace('{maxRetries}', MULTIPART_UPLOAD_CONFIG.MAX_RETRIES.toString());
-                reject(new Error(message));
+                
+                // Add specific guidance based on error type
+                if (errorDetails.includes('timeout') || errorDetails.includes('Timeout')) {
+                    userMessage = `${userMessage} ${en.media.multipart.timeout}`;
+                } else if (errorDetails.includes('Network') || errorDetails.includes('network')) {
+                    userMessage = `${userMessage} ${en.media.multipart.networkError}`;
+                }
+                
+                reject(new Error(userMessage));
                 return;
             }
 
-            // Retry logic with backoff
+            // Retry logic with exponential backoff
             const delay = MULTIPART_UPLOAD_CONFIG.RETRY_DELAY_BASE * Math.pow(2, part.attempts) + Math.random() * MULTIPART_UPLOAD_CONFIG.RETRY_JITTER;
             const warnMessage = en.media.multipart.partFailedRetry
                 .replace('{partNumber}', part.partNumber.toString())
@@ -265,8 +280,8 @@ export class MultipartUploader {
 
     private async finalizeUpload() {
         this.completedParts.sort((a, b) => a.part_number - b.part_number);
-         
-         const requestPayload = {
+
+        const requestPayload = {
             key: this.key,
             upload_id: this.uploadId,
             parts: this.completedParts,

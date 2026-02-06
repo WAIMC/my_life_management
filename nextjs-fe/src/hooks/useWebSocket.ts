@@ -27,32 +27,46 @@ export const useWebSocket = ({
   const echoRef = useRef<Echo<any> | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    // Only initialize Echo if roomId is provided
+    // This prevents unnecessary WebSocket connections
+    if (!roomId) {
+      console.log('No roomId provided, skipping WebSocket connection');
+      return;
+    }
+
+    // Cookie-based auth: Initialize Echo
+    // The HttpOnly cookie will be sent automatically
 
     // Configure Echo with Reverb
     // Reverb uses Pusher protocol
-    const echo = new Echo({
-      broadcaster: 'reverb',
+    const echoConfig = {
+      broadcaster: 'reverb' as const,
       key: process.env.NEXT_PUBLIC_REVERB_APP_KEY || 'my-app-key',
       wsHost: process.env.NEXT_PUBLIC_REVERB_HOST || 'localhost',
       wsPort: process.env.NEXT_PUBLIC_REVERB_PORT ? parseInt(process.env.NEXT_PUBLIC_REVERB_PORT) : 8080,
       wssPort: process.env.NEXT_PUBLIC_REVERB_PORT ? parseInt(process.env.NEXT_PUBLIC_REVERB_PORT) : 8080,
       forceTLS: (process.env.NEXT_PUBLIC_REVERB_SCHEME || 'http') === 'https',
       enabledTransports: ['ws', 'wss'],
-      authEndpoint: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/broadcasting/auth`,
+      // Cookie will be sent automatically by browser (path=/api/admin, httpOnly)
+      authEndpoint: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/broadcasting/auth`,
       auth: {
-        headers: {
+        headers: token ? {
           Authorization: `Bearer ${token}`,
-        },
+        } : {},
       },
-    });
+    };
 
-    echo.connector.pusher.connection.bind('connected', () => {
-      console.log('Reverb Connected');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const echo = new Echo(echoConfig as any);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (echo.connector as any).pusher?.connection.bind('connected', () => {
+      console.log('Reverb Connected for room:', roomId);
       setIsConnected(true);
     });
 
-    echo.connector.pusher.connection.bind('disconnected', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (echo.connector as any).pusher?.connection.bind('disconnected', () => {
       console.log('Reverb Disconnected');
       setIsConnected(false);
     });
@@ -62,7 +76,7 @@ export const useWebSocket = ({
     return () => {
       echo.disconnect();
     };
-  }, [token]);
+  }, [token, roomId]); // Include roomId to reconnect when it changes
 
   // Subscribe to Room Channel
   useEffect(() => {

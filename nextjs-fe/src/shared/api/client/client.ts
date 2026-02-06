@@ -41,6 +41,20 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response) => {
+        // Check if response body has error.status = true (business logic error)
+        const data = response.data;
+        if (data && typeof data === 'object' && 'error' in data) {
+          const errorInfo = data.error as { status: boolean; messages?: string | string[] | null };
+          if (errorInfo.status === true && errorInfo.messages) {
+            // Business logic error - show error message
+            const errorMsg = Array.isArray(errorInfo.messages) 
+              ? errorInfo.messages.join(', ') 
+              : errorInfo.messages;
+            console.error('[API Error]', errorMsg);
+            // Don't reject, let the caller handle it
+            // return Promise.reject(new Error(errorMsg));
+          }
+        }
         return response;
       },
       async (error: AxiosError) => {
@@ -91,7 +105,7 @@ class ApiClient {
           }
         }
 
-        return handleCommonError(error as AxiosError<ApiResponse<unknown>>);
+        return handleCommonError(error as AxiosError<ApiResponse<unknown> | { message?: string }>);
       }
     );
   }

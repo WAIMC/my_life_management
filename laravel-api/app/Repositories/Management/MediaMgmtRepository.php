@@ -49,6 +49,21 @@ class MediaMgmtRepository extends BaseRepository implements MediaMgmtInterface
             $query->where('is_file', $payload['is_file']);
         }
 
+        // Filter by upload status (default: only show completed files)
+        if (isset($payload['upload_status'])) {
+            if (is_array($payload['upload_status'])) {
+                $query->whereIn('upload_status', $payload['upload_status']);
+            } else {
+                $query->where('upload_status', $payload['upload_status']);
+            }
+        } else {
+            // Default: only show completed files (or folders which don't have upload_status)
+            $query->where(function ($q) {
+                $q->where('upload_status', \App\Enums\UploadStatus::COMPLETED->value)
+                  ->orWhere('is_file', false); // Folders don't have upload status
+            });
+        }
+
         // Filter by MIME type
         if (isset($payload['mime_type'])) {
             $query->where('mime_type', 'LIKE', $payload['mime_type'] . '%');

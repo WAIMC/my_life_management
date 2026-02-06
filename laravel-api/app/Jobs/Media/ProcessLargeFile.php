@@ -47,7 +47,8 @@ class ProcessLargeFile implements ShouldQueue
    */
   public function __construct(
     protected MediaMgmt $media,
-    protected string $tempKey
+    protected string $tempKey,
+    protected string $roomId
   ) {}
 
   /**
@@ -56,9 +57,7 @@ class ProcessLargeFile implements ShouldQueue
   public function handle(MinioService $minioService, RedisPublisher $redisPublisher): void
   {
     $startTime = microtime(true);
-    Log::info("Processing large file upload for Media ID: {$this->media->id}");
-
-    $roomId = $this->determineRoomId();
+    Log::info("Processing large file upload for Media ID: {$this->media->id}, Room ID: {$this->roomId}");
 
     try {
       // 1. Move file from Temp to Official
@@ -85,12 +84,11 @@ class ProcessLargeFile implements ShouldQueue
       $duration = microtime(true) - $startTime;
 
       // 3. Notify User via Reverb (Event)
-      // Room ID logic: "{userId}_noti_upload_file"
       $userId = $this->media->created_by;
 
       broadcast(new \App\Events\UploadStatusUpdated(
         userId: $userId,
-        roomId: $roomId,
+        roomId: $this->roomId,
         status: \App\Enums\UploadStatus::COMPLETED->value,
         message: 'Upload completed successfully.',
         fileId: $this->media->id,
@@ -121,7 +119,7 @@ class ProcessLargeFile implements ShouldQueue
 
         broadcast(new \App\Events\UploadStatusUpdated(
           userId: $userId,
-          roomId: $roomId,
+          roomId: $this->roomId,
           status: \App\Enums\UploadStatus::FAILED->value,
           message: 'Upload failed after retries.'
         ));
@@ -129,17 +127,5 @@ class ProcessLargeFile implements ShouldQueue
 
       throw $e; // Trigger retry
     }
-  }
-
-  protected function determineRoomId(): string
-  {
-    // Define room logic. The user said: "client gửi request join room...".
-    // Usually, the room ID is related to the user ID or a specific context.
-    // For "private" notification: user_id + name feature.
-    // Example: "{userId}_noti_upload_file"
-
-    // We need userId. MediaMgmt has 'created_by' (which usually is userId).
-    $userId = $this->media->created_by;
-    return "{$userId}_noti_upload_file";
   }
 }

@@ -339,9 +339,10 @@
       "noEtag": "No ETag in response",
       "uploadFailedStatus": "Upload failed with status {status}",
       "networkError": "Network error",
-      "timeout": "Timeout",
-      "partFailedMaxRetries": "Part {partNumber} failed after {maxRetries} attempts",
-      "partFailedRetry": "Part {partNumber} failed, retrying in {delay}ms"
+      "timeout": "Request timeout - the server took too long to respond",
+      "partFailedMaxRetries": "Upload failed: Part {partNumber} failed after {maxRetries} attempts. Please check your connection and try again.",
+      "partFailedRetry": "Part {partNumber} failed, retrying in {delay}ms",
+      "uploadFailedAfterRetries": "Upload failed after multiple retry attempts. Please check your network connection and try again."
     }
   },
   "savedFilters": {
@@ -463,7 +464,9 @@
         "finalizing": "Finalizing upload...",
         "failedToUploadToTemp": "Failed to upload file to temporary storage",
         "autoUploadError": "Auto-upload error",
-        "commitError": "Commit error"
+        "commitError": "Commit error",
+        "filesWithErrors": "Some files failed to upload",
+        "removeFailedFiles": "Please remove failed files before uploading. You can retry by removing them and adding them again."
       },
       "newFolder": {
         "title": "New Folder",

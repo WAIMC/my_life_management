@@ -99,6 +99,22 @@ export const IsDeleteLabels: Record<IsDelete, string> = {
 };
 
 // ==========================================
+// UploadStatus (app/Enums/UploadStatus.php)
+// File upload processing status
+// ==========================================
+export enum UploadStatus {
+  PROCESSING = 1,
+  COMPLETED = 2,
+  FAILED = 3,
+}
+
+export const UploadStatusLabels: Record<UploadStatus, string> = {
+  [UploadStatus.PROCESSING]: 'Processing',
+  [UploadStatus.COMPLETED]: 'Completed',
+  [UploadStatus.FAILED]: 'Failed',
+};
+
+// ==========================================
 // CategoryStatus (app/Enums/CategoryStatus.php)
 // ==========================================
 export enum CategoryStatus {

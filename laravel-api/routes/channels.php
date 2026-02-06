@@ -8,12 +8,24 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 Broadcast::channel('upload.status.{roomId}', function ($user, $roomId) {
   // Logic to authorize user for this room.
-  // Ensure roomId starts with userId to verify ownership
-  // Room Format: "{userId}_noti_upload_file"
-
+  // Room Format: "{uuid}_{userId}_upload_file"
+  // Extract userId from middle part
+  
   $parts = explode('_', $roomId);
-  if (count($parts) > 0 && (int)$parts[0] === (int)$user->id) {
-    return true;
+  // Expected format: [uuid, userId, 'upload', 'file']
+  if (count($parts) >= 4) {
+    $userId = $parts[1];
+    
+    // Get user ID from AdminMiddleware attributes
+    // Note: $user here is authenticated via AdminMiddleware's JWT
+    // AdminMiddleware stores 'current_admin_id' in request attributes
+    // But in broadcast auth context, we need to extract from JWT again
+    // So we compare with the userId embedded in roomId
+    
+    // Since AdminMiddleware already authenticated this user,
+    // we just need to verify the roomId belongs to them
+    return (int)$userId === (int)$user->id;
   }
+  
   return false;
 });

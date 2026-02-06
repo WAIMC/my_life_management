@@ -38,6 +38,7 @@ export const UploadDialog = ({
   const isAnyFileUploading = uploadedFiles.some(f => f.uploading);
   const allFilesUploaded = uploadedFiles.length > 0 && uploadedFiles.every(f => f.uploaded || f.error);
   const hasValidFiles = uploadedFiles.some(f => f.uploaded);
+  const hasAnyErrors = uploadedFiles.some(f => f.error);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -137,13 +138,13 @@ export const UploadDialog = ({
         // Heavy File Upload Flow
         const uploader = new MultipartUploader(file, (progress) => {
              // Update progress
-             setUploadedFiles(prev => prev.map(uf => {
-               const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
-               if (id === fileId) {
-                 return { ...uf, progress: progress.percentage };
-               }
-               return uf;
-             }));
+            setUploadedFiles(prev => prev.map(uf => {
+              const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
+              if (id === fileId) {
+                return { ...uf, progress: progress.percentage };
+              }
+              return uf;
+            }));
         }, undefined, currentPath);
 
         const result = await uploader.start();
@@ -156,6 +157,12 @@ export const UploadDialog = ({
               const extendedFile = uf.file as ExtendedFile;
               extendedFile.isHeavyUploaded = true;
               extendedFile.tempKey = result.key; // Use real key from backend
+              extendedFile.tempMetadata = {
+                original_name: result.original_name,
+                extension: result.extension,
+                mime_type: result.mime_type,
+                size: result.size,
+              };
 
               return {
                 ...uf,
@@ -177,7 +184,19 @@ export const UploadDialog = ({
       } else {
         // Normal Upload Flow
         // Upload to temp bucket via presigned URL
-        const metadata = await mediaFileService.uploadToMinio({ file });
+        const metadata = await mediaFileService.uploadToMinio({ 
+          file,
+          onProgress: (percentage) => {
+            // Update progress
+            setUploadedFiles(prev => prev.map(uf => {
+              const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
+              if (id === fileId) {
+                return { ...uf, progress: percentage };
+              }
+              return uf;
+            }));
+          }
+        });
 
         if (!metadata) {
             throw new Error(t('upload.failedToUploadToTemp'));
@@ -187,19 +206,29 @@ export const UploadDialog = ({
         setUploadedFiles(prev => prev.map(uf => {
             const id = `${uf.file.name}-${uf.file.size}-${uf.file.lastModified}`;
             if (id === fileId) {
-            return {
+              // Attach metadata to file object for useFileManager
+              const extendedFile = uf.file as ExtendedFile;
+              extendedFile.tempKey = metadata.key;
+              extendedFile.tempMetadata = {
+                original_name: metadata.original_name,
+                extension: metadata.extension,
+                mime_type: metadata.mime_type,
+                size: metadata.size,
+              };
+
+              return {
                 ...uf,
                 key: metadata.key,
                 preview,
                 uploading: false,
                 uploaded: true,
                 metadata: {
-                original_name: metadata.original_name,
-                extension: metadata.extension,
-                mime_type: metadata.mime_type,
-                size: metadata.size,
+                  original_name: metadata.original_name,
+                  extension: metadata.extension,
+                  mime_type: metadata.mime_type,
+                  size: metadata.size,
                 }
-            };
+              };
             }
             return uf;
         }));
@@ -283,6 +312,9 @@ export const UploadDialog = ({
       await onUpload(filesToCommit);
       
       setCommitProgress(100);
+      clearInterval(interval);
+      
+      // Only close dialog if successful
       setTimeout(() => {
         setUploadedFiles([]);
         setCommitting(false);
@@ -290,6 +322,7 @@ export const UploadDialog = ({
         onOpenChange(false);
       }, UPLOAD_CONFIG.COMPLETE_DELAY_MS);
     } catch (err: unknown) {
+      clearInterval(interval);
       setCommitting(false);
       setCommitProgress(0);
       
@@ -301,8 +334,8 @@ export const UploadDialog = ({
       
       setError(errorMessage);
       console.error(t('upload.commitError'), err);
-    } finally {
-      clearInterval(interval);
+      
+      // DO NOT close dialog on error - let user see the error and retry
     }
   };
 
@@ -356,7 +389,10 @@ export const UploadDialog = ({
               {uploadedFiles.map((uploadedFile, index) => (
                 <div
                   key={`${uploadedFile.file.name}-${index}`}
-                  className="flex items-start gap-3 rounded-md border border-border p-3 text-sm"
+                  className={cn(
+                    "flex items-start gap-3 rounded-md border p-3 text-sm",
+                    uploadedFile.error ? "border-destructive bg-destructive/5" : "border-border"
+                  )}
                 >
                   {/* Preview or Icon */}
                   <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-muted flex items-center justify-center">
@@ -399,7 +435,17 @@ export const UploadDialog = ({
                         {uploadedFile.error && (
                           <AlertCircle className="h-4 w-4 text-destructive" />
                         )}
-                        {!uploadedFile.uploading && !uploadedFile.error && (
+                        {!uploadedFile.uploading && !uploadedFile.uploaded && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 -mr-2"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {!uploadedFile.uploading && uploadedFile.uploaded && !uploadedFile.error && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -417,8 +463,19 @@ export const UploadDialog = ({
                       <p className="text-xs text-destructive mt-1">{uploadedFile.error}</p>
                     )}
                     
-                    {/* Uploading Status */}
-                    {uploadedFile.uploading && (
+                    {/* Progress Bar */}
+                    {uploadedFile.uploading && uploadedFile.progress !== undefined && (
+                      <div className="mt-2">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-primary">{t('upload.uploadingToTemp')}</span>
+                          <span className="text-primary font-medium">{uploadedFile.progress}%</span>
+                        </div>
+                        <Progress value={uploadedFile.progress} className="h-1.5" />
+                      </div>
+                    )}
+                    
+                    {/* Uploading Status without Progress */}
+                    {uploadedFile.uploading && uploadedFile.progress === undefined && (
                       <p className="text-xs text-primary mt-1">{t('upload.uploadingToTemp')}</p>
                     )}
                   </div>
@@ -446,6 +503,17 @@ export const UploadDialog = ({
             </div>
           )}
 
+          {/* Files with errors warning */}
+          {hasAnyErrors && !error && (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-destructive">{t('upload.filesWithErrors')}</p>
+                <p className="text-destructive/90 mt-1">{t('upload.removeFailedFiles')}</p>
+              </div>
+            </div>
+          )}
+
           {/* Commit Progress Bar */}
           {committing && (
             <div className="space-y-2">
@@ -468,7 +536,7 @@ export const UploadDialog = ({
             </Button>
             <Button
               onClick={handleCommit}
-              disabled={!hasValidFiles || committing || isAnyFileUploading || !allFilesUploaded || isExternalLoading}
+              disabled={!hasValidFiles || committing || isAnyFileUploading || !allFilesUploaded || isExternalLoading || hasAnyErrors}
             >
               {committing || isExternalLoading ? t('upload.uploading') : t('upload.uploadButton')}
             </Button>

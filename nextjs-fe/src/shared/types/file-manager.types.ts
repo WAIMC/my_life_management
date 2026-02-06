@@ -147,6 +147,10 @@ export interface FileManagerContextType {
   renameFile?: (id: string, newName: string) => Promise<void>;
   moveFiles?: (ids: string[], targetPath: string) => Promise<void>;
   copyFiles?: (ids: string[], targetPath: string) => Promise<void>;
+  
+  // Heavy file upload tracking (for WebSocket notifications)
+  heavyUploads?: Array<{ roomId: string; fileName: string }>;
+  clearHeavyUpload?: (roomId: string) => void;
 }
 
 /**
