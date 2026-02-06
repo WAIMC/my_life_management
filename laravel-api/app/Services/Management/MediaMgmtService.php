@@ -245,6 +245,9 @@ class MediaMgmtService extends BaseService
   /**
    * Store file from Temp (Move to Official + Create DB Record)
    */
+  /**
+   * Store file from Temp (Move to Official + Create DB Record)
+   */
   public function storeFromTemp(array $payload): int
   {
     $tempKey = $payload['key']; // This is the path in temp bucket: {uuid}.{ext}
@@ -263,12 +266,7 @@ class MediaMgmtService extends BaseService
     $officialDisk = MediaConst::DISK_OFFICIAL;
     $officialPath = $this->minioService->generateStoragePath($extension, $officialDisk, $workspaceId);
 
-    // 3. Move file from Temp to Official
-    if (!$this->minioService->move(MediaConst::DISK_TEMP, $tempKey, $officialDisk, $officialPath)) {
-      throw new Exception(__('messages.media.move_temp_failed'));
-    }
-
-    // 4. Create DB Record
+    // 3. Create DB Record (Processing)
     $virtualPath = rtrim($parentPath, '/') . '/' . $originalName;
 
     $data = [
@@ -278,17 +276,24 @@ class MediaMgmtService extends BaseService
       'storage_path' => $officialPath,
       'original_name' => $originalName,
       'extension' => $extension,
-      'mime_type' => $payload['mime_type'] ?? null, // optional
-      'size' => $payload['size'] ?? 0, // optional, but better if provided
+      'mime_type' => $payload['mime_type'] ?? null,
+      'size' => $payload['size'] ?? 0,
       'minio_bucket' => $officialDisk,
       'minio_object_key' => $officialPath,
       'url' => $this->minioService->getPublicUrl($officialDisk, $officialPath),
       'is_delete' => false,
-      // Metadata like width/height is harder to extract without downloading, 
-      // but client can send it if needed, or we use a lambda/worker later.
+      'minio_object_key' => $officialPath,
+      'url' => $this->minioService->getPublicUrl($officialDisk, $officialPath),
+      'upload_status' => \App\Enums\UploadStatus::PROCESSING, // Mark as processing
     ];
 
-    return $this->mediaMgmt->executeStore($data);
+    $mediaId = $this->mediaMgmt->executeStore($data);
+    $media = $this->mediaMgmt->find($mediaId);
+
+    // 4. Dispatch Job to Process File (Move + Notify)
+    \App\Jobs\Media\ProcessLargeFile::dispatch($media, $tempKey);
+
+    return $media->id;
   }
 
   /**

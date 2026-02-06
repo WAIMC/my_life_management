@@ -41,7 +41,7 @@ export function createCrudService<T>(config: ServiceConfig): CrudServiceOperatio
 
   return {
     async list(params: ListQueryParams = {}) {
-      return apiClient.get<PaginatedResponse<T>>(endpoints.list, params);
+      return apiClient.get<PaginatedResponse<T>>(endpoints.list, { params });
     },
 
     async getById(id: number) {
@@ -58,7 +58,7 @@ export function createCrudService<T>(config: ServiceConfig): CrudServiceOperatio
     },
 
     async delete(ids: number[]) {
-      await apiClient.delete(endpoints.delete, { ids });
+      await apiClient.delete(endpoints.delete, { data: { ids } });
     },
   };
 }

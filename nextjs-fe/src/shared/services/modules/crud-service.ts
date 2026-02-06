@@ -46,7 +46,7 @@ export class CrudService<T = Record<string, unknown>> {
    */
   async list(params?: ListQueryParams): Promise<PaginatedResponse<T>> {
     const url = `${this.baseUrl}${this.endpoints.list}`;
-    const response = await apiClient.get<PaginatedResponse<T>>(url, params);
+    const response = await apiClient.get<PaginatedResponse<T>>(url, { params });
     return response.data;
   }
 

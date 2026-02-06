@@ -35,7 +35,7 @@ export function MediaManager() {
 
       const response = await mediaFileService.list(params);
       setFiles(response.data);
-      setTotalPages(response.last_page);
+      setTotalPages(response.last_page ?? 1);
     } catch {
       alert(t('media.failedToLoadFiles'));
     } finally {

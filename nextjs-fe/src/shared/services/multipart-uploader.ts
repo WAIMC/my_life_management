@@ -1,6 +1,6 @@
 import { mediaFileService } from './modules/media-file.service';
 import { MultipartPart, Part, UploadProgress, HeavyUploadResult } from '../types/media-file.types';
-import { MULTIPART_UPLOAD_CONFIG } from '../config/constant';
+import { MULTIPART_UPLOAD_CONFIG, PART_SIZE_CONFIG } from '../config/constant';
 import en from '../../../messages/en.json';
 
 export class MultipartUploader {
@@ -34,6 +34,16 @@ export class MultipartUploader {
     }
 
     async start(): Promise<HeavyUploadResult> {
+        // Calculate optimal settings dynamically
+        const optimalConcurrency = this.calculateConcurrency();
+        
+        console.info('[MultipartUploader] Dynamic config calculated:', {
+            fileSize: this.file.size,
+            fileName: this.file.name,
+            optimalConcurrency,
+            // Backend will calculate part size
+        });
+        
         // 1. Init Multipart Upload
         const initData = await mediaFileService.initMultipartUpload({
             extension: this.file.name.split('.').pop() || '',
@@ -46,6 +56,13 @@ export class MultipartUploader {
         this.key = initData.key;
         this.partSize = initData.part_size;
         this.partsCount = initData.parts_count;
+        
+        console.info('[MultipartUploader] Upload initialized:', {
+            uploadId: this.uploadId,
+            key: this.key,
+            partSize: this.partSize,
+            partsCount: this.partsCount,
+        });
 
         // 2. Prepare Parts
         for (let i = 0; i < this.partsCount; i++) {
@@ -62,7 +79,8 @@ export class MultipartUploader {
         
         this.pendingQueue = [...this.parts];
 
-        // 3. Start Upload Loop
+        // 3. Start Upload Loop with dynamic concurrency
+        // Note: We'll need to modify processQueue to use dynamic concurrency
         return new Promise<HeavyUploadResult>((resolve, reject) => {
             this.processQueue(resolve, reject);
         });
@@ -183,6 +201,66 @@ export class MultipartUploader {
             total,
             percentage: Math.round((loaded / total) * 100)
         });
+    }
+
+    /**
+     * Calculate optimal part size based on file size
+     */
+    private calculatePartSize(fileSize: number): number {
+        if (fileSize < PART_SIZE_CONFIG.MEDIUM_FILE_THRESHOLD) {
+            return Math.max(
+                PART_SIZE_CONFIG.MIN_PART_SIZE_16MB, 
+                Math.ceil(fileSize / PART_SIZE_CONFIG.MAX_PARTS)
+            );
+        } else if (fileSize < PART_SIZE_CONFIG.LARGE_FILE_THRESHOLD) {
+            return Math.max(
+                PART_SIZE_CONFIG.MIN_PART_SIZE_32MB,
+                Math.ceil(fileSize / PART_SIZE_CONFIG.MAX_PARTS)
+            );
+        } else if (fileSize < PART_SIZE_CONFIG.HUGE_FILE_THRESHOLD) {
+            return Math.max(
+                PART_SIZE_CONFIG.MIN_PART_SIZE_64MB,
+                Math.ceil(fileSize / PART_SIZE_CONFIG.MAX_PARTS)
+            );
+        } else {
+            return Math.max(
+                PART_SIZE_CONFIG.MIN_PART_SIZE_128MB,
+                Math.ceil(fileSize / PART_SIZE_CONFIG.MAX_PARTS)
+            );
+        }
+    }
+
+    /**
+     * Detect HTTP version and calculate optimal concurrency
+     */
+    private calculateConcurrency(): number {
+        // Try to detect HTTP/2 support
+        const performance = window.performance;
+        const navEntry = performance.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming & { nextHopProtocol?: string } | undefined;
+        const nextHopProtocol = navEntry?.nextHopProtocol || '';
+        
+        const supportsHTTP2 = nextHopProtocol === 'h2' || nextHopProtocol === 'h2c';
+        const supportsHTTP3 = nextHopProtocol === 'h3';
+        
+        const navigator = window.navigator;
+        const cpuCores = (navigator as Navigator & { hardwareConcurrency?: number }).hardwareConcurrency || 4;
+        
+        if (supportsHTTP3) {
+            // HTTP/3: Maximum parallelism
+            return Math.min(
+                MULTIPART_UPLOAD_CONFIG.HTTP_VERSION_LIMITS['HTTP/3'],
+                Math.floor(cpuCores * 2)
+            );
+        } else if (supportsHTTP2) {
+            // HTTP/2: Enhanced parallelism
+            return Math.min(
+                MULTIPART_UPLOAD_CONFIG.HTTP_VERSION_LIMITS['HTTP/2'],
+                Math.floor(cpuCores * 1.5)
+            );
+        } else {
+            // HTTP/1.1: Browser connection limit
+            return MULTIPART_UPLOAD_CONFIG.HTTP_VERSION_LIMITS['HTTP/1.1'];
+        }
     }
 
     private async finalizeUpload() {

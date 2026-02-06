@@ -186,12 +186,34 @@ export const UPLOAD_CONFIG = {
 } as const;
 
 export const MULTIPART_UPLOAD_CONFIG = {
-  MAX_RETRIES: 3,
-  CONCURRENT_UPLOADS: 6,
+  MAX_RETRIES: 5,                    // Sync with backend
+  CONCURRENT_UPLOADS: 6,             // Base value, will be overridden dynamically
   RETRY_DELAY_BASE: 1000,
-  RETRY_JITTER: 100,
+  RETRY_JITTER: 500,                 // Increased for better distribution
   HTTP_STATUS_OK_MIN: 200,
   HTTP_STATUS_OK_MAX: 300,
+  
+  // HTTP version-based concurrency limits
+  HTTP_VERSION_LIMITS: {
+    'HTTP/1.1': 6,
+    'HTTP/2': 16,
+    'HTTP/3': 32,
+  } as const,
+} as const;
+
+// Part size configuration for dynamic calculation
+export const PART_SIZE_CONFIG = {
+  SMALL_FILE_THRESHOLD: 100 * 1024 * 1024,      // 100MB
+  MEDIUM_FILE_THRESHOLD: 500 * 1024 * 1024,     // 500MB
+  LARGE_FILE_THRESHOLD: 10 * 1024 * 1024 * 1024, // 10GB
+  HUGE_FILE_THRESHOLD: 100 * 1024 * 1024 * 1024, // 100GB
+  
+  MIN_PART_SIZE_16MB: 16 * 1024 * 1024,
+  MIN_PART_SIZE_32MB: 32 * 1024 * 1024,
+  MIN_PART_SIZE_64MB: 64 * 1024 * 1024,
+  MIN_PART_SIZE_128MB: 128 * 1024 * 1024,
+  
+  MAX_PARTS: 10000,
 } as const;
 
 // Media file categories & extensions

@@ -266,7 +266,7 @@ export function Step2PermissionSetup({
                     checked={
                       Object.keys(filteredGroupedApis).length > 0 &&
                       Object.values(filteredGroupedApis).every(({ apis }) =>
-                        apis.every(api => selectedApiIds.includes(api.id))
+                        apis.every((api: ApiMst) => selectedApiIds.includes(api.id))
                       )
                     }
                     onCheckedChange={(checked) => {

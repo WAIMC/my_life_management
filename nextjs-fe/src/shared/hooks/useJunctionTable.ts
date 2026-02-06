@@ -34,15 +34,19 @@ export function useJunctionTable<T = unknown>(
 
       // Fetch all available items (e.g., all roles)
       const allItemsResponse = await apiClient.get<PaginatedResponse<T> | T[]>(`${allItemsEndpoint}/list`, {
-        per_page: PAGINATION.MAX_PER_PAGE,
+        params: {
+          per_page: PAGINATION.MAX_PER_PAGE,
+        }
       });
       const data = allItemsResponse.data;
       setAllItems(Array.isArray(data) ? data : (data as PaginatedResponse<T>).data || []);
 
       // Fetch assigned relationships
       const assignedResponse = await apiClient.get<PaginatedResponse<Record<string, number>> | Record<string, number>[]>(`${junctionEndpoint}/list`, {
-        [parentIdKey]: parentId,
-        per_page: PAGINATION.MAX_PER_PAGE,
+        params: {
+          [parentIdKey]: parentId,
+          per_page: PAGINATION.MAX_PER_PAGE,
+        }
       });
 
       const assignedData = assignedResponse.data;

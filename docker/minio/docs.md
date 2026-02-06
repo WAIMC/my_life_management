@@ -456,7 +456,7 @@ Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác n
 
   * Flow hoàn chỉnh
     * Client sử dụng 1 chức năng nào đó cần có websocket, nó sẽ gủi request join room lên api, trong request có đính kèm access token trong cookie header request
-    * API verify request, nếu hợp lệ thì tìm kiếm token đó trong redis và thêm room_id cho token user tương ứng, sau đó trả về response success cho client
+    * API verify request, nếu hợp lệ thì tìm kiếm token đó trong redis và thêm room_id cho token user tương ứng, sau đó trả về response success cho client. Hoặc gen JWT dạng stateless, ko cần lưu trữ, chỉ cần wss verify được là yên tâm sử dụng thông tin trong payload thực hiện logic join room.
     + Client nhận được response thành công, sẽ thực hiện request đến domain wss yêu cầu kết nối và join room id. Tại vì các thành phần FE và wss có cùng domain lên khi gửi request chúng sẽ tự đính kèm access token cookie trong request. Trường hợp khác domain thì setting lại or gửi token qua query string: ws://api.com?token=abc. URL có thể bị lưu trong log server or có thể truy cập ở đâu đó, trường hợp này tạo one-time token với thời gian cực ngắn khoảng 30s để đảm bảo an toàn.
     + WSS: Viết script thực hiện lấy access token từ cookie or query string. Sau đó, request truy cập đến redis, tìm kiếm token và room id có tồn tại không ? nếu có chứng tỏ chúng được api cấp phép và tạo trước đó, trường hợp này tạo room nếu chưa có và thêm socket id (user) vào, tạo kết nối trực tiếp đến user để gửi nhận message, duy trì kết nối.
 
@@ -468,6 +468,7 @@ Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác n
     + WSS: Viết script thực hiện tổng hợp các socket id đang quản lý, theo định kỳ gửi ping đển các socket id này, nếu các socket id đó còn hoạt động chúng sẽ thực hiện phản hồi là pong, thì không làm gì cả. Nếu không có phản hồi thì thử lại với thời gian ngẫu nhiên trong thời gian ngắn sau đó, mong đợi socket id đó kết nối lại, sau vài lần không phản hồi thì thực hiện xóa socket id đó ở tất cả các room đang quản lý.
     + Front-end: Nếu connect wss thất bại, thử reconnect lại vài lần, mỗi lần thử lại thời gian chờ theo lũy thừa giãn ra. Nếu quá số lần thất bại thì thông báo lỗi connect cho user, thành công thì báo reconnect thành công. FE sẽ lưu last_message_id để đánh dấu message gần nhất đã nhận.
     + WSS: Khi nhận được last_message_id từ FE, wss kiểm tra last_messsage_id đó ở đâu ? nếu là mới nhất thì không làm gì cả, nếu nó bị cũ thì gửi thêm cho socket id đó những message bị miss từ đó đến message mới nhất.
+    + API: Đăng thông tin tin nhắn lên redis, thông tin bao gồm wss id + room id + message. WSS sẽ follow và thực hiện gửi tin nhắn đến các socket id. Khi không dùng client gửi out room, room không có ai nó tự xóa.
 
 
     + Note: Tùy thuộc vào chức năng khác nhau và ở client or api sẽ thực hiện close connection or xóa room tương ứng.

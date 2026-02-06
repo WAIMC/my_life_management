@@ -44,6 +44,8 @@ function NavigationProvider() {
 import { AuthProvider } from '@/providers/auth-provider';
 import { GlobalLoadingProvider } from '@/shared/providers/global-loading-provider';
 
+import { WebSocketNotification } from '@/components/common/WebSocketNotification';
+
 export function Providers({ 
   children,
   locale = 'en',
@@ -53,6 +55,7 @@ export function Providers({
   locale?: string;
   messages: AbstractIntlMessages;
 }) {
+
   const [currentLocale, setCurrentLocale] = useState(locale);
   const [currentMessages, setCurrentMessages] = useState(messages);
   const [isLoaded, setIsLoaded] = useState(true); // Default to true since we have initial messages
@@ -95,6 +98,7 @@ export function Providers({
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <WebSocketNotification />
         <NextIntlClientProvider messages={currentMessages} locale={currentLocale} timeZone="UTC">
           <ThemeProvider
             attribute="class"

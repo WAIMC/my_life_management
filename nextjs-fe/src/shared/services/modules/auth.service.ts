@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from "axios";
 import { authLock } from "@/shared/utils/auth-lock";
 import { apiClient } from "@/shared/api/client";
 import { ENDPOINTS } from "@/shared/api";
@@ -32,7 +33,7 @@ export const authService = {
     return response.data;
   },
 
-  async getMe(config?: InternalAxiosRequestConfig): Promise<AuthResponse> {
+  async getMe(config?: AxiosRequestConfig): Promise<AuthResponse> {
     const response = await apiClient.get<MeApiResponse>(ENDPOINTS.AUTH.ME, config);
     return response.data;
   },

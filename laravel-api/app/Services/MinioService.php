@@ -60,15 +60,106 @@ class MinioService
   /**
    * Move file in MinIO (Copy + Delete) using internal S3 CopyObject
    */
-  public function move(string $sourceDisk, string $sourceKey, string $destDisk, string $destKey): bool
+  public function move(string $sourceDisk, string $sourceKey, string $destDisk, string $destKey, int $fileSize = 0): bool
   {
     try {
-      if ($this->copyKey($sourceDisk, $sourceKey, $destDisk, $destKey)) {
+      // Use optimized copy if file size provided
+      $copySuccess = $fileSize > 0
+        ? $this->copyKeyOptimized($sourceDisk, $sourceKey, $destDisk, $destKey, $fileSize)
+        : $this->copyKey($sourceDisk, $sourceKey, $destDisk, $destKey);
+
+      if ($copySuccess) {
         return $this->delete($sourceDisk, $sourceKey);
       }
       return false;
     } catch (Exception $e) {
       Log::error(__('minio.move_failed'), ['error' => $e->getMessage()]);
+      return false;
+    }
+  }
+
+  /**
+   * Calculate optimal part size based on file size
+   */
+  private function calculatePartSize(int $fileSize): int
+  {
+    $MB = 1024 * 1024;
+    $GB = 1024 * $MB;
+
+    if ($fileSize < 500 * $MB) {
+      return 16 * $MB; // 16MB
+    } elseif ($fileSize < 10 * $GB) {
+      return 32 * $MB; // 32MB
+    } elseif ($fileSize < 100 * $GB) {
+      return 64 * $MB; // 64MB
+    } else {
+      return max(128 * $MB, (int)ceil($fileSize / 10000)); // 128MB or fileSize/10000
+    }
+  }
+
+  /**
+   * Calculate optimal concurrency based on system resources
+   */
+  private function calculateConcurrency(): int
+  {
+    // Get CPU cores (fallback to 4 if can't detect)
+    $cpuCores = (int) shell_exec('nproc 2>/dev/null') ?: 4;
+
+    // Use 60% of available cores for copying
+    $optimalConcurrency = (int) ceil($cpuCores * 0.6);
+
+    // Cap between 5-12 for safety
+    return max(5, min(12, $optimalConcurrency));
+  }
+
+  /**
+   * Optimized copy with dynamic configuration
+   */
+  public function copyKeyOptimized(
+    string $sourceDisk,
+    string $sourceKey,
+    string $destDisk,
+    string $destKey,
+    int $fileSize
+  ): bool {
+    try {
+      $client = $this->getS3Client($destDisk, true);
+      $destBucket = config("filesystems.disks.{$destDisk}.bucket");
+      $sourceBucket = config("filesystems.disks.{$sourceDisk}.bucket");
+
+      $partSize = $this->calculatePartSize($fileSize);
+      $concurrency = $this->calculateConcurrency();
+
+      Log::info('[MinIO] Copy config', [
+        'file_size' => $fileSize,
+        'part_size' => $partSize,
+        'concurrency' => $concurrency,
+        'source' => "{$sourceBucket}/{$sourceKey}",
+        'dest' => "{$destBucket}/{$destKey}",
+      ]);
+
+      $startTime = microtime(true);
+
+      // Use optimized copy with dynamic configuration
+      $client->copy($sourceBucket, $sourceKey, $destBucket, $destKey, [
+        'params' => [
+          'StorageClass' => 'STANDARD',
+        ],
+        'concurrency' => $concurrency,
+        'part_size' => $partSize,
+      ]);
+
+      $duration = microtime(true) - $startTime;
+      $throughput = $duration > 0 ? ($fileSize / $duration) : 0;
+
+      Log::info('[MinIO] Copy completed', [
+        'duration' => round($duration, 2) . 's',
+        'throughput' => round($throughput / 1024 / 1024, 2) . ' MB/s',
+      ]);
+
+      return true;
+    } catch (Exception $e) {
+      Log::error(__('minio.copy_failed'), ['error' => $e->getMessage()]);
       return false;
     }
   }
