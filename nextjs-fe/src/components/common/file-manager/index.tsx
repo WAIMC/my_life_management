@@ -351,6 +351,7 @@ export default function FileManager() {
           key={upload.roomId}
           roomId={upload.roomId}
           fileName={upload.fileName}
+          mediaId={upload.mediaId}
           onComplete={() => {
             // Remove from state and refresh file list
             clearHeavyUpload(upload.roomId);

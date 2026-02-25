@@ -11,9 +11,27 @@ import {
 } from '@/shared/types/file-manager.types';
 import { mediaFileService } from '@/shared/services/modules/media-file.service';
 import toast from 'react-hot-toast';
+import { notification } from '@/shared/utils';
 import { FILTER_TYPE, FILE_MANAGER_SORT_FIELDS, SORT_ORDER, INITIAL_PAGINATION, FILE_TYPE, MIME_TYPE_PREFIX, PAGINATION } from '@/shared/config/constant';
 import { useTranslations } from 'next-intl';
 import { UploadStatus } from '@/shared/enums/enums';
+import { UploadDebugger } from '@/shared/utils/upload-debug';
+
+/**
+ * Helper function to extract media item from API list response
+ * Handles both array format and object with data array format
+ */
+const extractMediaItem = (listResponse: unknown): MediaFile | undefined => {
+  if (Array.isArray(listResponse)) {
+    return listResponse[0] as MediaFile;
+  } else if (listResponse && typeof listResponse === 'object' && 'data' in listResponse) {
+    const data = (listResponse as { data: unknown }).data;
+    if (Array.isArray(data)) {
+      return data[0] as MediaFile;
+    }
+  }
+  return undefined;
+};
 
 export const useFileManager = (): FileManagerContextType => {
   const t = useTranslations('fileManager');
@@ -39,7 +57,7 @@ export const useFileManager = (): FileManagerContextType => {
   // State to track heavy file uploads for WebSocket notifications
   // Note: Not persisted to localStorage - if user refreshes/closes tab, 
   // MinIO lifecycle will auto-cleanup incomplete parts and user can re-upload if needed
-  const [heavyUploads, setHeavyUploads] = useState<Array<{ roomId: string; fileName: string }>>([]);
+  const [heavyUploads, setHeavyUploads] = useState<Array<{ roomId: string; fileName: string; mediaId: number }>>([]);
 
   // Fetch files from API (only when path changes)
   const fetchFiles = useCallback(async (signal?: AbortSignal) => {
@@ -208,7 +226,7 @@ export const useFileManager = (): FileManagerContextType => {
   const uploadFiles = useCallback(async (filesToUpload: File[]) => {
     try {
       setIsLoading(true);
-      const heavyFileUploads: Array<{ roomId: string; fileName: string }> = [];
+      const heavyFileUploads: Array<{ roomId: string; fileName: string; mediaId: number }> = [];
       
       // Process files in parallel instead of sequential for better performance
       const uploadPromises = filesToUpload.map(async (file) => {
@@ -234,18 +252,56 @@ export const useFileManager = (): FileManagerContextType => {
               ...fileWithMeta.tempMetadata
             });
             
-            console.log('[useFileManager] Upload result:', result);
-            console.log('[useFileManager] result.status:', result.status);
-            console.log('[useFileManager] result.room_id:', result.room_id);
-            console.log('[useFileManager] UploadStatus.PROCESSING:', UploadStatus.PROCESSING);
+            // Debug log response and room_id
+            UploadDebugger.logStoreResponse(result);
             
             // Check if result is heavy upload (status = PROCESSING)
-            if (result.status === UploadStatus.PROCESSING && result.room_id) {
-              heavyFileUploads.push({ 
-                roomId: result.room_id, 
-                fileName: fileWithMeta.tempMetadata.original_name 
+            if (result.status === UploadStatus.PROCESSING && result.media_id) {
+              console.log('[Heavy Upload] Detected heavy upload, will setup WebSocket:', {
+                roomId: result.room_id,
+                mediaId: result.media_id,
+                fileName: fileWithMeta.tempMetadata.original_name
               });
-              toast.success(result.message);
+              
+              // Show toast notification - auto dismiss after 4 seconds
+              notification.info(result.message || 'File đang được xử lý...', { duration: 4000 });
+              
+              // ALWAYS push to heavyFileUploads first to ensure WebSocket is initialized
+              heavyFileUploads.push({ 
+                roomId: result.room_id!, 
+                fileName: fileWithMeta.tempMetadata.original_name,
+                mediaId: result.media_id
+              });
+              console.log('[Heavy Upload] Pushed to heavyFileUploads array, length:', heavyFileUploads.length);
+              
+              // Immediately check status to avoid missing notification if job completes quickly
+              try {
+                const listResponse = await mediaFileService.list({ id: result.media_id });
+                const mediaItem = extractMediaItem(listResponse);
+
+                if (mediaItem && mediaItem.upload_status !== UploadStatus.PROCESSING) {
+                  console.log('[Heavy Upload] Job already completed on status check:', mediaItem.upload_status);
+                  // Job already completed - remove from heavyFileUploads and show result immediately
+                  const index = heavyFileUploads.findIndex(u => u.mediaId === result.media_id);
+                  if (index !== -1) {
+                    heavyFileUploads.splice(index, 1);
+                    console.log('[Heavy Upload] Removed from heavyFileUploads, job completed fast');
+                  }
+                  
+                  if (mediaItem.upload_status === UploadStatus.COMPLETED) {
+                    toast.success(t('uploadSuccess'));
+                    return { type: 'immediate', fileName: fileWithMeta.tempMetadata.original_name };
+                  } else {
+                    toast.error(t('uploadError'));
+                    return { type: 'error', fileName: fileWithMeta.tempMetadata.original_name };
+                  }
+                }
+                console.log('[Heavy Upload] Still processing, will wait for WebSocket notification');
+              } catch (error) {
+                // If check status fails, continue to WebSocket (fallback)
+                console.warn('[Heavy Upload] Failed to check status, will wait for WebSocket notification:', error);
+              }
+              
               return { type: 'heavy', fileName: fileWithMeta.tempMetadata.original_name };
             }
             // Light file (status = COMPLETED)
@@ -262,17 +318,56 @@ export const useFileManager = (): FileManagerContextType => {
                 ...metadata
               });
               
-              console.log('[useFileManager] Upload result (fallback):', result);
-              console.log('[useFileManager] result.status:', result.status);
-              console.log('[useFileManager] result.room_id:', result.room_id);
+              // Debug log response and room_id
+              UploadDebugger.logStoreResponse(result);
               
               // Check if result is heavy upload (status = PROCESSING)
-              if (result.status === UploadStatus.PROCESSING && result.room_id) {
-                heavyFileUploads.push({ 
-                  roomId: result.room_id, 
-                  fileName: metadata.original_name 
+              if (result.status === UploadStatus.PROCESSING && result.media_id) {
+                console.log('[Heavy Upload] Detected heavy upload (fallback path), will setup WebSocket:', {
+                  roomId: result.room_id,
+                  mediaId: result.media_id,
+                  fileName: metadata.original_name
                 });
-                toast.success(result.message);
+                
+                // Show toast notification - auto dismiss after 4 seconds
+                notification.info(result.message || 'File đang được xử lý...', { duration: 4000 });
+                
+                // ALWAYS push to heavyFileUploads first to ensure WebSocket is initialized
+                heavyFileUploads.push({ 
+                  roomId: result.room_id!, 
+                  fileName: metadata.original_name,
+                  mediaId: result.media_id
+                });
+                console.log('[Heavy Upload] Pushed to heavyFileUploads array, length:', heavyFileUploads.length);
+                
+                // Immediately check status to avoid missing notification if job completes quickly
+                try {
+                  const listResponse = await mediaFileService.list({ id: result.media_id });
+                  const mediaItem = extractMediaItem(listResponse);
+
+                  if (mediaItem && mediaItem.upload_status !== UploadStatus.PROCESSING) {
+                    console.log('[Heavy Upload] Job already completed on status check:', mediaItem.upload_status);
+                    // Job already completed - remove from heavyFileUploads and show result immediately
+                    const index = heavyFileUploads.findIndex(u => u.mediaId === result.media_id);
+                    if (index !== -1) {
+                      heavyFileUploads.splice(index, 1);
+                      console.log('[Heavy Upload] Removed from heavyFileUploads, job completed fast');
+                    }
+                    
+                    if (mediaItem.upload_status === UploadStatus.COMPLETED) {
+                      toast.success(t('uploadSuccess'));
+                      return { type: 'immediate', fileName: metadata.original_name };
+                    } else {
+                      toast.error(t('uploadError'));
+                      return { type: 'error', fileName: metadata.original_name };
+                    }
+                  }
+                  console.log('[Heavy Upload] Still processing, will wait for WebSocket notification');
+                } catch (error) {
+                  // If check status fails, continue to WebSocket (fallback)
+                  console.warn('[Heavy Upload] Failed to check status, will wait for WebSocket notification:', error);
+                }
+                
                 return { type: 'heavy', fileName: metadata.original_name };
               }
               // Light file (status = COMPLETED)
@@ -291,14 +386,19 @@ export const useFileManager = (): FileManagerContextType => {
       // Wait for all uploads to complete
       const results = await Promise.all(uploadPromises);
       
+      console.log('[Heavy Upload] Upload promises completed, heavyFileUploads.length:', heavyFileUploads.length);
+      console.log('[Heavy Upload] Heavy uploads to register:', heavyFileUploads);
+      
       // Update heavy uploads state for parent component to subscribe to WebSocket
       if (heavyFileUploads.length > 0) {
-        console.log('[useFileManager] Adding heavy uploads to state:', heavyFileUploads);
         setHeavyUploads(prev => {
           const updated = [...prev, ...heavyFileUploads];
-          console.log('[useFileManager] Updated heavyUploads state:', updated);
+          console.log('[Heavy Upload] Updated heavyUploads state, new length:', updated.length);
+          console.log('[Heavy Upload] Updated heavyUploads state:', updated);
           return updated;
         });
+      } else {
+        console.log('[Heavy Upload] No heavy uploads to register');
       }
       
       // Show success for files that were processed immediately (not heavy uploads)

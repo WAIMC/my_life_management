@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/shared/api/client';
-import { notification } from '@/shared/utils/notification';
+import { notification } from '../utils';
 import { AxiosError } from 'axios';
 import { useTranslations } from 'next-intl';
 import type { UseCrudReturn, UseCrudOptions } from '@/shared/types/api';

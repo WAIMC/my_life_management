@@ -29,6 +29,7 @@ class ListMediaMgmtRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:255'],
             'order_by' => ['nullable', 'string', 'in:created_at,original_name,size'],
             'order_direction' => ['nullable', 'string', 'in:asc,desc'],
+            'id' => ['nullable', 'integer'],
             // No per_page/page validation - file manager loads all files
         ];
     }

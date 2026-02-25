@@ -5,7 +5,7 @@ import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useActionLock } from '@/shared/hooks/useActionLock';
 import { apiClient } from '@/shared/api/client';
-import { notification } from '@/shared/utils/notification';
+import { notification } from '@/shared/utils';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { DataTable, type Column } from '@/components/common/data-table/data-table';
@@ -117,7 +117,7 @@ export default function AdminListPage() {
         tCommon('updatedSuccessfully')
       );
       refetch();
-    } catch (error) {
+    } catch {
        notification.error(tCommon('somethingWentWrong'));
     }
   };

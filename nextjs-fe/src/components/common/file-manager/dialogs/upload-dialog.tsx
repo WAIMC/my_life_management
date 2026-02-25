@@ -62,13 +62,6 @@ export const UploadDialog = ({
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
   const validateFile = (_file: File): string | null => {
-    // Check file size
-    // if (file.size > MAX_FILE_SIZE) {
-    //   return `File too large. Maximum size is ${formatFileSize(MAX_FILE_SIZE)}`;
-    // }
-    
-    // Add more validation as needed (file type, etc.)
-    
     return null;
   };
 
@@ -325,17 +318,15 @@ export const UploadDialog = ({
       clearInterval(interval);
       setCommitting(false);
       setCommitProgress(0);
-      
+
       // Extract error message
       let errorMessage = t('upload.uploadError');
       if (err instanceof Error) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       console.error(t('upload.commitError'), err);
-      
-      // DO NOT close dialog on error - let user see the error and retry
     }
   };
 

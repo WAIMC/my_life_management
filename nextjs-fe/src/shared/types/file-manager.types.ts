@@ -27,6 +27,7 @@ export interface MediaFile {
   type: FileType;
   tags?: string[];
   isSelected?: boolean;
+  upload_status?: number;
 }
 
 export interface Folder {
@@ -149,7 +150,7 @@ export interface FileManagerContextType {
   copyFiles?: (ids: string[], targetPath: string) => Promise<void>;
   
   // Heavy file upload tracking (for WebSocket notifications)
-  heavyUploads?: Array<{ roomId: string; fileName: string }>;
+  heavyUploads?: Array<{ roomId: string; fileName: string; mediaId: number }>;
   clearHeavyUpload?: (roomId: string) => void;
 }
 

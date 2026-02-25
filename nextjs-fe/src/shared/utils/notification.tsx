@@ -1,27 +1,38 @@
-import toast from 'react-hot-toast';
+import toast, { Toast, ToastOptions as HotToastOptions } from 'react-hot-toast';
 
 export interface ToastOptions {
   duration?: number;
-  position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  position?: HotToastOptions['position'];
 }
+
+const renderDismissibleContent = (message: string, t: Toast) => (
+  <div
+    onClick={() => toast.dismiss(t.id)}
+    className="w-full h-full cursor-pointer flex items-center"
+    role="button"
+    tabIndex={0}
+  >
+    {message}
+  </div>
+);
 
 export const notification = {
   success: (message: string, options?: ToastOptions) => {
-    toast.success(message, {
+    toast.success((t) => renderDismissibleContent(message, t), {
       duration: options?.duration || 4000,
       position: options?.position || 'top-right',
     });
   },
 
   error: (message: string, options?: ToastOptions) => {
-    toast.error(message, {
+    toast.error((t) => renderDismissibleContent(message, t), {
       duration: options?.duration || 4000,
       position: options?.position || 'top-right',
     });
   },
 
   loading: (message: string, options?: ToastOptions) => {
-    return toast.loading(message, {
+    return toast.loading((t) => renderDismissibleContent(message, t), {
       duration: options?.duration || 4000,
       position: options?.position || 'top-right',
     });
@@ -43,9 +54,22 @@ export const notification = {
   },
 
   custom: (message: string, options?: ToastOptions) => {
-    return toast(message, {
+    return toast((t) => renderDismissibleContent(message, t), {
       duration: options?.duration || 4000,
       position: options?.position || 'top-right',
+    });
+  },
+
+  info: (message: string, options?: ToastOptions) => {
+    return toast((t) => renderDismissibleContent(message, t), {
+      icon: 'ℹ️',
+      duration: options?.duration || 4000,
+      position: options?.position || 'top-right',
+      style: {
+        border: '1px solid #3b82f6',
+        padding: '16px',
+        color: '#3b82f6',
+      },
     });
   },
 

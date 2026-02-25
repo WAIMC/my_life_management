@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { apiClient } from '@/shared/api/client';
-import { notification } from '@/shared/utils/notification';
+import { notification } from '../utils';
 import { PAGINATION } from '@/shared/config/constant';
 import type { UseJunctionTableReturn, PaginatedResponse } from '@/shared/types/api';
 

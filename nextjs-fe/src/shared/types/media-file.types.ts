@@ -26,6 +26,7 @@ export interface MediaFile {
   updated_by: number | null;
   created_at: string;
   updated_at: string;
+  upload_status?: number;
 }
 
 export interface UploadFileParams {

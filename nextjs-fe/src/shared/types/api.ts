@@ -461,6 +461,11 @@ export interface UploadResponse {
   filename: string;
   size: number;
   mime_type: string;
+  media_id?: number;
+  room_id?: string;
+  status?: number;
+  message?: string;
+  upload_status?: number;
 }
 
 /**

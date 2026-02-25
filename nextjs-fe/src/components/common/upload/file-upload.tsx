@@ -3,13 +3,14 @@
 import { useState, useCallback, useRef } from 'react';
 import { apiClient } from '@/shared/api/client';
 import { ENDPOINTS } from '@/shared/api';
-import { notification } from '@/shared/utils/notification';
+import { notification } from '@/shared/utils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import type { UploadResponse } from '@/shared/types/api';
-import type { SimpleFileUploadProps as FileUploadProps } from '@/shared/types/media-file.types';
+import type { SimpleFileUploadProps as FileUploadProps, MediaFile } from '@/shared/types/media-file.types';
+import { UploadStatus } from '@/shared/enums/enums';
 import { useTranslations } from 'next-intl';
 
 export function FileUpload({
@@ -74,10 +75,47 @@ export function FileUpload({
       clearInterval(progressInterval);
       setProgress(100);
 
-      const uploadedUrl = response.data.url;
-      setPreview(uploadedUrl);
-      onChange(uploadedUrl);
-      notification.success(t('media.fileUploadedSuccessfully'));
+      const data = response.data;
+
+      // Handle Post-processing for large files
+      if (data.room_id && data.media_id && data.upload_status === UploadStatus.PROCESSING) {
+        try {
+          // Check status immediately as requested
+          const listResponse = await apiClient.get<MediaFile[]>(ENDPOINTS.MEDIA.FILES, {
+            params: { id: data.media_id }
+          });
+          
+          const mediaItem = listResponse.data?.[0];
+
+          // upload_status: 1 = Processing, 2 = Completed, 3 = Failed
+          if (mediaItem && mediaItem.upload_status !== UploadStatus.PROCESSING) {
+            if (mediaItem.upload_status === UploadStatus.COMPLETED) {
+               notification.success(t('media.fileUploadedSuccessfully'));
+               if (mediaItem.url) {
+                 setPreview(mediaItem.url);
+                 onChange(mediaItem.url);
+               }
+            } else {
+               notification.error(t('media.failedToUploadFile'));
+            }
+          } else {
+            // Still processing: User said "do nothing" if status is 1
+            // But we should probably show the server message at least
+            notification.info(data.message || t('media.fileProcessing'), { duration: Infinity });
+          }
+        } catch (err) {
+          console.error('Failed to check media status', err);
+          // Fallback to showing processing message
+          notification.info(data.message || t('media.fileProcessing'), { duration: Infinity });
+        }
+      } else {
+        // Normal/Light file upload
+        const uploadedUrl = data.url;
+        setPreview(uploadedUrl);
+        onChange(uploadedUrl);
+        notification.success(t('media.fileUploadedSuccessfully'));
+      }
+
     } catch (error: unknown) {
       const message = error instanceof Error && 'response' in error 
         ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || t('media.failedToUploadFile')

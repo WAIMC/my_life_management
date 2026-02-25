@@ -112,15 +112,9 @@ echo ""
 # Step 6: Run project setup (migrations + seeds)
 echo -e "${YELLOW}[6/6] Running migrations and seeds...${NC}"
 
-# Run migrations
-echo -e "${BLUE}  -> Running: php artisan migrate${NC}"
-php artisan migrate --force
-
-# Run seeds
-echo -e "${BLUE}  -> Running: php artisan db:seed${NC}"
-php artisan db:seed --force
-
-if [ $? -eq 0 ]; then
+# Always run fresh migrations and seeds on container rebuild
+echo -e "${BLUE}  -> Running: php artisan migrate:fresh --seed${NC}"
+if php artisan migrate:fresh --seed --force; then
     echo -e "${GREEN}  ✓ Database setup completed successfully${NC}"
 else
     echo -e "${YELLOW}  ⚠ Database setup completed with warnings${NC}"

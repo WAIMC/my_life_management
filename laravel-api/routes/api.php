@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Custom\CredentialController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\BroadcastingAuthMiddleware;
 use App\Http\Middleware\GenerateResponseMiddleware;
 use App\Http\Middleware\TransactionMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -49,12 +50,11 @@ use App\Http\Controllers\History\Management\SocialMgmtHistController;
 use App\Http\Controllers\History\Management\UserMgmtHistController;
 use Illuminate\Support\Facades\Broadcast;
 
+Broadcast::routes(['middleware' => ['api', BroadcastingAuthMiddleware::class], 'prefix' => 'admin']);
+
 Route::prefix('admin')
   ->middleware([GenerateResponseMiddleware::class, TransactionMiddleware::class])
   ->group(function () {
-    // Broadcasting auth endpoint for WebSocket (Reverb)
-    // Placed here to match cookie path /api/admin
-    Broadcast::routes(['middleware' => ['api', AdminMiddleware::class]]);
     Route::prefix('credential')->group(function () {
       Route::post('login', [CredentialController::class, 'login']);
       Route::prefix('trust')->group(function () {

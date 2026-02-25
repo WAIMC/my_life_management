@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { useCrud } from '@/shared/hooks/useCrud';
 import { useActionLock } from '@/shared/hooks/useActionLock';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { UI_CONSTANTS } from '@/shared/config';
@@ -13,13 +12,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import type { RoleMst } from '@/shared/types/api';
 import { ENDPOINTS, API_ENDPOINTS, apiClient } from '@/shared/api';
 import type { RoleFormData } from '@/shared/validation/validation';
 import { Step1RoleSetup, Step2PermissionSetup, Step3ReviewConfirm, ConfirmCancelDialog, ConfirmSubmitDialog } from './role-wizard-steps';
 import { WIZARD_STEPS } from '@/shared/config/role-wizard.constant';
 import type { WizardState, RoleWizardDialogProps } from '@/shared/types/role-wizard.types';
-import { notification } from '@/shared/utils/notification';
+import { notification } from '@/shared/utils';
 
 export function RoleWizardDialog({
   open,
@@ -213,7 +211,7 @@ export function RoleWizardDialog({
         try {
           if (isEdit && initialData) {
             // Update Role
-            const res = await apiClient.put<{ data: number }>(`${ENDPOINTS.MASTER.ROLE}/update/${initialData.id}`, {
+            await apiClient.put<{ data: number }>(`${ENDPOINTS.MASTER.ROLE}/update/${initialData.id}`, {
               id: initialData.id,
               ...rolePayload
             });

@@ -14,6 +14,7 @@ import { NewFolderDialog } from './dialogs/new-folder-dialog';
 import { RenameDialog } from './dialogs/rename-dialog';
 import { DeleteConfirmDialog } from '@/components/common/file-manager/dialogs/delete-confirm-dialog';
 import { MoveCopyDialog } from './dialogs/move-copy-dialog';
+import { HeavyUploadNotification } from '@/components/common/HeavyUploadNotification';
 import type { MediaFile, FilterType, SortField, MoveCopyMode } from '@/shared/types/file-manager.types';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
@@ -43,6 +44,9 @@ export function FileManagerContent() {
     renameFile,
     moveFiles,
     copyFiles,
+    heavyUploads,
+    clearHeavyUpload,
+    refreshFiles,
   } = useFileManager();
 
   const t = useTranslations('fileManager');
@@ -340,6 +344,25 @@ export function FileManagerContent() {
         hasNext={hasNextPreview}
         hasPrev={hasPrevPreview}
       />
+
+      {/* Heavy Upload Notifications - WebSocket listeners for each heavy upload */}
+      {heavyUploads && heavyUploads.map((upload) => (
+        <HeavyUploadNotification
+          key={upload.roomId}
+          roomId={upload.roomId}
+          fileName={upload.fileName}
+          mediaId={upload.mediaId}
+          onComplete={() => {
+            // Remove from state and refresh file list
+            if (clearHeavyUpload) {
+              clearHeavyUpload(upload.roomId);
+            }
+            if (refreshFiles) {
+              refreshFiles();
+            }
+          }}
+        />
+      ))}
     </div>
   );
 }

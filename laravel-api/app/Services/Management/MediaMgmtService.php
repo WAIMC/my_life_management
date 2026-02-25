@@ -296,16 +296,9 @@ class MediaMgmtService extends BaseService
     if ($isHeavyFile) {
       // Heavy file: Dispatch async job
       // Generate room ID for WebSocket notification
-      // Format: {uuid}_{userId}_upload_file
+      // Format: {uuid}_{adminId}_upload_file
       $uuid = \Illuminate\Support\Str::uuid()->toString();
-      // Get userId from JWT token that was decoded in AdminMiddleware
-      $userId = request()->attributes->get('current_admin_id') ?? $media->created_by ?? null;
-      
-      if (!$userId) {
-        throw new \Exception('User ID not found in JWT token. Ensure AdminMiddleware is applied.');
-      }
-      
-      $roomId = "{$uuid}_{$userId}_upload_file";
+      $roomId = "{$uuid}_{$currentUserId}_upload_file";
 
       // Dispatch Job to Process File (Move + Notify)
       \App\Jobs\Media\ProcessLargeFile::dispatch($media, $tempKey, $roomId);

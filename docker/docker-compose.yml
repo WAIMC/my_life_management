@@ -73,32 +73,19 @@ services:
     working_dir: /var/www/laravel-api
     volumes:
       - ../laravel-api:/var/www/laravel-api
-      # Exclude vendor from host mount - let container manage it
-
       - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     environment:
-      # Database
       DB_CONNECTION: pgsql
       DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
       DB_PORT: ${POSTGRES_PORT_INSIDE_ENV}
       DB_DATABASE: ${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-
-      # Redis
       REDIS_HOST: ${REDIS_HOST_INSIDE_ENV}
       REDIS_PORT: ${REDIS_PORT_INSIDE_ENV}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-
-      # Laravel
       APP_ENV: local
       APP_DEBUG: "true"
-
-      # Reverb
-      REVERB_SERVER: reverb
-      REVERB_HOST: "0.0.0.0"
-      REVERB_PORT: 8080
-      REVERB_SCHEME: http
     depends_on:
       ml-postgres:
         condition: service_healthy
@@ -111,85 +98,19 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s # Extended to allow entrypoint setup script to complete
+      start_period: 90s
     networks:
       - app-network
     deploy:
       resources:
         limits:
-          memory: 2G # Increased from 1GB for ProcessLargeFile job
-          cpus: "6" # Added CPU limit
+          memory: 2G
+          cpus: "6"
         reservations:
-          memory: 512M # Increased from 256M
+          memory: 512M
           cpus: "2"
 
-  # Laravel Queue Worker
-  ml-queue-worker:
-    container_name: ml-queue-worker
-    build:
-      context: ../laravel-api
-      dockerfile: ../docker/laravel/Dockerfile
-      target: development
-      args:
-        PHP_VERSION: "8.3"
-    restart: unless-stopped
-    working_dir: /var/www/laravel-api
-    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=600", "--memory=512", "--sleep=3"]
-    volumes:
-      - ../laravel-api:/var/www/laravel-api
-      - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
-    environment:
-      # Database
-      DB_CONNECTION: pgsql
-      DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
-      DB_PORT: ${POSTGRES_PORT_INSIDE_ENV}
-      DB_DATABASE: ${POSTGRES_DB}
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-
-      # Redis
-      REDIS_HOST: ${REDIS_HOST_INSIDE_ENV}
-      REDIS_PORT: ${REDIS_PORT_INSIDE_ENV}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-
-      # Laravel
-      APP_ENV: local
-      APP_DEBUG: "true"
-      QUEUE_CONNECTION: database
-
-      # MinIO (for job access)
-      MINIO_ENDPOINT: http://${MINIO_HOST_INSIDE_ENV}:${MINIO_PORT_INSIDE_ENV}
-      MINIO_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET: ${MINIO_ROOT_PASSWORD}
-
-      # Reverb (for broadcasting)
-      REVERB_APP_ID: my-app-id
-      REVERB_APP_KEY: my-app-key
-      REVERB_APP_SECRET: my-app-secret
-      REVERB_HOST: ml-reverb
-      REVERB_PORT: 8080
-      REVERB_SCHEME: http
-    depends_on:
-      ml-postgres:
-        condition: service_healthy
-      ml-redis:
-        condition: service_healthy
-      ml-php:
-        condition: service_healthy
-      ml-minio:
-        condition: service_healthy
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: "4"
-        reservations:
-          memory: 256M
-          cpus: "1"
-
-  # Laravel Reverb Server
+  # Laravel Reverb (WebSocket Server)
   ml-reverb:
     container_name: ml-reverb
     build:
@@ -200,39 +121,41 @@ services:
         PHP_VERSION: "8.3"
     restart: unless-stopped
     working_dir: /var/www/laravel-api
-    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    command: php artisan reverb:start --debug
     volumes:
       - ../laravel-api:/var/www/laravel-api
+      - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     environment:
-      # Database & Redis (Needed for Reverb auth)
       DB_CONNECTION: pgsql
       DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
       DB_PORT: ${POSTGRES_PORT_INSIDE_ENV}
       DB_DATABASE: ${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-
       REDIS_HOST: ${REDIS_HOST_INSIDE_ENV}
       REDIS_PORT: ${REDIS_PORT_INSIDE_ENV}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-
       APP_ENV: local
       APP_DEBUG: "true"
-
-      REVERB_APP_ID: my-app-id
-      REVERB_APP_KEY: my-app-key
-      REVERB_APP_SECRET: my-app-secret
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
       REVERB_HOST: "0.0.0.0"
       REVERB_PORT: 8080
-      REVERB_SCHEME: http
+      REVERB_SCHEME: "http"
     ports:
-      - "8080:8080"
+      - "${REVERB_PORT_OUTSIDE_ENV}:8080"
     depends_on:
-      ml-php:
+      ml-postgres:
+        condition: service_healthy
+      ml-redis:
         condition: service_healthy
     networks:
       - app-network
-
+    deploy:
+      resources:
+        limits:
+          memory: 512M
   # Next.js Frontend
   ml-nextjs:
     container_name: ml-nextjs
@@ -242,21 +165,15 @@ services:
       target: development
     restart: unless-stopped
     volumes:
-      # Mount source code for hot-reload (exclude .next for better HMR)
       - ../nextjs-fe:/app
-      # Exclude .next directory - let it be generated in container
       - /app/.next
-      # Exclude node_modules - use the ones from image build
       - /app/node_modules
-      # Mount entrypoint script for easy debugging (optional)
-      # - ../docker/nextjs/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     environment:
-      - NODE_ENV=development
-      - PORT=${NEXTJS_PORT_INSIDE_ENV}
-      - HOSTNAME=0.0.0.0
-      # Enable file watching for Docker (required for hot-reload)
-      - WATCHPACK_POLLING=true
-      - CHOKIDAR_USEPOLLING=true
+      NODE_ENV: development
+      PORT: ${NEXTJS_PORT_INSIDE_ENV}
+      HOSTNAME: 0.0.0.0
+      WATCHPACK_POLLING: true
+      CHOKIDAR_USEPOLLING: true
     ports:
       - "${NEXTJS_PORT_OUTSIDE_ENV}:${NEXTJS_PORT_INSIDE_ENV}"
     expose:
@@ -270,7 +187,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s # Reduced since dependencies are pre-installed
+      start_period: 30s
     networks:
       - app-network
     deploy:
@@ -289,8 +206,6 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ../laravel-api/public:/var/www/laravel-api/public:ro
-      # Uncomment for SSL
-      # - ./certs:/etc/nginx/certs:ro
     ports:
       - "${NGINX_PORT_OUTSIDE_ENV}:${NGINX_PORT_INSIDE_ENV}"
       - "${NGINX_PORT_SECURE_OUTSIDE_ENV}:${NGINX_PORT_SECURE_INSIDE_ENV}"
@@ -353,13 +268,12 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G # Increased from 512MB for large file operations
-          cpus: "4" # Added CPU limit
+          memory: 1G
+          cpus: "4"
         reservations:
-          memory: 256M # Increased from 128M
-          cpus: "2" # Reserve 2 cores
+          memory: 256M
+          cpus: "2"
 
-  # MinIO client - auto init buckets
   # MinIO client - auto init buckets
   ml-minio-init:
     container_name: ml-minio-init
@@ -370,12 +284,8 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-
       MINIO_BUCKET_OFFICIAL: ${MINIO_BUCKET_OFFICIAL}
-
       MINIO_BUCKET_TEMP: ${MINIO_BUCKET_TEMP}
-
-      # IAM User
       MINIO_IAM_USER: ${MINIO_IAM_USER}
       MINIO_IAM_PASSWORD: ${MINIO_IAM_PASSWORD}
     volumes:

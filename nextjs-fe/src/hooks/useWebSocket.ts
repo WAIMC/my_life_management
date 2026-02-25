@@ -30,10 +30,12 @@ export const useWebSocket = ({
     // Only initialize Echo if roomId is provided
     // This prevents unnecessary WebSocket connections
     if (!roomId) {
-      console.log('No roomId provided, skipping WebSocket connection');
+      console.log('[useWebSocket] No roomId provided, skipping initialization');
       return;
     }
 
+    console.log('[useWebSocket] Initializing Echo for roomId:', roomId);
+    
     // Cookie-based auth: Initialize Echo
     // The HttpOnly cookie will be sent automatically
 
@@ -54,45 +56,89 @@ export const useWebSocket = ({
           Authorization: `Bearer ${token}`,
         } : {},
       },
+      authorizer: (channel: any) => {
+        return {
+          authorize: (socketId: string, callback: (error: Error | null, data: any) => void) => {
+            console.log('[useWebSocket] Authorizing channel:', channel.name, 'socketId:', socketId);
+            // Use fetch with credentials to send cookies
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:81/api'}/admin/broadcasting/auth`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              credentials: 'include', // CRITICAL: Send cookies
+              body: JSON.stringify({
+                socket_id: socketId,
+                channel_name: channel.name,
+              }),
+            })
+              .then(response => {
+                console.log('[useWebSocket] Auth response status:', response.status);
+                if (!response.ok) {
+                  throw new Error(`Auth failed: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+              })
+              .then(data => {
+                console.log('[useWebSocket] Auth successful:', data);
+                callback(null, data);
+              })
+              .catch(error => {
+                console.error('[useWebSocket] Auth error:', error);
+                callback(error, null);
+              });
+          }
+        };
+      },
     };
+
+    console.log('[useWebSocket] Echo config:', echoConfig);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const echo = new Echo(echoConfig as any);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (echo.connector as any).pusher?.connection.bind('connected', () => {
-      console.log('Reverb Connected for room:', roomId);
+      console.log('[useWebSocket] Pusher connected!');
       setIsConnected(true);
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (echo.connector as any).pusher?.connection.bind('disconnected', () => {
-      console.log('Reverb Disconnected');
+      console.log('[useWebSocket] Pusher disconnected');
       setIsConnected(false);
     });
 
     echoRef.current = echo;
 
     return () => {
+      console.log('[useWebSocket] Cleaning up Echo connection');
       echo.disconnect();
     };
   }, [token, roomId]); // Include roomId to reconnect when it changes
 
   // Subscribe to Room Channel
   useEffect(() => {
-    if (!echoRef.current || !roomId || !isConnected) return;
+    if (!echoRef.current || !roomId || !isConnected) {
+      console.log('[useWebSocket] Skipping channel subscription:', { 
+        hasEcho: !!echoRef.current, 
+        roomId, 
+        isConnected 
+      });
+      return;
+    }
 
     // Correct channel name mapping based on backend: `upload.status.{roomId}`
     // `private-` prefix is added automatically by `.private()`
     const channelName = `upload.status.${roomId}`;
-    
-    console.log(`Subscribing to private channel: ${channelName}`);
+    console.log('[useWebSocket] Subscribing to private channel:', channelName);
     
     const channel = echoRef.current.private(channelName);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     channel.listen('.upload.status.updated', (event: any) => {
-      console.log('Received event:', event);
+      console.log('[useWebSocket] Received event .upload.status.updated:', event);
       // Map event data to legacy WebSocketMessage format for compatibility
       setLastMessage({
         type: 'UPLOAD_STATUS', // Synthetic type
@@ -105,9 +151,22 @@ export const useWebSocket = ({
     });
 
     return () => {
+      console.log('[useWebSocket] Leaving channel:', channelName);
       echoRef.current?.leave(channelName);
     };
   }, [roomId, isConnected]);
+
+  // Method to leave/close room and cleanup connection
+  const leaveRoom = useCallback(() => {
+    if (echoRef.current && roomId) {
+      const channelName = `upload.status.${roomId}`;
+      echoRef.current.leave(channelName);
+      // Disconnect Echo entirely to free resources
+      echoRef.current.disconnect();
+      echoRef.current = null;
+      setIsConnected(false);
+    }
+  }, [roomId]);
 
   // Deprecated compatibility methods
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -121,5 +180,5 @@ export const useWebSocket = ({
      console.warn('joinRoom is handled via props in this implementation');
   }, []);
 
-  return { isConnected, lastMessage, sendMessage, joinRoom };
+  return { isConnected, lastMessage, sendMessage, joinRoom, leaveRoom };
 };

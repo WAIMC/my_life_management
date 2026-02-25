@@ -209,14 +209,13 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
     * Verify request, check quyền bằng middleware
     * Validate: Các thông tin request từ client
     * Lấy thông tin file từ payload
-    * Tính toán số lượng part song song theo công thức `Công thức tính số lượng part song song`, mặc định là 6. Tính toán số lượng part theo công thức `Công thức tính toán part size`. Tính toán cho mỗi part theo công thức `Công thức tính TTL cho presigned url`
+    * Tính toán số lượng part song song theo công thức `Công thức tính số lượng part song song`, mặc định là 6. Tính toán số lượng part theo công thức `Công thức tính toán part size`. Tính toán presigned url cho mỗi part theo công thức `Công thức tính TTL cho presigned url`
     * Generate UUID làm tên object để chỉ định tên lưu trữ trong store
     * Call CreateMultipartUpload minio với object id là uuid đã generate để tạo uploadID, mục đích tạo khoảng trống upload trong bucket temp. Dùng để chứa các part file. Dùng cho upload part, Resume, Complete, Abort.
     * Xử lý dữ liệu: 
     * Trả về response chứa: UploadID, objectID, partSize, partNumber, ttl, presignedUrl của từng part.
-    * Vì browser giới hạn số lượng request đồng thời, nên số lượng part nhiều hơn giới hạn sẽ cần upload theo từng đợt. Nếu các part phía sau, có thời gian presined URL ngắn hơn thời gian upload của các part phía trước, thì ttl của part đó sẽ hết hạn và không được upload do lỗi. Vì vậy, các part được chia thành các đợt, mỗi đợt có số lượng part bằng giới hạn request đồng thời của browser. Mỗi đợt có thời gian presined URL bằng nhau và bằng thời gian upload của đợt đó.
-    * Tạo presigned url tạm thời cho từng giới hạn 6 (giới hạn request đồng thời của browser), thời gian ttl 10p.
-    mỗi part là 1 request độc lập. Không thể dùng 1 presigned url để upload nhiều part hoặc tạo nhiều presigned url cho cùng 1 part. 1 part = 1 presign Url. Vì để tránh 1 presigned url bị leak ra ngoài và gây ra vấn đề ghi vô hạn dữ liệu. Do browser giới hạn 6-15 connection/domain, nếu quá nhiều sẽ dễ throttle network, tăng latency -> để tầm khoảng 6-8 connection song song khi upload. Để tránh mạng kém, số lượng quá tải khiến xử lý chậm, presignUrl ttl ngắn sẽ hết hạn trước khi xử lý hết đặt TTL dài 10p.
+    * Vì browser giới hạn số lượng request đồng thời, nên số lượng part nhiều hơn giới hạn, thì sẽ cần chia ra upload theo nhiều đợt. Nếu các part phía sau có thời gian presined URL ngắn hơn thời gian upload của các part phía trước, thì ttl của part đó sẽ hết hạn và không được upload do lỗi. Vì vậy, các part được chia thành các đợt, mỗi đợt có số lượng part bằng giới hạn request đồng thời của browser. Mỗi luồng sẽ có thời gian xử lý hoàn tất khác nhau, nên luồng nào xong trước thì thực hiện lấy presigned mới và thực hiện upload part mới.
+    mỗi part là 1 request độc lập. Không thể dùng 1 presigned url để upload nhiều part hoặc tạo nhiều presigned url cho cùng 1 part. 1 part = 1 presign Url. Vì để tránh 1 presigned url bị leak ra ngoài và gây ra vấn đề ghi vô hạn dữ liệu. Do browser giới hạn 6-15 connection/domain, nếu quá nhiều sẽ dễ throttle network, tăng latency -> để tầm khoảng 6-8 connection song song khi upload. Để tránh mạng kém, số lượng quá tải khiến xử lý chậm, presignUrl ttl ngắn sẽ hết hạn trước khi xử lý hết
     * Response về thông tin upload part cho client
 
   * Client:
@@ -244,12 +243,22 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
     * Khi user submit upload, thì client gọi api submit upload. Call api gửi thông tin metadata của file.
 
   * Back-end:
-    * Nhận response từ client. Nếu lỗi thì thông báo lỗi cho user, nếu thành công thì thông báo cho user đã sẵn sàng để submit upload.
-    * Xử lý dữ liệu, store lại thông tin, move file mới upload từ bucket temp vào bucket chính official.
-    * Response về kết quả cho client.
-    
+    * Xử lý dữ liệu, store lại thông tin, lưu trữ trạng thái file là processing
+    * Kích hoạt job move file mới upload từ bucket temp vào bucket chính official.
+    * Response về kết quả cho client. Trong đó có room id để user theo dỗi kết quả upload file format dạng uuid_userId_mediaId (vì user có thể upload nhiều file nặng khác nhau)
+
+  * Worker execute job
+    * Thực hiện kiểm tra tồn tại của object đó trong bucket temp có tồn tại hay không ? nếu có thưc hiện lệnh move object từ bucket temp -> official, Storage tương ứng sẽ thực hiện move tùy theo kích thước file, nếu kích thước lớn nó sẽ chia thành nhiều part nhỏ để move qua giống như cách upload. Nhưng nó thực hiện nội bộ bên trong chính nó mình không cần can thiệp. khi thực hiện xong nó trả kết quả về.
+    * Quá trình chia nhỏ và upload part bị lỗi sẽ thực hiện retry chiến lược 5 lần, fail là kết thúc.
+    * Nếu thành công thì thực hiện delete object cũ (vì trong quá trình upload có thể lỗi, cần copy qua, xong rồi xóa đi thì đỡ lỗi).
+    * Cập nhật trạng thái upload file là complete or fail vào record trong db
+    * Reverb sẽ thực hiện broatcast event kết quả thực hiện đển room id tương ứng với trạng thái file đã thực hiện
+
   * Client:
-    * Kết thúc xử lý và thông báo kết quả cuối cùng.
+    * Nhận response và thực hiện thông báo cho user rằng quá trình đang diễn ra, sẽ thông báo kết quả sau
+    * Sau đó lấy room id từ response, thực hiện call wss đăng ký join room để nhận thông báo kết quả file
+    * Call api list với id media vừa upload, check column status coi nếu khác processing thì thực hiện thông báo kết quả luôn, sau đó call wss rời room id tương ứng. Vì một số trường hợp file nhỏ job xử lý nhanh tức thì, user call wss kết nối chậm hơn tốc độ xử lý job nên bị miss thông báo.
+    * Nếu không thì đợi job broadcast event -> reverb wss service receive -> send to client subscribing room id -> hiển thị thông báo kêt quả -> call wss rời room id tương ứng
 
 Note: 
 * Trường hợp upload dở dang mà user reload, close tab, close browser, sleep, turn off,... thì sẽ không hoàn thành upload, các part đã upload sẽ không được merge thành file hoàn chỉnh. Nó sẽ được dọn dẹp bằng lifecycle của minio.
@@ -290,6 +299,14 @@ Note:
   * 4G (20-100 Mbps)
   * 5G (187-393 Mbps)
   * 1 MB (megabyte) = 8Mb (megabit)
+
+* Job: là công việc được lập trình sẵn để thực hiện logic
+
+* Queue: hàng đợi thứ tự, ưu tiên, delay thực hiện job
+
+* Worker: Thực hiện công việc, luôn chạy sẵn, nó sẽ thực hiện các công việc của queue, thực hiện đồng thời or retry. Báo cáo kết quả thực hiện, phát event kết quả thực hiện
+
+* Reverb: Broadcast event kết quả theo room id
 
 * Web worker: là một script chạy ở nền tảng background, chạy độc lập và song song với UI thread, không ảnh hưởng đến UI thread.
 Nó không ảnh hưởng đến hiệu suất giao diện. Hạn chế là nó chạy riêng biệt nên không có quyền truy cập trực tiếp vào DOM.
@@ -426,7 +443,16 @@ Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác n
 
 * Đối với file nặng, mà cần move file từ bucket này qua bucket khác, thì thực hiện server-side Multipart Copy + Parallel Threads + batch job, thêm column đánh dấu trạng thái tình trạng hoàn thành, cập nhật column này là processing. Thông báo cho user "File của bạn đang được xử lý hệ thống. Chúng tôi sẽ thông báo khi file sẵn sàng.", sau đó tắt modal or dialog để cho user tiếp tục thực hiện trên web. Sau đó job sẽ chạy sau đó thực hiện xử lý ngầm, khi move hoàn thành thì thực hiện update lại status là upload completed. Tận dụng sức mạnh tối đa đa luồng, phần cứng của minio. Khi bị fail thì retry lại theo chiến lược thời gian giữa các đợt retry dãn dần ra để tình trạng mạng phục hồi lại. Giới hạn số lần retry là 5 lần. Nếu quá số lần retry thì update fail.
 
-* Để thông báo kết quả upload file đến người dùng, sử dụng websocket. Client tham gia một room theo ID. BE xử lý xong job gửi message cho user theo room ID. CLient nhận được tín hiệu sẽ thực hiện hiển thị thông báo kết quả.
+* Nhu cầu từ truy cập dữ liệu từ nhiều máy -> internet
+* Nhu cầu cập nhật thông tin và sự phổ biến của nó -> sử dụng trình duyệt -> giao thức kết nối http để gửi và phản hồi dữ liệu.
+* Nhu cầu tương tác với dữ liệu trên trình duyệt (như validate form trước khi request) -> javascript.
+* Nhu cầu thao tác với dữ liệu trên trình duyệt mượt mà không tải lại toàn bộ page trên browser mỗi khi request -> ajax.
+* Nhu cầu gửi nhận dữ liệu 2 chiều kịp thời nhanh chóng thời gian thực thay vì request để lấy dữ liệu mới -> giao thức websocket. 
+* Nhu cầu cao hơn về thao tác dữ liệu thời gian thực với độ trễ thấp -> websocket + http/2, webRTC, webtransport.
+
+* KHi một số mô hình, công nghệ, khái niệm mới chứng mình được sự ưu việt thì trình duyệt, ngôn ngữ lập trình, các hệ sinh thái,... sẽ cố gắng lập trình, hấp thụ, kế thừa chúng vào để đáp ứng đầy đủ và đa dạng nhất tất cả các yêu cầu của người dùng để thích nghi và tồn tại. Quá trình diễn ra 2 hướng, 1 là các lớp lõi sẽ tích hợp or hỗ trợ chúng trong các phiên bản cập nhật về sau, 2 là hệ sinh thái như cộng đồng, doanh nghiệp,... sẽ phát triển các thư viện, framework, công cụ,... để hỗ trợ chúng.
+
+* Websocket phức tạp để mở rộng bời vì, khi cần mở rộng có 2 hướng, mở rộng theo chiều dọc nghĩa là mở rộng cấu hình xử lý thường tốn kém, mở rộng chiều ngang thì độ phức tạp tăng lên vì bản chất của websocket kết nối liên tục và nó chỉ biết bản thân và máy khách để trao đổi thông tin, khi mở rộng cần thêm các phương thức mở rộng mà không mất kết nối, chia sẽ dữ liệu đồng thời trên nhiều máy khách, cần thêm các thành phần trung gian để quản lý, điều phối, định tuyến, cân bằng tải, lưu trữ, xử lý,...
 
 * Websocket: là application-layer protocol, chạy trên TCP, không phải thay thế TCP. Giao thức truyền tải dữ liệu cho phép thiết lập một kênh liên lạc 2 chiều, duy trì liên tục giữa trình duyệt và máy chủ qua 1 kết nối TCP duy nhất. Khác với giao thức HTTP truyền thống, client hỏi và nhận phản hồi từ server, websocket cho phép cả 2 đều có thể chủ động gửi thông tin cho bên kia bất kỳ lúc nào sau khi kết nối.
 
@@ -435,51 +461,35 @@ Vấn đề là không tương thích là mỗi browser hỗ trợ codec khác n
     * Room: Là không gian chung cho nhiều client có thể theo dõi message của nhau. Ban đầu thiết lập kết nối mới, nó sẽ thực hiện tạo các đường dẫn đến client tương ứng và kết nối liên tục. KHi có tin nhắn chúng sẽ gửi tin nhắn đó đến các client trong room, trừ client gửi, khác với giao thức HTTP khi gửi dữ liệu cần có địa chỉ IP server. Mặc định các server websocket sẽ tự clear các room khi không có client nào.
     * server Websocket: là máy chủ quản lý danh sách các room và socket id trong ram. CLient join room thì nó sẽ lưu trữ socket id của client đó vào trong room đó. Khi client rời room nó sẽ xóa socket id khỏi room đó. 
 
+  * Hệ thống phân luồng
+    * Public room: Tất cả user đều nhận được thông báo
+    * Private room: Chỉ user có trong room mới nhận được thông báo
+    * Presence room: Giống private nhưng biết thêm ai đang connect (online)
+
+  * Hệ thống xác thực
+    * Reverb có cơ chế verify token để xác thực khi client gửi request có đính kèm token trong authorization header. Nó có sẵn nên không cần thực hiện thêm
+    * BE sẽ xác thực request user thông qua token có thể để trong auth or cookie, sau khi xác thực thành công sẽ kiểm tra quyền truy cập vào room tương ứng. Nếu tất cả hợp lệ thì mới thực hiện return về token được generate từ secret key, key này với reverb là 1. Nếu không thì return lỗi.
+    * Client khi cần gửi tin nhắn cần trỏ đúng địa chỉ IP server websocket, FE cần cài thêm thư viện như laravel-echo or pusher-js để thiết lập đường dẫn wss đến reveb. Reveb đã thực hiện tích hợp verify token để xác thực client có quyền truy cập vào wss hay không, việc cần thực hiện là tạo secrect key khớp với một hệ thống xác thực khác, ở đây là BE sẽ xác thực và tạo token với secrect giống reverb, client sẽ sử dụng token này để xác thực khi kết nối wss.
+
   * Cách thức hoạt động:
-    * Handshake: client gửi request http đặc biệt tới server với yêu cầu kết nối websocket.
+    * Handshake: client gửi request http get đặc biệt tới server với yêu cầu kết nối websocket.
     * Open connection: Nếu server đồng ý, kết nối được thiết lập. Lúc này, giao thức chuyển từ HTTP -> websocket.
     * Data trasnfer: Cả 2 đều có thể gửi dữ liệu cho nhau theo frame. Cực nhẹ mà ko cần gửi lại các thông tin header rườm rà.
     * Close: 1 trong 2 có thể đóng kết nối bất kỳ khi nào.
 
-  * Cách ứng dụng:
-    * Tự xây dựng 1 server websocket:
-      * Ngôn ngữ lập trình: nodejs, go, python, php, java, c#
-      * Framework: socket.io, ws, websocket, ...
-    * Sử dụng dịch vụ websocket:
-      * pusher, pubnub, ...
-    * Xác thực kết nối: Tạo 1 danh sách các địa chỉ tin cậy (white list), nếu địa chỉ request có trong danh sách này thì có thể trực tiếp kết nối tới server websocket ví dụ như các service trong cùng mạng nội bộ. Nếu không sẽ cần qua một api xác thực, xác thực fail thì reject request, đúng thì trả về 1 token để client đó sử dụng kết nối trực tiếp đến server websocket trong lần đầu tiên. Websocket sẽ xác thực token nếu hợp lệ nó sẽ thực hiện cho join room request tương ứng, nếu không thì reject request.
-    * Cách thức kết nối:
-      * Socket ID: 1 kết nối được thiết lập, server sẽ gán cho kết nối đó 1 ID duy nhất
-      * Găn định danh (auth): Thông thường, sau khi kết nối, client sẽ gửi package chứa mã token để server biết user nào
-      * Lưu trữ: Server sẽ giữ danh sách (thường là trong ram) để ánh xạ: user id -> socket id. Có nghĩa auth xong mới có socket id.
-    * Pub/sub: Mỗi khi có request join room để tham gia, Khi một bên gửi thông tin nên đây chúng sẽ được broadcasting copy tin nhắn gửi cho tất cả các client trong room đó trừ người gủi.
 
-  * Flow hoàn chỉnh
-    * Client sử dụng 1 chức năng nào đó cần có websocket, nó sẽ gủi request join room lên api, trong request có đính kèm access token trong cookie header request
-    * API verify request, nếu hợp lệ thì tìm kiếm token đó trong redis và thêm room_id cho token user tương ứng, sau đó trả về response success cho client. Hoặc gen JWT dạng stateless, ko cần lưu trữ, chỉ cần wss verify được là yên tâm sử dụng thông tin trong payload thực hiện logic join room.
-    + Client nhận được response thành công, sẽ thực hiện request đến domain wss yêu cầu kết nối và join room id. Tại vì các thành phần FE và wss có cùng domain lên khi gửi request chúng sẽ tự đính kèm access token cookie trong request. Trường hợp khác domain thì setting lại or gửi token qua query string: ws://api.com?token=abc. URL có thể bị lưu trong log server or có thể truy cập ở đâu đó, trường hợp này tạo one-time token với thời gian cực ngắn khoảng 30s để đảm bảo an toàn.
-    + WSS: Viết script thực hiện lấy access token từ cookie or query string. Sau đó, request truy cập đến redis, tìm kiếm token và room id có tồn tại không ? nếu có chứng tỏ chúng được api cấp phép và tạo trước đó, trường hợp này tạo room nếu chưa có và thêm socket id (user) vào, tạo kết nối trực tiếp đến user để gửi nhận message, duy trì kết nối.
+* FLow
+  * Client: khi cần theo dõi thông báo từ channel thông báo kết quả upload file nặng đang chạy ngầm. Sau đó thực hiện gửi request đến server websocket khởi tạo yêu cầu kết nối.
+  * Nginx: Sẽ proxy request đến server websocket.
+  * Reverb: Sẽ xác nhận yêu cầu kết nối, nếu hợp lệ thì sẽ trả về kết nối thành công, ngược lại sẽ trả về lỗi. Không xác thực. Lúc này như ở ngoài sảnh khách sạn ai cũng được vào nhưng chưa được xác thực phòng.
+  * Client: Thông qua thư viện laravel echo để request http post tới laravel để xác thực kết nối channel, lúc này param sẽ đính kèm channel cần kết nối. Thực hiện tạo param channel name là admin id + channel name (upload file nặng). Trong request mặc định sẽ tự đính kèm cookie (chứa access token). Có nghĩa request này sẽ thực hiện sau khi login thành công.
+  * Nginx: Sẽ proxy request đến laravel
+  * laravel: Sẽ thực hiện logic xác thực adminMiddlware check cookie có hợp lệ không sau đó next request. Lúc này broadcast middleware sẽ thực hiện tiếp kiểm tra lấy admin id trong param request đối chiếu với admin id được verify từ cookie chứa access token dạng jwt. Nếu khớp thì thực hiện tạo chữ ký mã hóa trả về cho client. Chữ ký mã hóa này có key là secret key của reverb. Response trả về sẽ dạng một chuỗi json như {"auth": "a1b2c3d4e5..."}.
+  * Client: Sử dụng chữ ký mã hóa này để xác thực kết nối channel với server websocket. Thông qua laravel-echo đóng gói lại thành wss frame.
+  * Reverb: Sẽ xác nhận yêu cầu kết nối, giải mã chữ ký mã hóa, nếu hợp lệ thì sẽ trả về kết nối thành công, ngược lại sẽ trả về lỗi. Không xác thực.
+  * Job laravel: Khi tạo job thực hiện hoàn tất, cần lưu trũ admin id (lấy trong cookie verify decode token lúc request kích hoạt job này), khi quá trình xử lý job hoàn tất thì nó thực hiện tạo channel với format tương ứng nó sẽ mã hóa các thông tin thành json và push vào kênh nội bộ redis.
+  * Reverb: Subcriber kênh nội bộ redis từ trước, ngay sau khi có tin nhắn mới. Nó sẽ đọc nội dung gói tin json đó, tìm kiếm channel name tương ứng đang tồn tại, nếu tồn tại thì nó sẽ gửi tin nhắn đến các socket id trong channel tương ứng.
+  * Client: Nhận tin nhắn và thực hiện hiển thị thông báo kết quả job cho người dùng cuối. Thực hiện close connection hoặc xóa room ngay khi nhận tin nhắn.
+  * Laravel job: Tạo job chạy định kỳ để tự động clear các record có upload status là inprogress với update time >24H so với hiện tại. Để tránh rác dữ liệu, còn ở storage thì có lifecycle để tự động clear rồi.
 
-
-    + API: Viết logic PUBLISH tin nhắn lên REDIS, nội dung bao gồm wss id + room id + message.
-    + WSS: Viết script thực hiện subcribe kênh trên redis, khi có tin nhắn thì chúng thực hiện so khớp thông tin wss id + room id, nếu khớp thì gửi tin nhắn đến socket id (user) trong room đó.
-    + WSS: Viết script thực hiện lấy access token từ cookie or query string. Sau đó, request truy cập đến redis, tìm kiếm token và room id có tồn tại không ? nếu có chứng tỏ chúng được api cấp phép và tạo trước đó, trường hợp này tạo room nếu chưa có và thêm socket id (user) vào, tạo kết nối trực tiếp đến user để gửi nhận message, duy trì kết nối.
-    + WSS: Mặc định không có ai trong room thì nó tự xóa. Nhưng có những trường hợp nhận dạng tin nhắn và xóa ngay, như chức năng gửi kết quả tình trạng upload, sau khi nhận tin nhắn từ api và gửi chúng đến socket id (user) trong room, sau khi gửi xong thì viết script để xóa room ngay lúc đó.
-    + WSS: Viết script thực hiện tổng hợp các socket id đang quản lý, theo định kỳ gửi ping đển các socket id này, nếu các socket id đó còn hoạt động chúng sẽ thực hiện phản hồi là pong, thì không làm gì cả. Nếu không có phản hồi thì thử lại với thời gian ngẫu nhiên trong thời gian ngắn sau đó, mong đợi socket id đó kết nối lại, sau vài lần không phản hồi thì thực hiện xóa socket id đó ở tất cả các room đang quản lý.
-    + Front-end: Nếu connect wss thất bại, thử reconnect lại vài lần, mỗi lần thử lại thời gian chờ theo lũy thừa giãn ra. Nếu quá số lần thất bại thì thông báo lỗi connect cho user, thành công thì báo reconnect thành công. FE sẽ lưu last_message_id để đánh dấu message gần nhất đã nhận.
-    + WSS: Khi nhận được last_message_id từ FE, wss kiểm tra last_messsage_id đó ở đâu ? nếu là mới nhất thì không làm gì cả, nếu nó bị cũ thì gửi thêm cho socket id đó những message bị miss từ đó đến message mới nhất.
-    + API: Đăng thông tin tin nhắn lên redis, thông tin bao gồm wss id + room id + message. WSS sẽ follow và thực hiện gửi tin nhắn đến các socket id. Khi không dùng client gửi out room, room không có ai nó tự xóa.
-    + API: Tạo job tự động clean các record có status inprogress với update time >24H so với hiện tại, chạy định kỳ hàng ngày 1 lần. Để tránh rác dũ liệu.
-
-
-    + Note: Tùy thuộc vào chức năng khác nhau và ở client or api sẽ thực hiện close connection or xóa room tương ứng.
-    vd:
-      - Chức năng upload file nặng: Quá trình diễn ra ngầm. Client cần nhận thông tin kết quả upload file ngầm và thông báo cho user cuối. Lúc này api chạy job ngầm xong thông báo kết quả lên bảng tin (redis). WSS sẽ viết script, có một event theo dõi, nếu có thông tin khớp thì chúng thực hiện gửi tin nhắn đến các socket id (client) trong room, sau khi gửi xong thì viết script để xóa room ngay lúc đó. Vì client chỉ follow kết quả xong thì thông báo cho người dùng cuối thôi không cần thiết lưu trữ dữ liệu room, dữ liệu trên bảng tin làm gì.
-      - Chức năng đợi xếp hàng truy cập mua vé: Cần cập nhật vị trí sếp hàng thời gian thực và liên tục đến khi hết đợi xếp hàng. Nó chỉ sử dụng trong quá trình đợi xếp hàng thôi, nên xếp hàng xong or không xếp hàng thì xóa socket id (user) ra khỏi room. KHi không có ai trong room xếp hàng thì room tự xóa để đảm bảo clean.
-      - Chức năng thông báo: Khi user follow một chức năng nào đó như User X, thì user sẽ được add vào room chứa những socket id (user) theo dõi user X. Khi user X có thông tin mới đây vào room chúng sẽ được gửi đến các socket id có trong room để hiển thị thông báo mới. Quá trình này sẽ diễn ra liên tục đến khi user unfollow user X (remove khỏi room)
-
-
-    + Cần định nghĩa các room theo rule: 
-      - Chức năng riêng tư: user_id + tên chức năng ví dụ: 123_noti_upload_file (gửi thông báo upload file đến riêng user có id là 123)
-      - Chức năng chung: tên chức năng ví dụ: new_deal_noti (gửi thông báo deal mới đến tất cả các socket id đang follow deal)
-    + Các thành phần liên quan cùng định nghĩa room theo rule chung, các logic chức năng cũng follow theo rule này để thực hiện.
+  * Note: Nếu quá trình xử lý mà client rời đi thì khi quay lại client sẽ phải tải dữ liệu mới lúc này không cần thông báo message miss nữa. Khi cần thực hiện ứng dụng chatapp thì mới cần đồng bộ message
