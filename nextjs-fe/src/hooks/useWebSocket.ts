@@ -45,12 +45,13 @@ export const useWebSocket = ({
       broadcaster: 'reverb' as const,
       key: process.env.NEXT_PUBLIC_REVERB_APP_KEY || 'my-app-key',
       wsHost: process.env.NEXT_PUBLIC_REVERB_HOST || 'localhost',
-      wsPort: process.env.NEXT_PUBLIC_REVERB_PORT ? parseInt(process.env.NEXT_PUBLIC_REVERB_PORT) : 8080,
-      wssPort: process.env.NEXT_PUBLIC_REVERB_PORT ? parseInt(process.env.NEXT_PUBLIC_REVERB_PORT) : 8080,
+      wsPort: process.env.NEXT_PUBLIC_REVERB_PORT ? parseInt(process.env.NEXT_PUBLIC_REVERB_PORT) : 81,
+      wssPort: process.env.NEXT_PUBLIC_REVERB_PORT ? parseInt(process.env.NEXT_PUBLIC_REVERB_PORT) : 81,
+      wsPath: process.env.NEXT_PUBLIC_REVERB_PATH || '/app',
       forceTLS: (process.env.NEXT_PUBLIC_REVERB_SCHEME || 'http') === 'https',
       enabledTransports: ['ws', 'wss'],
       // Cookie will be sent automatically by browser (path=/api/admin, httpOnly)
-      authEndpoint: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/broadcasting/auth`,
+      authEndpoint: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:81/api'}/admin/broadcasting/auth`,
       auth: {
         headers: token ? {
           Authorization: `Bearer ${token}`,
