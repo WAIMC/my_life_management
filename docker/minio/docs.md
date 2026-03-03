@@ -1,8 +1,8 @@
 ### KHỞI TẠO
 
-khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hiện việc đầu tiên là khởi tạo, thực hiện khi build env: 
+khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hiện việc đầu tiên là khởi tạo, thực hiện khi build env:
 
-* Cách minio scan clear: nó chạy một lần định kỳ mỗi 24H (mặc định), sau đó chúng mới thực hiện clear. Như vậy các file đã hết hạn vd rule quy định 24H, file đó đã tồn tại quá thời gian quy định nhưng chưa đến chu trình scan thì nó vẫn tồn tại.
+* Cách minio scan clear: nó chạy một lần định kỳ mỗi 24H (mặc định), sau đó chúng mới thực hiện clear. Như vậy các file đã hết hạn vd rule quy định 24H, file đó đã tồn tại quá thời gian quy định nhưng chưa đến chu trình scan thì nó vẫn tồn tại. Đôi với minio phiên bản mới sẽ thực hiện quét liên tục nhưng tùy theo mức độ ưu tiên, số lượng object và tải của hệ thống, do đó có thể object đến hạn nhưng cần một thời gian sau chúng mới xóa là bình thường. Thời gian đó tùy thuộc vào tốc độ trên.
 
 * Tạo 2 bucket để lưu trữ dữ liệu:
   * media-official: chứa dữ liệu riêng tư như thông tin cá nhân, tài liệu nhạy cảm, ...
@@ -16,6 +16,7 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
     * Bucket lưu trữ tạm thời setting lifecycle độc lập xóa dữ liệu tự động mỗi ngày, thường vài tiếng nó sẽ scan object với modified_time > 1 ngày -> xóa object
     * Không versioning để tiết kiệm chi phí lưu trữ vì không tạo delete marker, tự động clear dữ liệu mà không tồn rác
     * Setting rule để dọn các multipart upload thừa chưa hoàn tất. Thời gian 24H
+    * Ý tưởng tạo một setting cho phép làm mới bucket temp này mỗi ngày thay vì các rule bên trên, nhưng không có.
 
   * Lưu trữ media sẽ theo format: '{workspace}/{year}/{month}/{uuid}.{extension}';
   * vd: media-official/2026/01/16/abc.jpg
@@ -25,7 +26,23 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
   * MinIO sử dụng dấu / để mô phỏng cấu trúc thư mục. Nếu dồn quá nhiều đối tượng vào 1 prefix duy nhất sẽ gây áp lực truy vấn list và head. Khuyến nghị giữ đối tượng <10.000 đối tượng/prefix. Có thể chia thành nhiều prefix theo năm/tháng/ngày hoặc theo hash của object id.
   * Do đó, setting lifecycle tự động move media xuống tier lưu trữ thấp hơn, các media này là các media ít được sử dụng or lâu rồi không sử dụng or tần xuất truy cập ít và không muốn xóa, di chuyển nó xuống tier thấp hơn nhứ SSD -> HDD or cloud rẻ để tối ưu chi phí lưu trữ, truy vấn. Toàn bộ giao tiếp với dữ liệu đều thông qua giao thức HTTP(S) restful.
 
-* Khi upload sẽ chia thành nhiều part để upload. Mặc định, mọi multipart upload bị hủy (không hoàn tất) sẽ tự động bị xóa sau 24H và tần xuất quét xóa mặc định là 6H -> Nếu không cần thay đổi thiết lập thì việc này cũng tự động rồi
+* Khi upload file nặng sẽ chia file thành nhiều part nhỏ để upload khác với upload file nhẹ sẽ upload one shot 1 lần duy nhất. Quy trình upload file nặng trong phạm vi storage là khởi tạo object (khu vực lưu trữ), upload các part vào đây, sau đó request confirm kết thúc complete upload, storage sẽ tự check, merge các part thành object và đánh dấu nó là hoàn thành hoặc thất bại. Mặc định, mọi multipart upload bị hủy (không hoàn tất) sẽ tự động bị xóa sau 24H và tần xuất quét xóa mặc định là 6H -> Nếu không cần thay đổi thiết lập thì việc này cũng tự động rồi.
+
+* Khi có cơ chế backup object xóa mềm để có thể khôi phục dữ liệu khi cần trong một khoảng thời gian ngắn sau đó. không cần thiết phải lưu trữ chúng dài hạn làm ảnh hưởng đến dung lượng và hiệu xuất xử lý. Do đó cần thiết lập rule tự động xóa các file được đánh dấu xóa sau 30 ngày, trước đó 30 ngày cho phép rollback.
+
+* Cơ chế versioning, mục đích chúng sinh ra là để bảo vệ dữ liệu và đảm bảo tính toàn vẹn của dữ liệu.
+  * Tác dụng:
+    * Chống ghi đè or xóa nhầm: khi ghi đè hoặc xóa nhầm file nếu không có version chúng sẽ bị xóa or thay ghi đè thay đổi. Dẫn đến việc dữ liệu cũ của object đó bị biến mất vĩnh viễn.
+    * Chống ransomeware: Nếu hệ thống nhiễm mã độc và tất cả các file (object) bị mã hóa và không thể khôi phục. Thì thực chất chúng chỉ tạo ra một phiên bản khác của object đó và chỉ mã hóa dữ liệu 1 version mới của object đó thôi. Các dữ liệu version cũ của object đó vẫn an toàn, có thể khôi phục lại.
+  * Cơ chế đánh dấu version: Mỗi khi object có sự thay đổi, chúng sẽ tạo ra version mới và đánh dấu nó làm phiên bản hiện tại, đối với việc xóa thì chúng sẽ chèn delete marker lên trên cùng và thông báo không tồn tại object đó khi tìm kiếm, nhưng thực chất chúng chưa được xóa hoàn toàn. Để thực sự xóa một dữ liệu cần chỉ định rõ phiên bản của chúng
+  * Cơ Chế backup: Có 3 loại
+    * Đồng bộ hóa các thay đổi: Sao chép dữ liệu các phiên bản mới nhất của object đó có nghĩa mỗi object chỉ lấy một phiên bản mới nhất
+    * Khôi phục theo thời gian: Sao chép tất cả dữ liệu bao gồm việc lấy tất cả các phiên bản của mỗi object. Vì mỗi version mỗi object đều có timestamp tạo, hệ thống cho phép khôi phục dữ liệu tại một thời điểm trong quá khứ, bằng cách lấy toàn bộ dữ liệu cũ thông qua verion của các object có timestamp tạo <= thời điểm yêu cầu khôi phục trong quá khứ.
+    * Khôi phục theo từng object: khôi phục dữ liệu cho từng object riêng lẻ, cách này xử lý cho các sự cố nhỏ chỉ có tác dụng thay đổi cho object đó mà không ảnh hưởng đến object khác or toàn bucket
+  * Lưu ý dọn dẹp: Tác dụng của verioning rất tuyệt vời, nhưng chúng gây ra vấn đề khi một object thay đổi nhiều lần sẽ sao chép object ra số lượng tương ứng làm gây áp lực đến dung lượng lưu trữ và hiệu xuất sử dụng khi tương tác với object. Như vậy cần có rule dọn dẹp chúng.
+    * Tự động xóa các version cũ không phải version hiện tại sau 30 ngày
+    * Chỉ dữ lại 5 version gần nhất (setting phạm vi bucket, tất cả object trong bucket đó đều sẽ apply theo)
+    * Tự động xóa các delete marker thừa trong một khoảng thời gian nhất định
 
 * Cơ chế delete marker và xóa đối tượng: Nếu bucket bật tính năng versioning, thì mỗi khi xóa object đó chỉ là soft delete. Nó tạo delete marker để đánh dấu lại object đó. Client sẽ không nhìn thấy object đã xóa, nhưng thực tế chúng vẫn còn đang lưu trữ ở disk. Chức năng này có mục đích khôi phục dữ liệu, khi nhầm lẫn xóa object (do người dùng, lỗi logic delete) thì có thể khôi phục lại bằng cách xóa đánh dấu delete marker (current version). Vấn đề là object và delete marker lại không có liên kết ràng buộc lẫn nhau, nó tồn tại độc lập, nên khi xóa object thật vĩnh viễn thì delete marker vẫn còn tồn tại, lúc này delete marker là rác vì nó không đánh dấu cho object nào cả. Do đó cần setting rule để xóa vĩnh viễn delete marker. Vì bật tính năng versioning để cho mục đích khôi phục, nên cần setting rule như cái thùng rác, sẽ tự động xóa vĩnh viễn object sau x/ngày không khôi phục. Để đảm bảo quản lý, lưu trữ dữ liệu tối ưu.
 
@@ -63,6 +80,8 @@ khi sử dụng minio để quản lý dữ liệu media, tôi cần thực hi�
   * Hoặc remote S3 (cold): vd dữ liệu sau 1 năm không sờ vào -> move xuống S3
 
 * Tương lai sẽ thực hiện sau các thành phần: Backup & Disaster Recovery, Monitoring & Alert
+
+* Cần có hard limit cho các bucket, tránh bị spam upload làm đầy dung lượng. Việc này đã được thiết lập khi build container storage này rồi. Ở FE sẽ thực hiện thông báo lỗi cho user trực quan về lỗi này. Phía monitor sẽ cần thiết lập gửi thông báo và cảnh báo dưng lượng lưu trữ này. Cái này tương lai làm.
 
 
 #########################################################################################
