@@ -257,6 +257,47 @@ services:
         reservations:
           memory: 256M
 
+  # Next.js Documentation Frontend
+  ml-nextjs-docs:
+    container_name: ml-nextjs-docs
+    build:
+      context: ../nextjs-docs
+      dockerfile: ../docker/nextjs/Dockerfile
+      target: development
+    restart: unless-stopped
+    volumes:
+      - ../nextjs-docs:/app
+      - /app/.next
+      - docs_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: ${NEXTJS_DOCS_PORT_INSIDE_ENV}
+      HOSTNAME: 0.0.0.0
+      WATCHPACK_POLLING: true
+      CHOKIDAR_USEPOLLING: true
+    ports:
+      - "${NEXTJS_DOCS_PORT_OUTSIDE_ENV}:${NEXTJS_DOCS_PORT_INSIDE_ENV}"
+    expose:
+      - "${NEXTJS_DOCS_PORT_INSIDE_ENV}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_DOCS_PORT_INSIDE_ENV}/ || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
   # Nginx Reverse Proxy
   ml-nginx:
     container_name: ml-nginx
@@ -274,6 +315,8 @@ services:
         condition: service_healthy
       ml-nextjs:
         condition: service_healthy
+      ml-nextjs-docs:
+        condition: service_started
     healthcheck:
       test:
         [
@@ -366,6 +409,9 @@ volumes:
   minio_data:
     driver: local
     name: ml_minio_data
+  docs_node_modules:
+    driver: local
+    name: ml_docs_node_modules
 
 # Network configuration
 networks:

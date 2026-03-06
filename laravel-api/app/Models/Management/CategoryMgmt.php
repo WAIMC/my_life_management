@@ -85,17 +85,17 @@ class CategoryMgmt extends Model
   }
 
   /**
-   * Get the skills associated with this category.
+   * Get the entries associated with this category.
    *
    * @return BelongsToMany
    */
-  public function skills(): BelongsToMany
+  public function entries(): BelongsToMany
   {
     return $this->belongsToMany(
-      SkillMgmt::class,
-      'category_skill_mgmt',
+      EntryMgmt::class,
+      'category_entry_mgmt',
       'category_mgmt_id',
-      'skill_mgmt_id'
+      'entry_mgmt_id'
     )->withTimestamps();
   }
 

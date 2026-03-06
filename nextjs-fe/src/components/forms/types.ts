@@ -8,8 +8,8 @@ import type {
   PolicyDepartmentMst,
   RoleMst,
   SettingLinkMgmt,
-  SkillDescriptionMgmt,
-  SkillMgmt,
+  EntryDescriptionMgmt,
+  EntryMgmt,
   SliderMgmt,
   SocialMgmt,
   TokenMst,
@@ -70,14 +70,14 @@ export interface SettingLinkFormProps {
   onCancel: () => void;
 }
 
-export interface SkillDescriptionFormProps {
-  initialData?: SkillDescriptionMgmt | null;
+export interface EntryDescriptionFormProps {
+  initialData?: EntryDescriptionMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export interface SkillFormProps {
-  initialData?: SkillMgmt | null;
+export interface EntryFormProps {
+  initialData?: EntryMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
 }

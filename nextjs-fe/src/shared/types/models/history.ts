@@ -53,12 +53,12 @@ export interface CategoryMgmtHist extends BaseHistory {
   category_mgmt_id: number;
 }
 
-export interface SkillMgmtHist extends BaseHistory {
-  skill_mgmt_id: number;
+export interface EntryMgmtHist extends BaseHistory {
+  entry_mgmt_id: number;
 }
 
-export interface SkillDescriptionMgmtHist extends BaseHistory {
-  skill_description_mgmt_id: number;
+export interface EntryDescriptionMgmtHist extends BaseHistory {
+  entry_description_mgmt_id: number;
 }
 
 export interface BannerMgmtHist extends BaseHistory {

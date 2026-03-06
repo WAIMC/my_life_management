@@ -90,14 +90,14 @@ export const NAVIGATION_MENU: MenuItem[] = [
         href: ADMIN_ROUTES.CATEGORIES,
       },
       {
-        label: 'entities.skills',
+        label: 'entities.entries',
         icon: Briefcase,
-        href: ADMIN_ROUTES.SKILLS,
+        href: ADMIN_ROUTES.ENTRIES,
       },
       {
-        label: 'entities.skillDescriptions',
+        label: 'entities.entryDescriptions',
         icon: Layers,
-        href: ADMIN_ROUTES.SKILL_DESCRIPTIONS,
+        href: ADMIN_ROUTES.ENTRY_DESCRIPTIONS,
       },
       {
         label: 'entities.banners',

@@ -19,8 +19,8 @@ export const API_ENDPOINTS = {
   MANAGEMENT: {
     BANNER: '/admin/banner-mgmt',
     CATEGORY: '/admin/category-mgmt',
-    SKILL: '/admin/skill-mgmt',
-    SKILL_DESCRIPTION: '/admin/skill-description-mgmt',
+    ENTRY: '/admin/entry-mgmt',
+    ENTRY_DESCRIPTION: '/admin/entry-description-mgmt',
     SLIDER: '/admin/slider-mgmt',
     SOCIAL: '/admin/social-mgmt',
     USER: '/admin/user-mgmt',
@@ -31,7 +31,7 @@ export const API_ENDPOINTS = {
     ADMIN_DEPARTMENT: '/admin/admin-department-mst',
     API_ROLE: '/admin/api-role-mst',
     DEPARTMENT_MANAGEMENT: '/admin/department-management-mst',
-    CATEGORY_SKILL: '/admin/category-skill-mgmt',
+    CATEGORY_ENTRY: '/admin/category-entry-mgmt',
   },
   MEDIA: {
     FILES: '/admin/media-mgmt',

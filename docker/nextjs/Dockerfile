@@ -91,16 +91,19 @@ COPY package.json package-lock.json* pnpm-lock.yaml* ./
 
 # Install dependencies in the image (not at runtime)
 # This makes container startup much faster
-# Use pnpm if pnpm-lock.yaml exists, otherwise use npm with --legacy-peer-deps
+# Use pnpm if pnpm-lock.yaml exists, otherwise use npm with--legacy-peer-deps
 RUN if [ -f pnpm-lock.yaml ]; then \
       echo "Using pnpm..." && \
-      pnpm install --frozen-lockfile; \
+      pnpm install --frozen-lockfile && \
+      pnpm add -D @next/swc-linux-x64-musl; \
     elif [ -f package-lock.json ]; then \
       echo "Using npm with legacy peer deps..." && \
-      npm ci --legacy-peer-deps; \
+      npm ci --legacy-peer-deps && \
+      npm install --save-dev @next/swc-linux-x64-musl; \
     else \
-      echo "No lockfile found, using npm install..." && \
-      npm install --legacy-peer-deps; \
+      echo "Using npm..." && \
+      npm install --legacy-peer-deps && \
+      npm install --save-dev @next/swc-linux-x64-musl; \
     fi
 
 # Note: Source code will be mounted as volume at runtime

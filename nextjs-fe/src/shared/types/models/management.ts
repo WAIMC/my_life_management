@@ -45,13 +45,13 @@ export interface CategoryMgmt {
   // Relations
   parent?: CategoryMgmt;
   children?: CategoryMgmt[];
-  skills?: SkillMgmt[];
+  entries?: EntryMgmt[];
 }
 
 // ============================================
-// SKILL MANAGEMENT
+// ENTRY MANAGEMENT
 // ============================================
-export interface SkillMgmt {
+export interface EntryMgmt {
   id: number;
   name: string;
   slug: string;
@@ -65,15 +65,15 @@ export interface SkillMgmt {
   updated_at: string;
   // Relations
   categories?: CategoryMgmt[];
-  descriptions?: SkillDescriptionMgmt[];
+  descriptions?: EntryDescriptionMgmt[];
 }
 
 // ============================================
-// SKILL DESCRIPTION MANAGEMENT
+// ENTRY DESCRIPTION MANAGEMENT
 // ============================================
-export interface SkillDescriptionMgmt {
+export interface EntryDescriptionMgmt {
   id: number;
-  skill_mgmt_id: number;
+  entry_mgmt_id: number;
   title: string;
   content: string; // Rich text
   order: number;
@@ -83,7 +83,7 @@ export interface SkillDescriptionMgmt {
   created_at: string;
   updated_at: string;
   // Relations
-  skill?: SkillMgmt;
+  entry?: EntryMgmt;
 }
 
 // ============================================
@@ -159,12 +159,12 @@ export interface SettingLinkMgmt {
 }
 
 // ============================================
-// CATEGORY SKILL JUNCTION
+// CATEGORY ENTRY JUNCTION
 // ============================================
-export interface CategorySkillMgmt {
+export interface CategoryEntryMgmt {
   id: number;
   category_mgmt_id: number;
-  skill_mgmt_id: number;
+  entry_mgmt_id: number;
   created_at: string;
   updated_at: string;
 }

@@ -76,11 +76,11 @@
     "reset": "Reset",
     "preview": "Preview",
     "passwordRequired": "Password Required",
-    "skills": "Skills",
-    "skillsManagementComingSoon": "Skills Management Coming Soon",
+    "entries": "Entries",
+    "entriesManagementComingSoon": "Entries Management Coming Soon",
     "policyDepartments": "Policy Departments",
     "junctionManagementComingSoon": "Junction Management Coming Soon",
-    "skill": "Skill",
+    "entry": "Entry",
     "parentId": "Parent ID",
     "review": "Review",
     "next": "Next",
@@ -233,10 +233,10 @@
     "departments": "Departments",
     "feature": "Feature",
     "features": "Features",
-    "skill": "Skill",
-    "skills": "Skills",
-    "skillDescription": "Skill Description",
-    "skillDescriptions": "Skill Descriptions",
+    "entry": "Entry",
+    "entries": "Entries",
+    "entryDescription": "Entry Description",
+    "entryDescriptions": "Entry Descriptions",
     "banner": "Banner",
     "banners": "Banners",
     "slider": "Slider",
@@ -279,7 +279,7 @@
     "platform": "Platform",
     "adminId": "Admin ID",
     "token": "Token",
-    "skillId": "Skill ID",
+    "entryId": "Entry ID",
     "image": "Image",
     "link": "Link",
     "tableName": "Table Name",
@@ -559,7 +559,7 @@
       "passwordHidden": "••••••••",
       "leaveBlankToKeepCurrent": "Leave Blank To Keep Current",
       "selectFeature": "Select Feature",
-      "selectSkill": "Select Skill",
+      "selectEntry": "Select Entry",
       "selectAccount": "Select Account",
       "deviceName": "Device Name",
       "ipAddress": "IP Address",
@@ -678,8 +678,8 @@
       "required": "Permission is required",
       "maxLength": "Permission cannot exceed {max} characters"
     },
-    "skill": {
-      "required": "Skill is required"
+    "entry": {
+      "required": "Entry is required"
     },
     "feature": {
       "required": "Feature is required"

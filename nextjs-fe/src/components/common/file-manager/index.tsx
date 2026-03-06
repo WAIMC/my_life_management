@@ -346,7 +346,7 @@ export default function FileManager() {
       />
 
       {/* Heavy Upload Notifications - WebSocket listeners for each heavy upload */}
-      {heavyUploads.map((upload) => (
+      {heavyUploads?.map((upload) => (
         <HeavyUploadNotification
           key={upload.roomId}
           roomId={upload.roomId}
@@ -354,8 +354,8 @@ export default function FileManager() {
           mediaId={upload.mediaId}
           onComplete={() => {
             // Remove from state and refresh file list
-            clearHeavyUpload(upload.roomId);
-            refreshFiles();
+            if (clearHeavyUpload) clearHeavyUpload(upload.roomId);
+            if (refreshFiles) refreshFiles();
           }}
         />
       ))}

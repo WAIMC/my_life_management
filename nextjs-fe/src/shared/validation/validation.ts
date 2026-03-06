@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Gender, StatusEnum, AdminStatus, UserStatus, CategoryStatus, DepartmentStatus, FeatureStatus, SkillStatus, SocialStatus } from '@/shared/enums';
+import { Gender, StatusEnum, AdminStatus, UserStatus, CategoryStatus, DepartmentStatus, FeatureStatus, EntryStatus, SocialStatus } from '@/shared/enums';
 import { ValidationRules } from './validation-rules';
 
 type Translator = (key: string, params?: Record<string, string | number>) => string;
@@ -46,7 +46,7 @@ export const categoryStatusValidation = z.nativeEnum(CategoryStatus);
 export const departmentStatusValidation = z.nativeEnum(DepartmentStatus);
 export const featureStatusValidation = z.nativeEnum(FeatureStatus);
 export const userStatusValidation = z.nativeEnum(UserStatus);
-export const skillStatusValidation = z.nativeEnum(SkillStatus);
+export const entryStatusValidation = z.nativeEnum(EntryStatus);
 export const socialStatusValidation = z.nativeEnum(SocialStatus);
 
 // Admin schema matching StoreAdminMstRequest
@@ -99,16 +99,16 @@ export const getCategorySchema = (t: Translator) => z.object({
 
 export type CategoryFormData = z.infer<ReturnType<typeof getCategorySchema>>;
 
-// Skill schema
-export const getSkillSchema = (t: Translator) => z.object({
+// Entry schema
+export const getEntrySchema = (t: Translator) => z.object({
   name: z.string().min(1, t('name.required')),
   slug: z.string().optional(),
   rank_order: z.number().min(0, t('order.min', { min: 0 })),
-  status: skillStatusValidation,
+  status: entryStatusValidation,
   is_display: z.boolean().optional(),
 });
 
-export type SkillFormData = z.infer<ReturnType<typeof getSkillSchema>>;
+export type EntryFormData = z.infer<ReturnType<typeof getEntrySchema>>;
 
 // Role schema
 export const getRoleSchema = (t: Translator) => z.object({
@@ -173,9 +173,9 @@ export const getSocialSchema = (t: Translator) => z.object({
 
 export type SocialFormData = z.infer<ReturnType<typeof getSocialSchema>>;
 
-// Skill Description schema
-export const getSkillDescriptionSchema = (t: Translator) => z.object({
-  skill_mgmt_id: z.number().min(1, t('skill.required')),
+// Entry Description schema
+export const getEntryDescriptionSchema = (t: Translator) => z.object({
+  entry_mgmt_id: z.number().min(1, t('entry.required')),
   parent_id: z.number().int().min(0),
   title: z.string().min(1, t('title.required')),
   summary: z.string().optional(),
@@ -185,7 +185,7 @@ export const getSkillDescriptionSchema = (t: Translator) => z.object({
   is_display: z.boolean().optional(),
 });
 
-export type SkillDescriptionFormData = z.infer<ReturnType<typeof getSkillDescriptionSchema>>;
+export type EntryDescriptionFormData = z.infer<ReturnType<typeof getEntryDescriptionSchema>>;
 
 // API schema
 export const getApiSchema = (t: Translator) => z.object({

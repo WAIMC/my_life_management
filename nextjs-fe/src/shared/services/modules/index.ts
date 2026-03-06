@@ -3,7 +3,7 @@
  */
 export * from './user.service';
 export * from './category.service';
-export * from './skill.service';
+export * from './entry.service';
 export * from './banner.service';
 export * from './slider.service';
 export * from './social.service';
@@ -13,6 +13,6 @@ export * from './role.service';
 export * from './token.service';
 export * from './policy-department.service';
 export * from './setting-link.service';
-export * from './skill-description.service';
+export * from './entry-description.service';
 export * from './media-file.service';
 export * from './auth.service';

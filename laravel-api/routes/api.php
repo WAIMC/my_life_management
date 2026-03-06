@@ -23,11 +23,11 @@ use App\Http\Controllers\Master\DepartmentManagementMstController;
 
 use App\Http\Controllers\Management\BannerMgmtController;
 use App\Http\Controllers\Management\CategoryMgmtController;
-use App\Http\Controllers\Management\CategorySkillMgmtController;
+use App\Http\Controllers\Management\CategoryEntryMgmtController;
 use App\Http\Controllers\Management\MediaMgmtController;
 use App\Http\Controllers\Management\SettingLinkMgmtController;
-use App\Http\Controllers\Management\SkillDescriptionMgmtController;
-use App\Http\Controllers\Management\SkillMgmtController;
+use App\Http\Controllers\Management\EntryDescriptionMgmtController;
+use App\Http\Controllers\Management\EntryMgmtController;
 use App\Http\Controllers\Management\SliderMgmtController;
 use App\Http\Controllers\Management\SocialMgmtController;
 use App\Http\Controllers\Management\UserMgmtController;
@@ -43,14 +43,27 @@ use App\Http\Controllers\History\Master\RoleMstHistController;
 use App\Http\Controllers\History\Management\BannerMgmtHistController;
 use App\Http\Controllers\History\Management\CategoryMgmtHistController;
 use App\Http\Controllers\History\Management\SettingLinkMgmtHistController;
-use App\Http\Controllers\History\Management\SkillDescriptionMgmtHistController;
-use App\Http\Controllers\History\Management\SkillMgmtHistController;
+use App\Http\Controllers\History\Management\EntryDescriptionMgmtHistController;
+use App\Http\Controllers\History\Management\EntryMgmtHistController;
 use App\Http\Controllers\History\Management\SliderMgmtHistController;
 use App\Http\Controllers\History\Management\SocialMgmtHistController;
 use App\Http\Controllers\History\Management\UserMgmtHistController;
+use App\Http\Controllers\DocsController;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::routes(['middleware' => ['api', BroadcastingAuthMiddleware::class], 'prefix' => 'admin']);
+
+// ============================================================
+// PUBLIC DOCS API (No authentication required)
+// ============================================================
+Route::prefix('docs')
+  ->middleware([GenerateResponseMiddleware::class])
+  ->group(function () {
+    Route::get('categories', [DocsController::class, 'getCategories']);
+    Route::get('categories/{slug}/entries', [DocsController::class, 'getEntriesByCategory']);
+    Route::get('entries/{slug}', [DocsController::class, 'getEntryDetail']);
+    Route::get('search', [DocsController::class, 'search']);
+  });
 
 Route::prefix('admin')
   ->middleware([GenerateResponseMiddleware::class, TransactionMiddleware::class])
@@ -145,9 +158,9 @@ Route::prefix('admin')
 
 
 
-        // Category-Skill Junction
-        Route::get('category-skill-mgmt/list', [CategorySkillMgmtController::class, 'list']);
-        Route::put('category-skill-mgmt/update', [CategorySkillMgmtController::class, 'update']);
+        // Category-Entry Junction
+        Route::get('category-entry-mgmt/list', [CategoryEntryMgmtController::class, 'list']);
+        Route::put('category-entry-mgmt/update', [CategoryEntryMgmtController::class, 'update']);
 
         // ============================================================
         // MANAGEMENT DATA ROUTES
@@ -165,17 +178,17 @@ Route::prefix('admin')
         Route::put('category-mgmt/update/{id}', [CategoryMgmtController::class, 'update']);
         Route::post('category-mgmt/delete', [CategoryMgmtController::class, 'delete']);
 
-        // Skill Management
-        Route::get('skill-mgmt/list', [SkillMgmtController::class, 'list']);
-        Route::post('skill-mgmt/store', [SkillMgmtController::class, 'store']);
-        Route::put('skill-mgmt/update/{id}', [SkillMgmtController::class, 'update']);
-        Route::post('skill-mgmt/delete', [SkillMgmtController::class, 'delete']);
+        // Entry Management
+        Route::get('entry-mgmt/list', [EntryMgmtController::class, 'list']);
+        Route::post('entry-mgmt/store', [EntryMgmtController::class, 'store']);
+        Route::put('entry-mgmt/update/{id}', [EntryMgmtController::class, 'update']);
+        Route::post('entry-mgmt/delete', [EntryMgmtController::class, 'delete']);
 
-        // Skill Description Management
-        Route::get('skill-description-mgmt/list', [SkillDescriptionMgmtController::class, 'list']);
-        Route::post('skill-description-mgmt/store', [SkillDescriptionMgmtController::class, 'store']);
-        Route::put('skill-description-mgmt/update/{id}', [SkillDescriptionMgmtController::class, 'update']);
-        Route::post('skill-description-mgmt/delete', [SkillDescriptionMgmtController::class, 'delete']);
+        // Entry Description Management
+        Route::get('entry-description-mgmt/list', [EntryDescriptionMgmtController::class, 'list']);
+        Route::post('entry-description-mgmt/store', [EntryDescriptionMgmtController::class, 'store']);
+        Route::put('entry-description-mgmt/update/{id}', [EntryDescriptionMgmtController::class, 'update']);
+        Route::post('entry-description-mgmt/delete', [EntryDescriptionMgmtController::class, 'delete']);
 
         // Slider Management
         Route::get('slider-mgmt/list', [SliderMgmtController::class, 'list']);
@@ -280,17 +293,17 @@ Route::prefix('admin')
         Route::put('setting-link-mgmt-hist/update/{id}', [SettingLinkMgmtHistController::class, 'update']);
         Route::post('setting-link-mgmt-hist/delete', [SettingLinkMgmtHistController::class, 'delete']);
 
-        // Skill Description Management History
-        Route::get('skill-description-mgmt-hist/list', [SkillDescriptionMgmtHistController::class, 'list']);
-        Route::post('skill-description-mgmt-hist/store', [SkillDescriptionMgmtHistController::class, 'store']);
-        Route::put('skill-description-mgmt-hist/update/{id}', [SkillDescriptionMgmtHistController::class, 'update']);
-        Route::post('skill-description-mgmt-hist/delete', [SkillDescriptionMgmtHistController::class, 'delete']);
+        // Entry Description Management History
+        Route::get('entry-description-mgmt-hist/list', [EntryDescriptionMgmtHistController::class, 'list']);
+        Route::post('entry-description-mgmt-hist/store', [EntryDescriptionMgmtHistController::class, 'store']);
+        Route::put('entry-description-mgmt-hist/update/{id}', [EntryDescriptionMgmtHistController::class, 'update']);
+        Route::post('entry-description-mgmt-hist/delete', [EntryDescriptionMgmtHistController::class, 'delete']);
 
-        // Skill Management History
-        Route::get('skill-mgmt-hist/list', [SkillMgmtHistController::class, 'list']);
-        Route::post('skill-mgmt-hist/store', [SkillMgmtHistController::class, 'store']);
-        Route::put('skill-mgmt-hist/update/{id}', [SkillMgmtHistController::class, 'update']);
-        Route::post('skill-mgmt-hist/delete', [SkillMgmtHistController::class, 'delete']);
+        // Entry Management History
+        Route::get('entry-mgmt-hist/list', [EntryMgmtHistController::class, 'list']);
+        Route::post('entry-mgmt-hist/store', [EntryMgmtHistController::class, 'store']);
+        Route::put('entry-mgmt-hist/update/{id}', [EntryMgmtHistController::class, 'update']);
+        Route::post('entry-mgmt-hist/delete', [EntryMgmtHistController::class, 'delete']);
 
         // Slider Management History
         Route::get('slider-mgmt-hist/list', [SliderMgmtHistController::class, 'list']);

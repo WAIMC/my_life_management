@@ -213,15 +213,15 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
-        <TabsTrigger value="skills">{tCommon('skills')}</TabsTrigger>
+        <TabsTrigger value="entries">{tCommon('entries')}</TabsTrigger>
       </TabsList>
       
       <TabsContent value="details" className="mt-4">
         {FormContent}
       </TabsContent>
 
-      <TabsContent value="skills" className="mt-4">
-        <div className="text-muted-foreground">{tCommon('skillsManagementComingSoon')}</div>
+      <TabsContent value="entries" className="mt-4">
+        <div className="text-muted-foreground">{tCommon('entriesManagementComingSoon')}</div>
       </TabsContent>
     </Tabs>
   );

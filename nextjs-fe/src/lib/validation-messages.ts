@@ -72,8 +72,8 @@ export const ValidationMessages = {
     required: 'validation.permission.required',
     maxLength: 'validation.permission.maxLength',
   },
-  skill: {
-    required: 'validation.skill.required',
+  entry: {
+    required: 'validation.entry.required',
   },
   feature: {
     required: 'validation.feature.required',

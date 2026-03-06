@@ -40,4 +40,19 @@ interface CategoryMgmtInterface extends BaseInterface
    * @return void
    */
   public function executeDelete(array $ids): void;
+
+  /**
+   * Get displayable categories for docs
+   *
+   * @return \Illuminate\Support\Collection
+   */
+  public function getDisplayableCategories(): \Illuminate\Support\Collection;
+
+  /**
+   * Search categories
+   *
+   * @param string $query
+   * @return \Illuminate\Support\Collection
+   */
+  public function searchCategories(string $query): \Illuminate\Support\Collection;
 }

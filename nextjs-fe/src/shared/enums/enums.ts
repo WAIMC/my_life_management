@@ -164,20 +164,20 @@ export const FeatureStatusLabels: Record<FeatureStatus, string> = {
 };
 
 // ==========================================
-// SkillStatus (app/Enums/SkillStatus.php)
+// EntryStatus (app/Enums/EntryStatus.php)
 // ==========================================
-export enum SkillStatus {
+export enum EntryStatus {
   INACTIVE = 0,
   ACTIVE = 1,
   WAITING = 2,
   SUSPENDED = 3,
 }
 
-export const SkillStatusLabels: Record<SkillStatus, string> = {
-  [SkillStatus.INACTIVE]: 'Inactive',
-  [SkillStatus.ACTIVE]: 'Active',
-  [SkillStatus.WAITING]: 'Waiting',
-  [SkillStatus.SUSPENDED]: 'Suspended',
+export const EntryStatusLabels: Record<EntryStatus, string> = {
+  [EntryStatus.INACTIVE]: 'Inactive',
+  [EntryStatus.ACTIVE]: 'Active',
+  [EntryStatus.WAITING]: 'Waiting',
+  [EntryStatus.SUSPENDED]: 'Suspended',
 };
 
 // ==========================================

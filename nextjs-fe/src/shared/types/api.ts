@@ -299,10 +299,10 @@ export interface CategoryMgmt {
   is_delete: boolean;
   updated_at: string;
   // Relationships
-  skills?: SkillMgmt[];
+  entries?: EntryMgmt[];
 }
 
-export interface SkillMgmt {
+export interface EntryMgmt {
   id: number;
   parent_id?: number;
   name: string;
@@ -313,11 +313,11 @@ export interface SkillMgmt {
   is_delete: boolean;
   updated_at: string;
   // Relationships
-  skill_descriptions?: SkillDescriptionMgmt[];
+  entry_descriptions?: EntryDescriptionMgmt[];
   categories?: CategoryMgmt[];
 }
 
-export interface SkillDescriptionMgmt {
+export interface EntryDescriptionMgmt {
   id: number;
   parent_id?: number;
   title: string;
@@ -326,7 +326,7 @@ export interface SkillDescriptionMgmt {
   status: number;
   is_display: boolean;
   rank_order: number;
-  skill_mgmt_id: number;
+  entry_mgmt_id: number;
   is_delete: boolean;
   updated_at: string;
 }
@@ -411,9 +411,9 @@ export interface DepartmentManagementMst {
 
 
 
-export interface CategorySkillMgmt {
+export interface CategoryEntryMgmt {
   category_mgmt_id: number;
-  skill_mgmt_id: number;
+  entry_mgmt_id: number;
 }
 
 /**

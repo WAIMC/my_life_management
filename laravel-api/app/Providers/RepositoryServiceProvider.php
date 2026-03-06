@@ -9,8 +9,8 @@ use App\Interfaces\History\Management\BannerMgmtHistInterface;
 use App\Interfaces\History\Management\CategoryMgmtHistInterface;
 use App\Interfaces\History\Management\ProductMgmtHistInterface;
 use App\Interfaces\History\Management\SettingLinkMgmtHistInterface;
-use App\Interfaces\History\Management\SkillDescriptionMgmtHistInterface;
-use App\Interfaces\History\Management\SkillMgmtHistInterface;
+use App\Interfaces\History\Management\EntryDescriptionMgmtHistInterface;
+use App\Interfaces\History\Management\EntryMgmtHistInterface;
 use App\Interfaces\History\Management\SliderMgmtHistInterface;
 use App\Interfaces\History\Management\SocialMgmtHistInterface;
 use App\Interfaces\History\Management\UserMgmtHistInterface;
@@ -25,13 +25,13 @@ use App\Interfaces\History\Master\RoleMstHistInterface;
 
 use App\Interfaces\Management\BannerMgmtInterface;
 use App\Interfaces\Management\CategoryMgmtInterface;
-use App\Interfaces\Management\CategorySkillMgmtInterface;
+use App\Interfaces\Management\CategoryEntryMgmtInterface;
 use App\Interfaces\Management\MediaFileInterface;
 use App\Interfaces\Management\MediaMgmtInterface;
 use App\Interfaces\Management\ProductMgmtInterface;
 use App\Interfaces\Management\SettingLinkMgmtInterface;
-use App\Interfaces\Management\SkillDescriptionMgmtInterface;
-use App\Interfaces\Management\SkillMgmtInterface;
+use App\Interfaces\Management\EntryDescriptionMgmtInterface;
+use App\Interfaces\Management\EntryMgmtInterface;
 use App\Interfaces\Management\SliderMgmtInterface;
 use App\Interfaces\Management\SocialMgmtInterface;
 use App\Interfaces\Management\UserMgmtInterface;
@@ -55,8 +55,8 @@ use App\Repositories\History\Management\BannerMgmtHistRepository;
 use App\Repositories\History\Management\CategoryMgmtHistRepository;
 use App\Repositories\History\Management\ProductMgmtHistRepository;
 use App\Repositories\History\Management\SettingLinkMgmtHistRepository;
-use App\Repositories\History\Management\SkillDescriptionMgmtHistRepository;
-use App\Repositories\History\Management\SkillMgmtHistRepository;
+use App\Repositories\History\Management\EntryDescriptionMgmtHistRepository;
+use App\Repositories\History\Management\EntryMgmtHistRepository;
 use App\Repositories\History\Management\SliderMgmtHistRepository;
 use App\Repositories\History\Management\SocialMgmtHistRepository;
 use App\Repositories\History\Management\UserMgmtHistRepository;
@@ -71,13 +71,13 @@ use App\Repositories\History\Master\RoleMstHistRepository;
 
 use App\Repositories\Management\BannerMgmtRepository;
 use App\Repositories\Management\CategoryMgmtRepository;
-use App\Repositories\Management\CategorySkillMgmtRepository;
+use App\Repositories\Management\CategoryEntryMgmtRepository;
 use App\Repositories\Management\MediaFileRepository;
 use App\Repositories\Management\MediaMgmtRepository;
 use App\Repositories\Management\ProductMgmtRepository;
 use App\Repositories\Management\SettingLinkMgmtRepository;
-use App\Repositories\Management\SkillDescriptionMgmtRepository;
-use App\Repositories\Management\SkillMgmtRepository;
+use App\Repositories\Management\EntryDescriptionMgmtRepository;
+use App\Repositories\Management\EntryMgmtRepository;
 use App\Repositories\Management\SliderMgmtRepository;
 use App\Repositories\Management\SocialMgmtRepository;
 use App\Repositories\Management\UserMgmtRepository;
@@ -121,12 +121,12 @@ final class RepositoryServiceProvider extends ServiceProvider
     // Management
     BannerMgmtInterface::class => BannerMgmtRepository::class,
     CategoryMgmtInterface::class => CategoryMgmtRepository::class,
-    CategorySkillMgmtInterface::class => CategorySkillMgmtRepository::class,
+    CategoryEntryMgmtInterface::class => CategoryEntryMgmtRepository::class,
     MediaMgmtInterface::class => MediaMgmtRepository::class,
     ProductMgmtInterface::class => ProductMgmtRepository::class,
     SettingLinkMgmtInterface::class => SettingLinkMgmtRepository::class,
-    SkillDescriptionMgmtInterface::class => SkillDescriptionMgmtRepository::class,
-    SkillMgmtInterface::class => SkillMgmtRepository::class,
+    EntryDescriptionMgmtInterface::class => EntryDescriptionMgmtRepository::class,
+    EntryMgmtInterface::class => EntryMgmtRepository::class,
     SliderMgmtInterface::class => SliderMgmtRepository::class,
     SocialMgmtInterface::class => SocialMgmtRepository::class,
     UserMgmtInterface::class => UserMgmtRepository::class,
@@ -148,8 +148,8 @@ final class RepositoryServiceProvider extends ServiceProvider
     CategoryMgmtHistInterface::class => CategoryMgmtHistRepository::class,
     ProductMgmtHistInterface::class => ProductMgmtHistRepository::class,
     SettingLinkMgmtHistInterface::class => SettingLinkMgmtHistRepository::class,
-    SkillDescriptionMgmtHistInterface::class => SkillDescriptionMgmtHistRepository::class,
-    SkillMgmtHistInterface::class => SkillMgmtHistRepository::class,
+    EntryDescriptionMgmtHistInterface::class => EntryDescriptionMgmtHistRepository::class,
+    EntryMgmtHistInterface::class => EntryMgmtHistRepository::class,
     SliderMgmtHistInterface::class => SliderMgmtHistRepository::class,
     SocialMgmtHistInterface::class => SocialMgmtHistRepository::class,
     UserMgmtHistInterface::class => UserMgmtHistRepository::class,

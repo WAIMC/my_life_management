@@ -39,7 +39,7 @@ class CategoryMgmtRepository extends BaseRepository implements CategoryMgmtInter
         'rank_order',
         'updated_at',
       ])
-      ->with(['parent:id,name', 'skills:id,name'])
+      ->with(['parent:id,name', 'entries:id,name'])
       ->notDeleted();
 
     // Apply filters
@@ -119,5 +119,56 @@ class CategoryMgmtRepository extends BaseRepository implements CategoryMgmtInter
     $this->model->whereIn('id', $ids)
       ->notDeleted()
       ->update(['is_delete' => IsDelete::TRUE->value]);
+  }
+
+  /**
+   * Get displayable categories for docs
+   *
+   * @return \Illuminate\Support\Collection
+   */
+  public function getDisplayableCategories(): \Illuminate\Support\Collection
+  {
+    return $this->model->query()
+      ->select([
+        'id',
+        'parent_id',
+        'name',
+        'slug',
+        'description',
+        'rank_order',
+      ])
+      ->where('is_display', true)
+      ->where('status', 1)
+      ->notDeleted()
+      ->orderBy('rank_order', 'asc')
+      ->get();
+  }
+
+  /**
+   * Search categories
+   *
+   * @param string $query
+   * @return \Illuminate\Support\Collection
+   */
+  public function searchCategories(string $query): \Illuminate\Support\Collection
+  {
+    return $this->model->query()
+      ->select([
+        'id',
+        'name',
+        'slug',
+        'description',
+        'rank_order',
+      ])
+      ->where('is_display', true)
+      ->where('status', 1)
+      ->notDeleted()
+      ->where(function ($q) use ($query) {
+        $q->where('name', 'ILIKE', "%{$query}%")
+          ->orWhere('description', 'ILIKE', "%{$query}%");
+      })
+      ->orderBy('rank_order', 'asc')
+      ->limit(10)
+      ->get();
   }
 }
