@@ -452,21 +452,7 @@ export interface AuthUser {
   departments?: DepartmentMst[];
 }
 
-/**
- * File Upload Types
- */
 
-export interface UploadResponse {
-  url: string;
-  filename: string;
-  size: number;
-  mime_type: string;
-  media_id?: number;
-  room_id?: string;
-  status?: number;
-  message?: string;
-  upload_status?: number;
-}
 
 /**
  * API Endpoint Paths Constants

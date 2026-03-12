@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
-import type { UploadResponse } from '@/shared/types/api';
-import type { SimpleFileUploadProps as FileUploadProps, MediaFile } from '@/shared/types/media-file.types';
+import type { UploadResponse, SimpleFileUploadProps as FileUploadProps, MediaFile } from '@/shared/types/media-file.types';
 import { UploadStatus } from '@/shared/enums/enums';
 import { useTranslations } from 'next-intl';
 
@@ -110,7 +109,7 @@ export function FileUpload({
         }
       } else {
         // Normal/Light file upload
-        const uploadedUrl = data.url;
+        const uploadedUrl = data.url || '';
         setPreview(uploadedUrl);
         onChange(uploadedUrl);
         notification.success(t('media.fileUploadedSuccessfully'));

@@ -92,7 +92,7 @@ export interface FileTypeFilter {
  */
 
 export interface FileUploadProps {
-  onUploadSuccess?: (file: UploadFileResponse | number) => void;
+  onUploadSuccess?: (file: UploadFileResponse | UploadResponse | number) => void;
   onUploadError?: (error: Error) => void;
   accept?: string;
   maxSize?: number; // in bytes
@@ -194,4 +194,6 @@ export interface UploadResponse {
   room_id: string | null;
   status: number; // 1 = PROCESSING, 2 = COMPLETED, 3 = FAILED
   message: string;
+  url?: string;
+  upload_status?: number;
 }

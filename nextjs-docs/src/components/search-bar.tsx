@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { debounce } from "@/lib/utils";
 import { api } from "@/lib/api";
-import { SearchResult } from "@/types/docs";
+import { SearchResult, Category, Entry } from "@/types/docs";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
@@ -13,6 +13,12 @@ export default function SearchBar() {
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const router = useRouter();
+  
+  const clearSearch = () => {
+    setQuery("");
+    setResults(null);
+    setShowResults(false);
+  };
 
   const performSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -49,16 +55,25 @@ export default function SearchBar() {
   };
 
   return (
-    <div className="relative w-full">
-      <div className="flex items-center w-full h-11 rounded-xl border border-input/60 bg-background px-4 py-2 text-sm shadow-sm transition-all focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5">
-        <Search className="h-4 w-4 text-muted-foreground mr-3 shrink-0" />
+    <div className="relative w-full z-10">
+      <div className="flex items-center w-full h-11 rounded-full bg-[#505458] px-4 py-2 text-sm shadow-md transition-all focus-within:bg-[#5a5e62] cursor-text group border-none">
+        <Search className="h-4 w-4 text-slate-300 mr-3 shrink-0 group-focus-within:text-white transition-colors" />
         <input
           type="text"
           placeholder="Search documentation..."
           value={query}
           onChange={handleInputChange}
-          className="flex-1 bg-transparent border-none outline-none placeholder:text-muted-foreground text-[15px]"
+          className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-slate-400 text-[15px] focus:ring-0 focus:outline-none w-full"
         />
+        {query && (
+          <button 
+            type="button" 
+            onClick={clearSearch} 
+            className="p-1 hover:bg-white/10 rounded-full transition-colors ml-2"
+          >
+            <X className="h-4 w-4 text-slate-300 hover:text-white" />
+          </button>
+        )}
       </div>
 
       {showResults && results && (
@@ -69,7 +84,7 @@ export default function SearchBar() {
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                 Categories
               </h3>
-              {results.categories.map((cat) => (
+              {results.categories.map((cat: Category) => (
                 <div
                   key={cat.id}
                   onClick={() => router.push(`/docs/${cat.slug}`)}
@@ -92,7 +107,7 @@ export default function SearchBar() {
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                 Entries
               </h3>
-              {results.entries.map((entry) => (
+              {results.entries.map((entry: Entry) => (
                 <div
                   key={entry.id}
                   className="p-2 hover:bg-accent rounded cursor-pointer"
@@ -109,7 +124,7 @@ export default function SearchBar() {
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                 Content
               </h3>
-              {results.descriptions.map((desc) => (
+              {results.descriptions.map((desc: any) => (
                 <div
                   key={desc.id}
                   onClick={() =>
