@@ -23,7 +23,6 @@ class EntryDescriptionMgmt extends Model
    * @var string[]
    */
   protected $fillable = [
-    'parent_id',
     'title',
     'summary',
     'article',
@@ -41,10 +40,9 @@ class EntryDescriptionMgmt extends Model
    */
   protected $casts = [
     'id' => 'integer',
-    'parent_id' => 'integer',
     'title' => 'string',
     'summary' => 'string',
-    'article' => 'string',
+    'article' => 'array',
     'status' => 'integer',
     'is_display' => 'boolean',
     'rank_order' => 'integer',

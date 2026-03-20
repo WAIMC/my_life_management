@@ -13,7 +13,6 @@ return new class extends Migration {
     Schema::create('entry_mgmt_hist', function (Blueprint $table) {
       $table->increments('id')->comment('Entry id');
       $table->unsignedInteger('entry_mgmt_id')->comment('Entry management id');
-      $table->unsignedInteger('parent_id')->nullable()->comment('Parent entry');
       $table->string('name', 255)->nullable()->comment('name');
       $table->string('slug', 255)->nullable()->comment('slug');
       $table->unsignedTinyInteger('status')->nullable()->comment('status');

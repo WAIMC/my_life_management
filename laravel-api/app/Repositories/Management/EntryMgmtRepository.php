@@ -30,12 +30,12 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
     $query = $this->model->query()
       ->select([
         'id',
-        'parent_id',
         'name',
         'slug',
         'status',
         'is_display',
         'rank_order',
+        'layout_structure',
         'updated_at',
       ])
       ->notDeleted();
@@ -43,7 +43,6 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
     // Apply filters
     $this->applyFilters($query, $payload, [
       'id',
-      'parent_id',
       'status',
       'is_display',
       'rank_order',
@@ -125,6 +124,25 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
    */
   public function getEntriesByCategorySlug(string $slug): \Illuminate\Support\Collection
   {
+    // Get the category by slug
+    $category = \App\Models\Management\CategoryMgmt::where('slug', $slug)
+      ->where('is_display', true)
+      ->where('status', 1)
+      ->where('is_delete', false)
+      ->first();
+
+    if (!$category || !$category->layout_structure) {
+      return collect();
+    }
+
+    // Extract entry IDs from layout_structure
+    $entryIds = $this->extractEntryIdsFromLayoutStructure($category->layout_structure);
+
+    if (empty($entryIds)) {
+      return collect();
+    }
+
+    // Get entries in the order they appear in layout_structure
     return $this->model->query()
       ->select([
         'entry_mgmt.id',
@@ -132,14 +150,35 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
         'entry_mgmt.slug',
         'entry_mgmt.rank_order',
       ])
-      ->join('category_entry_mgmt', 'entry_mgmt.id', '=', 'category_entry_mgmt.entry_mgmt_id')
-      ->join('category_mgmt', 'category_entry_mgmt.category_mgmt_id', '=', 'category_mgmt.id')
-      ->where('category_mgmt.slug', $slug)
+      ->whereIn('entry_mgmt.id', $entryIds)
       ->where('entry_mgmt.is_display', true)
       ->where('entry_mgmt.status', 1)
       ->where('entry_mgmt.is_delete', false)
-      ->orderBy('entry_mgmt.rank_order', 'asc')
+      ->orderByRaw('array_position(ARRAY[' . implode(',', $entryIds) . '], entry_mgmt.id)')
       ->get();
+  }
+
+  /**
+   * Extract entry IDs from layout structure recursively
+   *
+   * @param array $layoutStructure
+   * @return array
+   */
+  private function extractEntryIdsFromLayoutStructure(array $layoutStructure): array
+  {
+    $entryIds = [];
+
+    foreach ($layoutStructure as $item) {
+      if (isset($item['entry_mgmt_id'])) {
+        $entryIds[] = $item['entry_mgmt_id'];
+      }
+
+      if (isset($item['children']) && is_array($item['children'])) {
+        $entryIds = array_merge($entryIds, $this->extractEntryIdsFromLayoutStructure($item['children']));
+      }
+    }
+
+    return array_unique($entryIds);
   }
 
   /**
@@ -165,8 +204,7 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
             ->where('status', 1)
             ->where('is_delete', false)
             ->orderBy('rank_order', 'asc');
-        },
-        'categories:id,name,slug'
+        }
       ])
       ->where('slug', $slug)
       ->where('is_display', true)

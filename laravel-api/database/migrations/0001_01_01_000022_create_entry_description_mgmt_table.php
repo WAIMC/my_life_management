@@ -12,10 +12,9 @@ return new class extends Migration {
     {
         Schema::create('entry_description_mgmt', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('parent_id')->default(0)->comment('Parent entry');
             $table->string('title', 100)->comment('Title entry');
             $table->string('summary', 255)->comment('Summary entry');
-            $table->text('article')->comment('Article entry');
+            $table->json('article')->nullable()->comment('Article entry in JSON format');
             $table->unsignedTinyInteger('status')->default(0)->comment('Entry status');
             $table->boolean('is_display')->default(false)->comment('Display entry');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Rank order');

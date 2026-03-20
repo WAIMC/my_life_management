@@ -9,7 +9,6 @@ return new class extends Migration {
     {
         Schema::create('category_mgmt', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('parent_id')->default(0)->comment('Parent category');
             $table->string('name', 255)->comment('Category name');
             $table->string('slug', 255)->comment('Category slug');
             $table->string('description', 150)->nullable()->comment('Category description');

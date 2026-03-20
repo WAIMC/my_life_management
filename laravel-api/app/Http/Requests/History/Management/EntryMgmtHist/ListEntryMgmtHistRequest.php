@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\History\Management\EntryMgmtHist;
 use App\Enums\StatusEnum;
+use App\Enums\IsActive;
 use App\Models\Management\EntryMgmt;
 
 class ListEntryMgmtHistRequest extends FormRequest
@@ -29,7 +30,6 @@ class ListEntryMgmtHistRequest extends FormRequest
     {
         return [
             'entry_mgmt_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
-            'parent_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'name' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
             'slug' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
             'status' => ['nullable', new Enum(StatusEnum::class),],

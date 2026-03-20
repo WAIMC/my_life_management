@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use App\Models\History\Management\EntryDescriptionMgmtHist;
 use App\Enums\StatusEnum;
+use App\Enums\IsActive;
 use App\Models\Management\EntryDescriptionMgmt;
 
 class ListEntryDescriptionMgmtHistRequest extends FormRequest
@@ -29,7 +30,6 @@ class ListEntryDescriptionMgmtHistRequest extends FormRequest
     {
         return [
             'entry_description_mgmt_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
-            'parent_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'title' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
             'summary' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:255',],
             'article' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR,],

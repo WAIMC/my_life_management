@@ -30,10 +30,9 @@ class UpdateEntryDescriptionMgmtRequest extends FormRequest
   {
     return [
       'id' => ['required', 'integer', 'min:1', Rule::exists(EntryDescriptionMgmt::class, 'id')],
-      'parent_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
       'title' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
       'summary' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:255',],
-      'article' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR,],
+      'article' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_TEXT,],
       'status' => ['required', new Enum(StatusEnum::class),],
       'is_display' => ['required', 'boolean',],
       'rank_order' => ['required', 'integer',],
@@ -45,7 +44,6 @@ class UpdateEntryDescriptionMgmtRequest extends FormRequest
   public function attributes(): array
   {
     return [
-      'parent_id' => __('messages.parent_id'),
       'title' => __('messages.title'),
       'summary' => __('messages.summary'),
       'article' => __('messages.article'),

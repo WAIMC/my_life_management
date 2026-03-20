@@ -102,7 +102,6 @@ class CategoryMgmtSeeder extends Seeder
         CategoryMgmt::firstOrCreate(
           ['slug' => $category['slug']],
           array_merge($category, [
-            'parent_id' => 0,
             'is_delete' => false,
             'created_at' => now(),
             'updated_at' => now(),

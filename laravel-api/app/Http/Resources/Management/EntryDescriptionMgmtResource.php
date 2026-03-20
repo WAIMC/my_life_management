@@ -17,7 +17,6 @@ class EntryDescriptionMgmtResource extends JsonResource
     {
         return [
             'id' => (int)$this->id,
-            'parent_id' => (int)$this->parent_id,
             'title' => (string)$this->title,
             'summary' => (string)$this->summary,
             'article' => (string)$this->article,

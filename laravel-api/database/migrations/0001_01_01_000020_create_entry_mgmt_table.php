@@ -9,7 +9,6 @@ return new class extends Migration {
   {
     Schema::create('entry_mgmt', function (Blueprint $table) {
       $table->increments('id');
-      $table->unsignedInteger('parent_id')->default(0)->comment('Parent entry');
       $table->string('name', 255)->comment('Entry name');
       $table->string('slug', 255)->comment('Entry slug');
       $table->unsignedTinyInteger('status')->default(0)->comment('Entry status');

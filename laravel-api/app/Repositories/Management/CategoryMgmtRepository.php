@@ -30,22 +30,20 @@ class CategoryMgmtRepository extends BaseRepository implements CategoryMgmtInter
     $query = $this->model->query()
       ->select([
         'id',
-        'parent_id',
         'name',
         'slug',
         'description',
         'status',
         'is_display',
         'rank_order',
+        'layout_structure',
         'updated_at',
       ])
-      ->with(['parent:id,name', 'entries:id,name'])
       ->notDeleted();
 
     // Apply filters
     $this->applyFilters($query, $payload, [
       'id',
-      'parent_id',
       'status',
       'is_display',
       'rank_order',
@@ -131,11 +129,11 @@ class CategoryMgmtRepository extends BaseRepository implements CategoryMgmtInter
     return $this->model->query()
       ->select([
         'id',
-        'parent_id',
         'name',
         'slug',
         'description',
         'rank_order',
+        'layout_structure',
       ])
       ->where('is_display', true)
       ->where('status', 1)

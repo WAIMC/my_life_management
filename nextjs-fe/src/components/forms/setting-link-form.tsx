@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import type { SettingLinkMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
+import { StatusEnum, StatusEnumLabels, IsActive } from '@/shared/enums';
 import { getSettingLinkSchema, type SettingLinkFormData } from '@/shared/validation/validation';
 import type { SettingLinkFormProps } from './types';
 
@@ -77,19 +77,19 @@ export function SettingLinkForm({ initialData, onSuccess, onCancel }: SettingLin
   const onSubmit = async (data: SettingLinkFormData) => {
     await execute(async () => {
       try {
-        // Convert string to number for rank_order
+        // Convert form data to API payload format
         const payload = {
-        ...data,
-        rank_order: Number(data.rank_order),
-      };
+          name: data.name,
+          link: data.url, // Map url to link
+          rank_order: Number(data.rank_order),
+          is_active: data.is_active ? IsActive.TRUE : IsActive.FALSE,
+          is_delete: false,
+        };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
       } else {
-        await create({
-          ...payload,
-          is_delete: false,
-        });
+        await create(payload);
       }
       onSuccess();
     } catch (error: unknown) {

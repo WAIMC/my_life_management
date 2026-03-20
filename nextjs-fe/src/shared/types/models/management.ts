@@ -34,7 +34,6 @@ export interface CategoryMgmt {
   name: string;
   slug: string;
   description?: string;
-  parent_id?: number;
   image?: string;
   order: number;
   status: number;
@@ -43,8 +42,6 @@ export interface CategoryMgmt {
   created_at: string;
   updated_at: string;
   // Relations
-  parent?: CategoryMgmt;
-  children?: CategoryMgmt[];
   entries?: EntryMgmt[];
 }
 

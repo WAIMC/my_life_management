@@ -38,6 +38,8 @@ export interface CategoryFormProps {
   initialData?: CategoryMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
+  renderActions?: boolean;  // Whether to render action buttons inside form (default: true)
+  submitTriggerRef?: React.Ref<(() => void) | null>;  // Ref to expose submit function
 }
 
 export interface DepartmentFormProps {
@@ -80,6 +82,8 @@ export interface EntryFormProps {
   initialData?: EntryMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
+  renderActions?: boolean;
+  submitTriggerRef?: React.Ref<(() => void) | null>;
 }
 
 export interface SliderFormProps {

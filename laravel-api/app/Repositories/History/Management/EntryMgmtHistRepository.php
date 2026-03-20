@@ -31,7 +31,6 @@ class EntryMgmtHistRepository extends BaseRepository implements EntryMgmtHistInt
       ->select([
         'id',
         'entry_mgmt_id',
-        'parent_id',
         'name',
         'slug',
         'status',
@@ -45,7 +44,6 @@ class EntryMgmtHistRepository extends BaseRepository implements EntryMgmtHistInt
     // Apply filters
     $this->applyFilters($query, $payload, [
       'entry_mgmt_id',
-      'parent_id',
       'status',
       'is_display',
       'rank_order',

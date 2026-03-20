@@ -15,13 +15,13 @@ class CategoryMgmtHist extends Model
    */
   protected $fillable = [
     'category_mgmt_id',
-    'parent_id',
     'name',
     'slug',
     'description',
     'status',
     'is_display',
     'rank_order',
+    'layout_structure',
     'action',
     'author_id',
   ];
@@ -34,13 +34,13 @@ class CategoryMgmtHist extends Model
   protected $casts = [
     'id' => 'integer',
     'category_mgmt_id' => 'integer',
-    'parent_id' => 'integer',
     'name' => 'string',
     'slug' => 'string',
     'description' => 'string',
     'status' => 'integer',
     'is_display' => 'boolean',
     'rank_order' => 'integer',
+    'layout_structure' => 'array',
     'action' => 'integer',
     'author_id' => 'integer',
     'created_at' => 'datetime',

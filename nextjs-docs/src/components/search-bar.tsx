@@ -56,14 +56,14 @@ export default function SearchBar() {
 
   return (
     <div className="relative w-full z-10">
-      <div className="flex items-center w-full h-11 rounded-full bg-[#505458] px-4 py-2 text-sm shadow-md transition-all focus-within:bg-[#5a5e62] cursor-text group border-none">
-        <Search className="h-4 w-4 text-slate-300 mr-3 shrink-0 group-focus-within:text-white transition-colors" />
+      <div className="flex items-center w-full h-11 rounded-full bg-[#d1d1d1] px-4 py-2 text-sm shadow-md transition-all focus-within:bg-[#e0e0e0] cursor-text group border-none">
+        <Search className="h-4 w-4 text-white mr-3 shrink-0 transition-colors" />
         <input
           type="text"
           placeholder="Search documentation..."
           value={query}
           onChange={handleInputChange}
-          className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-slate-400 text-[15px] focus:ring-0 focus:outline-none w-full"
+          className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white text-[15px] focus:ring-0 focus:outline-none w-full"
         />
         {query && (
           <button 
@@ -71,7 +71,7 @@ export default function SearchBar() {
             onClick={clearSearch} 
             className="p-1 hover:bg-white/10 rounded-full transition-colors ml-2"
           >
-            <X className="h-4 w-4 text-slate-300 hover:text-white" />
+            <X className="h-4 w-4 text-white hover:text-white/80" />
           </button>
         )}
       </div>

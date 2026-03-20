@@ -31,7 +31,6 @@ class CategoryMgmtHistRepository extends BaseRepository implements CategoryMgmtH
       ->select([
         'id',
         'category_mgmt_id',
-        'parent_id',
         'name',
         'slug',
         'description',
@@ -45,7 +44,6 @@ class CategoryMgmtHistRepository extends BaseRepository implements CategoryMgmtH
 
     $this->applyFilters($query, $payload, [
       'category_mgmt_id',
-      'parent_id',
       'status',
       'is_display',
       'rank_order',

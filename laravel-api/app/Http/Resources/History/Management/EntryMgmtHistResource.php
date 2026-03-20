@@ -18,7 +18,6 @@ class EntryMgmtHistResource extends JsonResource
         return [
             'id' => (int)$this->id,
             'entry_mgmt_id' => (int)$this->entry_mgmt_id,
-            'parent_id' => (int)$this->parent_id,
             'name' => (string)$this->name,
             'slug' => (string)$this->slug,
             'status' => (string)$this->status,

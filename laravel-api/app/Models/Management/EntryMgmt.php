@@ -8,7 +8,6 @@ use App\Traits\HasStatus;
 use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -24,13 +23,13 @@ class EntryMgmt extends Model
    * @var string[]
    */
   protected $fillable = [
-    'parent_id',
     'name',
     'slug',
     'status',
     'is_display',
     'rank_order',
     'is_delete',
+    'layout_structure',
   ];
 
   /**
@@ -40,13 +39,13 @@ class EntryMgmt extends Model
    */
   protected $casts = [
     'id' => 'integer',
-    'parent_id' => 'integer',
     'name' => 'string',
     'slug' => 'string',
     'status' => 'integer',
     'is_display' => 'boolean',
     'rank_order' => 'integer',
     'is_delete' => 'boolean',
+    'layout_structure' => 'array',
     'created_at' => 'datetime',
     'updated_at' => 'datetime',
   ];
@@ -59,21 +58,6 @@ class EntryMgmt extends Model
   public function descriptions(): HasMany
   {
     return $this->hasMany(EntryDescriptionMgmt::class, 'entry_mgmt_id');
-  }
-
-  /**
-   * Get the categories associated with the entry.
-   *
-   * @return BelongsToMany
-   */
-  public function categories(): BelongsToMany
-  {
-    return $this->belongsToMany(
-      CategoryMgmt::class,
-      'category_entry_mgmt',
-      'entry_mgmt_id',
-      'category_mgmt_id'
-    )->withTimestamps();
   }
 
   /**

@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import { v4 as uuidv4 } from 'uuid';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useActionLock } from '@/shared/hooks/useActionLock';
+import { useApiData } from '@/shared/hooks/useApiData';
 import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
 import { Button } from '@/components/ui/button';
@@ -20,14 +22,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { CategoryMgmt } from '@/shared/types/api';
+import type { CategoryMgmt, LayoutStructureItem, EntryMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { CategoryStatus, CategoryStatusLabels } from '@/shared/enums';
 import { getCategorySchema, type CategoryFormData } from '@/shared/validation/validation';
 import { slugify } from '@/shared/utils/string-utils';
 import type { CategoryFormProps } from './types';
+import { LayoutStructureEditor } from './layout-structure-editor';
+import { IsActive } from '@/shared/enums/enums';
 
-export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormProps) {
+export function CategoryForm({ initialData, onSuccess, onCancel, renderActions = true, submitTriggerRef }: CategoryFormProps) {
+  
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tLabels = useTranslations('forms.labels');
@@ -35,6 +40,22 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<CategoryMgmt>(ENDPOINTS.MANAGEMENT.CATEGORY);
   const [activeTab, setActiveTab] = useState('details');
+  const [layoutStructure, setLayoutStructure] = useState<LayoutStructureItem[]>([]);
+  const [entrySearchQuery, setEntrySearchQuery] = useState('');
+
+  const handleLayoutStructureChange = useCallback((newStructure: LayoutStructureItem[]) => {
+    setLayoutStructure(newStructure);
+  }, []);
+
+  // Fetch available entries for layout structure
+  const { data: availableEntries, loading: entriesLoading } = useApiData<EntryMgmt>(
+    ENDPOINTS.MANAGEMENT.ENTRY,
+    { 
+      page: 1, 
+      per_page: 100, 
+      filters: entrySearchQuery ? { name: entrySearchQuery } : {} 
+    }
+  );
 
   const {
     register,
@@ -45,12 +66,12 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
     reset,
     setError,
   } = useForm<CategoryFormData>({
+    // @ts-expect-error - z.preprocess causes status to be inferred as unknown
     resolver: zodResolver(getCategorySchema(tValidation)),
     defaultValues: {
       rank_order: 0,
       status: CategoryStatus.ACTIVE,
       is_display: true,
-      parent_id: 0,
       slug: '',
       is_delete: false,
     },
@@ -65,8 +86,23 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         rank_order: initialData.rank_order,
         status: initialData.status,
         is_display: initialData.is_display,
-        parent_id: initialData.parent_id,
         is_delete: initialData.is_delete,
+      });
+      // Defer state update to avoid cascading renders
+      queueMicrotask(() => {
+        // Transform old schema (entry_id) to new schema (entry_mgmt_id) and add ui_id
+        const transformedStructure = initialData.layout_structure?.map(item => {
+          const legacyItem = item as { entry_id?: number };
+          return {
+            ui_id: item.ui_id || uuidv4(),
+            entry_mgmt_id: item.entry_mgmt_id || legacyItem.entry_id,
+            entry_desc_id: item.entry_desc_id,
+            name: item.name,
+            slug: item.slug,
+            children: item.children,
+          };
+        }) || [];
+        setLayoutStructure(transformedStructure);
       });
     } else {
       reset({
@@ -76,23 +112,29 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
         rank_order: 0,
         status: CategoryStatus.ACTIVE,
         is_display: true,
-        parent_id: 0,
         is_delete: false,
+      });
+      // Defer state update to avoid cascading renders
+      queueMicrotask(() => {
+        setLayoutStructure([]);
       });
     }
   }, [initialData, reset]);
 
   const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
 
-  const onSubmit = async (data: CategoryFormData) => {
+  const onSubmit = useCallback(async (data: CategoryFormData) => {
     await execute(async () => {
       try {
-        // Convert string to number for rank_order and handle boolean to number for Enums
+        // Convert form data to API payload format
         const payload = {
           ...data,
           rank_order: Number(data.rank_order),
+          status: Number(data.status),
+          is_display: data.is_display ? IsActive.TRUE : IsActive.FALSE,
+          layout_structure: layoutStructure,
         };
-      
+        
       if (isEdit && initialData) {
         await update(initialData.id, payload);
       } else {
@@ -100,17 +142,40 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
       }
       onSuccess();
     } catch (error: unknown) {
-      console.error(error);
+      console.error('[CategoryForm] Submit error:', error);
       handleBindErrors(error, setError);
     }
     });
-  };
+  }, [execute, isEdit, initialData, update, create, onSuccess, setError, layoutStructure]);
+
+  // Expose submit function via ref (must be after onSubmit is defined)
+  useEffect(() => {
+    if (submitTriggerRef && typeof submitTriggerRef !== 'function') {
+      submitTriggerRef.current = () => {
+        
+        // Call handleSubmit with both success and error handlers
+        handleSubmit(
+          (data) => {
+            void onSubmit(data as unknown as CategoryFormData);
+          },
+          () => {
+          }
+        )();
+      };
+    }
+    
+    return () => {
+      if (submitTriggerRef && typeof submitTriggerRef !== 'function') {
+        submitTriggerRef.current = null;
+      }
+    };
+  }, [submitTriggerRef, handleSubmit, onSubmit, errors, control]);
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
   const statusValue = useWatch({ control, name: 'status' });
 
-  const FormContent = (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+  const FormFields = (
+    <>
       <div className="space-y-2">
         <Label htmlFor="name">
           {tLabels('name')} <span className="text-red-500">*</span>
@@ -143,7 +208,7 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
             placeholder={tForms('slugExample')}
             className={errors.slug ? 'border-red-500' : ''}
           />
-           {errors.slug && (
+          {errors.slug && (
             <p className="text-sm text-red-500">{errors.slug.message}</p>
           )}
         </div>
@@ -193,36 +258,84 @@ export function CategoryForm({ initialData, onSuccess, onCancel }: CategoryFormP
           <Label htmlFor="is_display">{tLabels('isDisplay')}</Label>
         </div>
       </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-          {tCommon('cancel')}
-        </Button>
-        <Button type="submit" disabled={loading || isActionProcessing}>
-          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
-        </Button>
-      </div>
-    </form>
+    </>
   );
 
+  // For non-edit mode (create), wrap fields in form with buttons
   if (!isEdit) {
-    return FormContent;
+    return (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
+          {FormFields}
+        </div>
+        <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t bg-muted/20">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+            {tCommon('cancel')}
+          </Button>
+          <Button type="submit" disabled={loading || isActionProcessing}>
+            {loading || isActionProcessing ? tCommon('creating') : tCommon('create')}
+          </Button>
+        </div>
+      </form>
+    );
   }
 
+  // For edit mode, show tabs with fields and layout structure  
+  
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
-        <TabsTrigger value="entries">{tCommon('entries')}</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="details" className="mt-4">
-        {FormContent}
-      </TabsContent>
+    <div className="flex flex-col h-full overflow-hidden">
+      <Tabs key={`category-tabs-${initialData?.id || 'new'}`} value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
+        <div className="shrink-0 px-6 pb-2 border-b">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details" type="button">{tCommon('details')}</TabsTrigger>
+            <TabsTrigger value="entries" type="button">{tCommon('entries')}</TabsTrigger>
+          </TabsList>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+          <TabsContent value="details" className="m-0 space-y-4">
+            {FormFields}
+          </TabsContent>
 
-      <TabsContent value="entries" className="mt-4">
-        <div className="text-muted-foreground">{tCommon('entriesManagementComingSoon')}</div>
-      </TabsContent>
-    </Tabs>
+          <TabsContent value="entries" className="m-0 h-full">
+            <div className="space-y-4 h-full flex flex-col">
+              <div className="text-sm text-muted-foreground shrink-0">
+                Manage the layout structure for entries in this category. Drag and drop to reorder, and use indent buttons to change hierarchy.
+              </div>
+              <div className="flex-1 min-h-[400px]">
+                <LayoutStructureEditor
+                  type="entry"
+                  value={layoutStructure}
+                  onChange={handleLayoutStructureChange}
+                  availableItems={availableEntries || []}
+                  loading={entriesLoading}
+                  onSearch={setEntrySearchQuery}
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </div>
+      </Tabs>
+      
+      {/* Action buttons - only render if renderActions is true */}
+      {renderActions && (
+        <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t bg-muted/20">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+            {tCommon('cancel')}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              handleSubmit(onSubmit as any)();
+            }}
+            disabled={loading || isActionProcessing}
+          >
+            {loading || isActionProcessing ? tCommon('updating') : tCommon('update')}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

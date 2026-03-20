@@ -18,7 +18,6 @@ class CategoryMgmtHistResource extends JsonResource
         return [
             'id' => (int)$this->id,
             'category_mgmt_id' => (int)$this->category_mgmt_id,
-            'parent_id' => (int)$this->parent_id,
             'name' => (string)$this->name,
             'slug' => (string)$this->slug,
             'description' => (string)$this->description,

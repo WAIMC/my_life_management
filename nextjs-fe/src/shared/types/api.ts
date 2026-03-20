@@ -116,8 +116,8 @@ export interface UseApiDataReturn<T> {
  */
 
 export interface UseCrudReturn<T> {
-  create: (data: Partial<T>) => Promise<number>;
-  update: (id: number, data: Partial<T>) => Promise<number>;
+  create: (data: Record<string, unknown>) => Promise<number>;
+  update: (id: number, data: Record<string, unknown>) => Promise<number>;
   remove: (ids: number[]) => Promise<void>;
   loading: boolean;
   error: Error | null;
@@ -287,9 +287,17 @@ export interface BannerMgmt {
   updated_at: string;
 }
 
+export interface LayoutStructureItem {
+  ui_id: string;
+  entry_desc_id?: number;
+  entry_mgmt_id?: number;
+  name?: string;
+  slug?: string;
+  children?: LayoutStructureItem[];
+}
+
 export interface CategoryMgmt {
   id: number;
-  parent_id: number;
   name: string;
   slug: string;
   description?: string;
@@ -297,6 +305,7 @@ export interface CategoryMgmt {
   is_display: boolean;
   rank_order: number;
   is_delete: boolean;
+  layout_structure?: LayoutStructureItem[];
   updated_at: string;
   // Relationships
   entries?: EntryMgmt[];
@@ -304,13 +313,13 @@ export interface CategoryMgmt {
 
 export interface EntryMgmt {
   id: number;
-  parent_id?: number;
   name: string;
   slug?: string;
   status: number;
   is_display?: boolean;
   rank_order: number;
   is_delete: boolean;
+  layout_structure?: LayoutStructureItem[];
   updated_at: string;
   // Relationships
   entry_descriptions?: EntryDescriptionMgmt[];
@@ -319,7 +328,6 @@ export interface EntryMgmt {
 
 export interface EntryDescriptionMgmt {
   id: number;
-  parent_id?: number;
   title: string;
   summary?: string;
   article?: string;

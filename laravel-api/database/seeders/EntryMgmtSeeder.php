@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Management\EntryMgmt;
 use App\Models\Management\CategoryMgmt;
-use App\Models\Management\CategoryEntryMgmt;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -257,7 +256,6 @@ class EntryMgmtSeeder extends Seeder
           $entry = EntryMgmt::firstOrCreate(
             ['slug' => $entryData['slug']],
             array_merge($entryData, [
-              'parent_id' => 0,
               'status' => 1,
               'is_display' => true,
               'is_delete' => false,
@@ -266,17 +264,27 @@ class EntryMgmtSeeder extends Seeder
             ])
           );
 
-          // Create the relationship
-          CategoryEntryMgmt::firstOrCreate(
-            [
-              'category_mgmt_id' => $category->id,
-              'entry_mgmt_id' => $entry->id,
-            ],
-            [
-              'created_at' => now(),
-              'updated_at' => now(),
-            ]
-          );
+          // Store the relationship in category's layout_structure
+          $layoutStructure = $category->layout_structure ?? [];
+          
+          // Check if entry is not already in layout structure
+          $entryExists = false;
+          foreach ($layoutStructure as $item) {
+            if (isset($item['entry_id']) && $item['entry_id'] === $entry->id) {
+              $entryExists = true;
+              break;
+            }
+          }
+          
+          if (!$entryExists) {
+            $layoutStructure[] = [
+              'entry_id' => $entry->id,
+              'rank_order' => $entryData['rank_order'] ?? 0,
+            ];
+            
+            $category->layout_structure = $layoutStructure;
+            $category->save();
+          }
         }
       }
 

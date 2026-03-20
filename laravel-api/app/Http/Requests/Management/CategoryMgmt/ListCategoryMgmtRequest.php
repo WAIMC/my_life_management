@@ -9,6 +9,7 @@ use Illuminate\Validation\Rules\Enum;
 use App\Models\Management\CategoryMgmt;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
+use App\Enums\IsActive;
 
 class ListCategoryMgmtRequest extends FormRequest
 {
@@ -28,7 +29,6 @@ class ListCategoryMgmtRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'parent_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'name' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
             'slug' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
             'description' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:150',],
@@ -55,7 +55,6 @@ class ListCategoryMgmtRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'parent_id' => __('messages.parent_id'),
             'name' => __('messages.name'),
             'slug' => __('messages.slug'),
             'description' => __('messages.description'),

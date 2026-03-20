@@ -23,7 +23,6 @@ use App\Http\Controllers\Master\DepartmentManagementMstController;
 
 use App\Http\Controllers\Management\BannerMgmtController;
 use App\Http\Controllers\Management\CategoryMgmtController;
-use App\Http\Controllers\Management\CategoryEntryMgmtController;
 use App\Http\Controllers\Management\MediaMgmtController;
 use App\Http\Controllers\Management\SettingLinkMgmtController;
 use App\Http\Controllers\Management\EntryDescriptionMgmtController;
@@ -155,12 +154,6 @@ Route::prefix('admin')
         // Department-Management Junction
         Route::get('department-management-mst/list', [DepartmentManagementMstController::class, 'list']);
         Route::put('department-management-mst/update', [DepartmentManagementMstController::class, 'update']);
-
-
-
-        // Category-Entry Junction
-        Route::get('category-entry-mgmt/list', [CategoryEntryMgmtController::class, 'list']);
-        Route::put('category-entry-mgmt/update', [CategoryEntryMgmtController::class, 'update']);
 
         // ============================================================
         // MANAGEMENT DATA ROUTES

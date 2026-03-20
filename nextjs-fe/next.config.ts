@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   // Export as static SPA - generates static HTML/CSS/JS files
   // All pages are pre-rendered at build time into the 'out/' directory
   // No Node.js server required - can be deployed to any static hosting
+  // Note: Disabled in dev for better DX, enable for production builds
   // output: 'export',
   
   // Disable Next.js image optimization (requires server)

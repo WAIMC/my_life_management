@@ -30,7 +30,6 @@ class EntryDescriptionMgmtRepository extends BaseRepository implements EntryDesc
     $query = $this->model->query()
       ->select([
         'id',
-        'parent_id',
         'title',
         'summary',
         'article',
@@ -46,7 +45,6 @@ class EntryDescriptionMgmtRepository extends BaseRepository implements EntryDesc
     // Apply filters
     $this->applyFilters($query, $payload, [
       'id',
-      'parent_id',
       'status',
       'is_display',
       'rank_order',

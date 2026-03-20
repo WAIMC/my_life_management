@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useActionLock } from '@/shared/hooks/useActionLock';
@@ -35,6 +35,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { EntryForm } from '@/components/forms/entry-form';
 import { useTranslations } from 'next-intl';
@@ -67,6 +68,9 @@ export default function EntryListPage() {
 
   const { remove } = useCrud<EntryMgmt>(API_ENDPOINTS.MANAGEMENT.ENTRY);
 
+  // Ref to trigger form submission from outside (for EDIT mode in Dialog)
+  const submitTriggerRef = useRef<(() => void) | null>(null);
+
   const handleCreate = () => {
     setEditingEntry(null);
     setFormDialogOpen(true);
@@ -76,9 +80,16 @@ export default function EntryListPage() {
     setEditingEntry(entry);
     setFormDialogOpen(true);
   };
+  
+  const handleDialogUpdate = () => {
+    if (submitTriggerRef.current) {
+      submitTriggerRef.current();
+    }
+  };
 
   const handleFormSuccess = () => {
     setFormDialogOpen(false);
+    refetch(); // Refetch the list after successful update
   };
 
   const handleDelete = async (ids: number[]) => {
@@ -242,18 +253,46 @@ export default function EntryListPage() {
 
       {/* Create/Edit Entry Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingEntry ? tCrud('editEntity', { entity: tEntities('entry') }) : tCrud('createEntity', { entity: tEntities('entry') })}</DialogTitle>
-            <DialogDescription>
-              {editingEntry ? tCrud('editDescription', { entity: tEntities('entry').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('entry').toLowerCase() })}
-            </DialogDescription>
-          </DialogHeader>
-          <EntryForm
-            initialData={editingEntry}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          <div className="shrink-0 px-6 pt-6 pb-4">
+            <DialogHeader>
+              <DialogTitle>{editingEntry ? tCrud('editEntity', { entity: tEntities('entry') }) : tCrud('createEntity', { entity: tEntities('entry') })}</DialogTitle>
+              <DialogDescription>
+                {editingEntry ? tCrud('editDescription', { entity: tEntities('entry').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('entry').toLowerCase() })}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+            <EntryForm
+              initialData={editingEntry}
+              onSuccess={handleFormSuccess}
+              onCancel={() => setFormDialogOpen(false)}
+              renderActions={!editingEntry}  // Only render actions for CREATE mode
+              submitTriggerRef={editingEntry ? submitTriggerRef : undefined}  // Pass ref for EDIT mode
+            />
+          </div>
+          {/* Render action buttons in DialogFooter for EDIT mode */}
+          {editingEntry && (
+            <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                  {tCommon('cancel')}
+                </Button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDialogUpdate();
+                  }}
+                  disabled={false}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                >
+                  {tCommon('update')}
+                </button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

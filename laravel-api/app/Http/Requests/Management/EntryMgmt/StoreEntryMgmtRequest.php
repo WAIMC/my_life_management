@@ -10,6 +10,7 @@ use App\Models\Management\EntryMgmt;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
 use App\Enums\IsDisplay;
+use App\Rules\LayoutStructureRule;
 
 class StoreEntryMgmtRequest extends FormRequest
 {
@@ -29,13 +30,13 @@ class StoreEntryMgmtRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'parent_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
       'name' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'slug' => ['required', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:50',],
       'status' => ['required', new Enum(StatusEnum::class),],
       'is_display' => ['required', new Enum(IsDisplay::class)],
       'rank_order' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
       'is_delete' => ['required', new Enum(IsDelete::class),],
+      'layout_structure' => ['nullable', new LayoutStructureRule(100, 'entry_desc_id')],
     ];
   }
 

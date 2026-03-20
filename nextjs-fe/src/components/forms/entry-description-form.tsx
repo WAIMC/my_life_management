@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import type { JSONContent } from '@tiptap/react';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useApiData } from '@/shared/hooks/useApiData';
 import { useActionLock } from '@/shared/hooks/useActionLock';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { NovelEditor } from '@/components/features/editor/novel-editor';
 import {
   Select,
   SelectContent,
@@ -23,7 +25,7 @@ import {
 import type { EntryDescriptionMgmt, EntryMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
 import { SORT_ORDER, SORT_FIELDS, PAGINATION, FORM_DEFAULTS } from '@/shared/config/constant';
-import { StatusEnum, StatusEnumLabels } from '@/shared/enums';
+import { StatusEnum, StatusEnumLabels, IsActive } from '@/shared/enums';
 import { getEntryDescriptionSchema, type EntryDescriptionFormData } from '@/shared/validation/validation';
 import type { EntryDescriptionFormProps } from './types';
 
@@ -31,7 +33,6 @@ const getFormValues = (data: EntryDescriptionFormProps['initialData']): EntryDes
     if (data) {
       return {
         entry_mgmt_id: Number(data.entry_mgmt_id),
-        parent_id: data.parent_id !== null ? Number(data.parent_id) : 0,
         title: data.title,
         summary: data.summary || '',
         article: data.article || '',
@@ -42,7 +43,6 @@ const getFormValues = (data: EntryDescriptionFormProps['initialData']): EntryDes
     }
     return {
       entry_mgmt_id: 0, // Using 0 as default for number input, though validation requires min 1
-      parent_id: 0,
       title: '',
       summary: '',
       article: '',
@@ -58,6 +58,8 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
   const tValidation = useTranslations('validation');
   const isEdit = !!initialData;
   const { create, update, loading } = useCrud<EntryDescriptionMgmt>(ENDPOINTS.MANAGEMENT.ENTRY_DESCRIPTION);
+  
+  const [articleContent, setArticleContent] = useState<JSONContent | null>(null);
 
   // Fetch entries for the dropdown
   // We'll fetch all active entries (no pagination effectively, or big page size)
@@ -84,6 +86,23 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
 
   useEffect(() => {
     reset(getFormValues(initialData));
+    // Initialize article content from initialData
+    if (initialData?.article) {
+      queueMicrotask(() => {
+        try {
+          const parsed = JSON.parse(initialData.article as string);
+          setArticleContent(parsed);
+        } catch {
+          // If not JSON, create a simple doc with text
+          setArticleContent({
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: initialData.article }] }]
+          });
+        }
+      });
+    } else {
+      queueMicrotask(() => setArticleContent(null));
+    }
   }, [initialData, reset]);
 
   const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
@@ -91,21 +110,21 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
   const onSubmit = async (data: EntryDescriptionFormData) => {
     await execute(async () => {
       try {
-        // Convert string to number for numeric fields
-      const payload = {
-        ...data,
-        entry_mgmt_id: Number(data.entry_mgmt_id),
-        parent_id: Number(data.parent_id ?? 0),
-        rank_order: Number(data.rank_order),
-      };
+        // Convert form data to API payload format
+        const payload = {
+          entry_mgmt_id: Number(data.entry_mgmt_id),
+          name: data.title,
+          slug: data.title.toLowerCase().replace(/\s+/g, '-'),
+          rank_order: Number(data.rank_order),
+          is_display: data.is_display ? IsActive.TRUE : IsActive.FALSE,
+          is_delete: false,
+          article: articleContent ? JSON.stringify(articleContent) : '',
+        };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
       } else {
-        await create({
-          ...payload,
-          is_delete: false,
-        });
+        await create(payload);
       }
       onSuccess();
     } catch (error: unknown) {
@@ -121,17 +140,6 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="parent_id">
-          {tCommon('parentId')}
-        </Label>
-        <Input
-          id="parent_id"
-          type="number"
-          {...register('parent_id', { valueAsNumber: true })}
-        />
-      </div>
-      
       <div className="space-y-2">
         <Label htmlFor="entry_mgmt_id">
           {tCommon('entry')} <span className="text-red-500">*</span>
@@ -182,10 +190,14 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
 
       <div className="space-y-2">
         <Label htmlFor="article">{tCommon('article')}</Label>
-        <Textarea
-          id="article"
-          {...register('article')}
-          rows={5}
+        <NovelEditor
+          content={articleContent}
+          onChange={(content) => {
+            setArticleContent(content);
+            setValue('article', JSON.stringify(content));
+          }}
+          placeholder="Write your article content..."
+          className="min-h-[400px]"
         />
       </div>
 

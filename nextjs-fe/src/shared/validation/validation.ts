@@ -42,11 +42,17 @@ export const getAvatarValidation = (t: Translator) => z.string()
 export const genderValidation = z.nativeEnum(Gender);
 export const statusValidation = z.nativeEnum(StatusEnum);
 export const adminStatusValidation = z.nativeEnum(AdminStatus);
-export const categoryStatusValidation = z.nativeEnum(CategoryStatus);
+export const categoryStatusValidation = z.preprocess(
+  (val) => (typeof val === 'string' ? Number(val) : val),
+  z.nativeEnum(CategoryStatus)
+);
 export const departmentStatusValidation = z.nativeEnum(DepartmentStatus);
 export const featureStatusValidation = z.nativeEnum(FeatureStatus);
 export const userStatusValidation = z.nativeEnum(UserStatus);
-export const entryStatusValidation = z.nativeEnum(EntryStatus);
+export const entryStatusValidation = z.preprocess(
+  (val) => (typeof val === 'string' ? Number(val) : val),
+  z.nativeEnum(EntryStatus)
+);
 export const socialStatusValidation = z.nativeEnum(SocialStatus);
 
 // Admin schema matching StoreAdminMstRequest
@@ -87,7 +93,6 @@ export type UserFormData = z.infer<ReturnType<typeof getUserSchema>>;
 
 // Category schema
 export const getCategorySchema = (t: Translator) => z.object({
-  parent_id: z.number(),
   name: z.string().min(1, t('name.required')),
   slug: z.string().min(1, t('slug.required')),
   description: z.string().optional(),
@@ -176,7 +181,6 @@ export type SocialFormData = z.infer<ReturnType<typeof getSocialSchema>>;
 // Entry Description schema
 export const getEntryDescriptionSchema = (t: Translator) => z.object({
   entry_mgmt_id: z.number().min(1, t('entry.required')),
-  parent_id: z.number().int().min(0),
   title: z.string().min(1, t('title.required')),
   summary: z.string().optional(),
   article: z.string().optional(),

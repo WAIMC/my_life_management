@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import { IsActive } from '@/shared/enums/enums';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useActionLock } from '@/shared/hooks/useActionLock';
 import { UI_CONSTANTS } from '@/shared/config';
@@ -76,19 +77,18 @@ export function SocialForm({ initialData, onSuccess, onCancel }: SocialFormProps
   const onSubmit = async (data: SocialFormData) => {
     await execute(async () => {
       try {
-        // Convert string to number for rank_order
+        // Convert form data to API payload format
         const payload = {
-        ...data,
-        rank_order: Number(data.rank_order),
-      };
+          ...data,
+          rank_order: Number(data.rank_order),
+          is_display: data.is_display ? IsActive.TRUE : IsActive.FALSE,
+          is_delete: false,
+        };
       
       if (isEdit && initialData) {
         await update(initialData.id, payload);
       } else {
-        await create({
-          ...payload,
-          is_delete: false,
-        });
+        await create(payload);
       }
       onSuccess();
     } catch (error: unknown) {

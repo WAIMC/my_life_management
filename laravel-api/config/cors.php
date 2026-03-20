@@ -3,7 +3,7 @@
 return [
     'paths' => ['api/*'],  // Áp dụng cho tất cả routes api
     'allowed_methods' => ['*'],  // Allow methods
-    'allowed_origins' => ['http://localhost:81', 'http://localhost:6543'],  // Specific origins for credentials
+    'allowed_origins' => ['http://localhost:81', 'http://localhost:6543', 'http://localhost:3456', 'http://localhost:3457'],  // Specific origins for credentials
     'allowed_origins_patterns' => [],  // Nếu cần regex
     'allowed_headers' => ['*'],
     'exposed_headers' => [],  // Expose nếu cần

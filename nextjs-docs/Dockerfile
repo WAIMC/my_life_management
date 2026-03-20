@@ -6,13 +6,16 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Copy package files
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* package-lock.json* ./
 
 # Install dependencies
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm install --frozen-lockfile; \
+    pnpm install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
   else \
@@ -22,6 +25,10 @@ RUN \
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -32,7 +39,7 @@ ENV NODE_ENV=production
 # Build Next.js app
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm run build; \
+    pnpm run build; \
   else \
     npm run build; \
   fi
@@ -66,3 +73,47 @@ ENV PORT=3457
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
+
+# ============ Stage: Development (Optimized for Hot Reload) ============
+FROM base AS development
+
+WORKDIR /app
+
+# Install system dependencies for development
+RUN apk add --no-cache wget bash libc6-compat
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3457
+
+# Copy package files first for better layer caching
+COPY package.json pnpm-lock.yaml* package-lock.json* ./
+
+# Install dependencies in the image (not at runtime)
+RUN if [ -f pnpm-lock.yaml ]; then \
+      echo "Using pnpm..." && \
+      pnpm install --frozen-lockfile && \
+      pnpm add -D @next/swc-linux-x64-musl; \
+    elif [ -f package-lock.json ]; then \
+      echo "Using npm with legacy peer deps..." && \
+      npm ci --legacy-peer-deps && \
+      npm install --save-dev @next/swc-linux-x64-musl; \
+    else \
+      echo "Using npm..." && \
+      npm install --legacy-peer-deps && \
+      npm install --save-dev @next/swc-linux-x64-musl; \
+    fi
+
+# Note: Source code will be mounted as volume at runtime
+# This allows hot-reload without rebuilding the image
+
+# Expose port
+EXPOSE 3457
+
+# Start Next.js development server
+CMD ["npm", "run", "dev"]

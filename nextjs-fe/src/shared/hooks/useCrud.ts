@@ -30,7 +30,7 @@ export function useCrud<T>(
    * Create mutation
    */
   const createMutation = useMutation({
-    mutationFn: async (data: Partial<T>): Promise<number> => {
+    mutationFn: async (data: Record<string, unknown>): Promise<number> => {
       const response = await apiClient.post<number>(`${endpoint}/store`, data);
       return response.data;
     },
@@ -52,7 +52,7 @@ export function useCrud<T>(
    * Update mutation
    */
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<T> }): Promise<number> => {
+    mutationFn: async ({ id, data }: { id: number; data: Record<string, unknown> }): Promise<number> => {
       const response = await apiClient.put<number>(`${endpoint}/update/${id}`, {
         id,
         ...data,
@@ -100,11 +100,11 @@ export function useCrud<T>(
   });
 
   // Wrapper functions to maintain API compatibility
-  const create = async (data: Partial<T>): Promise<number> => {
+  const create = async (data: Record<string, unknown>): Promise<number> => {
     return createMutation.mutateAsync(data);
   };
 
-  const update = async (id: number, data: Partial<T>): Promise<number> => {
+  const update = async (id: number, data: Record<string, unknown>): Promise<number> => {
     return updateMutation.mutateAsync({ id, data });
   };
 

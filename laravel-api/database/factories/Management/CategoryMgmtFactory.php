@@ -23,7 +23,6 @@ class CategoryMgmtFactory extends Factory
   public function definition()
   {
     return [
-      'parent_id' => 0,
       'name' => Str::limit($this->faker->words(3, true), 45, ''),
       'slug' => Str::limit($this->faker->slug, 45, ''),
       'description' => $this->faker->text(140),

@@ -16,12 +16,12 @@ class EntryMgmtHist extends Model
    */
   protected $fillable = [
     'entry_mgmt_id',
-    'parent_id',
     'name',
     'slug',
     'status',
     'is_display',
     'rank_order',
+    'layout_structure',
     'action',
     'author_id',
     'created_at',
@@ -35,12 +35,12 @@ class EntryMgmtHist extends Model
   protected $casts = [
     'id' => 'integer',
     'entry_mgmt_id' => 'integer',
-    'parent_id' => 'integer',
     'name' => 'string',
     'slug' => 'string',
     'status' => 'integer',
     'is_display' => 'boolean',
     'rank_order' => 'integer',
+    'layout_structure' => 'array',
     'action' => 'integer',
     'author_id' => 'integer',
     'created_at' => 'datetime',

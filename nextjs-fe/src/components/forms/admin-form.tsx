@@ -5,6 +5,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import { IsActive } from '@/shared/enums/enums';
 import { useCrud } from '@/shared/hooks/useCrud';
 import { useActionLock } from '@/shared/hooks/useActionLock';
 import { UI_CONSTANTS } from '@/shared/config';
@@ -161,17 +162,20 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
         //   data.avatar = uploadData.url;
         // }
 
-        const payload = { ...data };
+        const payload = {
+          ...data,
+          is_active: data.is_active ? IsActive.TRUE : IsActive.FALSE,
+        };
 
         if (data.birth) {
-          (payload as AdminFormData & { birth?: string }).birth = formatDateForBackend(data.birth);
+          payload.birth = formatDateForBackend(data.birth);
         }
 
         let adminId: number | undefined;
 
         if (isEdit && initialData) {
           if (!payload.password) {
-            delete (payload as AdminFormData & { password?: string }).password;
+            delete payload.password;
           }
           await update(initialData.id, payload);
           adminId = initialData.id;
@@ -179,7 +183,7 @@ export function AdminForm({ initialData, onSuccess, onCancel }: AdminFormProps) 
           adminId = await create({
             ...payload,
             is_delete: false,
-          } as AdminFormData & { is_delete: boolean });
+          });
         }
 
         // Handle role assignment

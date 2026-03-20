@@ -9,6 +9,7 @@ use Illuminate\Validation\Rules\Enum;
 use App\Models\Management\EntryDescriptionMgmt;
 use App\Enums\IsDelete;
 use App\Enums\StatusEnum;
+use App\Enums\IsActive;
 use App\Models\Management\EntryMgmt;
 
 class ListEntryDescriptionMgmtRequest extends FormRequest
@@ -29,7 +30,6 @@ class ListEntryDescriptionMgmtRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'parent_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'title' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:100',],
             'summary' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:255',],
             'article' => ['nullable', 'string', 'min:' . CommonVal::MIN_VARCHAR, 'max:' . CommonVal::MAX_VARCHAR,],

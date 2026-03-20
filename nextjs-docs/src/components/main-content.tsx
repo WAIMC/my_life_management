@@ -2,6 +2,7 @@
 
 import { EntryDetail } from "@/types/docs";
 import { slugify } from "@/lib/utils";
+import { ContentRenderer } from "./content-renderer";
 
 interface MainContentProps {
   entry: EntryDetail;
@@ -27,12 +28,7 @@ export default function MainContent({ entry }: MainContentProps) {
               </p>
             )}
 
-            <div
-              className="prose-content"
-              dangerouslySetInnerHTML={{
-                __html: desc.article.replace(/\\n/g, "\n"),
-              }}
-            />
+            <ContentRenderer content={desc.article} />
           </section>
         );
       })}

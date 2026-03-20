@@ -9,7 +9,6 @@ use App\Traits\HasHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -25,7 +24,6 @@ class CategoryMgmt extends Model
    * @var string[]
    */
   protected $fillable = [
-    'parent_id',
     'name',
     'slug',
     'description',
@@ -33,6 +31,7 @@ class CategoryMgmt extends Model
     'is_display',
     'rank_order',
     'is_delete',
+    'layout_structure',
   ];
 
   /**
@@ -42,7 +41,6 @@ class CategoryMgmt extends Model
    */
   protected $casts = [
     'id' => 'integer',
-    'parent_id' => 'integer',
     'name' => 'string',
     'slug' => 'string',
     'description' => 'string',
@@ -50,29 +48,10 @@ class CategoryMgmt extends Model
     'is_display' => 'boolean',
     'rank_order' => 'integer',
     'is_delete' => 'boolean',
+    'layout_structure' => 'array',
     'created_at' => 'datetime',
     'updated_at' => 'datetime',
   ];
-
-  /**
-   * Get the parent category.
-   *
-   * @return BelongsTo
-   */
-  public function parent(): BelongsTo
-  {
-    return $this->belongsTo(CategoryMgmt::class, 'parent_id');
-  }
-
-  /**
-   * Get the child categories.
-   *
-   * @return HasMany
-   */
-  public function children(): HasMany
-  {
-    return $this->hasMany(CategoryMgmt::class, 'parent_id');
-  }
 
   /**
    * Get the products in this category.
@@ -82,21 +61,6 @@ class CategoryMgmt extends Model
   public function products(): HasMany
   {
     return $this->hasMany(ProductMgmt::class, 'category_mgmt_id');
-  }
-
-  /**
-   * Get the entries associated with this category.
-   *
-   * @return BelongsToMany
-   */
-  public function entries(): BelongsToMany
-  {
-    return $this->belongsToMany(
-      EntryMgmt::class,
-      'category_entry_mgmt',
-      'category_mgmt_id',
-      'entry_mgmt_id'
-    )->withTimestamps();
   }
 
   /**

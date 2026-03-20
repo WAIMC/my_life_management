@@ -1,10 +1,37 @@
+'use client';
+
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Category } from "@/types/docs";
 import SearchBar from "@/components/search-bar";
 import HexagonGrid from "@/components/hexagon-grid";
 
-export default async function DocsPage() {
-  const categories = await api.getCategories() as Category[];
+export default function DocsPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await api.getCategories() as Category[];
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-x-hidden flex flex-col items-center bg-[#f8fbff] bg-gradient-to-br from-blue-50/70 via-white to-purple-50/70">

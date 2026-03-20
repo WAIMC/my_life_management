@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Entry, EntryDetail } from "@/types/docs";
 import MainContent from "@/components/main-content";
@@ -5,14 +9,52 @@ import RightToc from "@/components/right-toc";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default async function EntryDetailPage({
-  params,
-}: {
-  params: Promise<{ entrySlug: string; categorySlug: string }>;
-}) {
-  const { entrySlug, categorySlug } = await params;
-  const entry = (await api.getEntryDetail(entrySlug)) as EntryDetail;
-  const entries = (await api.getEntriesByCategory(categorySlug)) as Entry[];
+export default function EntryDetailPage() {
+  const params = useParams();
+  const entrySlug = params?.entrySlug as string;
+  const categorySlug = params?.categorySlug as string;
+  
+  const [entry, setEntry] = useState<EntryDetail | null>(null);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (entrySlug && categorySlug) {
+      const loadData = async () => {
+        try {
+          const [entryData, entriesData] = await Promise.all([
+            api.getEntryDetail(entrySlug) as Promise<EntryDetail>,
+            api.getEntriesByCategory(categorySlug) as Promise<Entry[]>,
+          ]);
+          
+          setEntry(entryData);
+          setEntries(entriesData);
+        } catch (error) {
+          console.error('Failed to load entry data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadData();
+    }
+  }, [entrySlug, categorySlug]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Entry not found</p>
+      </div>
+    );
+  }
 
   // Find current index for pagination
   const currentIndex = entries.findIndex((e) => e.slug === entrySlug);

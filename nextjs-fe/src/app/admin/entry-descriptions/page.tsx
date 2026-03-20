@@ -262,7 +262,7 @@ export default function EntryDescriptionListPage() {
 
       {/* Create/Edit Entry Description Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingDescription ? tCrud('editEntity', { entity: tEntities('entryDescription') }) : tCrud('createEntity', { entity: tEntities('entryDescription') })}</DialogTitle>
             <DialogDescription>

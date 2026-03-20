@@ -124,3 +124,167 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom styles for TipTap editor prose classes */
+@layer components {
+  .prose {
+    /* Headings */
+    h1 {
+      @apply text-4xl font-bold mt-6 mb-4;
+    }
+    h2 {
+      @apply text-3xl font-bold mt-5 mb-3;
+    }
+    h3 {
+      @apply text-2xl font-bold mt-4 mb-2;
+    }
+    h4 {
+      @apply text-xl font-semibold mt-3 mb-2;
+    }
+    h5 {
+      @apply text-lg font-semibold mt-2 mb-1;
+    }
+    h6 {
+      @apply text-base font-semibold mt-2 mb-1;
+    }
+
+    /* Lists */
+    ul {
+      @apply list-disc my-4 pl-6;
+      list-style-position: outside;
+      display: block !important;
+    }
+    ol {
+      @apply list-decimal my-4 pl-6;
+      list-style-position: outside;
+      display: block !important;
+    }
+    li {
+      @apply my-2;
+      display: list-item !important;
+    }
+    li > ul,
+    li > ol {
+      @apply my-2 mt-2;
+    }
+    
+    /* Ensure list markers are visible in dark mode */
+    ul li::marker {
+      @apply text-gray-700 dark:text-gray-300;
+    }
+    ol li::marker {
+      @apply text-gray-700 dark:text-gray-300;
+    }
+
+    /* Blockquote */
+    blockquote {
+      @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 py-2 my-4 italic text-gray-700 dark:text-gray-300;
+    }
+
+    /* Code */
+    code {
+      @apply bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm font-mono;
+    }
+    pre {
+      @apply bg-gray-100 dark:bg-gray-800 p-4 rounded my-4 overflow-x-auto;
+    }
+    pre code {
+      @apply bg-transparent p-0;
+    }
+
+    /* Links */
+    a {
+      @apply text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300;
+    }
+
+    /* Paragraphs */
+    p {
+      @apply my-3;
+    }
+
+    /* Strong and emphasis */
+    strong {
+      @apply font-bold;
+    }
+    em {
+      @apply italic;
+    }
+
+    /* Strikethrough */
+    s,
+    del {
+      @apply line-through;
+    }
+
+    /* Highlight */
+    mark {
+      @apply bg-yellow-200 dark:bg-yellow-700 px-1;
+    }
+
+    /* Horizontal rule */
+    hr {
+      @apply my-6 border-gray-300 dark:border-gray-600;
+    }
+
+    /* Images */
+    img {
+      @apply rounded-lg my-4 max-w-full h-auto;
+    }
+
+    /* Tables */
+    table {
+      @apply w-full border-collapse my-4;
+    }
+    th {
+      @apply border border-gray-300 dark:border-gray-600 px-4 py-2 bg-gray-100 dark:bg-gray-800 font-semibold text-left;
+    }
+    td {
+      @apply border border-gray-300 dark:border-gray-600 px-4 py-2;
+    }
+  }
+
+  /* Dark mode specific prose adjustments */
+  .dark .prose {
+    h1, h2, h3, h4, h5, h6 {
+      @apply text-gray-100;
+    }
+    p {
+      @apply text-gray-200;
+    }
+    li {
+      @apply text-gray-200;
+    }
+  }
+  
+  /* Specific ProseMirror editor styles to ensure lists display correctly */
+  .ProseMirror {
+    ul, ol {
+      display: block !important;
+      list-style-position: outside !important;
+      margin-left: 1.5rem !important;
+      padding-left: 0.5rem !important;
+    }
+    
+    ul {
+      list-style-type: disc !important;
+    }
+    
+    ol {
+      list-style-type: decimal !important;
+    }
+    
+    li {
+      display: list-item !important;
+    }
+    
+    ul ul {
+      list-style-type: circle !important;
+      margin-top: 0.5rem !important;
+    }
+    
+    ol ol {
+      list-style-type: lower-alpha !important;
+      margin-top: 0.5rem !important;
+    }
+  }
+}

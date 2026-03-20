@@ -16,7 +16,6 @@ class EntryDescriptionMgmtHist extends Model
    */
   protected $fillable = [
     'entry_description_mgmt_id',
-    'parent_id',
     'title',
     'summary',
     'article',
@@ -37,7 +36,6 @@ class EntryDescriptionMgmtHist extends Model
   protected $casts = [
     'id' => 'integer',
     'entry_description_mgmt_id' => 'integer',
-    'parent_id' => 'integer',
     'title' => 'string',
     'summary' => 'string',
     'article' => 'string',
