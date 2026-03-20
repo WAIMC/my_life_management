@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { Entry } from "@/types/docs";
+import { Entry, Category } from "@/types/docs";
 import DocLayoutClient from "@/components/doc-layout-client";
 
 export default function CategoryLayout({
@@ -14,14 +14,22 @@ export default function CategoryLayout({
   const params = useParams();
   const categorySlug = params?.categorySlug as string;
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [category, setCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (categorySlug) {
-      const loadEntries = async () => {
+      const loadData = async () => {
         try {
-          const data = await api.getEntriesByCategory(categorySlug) as Entry[];
-          setEntries(data);
+          const [entriesData, categoriesData] = await Promise.all([
+            api.getEntriesByCategory(categorySlug) as Promise<Entry[]>,
+            api.getCategories() as Promise<Category[]>,
+          ]);
+          setEntries(entriesData);
+          const currentCategory = categoriesData.find(c => c.slug === categorySlug);
+          if (currentCategory) {
+            setCategory(currentCategory);
+          }
         } catch (error) {
           console.error('Failed to load entries:', error);
         } finally {
@@ -29,7 +37,7 @@ export default function CategoryLayout({
         }
       };
 
-      loadEntries();
+      loadData();
     }
   }, [categorySlug]);
 
@@ -42,7 +50,7 @@ export default function CategoryLayout({
   }
 
   return (
-    <DocLayoutClient entries={entries} categorySlug={categorySlug}>
+    <DocLayoutClient entries={entries} categorySlug={categorySlug} layoutStructure={category?.layout_structure}>
       {children}
     </DocLayoutClient>
   );

@@ -113,11 +113,12 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
         // Convert form data to API payload format
         const payload = {
           entry_mgmt_id: Number(data.entry_mgmt_id),
-          name: data.title,
-          slug: data.title.toLowerCase().replace(/\s+/g, '-'),
+          title: data.title,
+          summary: data.summary,
+          status: Number(data.status),
           rank_order: Number(data.rank_order),
           is_display: data.is_display ? IsActive.TRUE : IsActive.FALSE,
-          is_delete: false,
+          is_delete: 0,
           article: articleContent ? JSON.stringify(articleContent) : '',
         };
       

@@ -265,11 +265,9 @@ export function CategoryForm({ initialData, onSuccess, onCancel, renderActions =
   if (!isEdit) {
     return (
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
-          {FormFields}
-        </div>
-        <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t bg-muted/20">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
+        {FormFields}
+        <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
             {tCommon('cancel')}
           </Button>
@@ -284,43 +282,37 @@ export function CategoryForm({ initialData, onSuccess, onCancel, renderActions =
   // For edit mode, show tabs with fields and layout structure  
   
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Tabs key={`category-tabs-${initialData?.id || 'new'}`} value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
-        <div className="shrink-0 px-6 pb-2 border-b">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details" type="button">{tCommon('details')}</TabsTrigger>
-            <TabsTrigger value="entries" type="button">{tCommon('entries')}</TabsTrigger>
-          </TabsList>
-        </div>
+    <div className="flex flex-col">
+      <Tabs key={`category-tabs-${initialData?.id || 'new'}`} value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="details" type="button">{tCommon('details')}</TabsTrigger>
+          <TabsTrigger value="entries" type="button">{tCommon('entries')}</TabsTrigger>
+        </TabsList>
         
-        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-          <TabsContent value="details" className="m-0 space-y-4">
-            {FormFields}
-          </TabsContent>
+        <TabsContent value="details" className="mt-4 space-y-4 max-h-[50vh] overflow-y-auto">
+          {FormFields}
+        </TabsContent>
 
-          <TabsContent value="entries" className="m-0 h-full">
-            <div className="space-y-4 h-full flex flex-col">
-              <div className="text-sm text-muted-foreground shrink-0">
-                Manage the layout structure for entries in this category. Drag and drop to reorder, and use indent buttons to change hierarchy.
-              </div>
-              <div className="flex-1 min-h-[400px]">
-                <LayoutStructureEditor
-                  type="entry"
-                  value={layoutStructure}
-                  onChange={handleLayoutStructureChange}
-                  availableItems={availableEntries || []}
-                  loading={entriesLoading}
-                  onSearch={setEntrySearchQuery}
-                />
-              </div>
+        <TabsContent value="entries" className="mt-4 max-h-[50vh] overflow-y-auto">
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground mb-4">
+              Manage the layout structure for entries in this category. Drag and drop to reorder or change hierarchy.
             </div>
-          </TabsContent>
-        </div>
+            <LayoutStructureEditor
+              type="entry"
+              value={layoutStructure}
+              onChange={handleLayoutStructureChange}
+              availableItems={availableEntries || []}
+              loading={entriesLoading}
+              onSearch={setEntrySearchQuery}
+            />
+          </div>
+        </TabsContent>
       </Tabs>
       
       {/* Action buttons - only render if renderActions is true */}
       {renderActions && (
-        <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t bg-muted/20">
+        <div className="flex justify-end gap-2 pt-4 border-t mt-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
             {tCommon('cancel')}
           </Button>

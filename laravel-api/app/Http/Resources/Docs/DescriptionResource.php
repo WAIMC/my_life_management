@@ -20,6 +20,7 @@ class DescriptionResource extends JsonResource
             'summary' => $this->summary,
             'article' => $this->article,
             'rank_order' => $this->rank_order,
+            'layout_structure' => $this->layout_structure,
         ];
     }
 }

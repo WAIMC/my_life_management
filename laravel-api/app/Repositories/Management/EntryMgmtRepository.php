@@ -181,18 +181,25 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
     return array_unique($entryIds);
   }
 
-  /**
-   * Get entry detail by slug with descriptions
-   *
-   * @param string $slug
-   * @return \Illuminate\Database\Eloquent\Model|null
-   */
   public function getEntryDetailBySlug(string $slug): ?\Illuminate\Database\Eloquent\Model
   {
-    return $this->model->query()
-      ->with([
-        'descriptions' => function ($query) {
-          $query->select([
+    $entry = $this->model->query()
+      ->where('slug', $slug)
+      ->where('is_display', true)
+      ->where('status', 1)
+      ->notDeleted()
+      ->first();
+
+    if (!$entry) {
+      return null;
+    }
+
+    if (!empty($entry->layout_structure)) {
+      $descIds = $this->extractEntryDescIdsFromLayoutStructure($entry->layout_structure);
+
+      if (!empty($descIds)) {
+        $descriptions = \App\Models\Management\EntryDescriptionMgmt::query()
+          ->select([
             'id',
             'entry_mgmt_id',
             'title',
@@ -200,17 +207,60 @@ class EntryMgmtRepository extends BaseRepository implements EntryMgmtInterface
             'article',
             'rank_order',
           ])
-            ->where('is_display', true)
-            ->where('status', 1)
-            ->where('is_delete', false)
-            ->orderBy('rank_order', 'asc');
-        }
-      ])
-      ->where('slug', $slug)
-      ->where('is_display', true)
-      ->where('status', 1)
-      ->notDeleted()
-      ->first();
+          ->whereIn('id', $descIds)
+          ->where('is_display', true)
+          ->where('status', 1)
+          ->where('is_delete', false)
+          ->orderByRaw('array_position(ARRAY[' . implode(',', $descIds) . '], id)')
+          ->get();
+
+        $entry->setRelation('descriptions', $descriptions);
+        return $entry;
+      }
+    }
+
+    // Fallback if no layout_structure or empty descriptions
+    $entry->load([
+      'descriptions' => function ($query) {
+        $query->select([
+          'id',
+          'entry_mgmt_id',
+          'title',
+          'summary',
+          'article',
+          'rank_order',
+        ])
+          ->where('is_display', true)
+          ->where('status', 1)
+          ->where('is_delete', false)
+          ->orderBy('rank_order', 'asc');
+      }
+    ]);
+
+    return $entry;
+  }
+
+  /**
+   * Extract entry desc IDs from layout structure recursively
+   *
+   * @param array $layoutStructure
+   * @return array
+   */
+  private function extractEntryDescIdsFromLayoutStructure(array $layoutStructure): array
+  {
+    $descIds = [];
+
+    foreach ($layoutStructure as $item) {
+      if (isset($item['entry_desc_id'])) {
+        $descIds[] = $item['entry_desc_id'];
+      }
+
+      if (isset($item['children']) && is_array($item['children'])) {
+        $descIds = array_merge($descIds, $this->extractEntryDescIdsFromLayoutStructure($item['children']));
+      }
+    }
+
+    return array_unique($descIds);
   }
 
   /**

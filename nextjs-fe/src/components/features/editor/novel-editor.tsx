@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { EditorContent, useEditor, type JSONContent } from '@tiptap/react';
+import { EditorContent, useEditor, type JSONContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
@@ -9,6 +9,7 @@ import Link from '@tiptap/extension-link';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import { Video } from './extensions/video';
 import { EditorBubbleMenu } from './editor-bubble-menu';
 import { EditorToolbar } from './editor-toolbar';
 import { MediaSelectorModal } from '@/components/common/media-selector-modal';
@@ -60,10 +61,11 @@ export function NovelEditor({
       Highlight.configure({
         multicolor: true,
       }),
+      Video,
     ],
     content: content ? (typeof content === 'string' ? JSON.parse(content) : content) : undefined,
     editable,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       if (onChange) {
         onChange(editor.getJSON());
       }
@@ -111,7 +113,11 @@ export function NovelEditor({
 
   const handleMediaSelect = (media: MediaFile) => {
     if (editor && media.url) {
-      editor.chain().focus().setImage({ src: media.url }).run();
+      if (media.mime_type?.startsWith('video/')) {
+        editor.chain().focus().setVideo({ src: media.url }).run();
+      } else {
+        editor.chain().focus().setImage({ src: media.url }).run();
+      }
     }
     setShowMediaModal(false);
   };
@@ -145,8 +151,8 @@ export function NovelEditor({
         open={showMediaModal}
         onClose={() => setShowMediaModal(false)}
         onSelect={handleMediaSelect}
-        allowedMimeTypes={['image/']}
-        title="Select Image"
+        allowedMimeTypes={['image/', 'video/']}
+        title="Select Media"
       />
     </>
   );

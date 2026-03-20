@@ -19,6 +19,7 @@ class EntryResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'rank_order' => $this->rank_order,
+            'layout_structure' => $this->layout_structure,
         ];
     }
 }

@@ -18,6 +18,7 @@ class EntryDetailResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'layout_structure' => $this->layout_structure,
             'categories' => CategoryResource::collection($this->whenLoaded('categories')),
             'descriptions' => DescriptionResource::collection($this->whenLoaded('descriptions')),
         ];

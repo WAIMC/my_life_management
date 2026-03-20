@@ -4,6 +4,7 @@ export interface Category {
   slug: string;
   description: string | null;
   rank_order: number;
+  layout_structure?: any;
 }
 
 export interface Entry {
@@ -11,6 +12,7 @@ export interface Entry {
   name: string;
   slug: string;
   rank_order: number;
+  layout_structure?: any;
 }
 
 export interface Description {
@@ -19,6 +21,7 @@ export interface Description {
   summary: string;
   article: string;
   rank_order: number;
+  layout_structure?: any;
 }
 
 export interface EntryDetail {
@@ -27,6 +30,7 @@ export interface EntryDetail {
   slug: string;
   categories: Category[];
   descriptions: Description[];
+  layout_structure?: any;
 }
 
 export interface SearchResult {

@@ -5,21 +5,43 @@ const API_BASE_URL = isServer
   ? 'http://ml-nginx/api'
   : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api');
 
-export async function fetchApi<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-  });
+// Request deduplicator cache
+const requestCache = new Map<string, Promise<any>>();
 
-  if (!response.ok) {
-    throw new Error(`API call failed: ${response.statusText}`);
+export async function fetchApi<T>(endpoint: string): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  if (requestCache.has(url)) {
+    return requestCache.get(url) as Promise<T>;
   }
 
-  const json = await response.json();
-  // API response structure: { data: { data: [...] } }
-  return json.data?.data || json.data;
+  const promise = (async () => {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    return json.data?.data || json.data;
+  })();
+
+  requestCache.set(url, promise);
+
+  try {
+    const result = await promise;
+    // Clear cache immediately after the tick to only dedup true parallel requests
+    setTimeout(() => requestCache.delete(url), 500);
+    return result;
+  } catch (error) {
+    requestCache.delete(url);
+    throw error;
+  }
 }
 
 export const api = {

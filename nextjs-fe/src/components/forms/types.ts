@@ -82,8 +82,6 @@ export interface EntryFormProps {
   initialData?: EntryMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
-  renderActions?: boolean;
-  submitTriggerRef?: React.Ref<(() => void) | null>;
 }
 
 export interface SliderFormProps {

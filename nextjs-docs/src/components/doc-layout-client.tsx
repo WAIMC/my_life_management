@@ -13,12 +13,14 @@ interface DocLayoutClientProps {
   children: React.ReactNode;
   entries: Entry[];
   categorySlug: string;
+  layoutStructure?: any;
 }
 
 export default function DocLayoutClient({
   children,
   entries,
   categorySlug,
+  layoutStructure,
 }: DocLayoutClientProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -59,7 +61,7 @@ export default function DocLayoutClient({
         {/* Left Sidebar - Sticky with isolated scroll */}
         <aside className="hidden md:block w-72 lg:w-80 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain scrollbar-hide shrink-0 px-2 border-r border-transparent">
           <div className="py-6">
-            <LeftSidebar entries={entries} categorySlug={categorySlug} />
+            <LeftSidebar entries={entries} categorySlug={categorySlug} layoutStructure={layoutStructure} />
           </div>
         </aside>
 
@@ -80,7 +82,7 @@ export default function DocLayoutClient({
                 </button>
               </div>
               <div className="h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
-                <LeftSidebar entries={entries} categorySlug={categorySlug} />
+                <LeftSidebar entries={entries} categorySlug={categorySlug} layoutStructure={layoutStructure} />
               </div>
             </div>
           </div>

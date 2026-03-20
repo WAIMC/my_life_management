@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
@@ -31,7 +31,7 @@ import { slugify } from '@/shared/utils/string-utils';
 import type { EntryFormProps } from './types';
 import { LayoutStructureEditor } from './layout-structure-editor';
 
-export function EntryForm({ initialData, onSuccess, onCancel, renderActions = true, submitTriggerRef }: EntryFormProps) {
+export function EntryForm({ initialData, onSuccess, onCancel }: EntryFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tValidation = useTranslations('validation');
@@ -68,7 +68,6 @@ export function EntryForm({ initialData, onSuccess, onCancel, renderActions = tr
     reset,
     setError,
   } = useForm<EntryFormData>({
-    // @ts-expect-error - z.preprocess causes status to be inferred as unknown
     resolver: zodResolver(getEntrySchema(tValidation)),
     defaultValues: {
       rank_order: FORM_DEFAULTS.RANK_ORDER,
@@ -105,7 +104,7 @@ export function EntryForm({ initialData, onSuccess, onCancel, renderActions = tr
 
   const { execute, isLoading: isActionProcessing } = useActionLock({ delay: UI_CONSTANTS.ACTION_DELAY_MS });
 
-  const onSubmit = useCallback(async (data: EntryFormData) => {
+  const onSubmit = async (data: EntryFormData) => {
     await execute(async () => {
       try {
         const payload = {
@@ -118,48 +117,24 @@ export function EntryForm({ initialData, onSuccess, onCancel, renderActions = tr
           layout_structure: layoutStructure,
         };
       
-        if (isEdit && initialData) {
-          await update(initialData.id, payload);
-        } else {
-          await create(payload);
-        }
-        onSuccess();
-      } catch (error: unknown) {
-        console.error('[EntryForm] Submit error:', error);
-        handleBindErrors(error, setError);
+      if (isEdit && initialData) {
+        await update(initialData.id, payload);
+      } else {
+        await create(payload);
       }
-    });
-  }, [execute, isEdit, initialData, update, create, onSuccess, setError, layoutStructure]);
-
-  // Expose submit function via ref (must be after onSubmit is defined)
-  useEffect(() => {
-    if (submitTriggerRef && typeof submitTriggerRef !== 'function') {
-      submitTriggerRef.current = () => {
-        console.log('[EntryForm] submitTriggerRef.current() called, executing handleSubmit...');
-        handleSubmit(
-          (data) => {
-            console.log('[EntryForm] Validation Success. Payload:', data);
-            void onSubmit(data as unknown as EntryFormData);
-          },
-          (errs) => {
-            console.error('[EntryForm] Validation Failed. Errors:', errs);
-          }
-        )();
-      };
+      onSuccess();
+    } catch (error: unknown) {
+      console.error(error);
+      handleBindErrors(error, setError);
     }
-    
-    return () => {
-      if (submitTriggerRef && typeof submitTriggerRef !== 'function') {
-        submitTriggerRef.current = null;
-      }
-    };
-  }, [submitTriggerRef, handleSubmit, onSubmit, errors, control]);
+    });
+  };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
   const statusValue = useWatch({ control, name: 'status' });
 
-  const FormFields = (
-    <>
+  const FormContent = (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
           {tCommon('name')} <span className="text-red-500">*</span>
@@ -227,96 +202,70 @@ export function EntryForm({ initialData, onSuccess, onCancel, renderActions = tr
         />
         <Label htmlFor="is_display">{tCommon('isDisplay')}</Label>
       </div>
-    </>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+          {tCommon('cancel')}
+        </Button>
+        <Button type="submit" disabled={loading || isActionProcessing}>
+          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+        </Button>
+      </div>
+    </form>
   );
 
-  // For non-edit mode (create), wrap fields in form with buttons
   if (!isEdit) {
-    return (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
-          {FormFields}
-        </div>
-        <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t bg-muted/20">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-            {tCommon('cancel')}
-          </Button>
-          <Button type="submit" disabled={loading || isActionProcessing}>
-            {loading || isActionProcessing ? tCommon('creating') : tCommon('create')}
-          </Button>
-        </div>
-      </form>
-    );
+    return FormContent;
   }
 
-  // For edit mode, show tabs mapped identical to CategoryForm
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Tabs key={`entry-tabs-${initialData?.id || 'new'}`} value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
-        <div className="shrink-0 px-6 pb-2 border-b">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="details" type="button">{tCommon('details')}</TabsTrigger>
-            <TabsTrigger value="descriptions" type="button">{tCommon('descriptions')}</TabsTrigger>
-            <TabsTrigger value="history" type="button">{tCommon('history')}</TabsTrigger>
-          </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+        <TabsTrigger value="descriptions">{tCommon('descriptions')}</TabsTrigger>
+        <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
+      </TabsList>
+      <TabsContent value="details" className="mt-4">
+        {FormContent}
+      </TabsContent>
+      <TabsContent value="descriptions" className="mt-4">
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground mb-4">
+            Manage the layout structure for descriptions in this entry. Drag and drop to reorder or change hierarchy.
+          </div>
+          <LayoutStructureEditor
+            type="entry_desc"
+            value={layoutStructure}
+            onChange={setLayoutStructure}
+            availableItems={mappedDescriptions}
+            loading={descriptionsLoading}
+            onSearch={setDescSearchQuery}
+          />
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+              {tCommon('cancel')}
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleSubmit(onSubmit)} 
+              disabled={loading || isActionProcessing}
+            >
+              {loading || isActionProcessing ? tCommon('updating') : tCommon('update')}
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-          <TabsContent value="details" className="m-0 space-y-4">
-            {FormFields}
-          </TabsContent>
-
-          <TabsContent value="descriptions" className="m-0 h-full">
-            <div className="space-y-4 h-full flex flex-col">
-              <div className="text-sm text-muted-foreground shrink-0">
-                Manage the layout structure for descriptions in this entry. Drag and drop to reorder or change hierarchy.
-              </div>
-              <div className="flex-1 min-h-[400px]">
-                <LayoutStructureEditor
-                  type="entry_desc"
-                  value={layoutStructure}
-                  onChange={setLayoutStructure}
-                  availableItems={mappedDescriptions}
-                  loading={descriptionsLoading}
-                  onSearch={setDescSearchQuery}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="history" className="m-0 h-full">
-            <div className="h-full overflow-y-auto pr-2">
-              {initialData && (
-                <HistoryViewer
-                  entityType="entry"
-                  entityId={initialData.id}
-                  endpoint={`${ENDPOINTS.MANAGEMENT.ENTRY}-hist`}
-                />
-              )}
-            </div>
-          </TabsContent>
+      </TabsContent>
+      <TabsContent value="history" className="mt-4">
+        <div className="h-[400px] overflow-y-auto pr-2">
+          {initialData && (
+            <HistoryViewer
+              entityType="entry"
+              entityId={initialData.id}
+              endpoint={`${ENDPOINTS.MANAGEMENT.ENTRY}-hist`}
+            />
+          )}
         </div>
-      </Tabs>
-      
-      {/* Action buttons - only render if renderActions is true */}
-      {renderActions && (
-        <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t bg-muted/20">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-            {tCommon('cancel')}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              handleSubmit(onSubmit as any)();
-            }}
-            disabled={loading || isActionProcessing}
-          >
-            {loading || isActionProcessing ? tCommon('updating') : tCommon('update')}
-          </Button>
-        </div>
-      )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

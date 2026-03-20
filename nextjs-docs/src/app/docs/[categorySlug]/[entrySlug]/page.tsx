@@ -3,11 +3,38 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { Entry, EntryDetail } from "@/types/docs";
+import { Entry, EntryDetail, Category } from "@/types/docs";
 import MainContent from "@/components/main-content";
 import RightToc from "@/components/right-toc";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+type LayoutNode = { ui_id?: string; entry_mgmt_id?: number | string; children?: LayoutNode[] };
+
+function parseLayoutStructure(raw: any): LayoutNode[] | null {
+  if (!raw) return null;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function flattenEntryIds(nodes: LayoutNode[] | null): number[] {
+  if (!nodes || nodes.length === 0) return [];
+  let ids: number[] = [];
+  for (const node of nodes) {
+    if (node.entry_mgmt_id) ids.push(Number(node.entry_mgmt_id));
+    if (node.children) {
+      ids = ids.concat(flattenEntryIds(node.children));
+    }
+  }
+  return ids;
+}
 
 export default function EntryDetailPage() {
   const params = useParams();
@@ -16,19 +43,27 @@ export default function EntryDetailPage() {
   
   const [entry, setEntry] = useState<EntryDetail | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [flatOrderedIds, setFlatOrderedIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (entrySlug && categorySlug) {
       const loadData = async () => {
         try {
-          const [entryData, entriesData] = await Promise.all([
+          const [entryData, entriesData, categoriesData] = await Promise.all([
             api.getEntryDetail(entrySlug) as Promise<EntryDetail>,
             api.getEntriesByCategory(categorySlug) as Promise<Entry[]>,
+            api.getCategories() as Promise<Category[]>,
           ]);
           
           setEntry(entryData);
           setEntries(entriesData);
+
+          const category = categoriesData.find(c => c.slug === categorySlug);
+          if (category) {
+            const layoutTree = parseLayoutStructure(category.layout_structure);
+            setFlatOrderedIds(flattenEntryIds(layoutTree));
+          }
         } catch (error) {
           console.error('Failed to load entry data:', error);
         } finally {
@@ -56,10 +91,30 @@ export default function EntryDetailPage() {
     );
   }
 
-  // Find current index for pagination
-  const currentIndex = entries.findIndex((e) => e.slug === entrySlug);
-  const prevEntry = currentIndex > 0 ? entries[currentIndex - 1] : null;
-  const nextEntry = currentIndex < entries.length - 1 ? entries[currentIndex + 1] : null;
+  // Find current index based on layout_structure flattened list
+  let prevEntry: Entry | null = null;
+  let nextEntry: Entry | null = null;
+
+  if (flatOrderedIds.length > 0) {
+    const currentIndex = flatOrderedIds.findIndex(id => id === entry.id);
+    if (currentIndex !== -1) {
+      if (currentIndex > 0) {
+        const prevId = flatOrderedIds[currentIndex - 1];
+        prevEntry = entries.find(e => e.id === prevId) || null;
+      }
+      if (currentIndex < flatOrderedIds.length - 1) {
+        const nextId = flatOrderedIds[currentIndex + 1];
+        nextEntry = entries.find(e => e.id === nextId) || null;
+      }
+    }
+  } else {
+    // Fallback exactly as before if no layout_structure exists!
+    const currentIndex = entries.findIndex(e => e.id === entry.id);
+    if (currentIndex !== -1) {
+      if (currentIndex > 0) prevEntry = entries[currentIndex - 1] || null;
+      if (currentIndex < entries.length - 1) nextEntry = entries[currentIndex + 1] || null;
+    }
+  }
 
   return (
     <div className="flex w-full items-start">
@@ -105,7 +160,7 @@ export default function EntryDetailPage() {
 
       {/* Right Sidebar - TOC - Sticky with isolated scroll */}
       <aside className="hidden xl:block w-72 lg:w-80 shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain scrollbar-hide py-8">
-        <RightToc descriptions={entry.descriptions} />
+        <RightToc descriptions={entry.descriptions} layoutStructure={entry.layout_structure} />
       </aside>
     </div>
   );

@@ -8,6 +8,7 @@ import Link from '@tiptap/extension-link';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import { Video } from './extensions/video';
 import { cn } from '@/lib/utils';
 
 interface ContentRendererProps {
@@ -21,6 +22,7 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
+      // @ts-expect-error - Mismatched extension type from monorepo tiptap versions
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
@@ -42,6 +44,7 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
       Highlight.configure({
         multicolor: true,
       }),
+      Video,
     ],
     content: content ? (typeof content === 'string' ? JSON.parse(content) : content) : undefined,
     editable: false,

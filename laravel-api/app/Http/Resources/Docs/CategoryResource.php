@@ -20,6 +20,7 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'rank_order' => $this->rank_order,
+            'layout_structure' => $this->layout_structure,
         ];
     }
 }
