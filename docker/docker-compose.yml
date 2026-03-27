@@ -134,6 +134,7 @@ services:
     volumes:
       - ../laravel-api:/var/www/laravel-api
       - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./laravel/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     environment:
       DB_CONNECTION: pgsql
       DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
@@ -159,6 +160,8 @@ services:
         condition: service_healthy
       ml-redis:
         condition: service_healthy
+      ml-php:
+        condition: service_healthy
     networks:
       - app-network
     deploy:
@@ -181,6 +184,7 @@ services:
     volumes:
       - ../laravel-api:/var/www/laravel-api
       - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./laravel/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     environment:
       DB_CONNECTION: pgsql
       DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
@@ -204,6 +208,8 @@ services:
       ml-postgres:
         condition: service_healthy
       ml-redis:
+        condition: service_healthy
+      ml-php:
         condition: service_healthy
       ml-minio-init:
         condition: service_completed_successfully

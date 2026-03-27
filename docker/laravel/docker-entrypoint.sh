@@ -109,20 +109,27 @@ chmod -R 775 storage bootstrap/cache
 echo -e "${GREEN}  ✓ Permissions set${NC}"
 echo ""
 
-# Step 6: Run project setup (migrations + seeds)
-echo -e "${YELLOW}[6/6] Running migrations and seeds...${NC}"
+# Step 6: Run project setup (migrations + seeds) - ONLY if DB is empty
+echo -e "${YELLOW}[6/6] Running project setup (Migrate & Seed)...${NC}"
 
-echo -e "${BLUE}  -> Running: php artisan migrate --force${NC}"
-if php artisan migrate --force; then
-    echo -e "${GREEN}  ✓ Database migration completed successfully${NC}"
+# Kiểm tra xem database đã có bảng nào chưa
+TABLE_COUNT=$(PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USERNAME}" -d "${DB_DATABASE}" -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';" | xargs)
+
+if [ "$TABLE_COUNT" -eq 0 ]; then
+    echo -e "${BLUE}  -> Database is empty. Performing initial migration...${NC}"
+    if php artisan migrate --force; then
+        echo -e "${GREEN}  ✓ Database migration completed successfully${NC}"
+        
+        # Chỉ Seed nếu đây là lần đầu dựng DB
+        echo -e "${BLUE}  -> Running initial data seeding...${NC}"
+        php artisan db:seed --force
+        echo -e "${GREEN}  ✓ Initial seeding completed successfully${NC}"
+    else
+        echo -e "${RED}  ✗ ERROR: Initial migration failed!${NC}"
+        exit 1
+    fi
 else
-    echo -e "${YELLOW}  ⚠ Database migration completed with warnings${NC}"
-fi
-
-# Seed DB only if explicitly requested via SEED_DB=true
-if [ "${SEED_DB}" = "true" ]; then
-    echo -e "${BLUE}  -> Running: php artisan db:seed --force${NC}"
-    php artisan db:seed --force
+    echo -e "${GREEN}  ✓ Database already initialized (Tables: $TABLE_COUNT). Skipping setup.${NC}"
 fi
 echo ""
 

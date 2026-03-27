@@ -1,72 +1,80 @@
-# Kế hoạch Sao lưu và Phục hồi Hệ thống (Backup & Restore Strategy)
+Quá trình sao lưu dữ liệu là quá trình đóng gói các dữ liệu của môi trường tại một thời điểm nhất định, dữ liệu đó là những gì được lưu trữ và sử dụng cho môi trường tại thời điểm đó. Dữ liệu này có thể là cơ sở dữ liệu, tài liêu file or folder có cấu trúc được lưu trong các storage, file cấu hình hệ thống,... Chúng được gom nhóm, đóng gói và lưu trữ lại ở nhiều nơi khác nhau tuy theo mục đích sử dụng. Phổ biến lưu dữ liệu này ở local, máy tính cá nhân, máy chủ, cloud,...
 
-Tài liệu này định nghĩa quy trình chuẩn hóa cho việc sao lưu và phục hồi hệ thống dựa trên Docker (PostgreSQL, MinIO, NextJS, Laravel). Cả hai quy trình đã được tự động hóa hoàn toàn thông qua Bash Scripts, hoạt động trơn tru trên bất kỳ môi trường nào.
+Quá trình khôi phục dữ liệu là quá trình lấy dữ liệu đã được sao lưu và khôi phục lại môi trường. Quá trình này thường được thực hiện khi môi trường bị lỗi, bị mất hoặc cần di chuyển sang môi trường mới,.. Quá trình thực hiện ngược lại so với sao lưu, việc này có hoặc không phải build lại môi trường nếu các thay đổi đó liên quan đến cấu hình, việc này thay đổi cấu hình chúng không áp dụng runtime, cần build lại mới để cập nhật cấu hình. Ngoài ra còn có vấn đề về tính toàn vẹn dữ liệu, trong quá trình triển khai có thể sai khác dữ liệu trong quá trình build. Không thể sử dụng cách build mới môi trường và cho chúng hoạt động song song với môi trường cũ. Sau đó chuyển hướng người dùng quá môi trường mới đồng thời xóa môi trường cũ. Trong lúc đó, người dùng đang thao tác dữ liệu môi trường cũ, khi chuyển sang môi trường mới sẽ không có dữ liệu mới nhất, dẫn đến mất dữ liệu. Do đó, thông thường khi diễn ra quá trình này cần proxy điều hướng traffic người dùng đến màn hình bảo trì để đảm bảo người dùng không thao tác gì thay đổi dữ liệu trong quá trình triển khai, nhằm đảm bảo tính toàn vẹn dữ liệu. Sau khi hoàn thiện mới điều hướng người dùng trở lại hệ thống.
 
----
+# Tài liệu Tiêu chuẩn: Chiến lược Sao lưu và Phục hồi Thảm họa (DR & Data Synchronization Strategy)
 
-## 1. Cấu hình Môi trường (Prerequisites)
+**Mức độ bảo mật:** Nội bộ (Internal)
+**Phạm vi áp dụng:** Môi trường Containerized (Docker/Docker Compose) của hệ thống Second Memory.
 
-Thay vì quản lý nhiều file cấu hình rời rạc, chúng ta sử dụng một file `.env` thống nhất đóng vai trò là "Single Source of Truth" cho toàn bộ hệ thống.
+## 1. Tổng quan & Mục tiêu
 
-1. **Khởi tạo thông tin cấu hình:** 
-   - Từ thư mục `docker/`, copy `docker/.env.example` thành `docker/.env` và điền hoặc điều chỉnh các tham số cần thiết. Không cần thiết phải quản lý `.env.fresh` hay `.env.restore` nào khác.
+Tài liệu này quy định các tiêu chuẩn kỹ thuật cấp cao và quy trình vận hành chuẩn (SOP) cho việc bảo toàn dữ liệu và phục hồi thảm họa (Disaster Recovery - DR). Mục tiêu cốt lõi là đảm bảo tính toàn vẹn, tính khả dụng và khả năng lưu trữ, truy xuất tài liệu dài hạn mà không gặp rủi ro mất mát thông tin dưới bất kỳ hình thức nào. 
 
-2. **Cài đặt Rclone & Cấu hình Cloud:**
-   - Cài đặt công cụ [Rclone](https://rclone.org/downloads/) trên server.
-   - Chạy lệnh `rclone config` để xác thực với nền tảng Cloud (VD: Google Drive, OneDrive).
-   - Đảm bảo tham số `RCLONE_REMOTES` trong file `.env` khai báo đúng tên Remote. Ví dụ: `RCLONE_REMOTES=ggdrive:second-memory-backups`.
+Hệ thống tuân thủ các chỉ số đo lường hiệu quả (KPIs) về DR theo chuẩn doanh nghiệp:
+* **RPO (Recovery Point Objective):** < 24 giờ. Dữ liệu mất mát tối đa cho phép không vượt quá 24 giờ thao tác.
+* **RTO (Recovery Time Objective):** < 30 phút. Thời gian gián đoạn tối đa để khôi phục toàn bộ dịch vụ cốt lõi kể từ khi kích hoạt kịch bản DR.
+* **Tính nhất quán nguyên tử (Atomic Consistency):** Một điểm khôi phục (Restore Point) phải là sự khớp nối hoàn hảo về thời gian giữa Cơ sở dữ liệu (PostgreSQL), Hệ thống tệp (MinIO) và Cấu hình môi trường (`.env`).
 
----
+## 2. Kiến trúc Hệ thống DR
 
-## 2. Quy trình Sao lưu Dữ liệu (Automated Backup Lifecycle)
+Kiến trúc sao lưu được phân tách thành 3 phân hệ độc lập nhằm giảm thiểu rủi ro điểm lỗi đơn lẻ (Single Point of Failure):
 
-Hệ thống sử dụng kịch bản `docker/backup.sh` để khóa nguyên trạng (Full Snapshot) toàn bộ dữ liệu ở thời điểm chạy, sau đó đẩy an toàn lên Cloud.
+1.  **Phân hệ Dữ liệu (Stateful Tier):** Bao gồm PostgreSQL (Relational Data) và MinIO (Object Storage). Đây là nơi chứa giá trị cốt lõi của hệ thống.
+2.  **Phân hệ Điều phối (Orchestration Tier):** Các kịch bản tự động hóa (`backup.sh`, `restore.sh`) đóng vai trò Controller, xử lý logic nén, mã hóa và định tuyến luồng dữ liệu.
+3.  **Phân hệ Phân tán (Sovereignty Storage Tier):** Tích hợp Rclone làm cầu nối luân chuyển bản sao lưu lên môi trường Multi-Cloud (Google Drive, OneDrive, AWS S3) để dự phòng rủi ro vật lý tại máy chủ cục bộ.
 
-**Quy trình chạy tự động 3 bước của script:**
-1. **Trích xuất Database:** Dùng `pg_dump` nén cơ sở dữ liệu và file cấu hình `.env` lại.
-2. **Kéo Media:** Sync thư mục chứa ảnh/File của hệ thống từ trong `ml-minio` ra ổ cứng cục bộ.
-3. **Đóng gói và Dọn dẹp:** 
-   - Đóng gói Database và Media thành 1 file ZIP duy nhất: `system_backup_YYYYMMDD_HHMMSS.tar.gz`.
-   - Upload file lưu trữ duy nhất đó lên các nền tảng Cloud đã cấu hình trong `RCLONE_REMOTES`.
-   - Dọn sạch các file backup cũ trên Cloud **khỏi hệ thống (lưu giữ 3 ngày theo chính sách Retention)**.
-   - Xóa các file rác trung gian cục bộ.
+## 3. Quy trình Sao lưu Tự động (Automated Backup Lifecycle)
+
+Tiến trình sao lưu được kích hoạt định kỳ (Cronjob) và thực thi qua kịch bản `backup/backup.sh` theo luồng 4 bước:
+
+* **Bước 1: Trích xuất Dữ liệu Định tuyến (Database Snapshot):** Sử dụng `pg_dump` với định dạng **Custom format (`-Fc`)**. Đây là định dạng nhị phân tối ưu nhất của PostgreSQL, tích hợp sẵn nén nội bộ và cho phép khôi phục cực nhanh thông qua công cụ `pg_restore`.
+* **Bước 2: Đồng bộ Dữ liệu Phi cấu trúc (Media Mirroring):** Kích hoạt `mc mirror` (MinIO Client) quét và đồng bộ delta changes (chỉ copy các file thay đổi) ra vùng nhớ đệm tại Host. Đảm bảo giữ nguyên Metadata.
+* **Bước 3: Đóng gói Định danh (Versioning & Archiving):** Gộp SQL Dump, thư mục MinIO và tệp `.env` thành một khối (Archive) duy nhất theo định dạng định danh: `system_backup_YYYYMMDD_HHMMSS.tar.gz`.
+* **Bước 4: Phân phối & Vòng đời (Distribution & Retention):**
+    * Đẩy bản sao lưu lên các node Cloud định sẵn trong biến `RCLONE_REMOTES`.
+    * Thực thi chính sách dọn dẹp (Housekeeping): Tự động xóa các bản sao lưu trên Cloud vượt quá ngưỡng **3 ngày** (tuỳ chỉnh qua tham số `--min-age`).
+    * **Xóa toàn bộ thư mục sao lưu cục bộ (`backups/`)** ngay sau khi hoàn tất việc tải lên Cloud để tối ưu tài nguyên lưu trữ (Zero-Local Footprint).
 
 **Cách chạy Backup thủ công (hoặc qua Cronjob):**
 ```bash
 bash backup/backup.sh
 ```
 
----
+## 4. Quy trình Phục hồi & Vận hành Cắt lớp (Restore & Cutover SOP)
 
-## 3. Quy trình Khôi phục Dữ liệu (Automated Restore)
+> **CẢNH BÁO QUAN TRỌNG:** Quá trình phục hồi yêu cầu thời gian gián đoạn dịch vụ (Downtime Window). Tuyệt đối **KHÔNG** chạy song song hệ thống cũ và hệ thống đang restore để tránh phân mảnh và ghi đè dữ liệu (Data Corruption). Việc khởi động container phải tuân thủ nghiêm ngặt theo trình tự 3 giai đoạn dưới đây.
 
-Dành cho các trường hợp chuyển server mới, dựng mới hoàn toàn (fresh build) hay khôi phục sau sự cố. Kịch bản `docker/restore.sh` sẽ tự động hóa từ A-Z.
+### Giai đoạn 1: Cách ly & Thiết lập Trạng thái Bảo trì (Maintenance Mode)
+* Chuyển hướng toàn bộ lưu lượng truy cập (Traffic) thông qua Nginx/Reverse Proxy đến trang trạng thái "Hệ thống đang bảo trì". 
+* Tắt toàn bộ các container ứng dụng (Stateless) hiện tại để chặn mọi Transaction mới.
 
-**Cách thực hiện:**
+### Giai đoạn 2: Tái thiết lập Phân hệ Lưu trữ (Stateful Provisioning)
+Chỉ khởi động các dịch vụ lõi lưu trữ để chuẩn bị nhận dữ liệu:
+```bash
+cd docker
+docker compose up -d ml-postgres ml-minio
+```
+*(Lưu ý: Chờ trạng thái health-check của các container này đạt `healthy` trước khi qua Bước 3).*
 
-1. **Chuẩn bị môi trường:** 
-   Tải source code về, cấu hình file `docker/.env` theo đúng cổng (port) hoạt động mới, và xác thực `rclone` cho server mới (như Bước 1). Cấu hình Mật khẩu và thông số Database / MinIO phải trỏ đúng nơi cần restore.
+### Giai đoạn 3: Thực thi Phục hồi & Đồng nhất (Data Ingestion)
+Chạy kịch bản khôi phục tự động:
+```bash
+bash backup/restore.sh
+```
+* Hệ thống tải bản Snapshot mới nhất từ Cloud.
+* Giải nén, sử dụng công cụ `pg_restore` để nạp dữ liệu nhị phân vào PostgreSQL và đồng bộ MinIO.
+* Áp dụng tệp `.env` từ bản Snapshot.
 
-2. **Khởi động Nền tảng Core:**
-   Không cần chạy toàn bộ hệ thống, chỉ đưa Database và MinIO Server lên trước để hứng dữ liệu:
-   ```bash
-   cd docker
-   docker compose up -d ml-postgres ml-minio
-   ```
-   *Chờ khoảng 5-10 giây để container sẵn sàng.*
+### Giai đoạn 4: Khởi động Ứng dụng & Hủy cách ly (Application Boot & Cutover)
+Khởi động phần còn lại của hệ thống dựa trên dữ liệu đã được đảm bảo tính toàn vẹn:
+```bash
+docker compose up -d ml-php ml-reverb ml-queue ml-nextjs ml-nextjs-docs
+```
+Kiểm tra logs. Nếu không có lỗi, tắt chế độ bảo trì trên Nginx và khôi phục luồng truy cập bình thường cho người dùng. Toàn bộ thư mục tạm khôi phục (`restore_tmp/`) sẽ được tự động xóa sạch.
 
-3. **Chạy kịch bản Restore thần tốc:**
-   ```bash
-   bash backup/restore.sh
-   ```
-   - Script tự động đọc `RCLONE_REMOTES` từ file `.env`.
-   - Lấy danh sách kiểm tra trên Google Drive / OneDrive và tải file `system_backup_...tar.gz` MỚI NHẤT về tĩnh.
-   - Tự động xả nén, nạp ngược lại dữ liệu cho PostgreSQL và đẩy toàn bộ lượng Media thẳng vào lại Storage (MinIO).
-   - Tự động dọn rác ngay khi kết thúc thành công!
+## 5. Tiêu chuẩn Vận hành Nâng cao (Best Practices)
 
-4. **Khởi chạy lại Toàn Server:**
-   Chạy tiếp các container phục vụ Ứng dụng:
-   ```bash
-   docker compose up -d ml-php ml-reverb ml-queue ml-nextjs ml-nextjs-docs ml-nginx
-   ```
-   *Quá trình khôi phục hoàn tất!*
+* **Bảo mật Thông tin Nhạy cảm (Credential Security):** Tệp `.env` chứa các Secret Keys. Hệ thống Cloud đích cấu hình qua Rclone phải sử dụng xác thực OAuth2 hoặc Token phân quyền hạn chế (Least Privilege). Khuyến nghị bật tính năng Mã hóa tại chỗ (Encryption at Rest) trên phía Cloud Provider.
+* **Cô lập Dữ liệu Tạm (Zero-Local Footprint):** Hệ thống được thiết kế để không để lại dấu vết dữ liệu tại máy chủ cục bộ. Mọi tệp tin trung gian và bản sao lưu vừa tạo/tải về phải được kịch bản bash tự động xóa sạch (purge) bằng cờ `trap` nhắm vào toàn bộ thư mục làm việc (`backups/` hoặc `restore_tmp/`) ở cuối kịch bản, ngay cả khi quy trình thất bại.
+* **Cơ chế Cảnh báo (Alerting):** Tích hợp Webhook (Slack/Telegram) vào kịch bản Bash để báo cáo trạng thái `SUCCESS` hoặc `FAILED` sau mỗi chu kỳ Cronjob, đảm bảo đội ngũ kỹ thuật có khả năng phản ứng ngay lập tức (Proactive Monitoring). Cái này bỏ qua làm sau.
