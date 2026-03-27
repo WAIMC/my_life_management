@@ -19,6 +19,9 @@ This application is built using:
 - ✅ Works perfectly with nginx proxy
 - ✅ Ideal for applications with authentication and dynamic content
 
+### Single Source of Truth for Docker
+Note that all Docker-related configuration (`Dockerfile`, `docker-compose.yml`) is removed from this directory to enforce a single source of truth. The `.dockerignore` remains here as required by the Docker build context. All Docker commands must be run from the root `docker/` directory.
+
 ## 🚀 Getting Started
 
 ### Development (Docker)

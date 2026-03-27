@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env') && fs.existsSync('.tenv.example')) fs.copyFileSync('.tenv.example', '.env')\"",
     "dev": "next dev --webpack",
+    "prebuild": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env') && fs.existsSync('.tenv.example')) fs.copyFileSync('.tenv.example', '.env')\"",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",

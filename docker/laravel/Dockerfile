@@ -100,10 +100,7 @@ COPY --from=base /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.i
 
 WORKDIR /var/www/laravel-api
 
-# Copy entrypoint script - file is in laravel-api directory
-COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-
 # Note: composer.json, composer.lock, and other files will be mounted via volume
 # Composer install will be handled by the entrypoint script for flexibility
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["bash", "/usr/local/bin/docker-entrypoint.sh"]

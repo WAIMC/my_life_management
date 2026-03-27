@@ -74,6 +74,7 @@ services:
     volumes:
       - ../laravel-api:/var/www/laravel-api
       - ./laravel/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./laravel/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     environment:
       DB_CONNECTION: pgsql
       DB_HOST: ${POSTGRES_HOST_INSIDE_ENV}
@@ -86,6 +87,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       APP_ENV: local
       APP_DEBUG: "true"
+      SEED_DB: ${SEED_DB:-false}
       REVERB_APP_ID: ${REVERB_APP_ID}
       REVERB_APP_KEY: ${REVERB_APP_KEY}
       REVERB_APP_SECRET: ${REVERB_APP_SECRET}

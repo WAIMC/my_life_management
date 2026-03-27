@@ -19,7 +19,11 @@ Backend API được xây dựng bằng Laravel 8+, cung cấp các API RESTful 
 #### Trong Docker (Khuyến nghị)
 
 ```bash
-# Đã được cấu hình sẵn trong start.sh của dự án chính
+# Toàn bộ cấu hình Docker (như Dockerfile, docker-entrypoint.sh, docker-compose.yml)
+# được quản lý tập trung và duy nhất tại thư mục `docker/` ở gốc dự án (single source of truth).
+# Bạn cần chạy Docker từ thư mục đó thay vì trong project này.
+cd ../docker
+docker compose up -d ml-php
 ```
 
 #### Trên máy local
