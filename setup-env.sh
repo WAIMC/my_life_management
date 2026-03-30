@@ -111,3 +111,19 @@ fi
 
 echo "=== UNIFIED CONFIGURATION SETUP COMPLETE ==="
 echo "Các mật khẩu và khóa bảo mật đã được đồng bộ tự động cho toàn bộ hệ thống!"
+
+# Check if containers are running
+RUNNING_CONTAINERS=$(docker ps --filter name=ml- --format '{{.Names}}' || true)
+if [ -n "$RUNNING_CONTAINERS" ]; then
+    echo ""
+    echo ">> [CẢNH BÁO] Hệ thống Docker đang chạy! Các thay đổi về mật khẩu (.env) SẼ KHÔNG có hiệu lực ngay lập tức."
+    echo ">> Bạn CẦN thực hiện khởi động lại container để áp dụng cấu hình mới:"
+    echo "   cd docker && docker-compose up -d --force-recreate ml-php ml-reverb ml-queue ml-redis"
+    echo ""
+    
+    # Optional: Automatically try to sync DB password if postgres is running
+    if [[ "$RUNNING_CONTAINERS" == *"ml-postgres"* ]]; then
+        echo ">> Phát hiện ml-postgres đang chạy. Đang thử đồng bộ mật khẩu role nội bộ..."
+        docker exec -i ml-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" > /dev/null 2>&1 || echo "   [!] LƯU Ý: Không thể tự động cập nhật mật khẩu Database nội bộ. Có thể bạn cần làm thủ công."
+    fi
+fi

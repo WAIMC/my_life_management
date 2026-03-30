@@ -184,6 +184,27 @@ if [ -f "$SETUP_ENV" ]; then
     bash "$SETUP_ENV"
 fi
 
+# -----------------------------------------------------------------------------
+# PHẦN 5: ĐỒNG BỘ MẬT KHẨU ROLE DB & KHỞI ĐỘNG LẠI DỊCH VỤ
+# -----------------------------------------------------------------------------
+echo "=========================================================="
+echo ">> [ÚP DATE] Đồng bộ mật khẩu Role Database và khởi động lại dịch vụ..."
+
+# Đảm bảo Postgres nhận mật khẩu mới (Nếu có lệch do restore từ volume cũ)
+if [ -n "$POSTGRES_PASSWORD" ]; then
+    echo ">> Đang đồng bộ mật khẩu role $POSTGRES_USER trong Database..."
+    docker exec -i "$PG_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" > /dev/null 2>&1 || echo "Cảnh báo: Không thể tự động ALTER USER (có thể do quyền hạn hoặc DB chưa sẵn sàng)."
+fi
+
+# Khởi động lại các stateless containers để nạp biến môi trường mới
+echo ">> Đang khởi động lại các dịch vụ ứng dụng (ml-php, ml-reverb, ml-queue, ml-redis)..."
+cd "$SCRIPT_DIR/../docker"
+docker-compose up -d --force-recreate ml-php ml-reverb ml-queue ml-redis
+
+# Xóa config cache (lần nữa để chắc chắn)
+echo ">> Xóa Laravel config cache trong container mới..."
+docker exec ml-php php artisan config:clear
+
 # Xóa config cache để Laravel load lại .env với credentials mới
 echo ">> Xóa Laravel config cache..."
 if docker ps -q --filter name=ml-php | grep -q .; then

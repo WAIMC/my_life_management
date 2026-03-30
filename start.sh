@@ -20,7 +20,9 @@ fi
 
 echo ">> [INFO] Starting Docker environment..."
 cd "$ROOT_DIR/docker"
-docker-compose up --build -d
+# Sử dụng --force-recreate để đảm bảo các thay đổi trong .env luôn được áp dụng
+docker-compose up -d --build --force-recreate ml-php ml-reverb ml-queue ml-redis
+docker-compose up -d
 
 echo "============================================"
 echo "    STARTUP COMMAND COMPLETED"
