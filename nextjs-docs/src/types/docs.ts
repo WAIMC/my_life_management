@@ -21,7 +21,6 @@ export interface Description {
   summary: string;
   article: string;
   rank_order: number;
-  layout_structure?: any;
 }
 
 export interface EntryDetail {

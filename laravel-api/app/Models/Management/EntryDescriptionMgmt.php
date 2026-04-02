@@ -29,7 +29,6 @@ class EntryDescriptionMgmt extends Model
     'status',
     'is_display',
     'rank_order',
-    'entry_mgmt_id',
     'is_delete',
   ];
 
@@ -46,21 +45,12 @@ class EntryDescriptionMgmt extends Model
     'status' => 'integer',
     'is_display' => 'boolean',
     'rank_order' => 'integer',
-    'entry_mgmt_id' => 'integer',
     'is_delete' => 'boolean',
     'created_at' => 'datetime',
     'updated_at' => 'datetime',
   ];
 
-  /**
-   * Get the entry that owns the description.
-   *
-   * @return BelongsTo
-   */
-  public function entry(): BelongsTo
-  {
-    return $this->belongsTo(EntryMgmt::class, 'entry_mgmt_id');
-  }
+
 
   /**
    * Get the history records for the entry description.

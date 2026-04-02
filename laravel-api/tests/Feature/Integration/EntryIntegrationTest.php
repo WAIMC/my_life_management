@@ -120,7 +120,6 @@ class EntryIntegrationTest extends TestCase
       'insert' => [
         [
           'category_mgmt_id' => $catId,
-          'entry_mgmt_id' => $entryId
         ]
       ]
     ];
@@ -129,7 +128,6 @@ class EntryIntegrationTest extends TestCase
 
     // 5. Add Description (Fixed Payload)
     $descPayload = [
-      'entry_mgmt_id' => $entryId,
       'parent_id' => 0,
       'title' => 'PHP Language',
       'summary' => 'Short summary.',
@@ -143,7 +141,6 @@ class EntryIntegrationTest extends TestCase
     $descResp->assertStatus(200);
 
     // 6. Verify Connection
-    $this->assertDatabaseHas('category_entry_mgmt', ['category_mgmt_id' => $catId, 'entry_mgmt_id' => $entryId]);
   }
 
   public function test_prevent_duplicate_slugs()

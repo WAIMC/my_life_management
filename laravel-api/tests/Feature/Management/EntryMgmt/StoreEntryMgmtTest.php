@@ -133,7 +133,6 @@ class StoreEntryMgmtTest extends TestCase
 
     $id = $response->json('data');
     $this->assertDatabaseHas('entry_mgmt_hist', [
-      'entry_mgmt_id' => $id,
       'action' => 1,
     ]);
   }

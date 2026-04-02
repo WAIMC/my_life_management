@@ -36,10 +36,8 @@ class EntryDescriptionMgmtRepository extends BaseRepository implements EntryDesc
         'status',
         'is_display',
         'rank_order',
-        'entry_mgmt_id',
         'updated_at',
       ])
-      ->with(['entry:id,name'])
       ->notDeleted();
 
     // Apply filters
@@ -48,7 +46,6 @@ class EntryDescriptionMgmtRepository extends BaseRepository implements EntryDesc
       'status',
       'is_display',
       'rank_order',
-      'entry_mgmt_id',
     ], [
       'title',
       'summary',
@@ -134,10 +131,8 @@ class EntryDescriptionMgmtRepository extends BaseRepository implements EntryDesc
         'title',
         'summary',
         'article',
-        'entry_mgmt_id',
         'rank_order',
       ])
-      ->with(['entry:id,name,slug'])
       ->where('is_display', true)
       ->where('status', 1)
       ->notDeleted()

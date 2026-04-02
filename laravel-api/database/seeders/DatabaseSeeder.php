@@ -17,9 +17,6 @@ class DatabaseSeeder extends Seeder
     // Create root account with all permissions
     $this->call([
       RootAccountSeeder::class,
-      CategoryMgmtSeeder::class,
-      EntryMgmtSeeder::class,
-      EntryDescriptionMgmtSeeder::class,
     ]);
   }
 }

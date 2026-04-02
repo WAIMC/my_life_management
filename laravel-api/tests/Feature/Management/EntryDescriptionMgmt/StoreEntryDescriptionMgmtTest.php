@@ -118,7 +118,6 @@ class StoreEntryDescriptionMgmtTest extends TestCase
       'status' => 1,
       'is_display' => 1,
       'rank_order' => 1,
-      'entry_mgmt_id' => $entry->id,
       'is_delete' => 0,
     ];
 

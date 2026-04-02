@@ -16,7 +16,6 @@ return new class extends Migration {
       $table->unsignedTinyInteger('status')->nullable()->comment('management status');
       $table->boolean('is_display')->nullable()->comment('Display');
       $table->unsignedSmallInteger('rank_order')->nullable()->comment('management order');
-      $table->unsignedInteger('entry_mgmt_id')->nullable()->comment('Entry management id');
       $table->unsignedTinyInteger('action')->comment('management action');
       $table->unsignedInteger('author_id')->comment('Author id');
       $table->timestamp('created_at')->comment('Created time');

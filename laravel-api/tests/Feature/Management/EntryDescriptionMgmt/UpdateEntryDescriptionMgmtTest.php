@@ -119,7 +119,6 @@ class UpdateEntryDescriptionMgmtTest extends TestCase
       'status' => 1,
       'is_display' => 1,
       'rank_order' => 2,
-      'entry_mgmt_id' => $desc->entry_mgmt_id,
       'is_delete' => 0,
     ];
 

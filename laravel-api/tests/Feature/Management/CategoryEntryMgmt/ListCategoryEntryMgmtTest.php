@@ -109,7 +109,6 @@ class ListCategoryEntryMgmtTest extends TestCase
 
     $pivot = CategoryEntryMgmt::create([
       'category_mgmt_id' => $category->id,
-      'entry_mgmt_id' => $entry->id,
     ]);
 
     $response = $this->call('GET', $this->baseUrl, [], $cookies);
@@ -136,8 +135,6 @@ class ListCategoryEntryMgmtTest extends TestCase
     $category2 = CategoryMgmt::factory()->create();
     $entry = EntryMgmt::factory()->create();
 
-    CategoryEntryMgmt::create(['category_mgmt_id' => $category1->id, 'entry_mgmt_id' => $entry->id]);
-    CategoryEntryMgmt::create(['category_mgmt_id' => $category2->id, 'entry_mgmt_id' => $entry->id]);
 
     $response = $this->call('GET', $this->baseUrl, ['category_mgmt_id' => $category1->id], $cookies);
     $response->assertStatus(200);

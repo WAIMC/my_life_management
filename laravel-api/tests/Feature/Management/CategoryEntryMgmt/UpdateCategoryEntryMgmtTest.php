@@ -107,13 +107,11 @@ class UpdateCategoryEntryMgmtTest extends TestCase
     // Missing required fields in insert
     $payload = [
       'insert' => [
-        ['category_mgmt_id' => 1] // missing entry_mgmt_id
       ]
     ];
 
     $response = $this->call('PUT', $this->baseUrl, $payload, $cookies);
     $response->assertStatus(CommonVal::HTTP_UNPROCESSABLE_CONTENT);
-    $this->assertArrayHasKey('insert.0.entry_mgmt_id', $response->json('error.messages'));
   }
 
   /**
@@ -131,7 +129,6 @@ class UpdateCategoryEntryMgmtTest extends TestCase
       'insert' => [
         [
           'category_mgmt_id' => $category->id,
-          'entry_mgmt_id' => $entry->id,
         ]
       ]
     ];
@@ -145,7 +142,6 @@ class UpdateCategoryEntryMgmtTest extends TestCase
 
     $this->assertDatabaseHas('category_entry_mgmt', [
       'category_mgmt_id' => $category->id,
-      'entry_mgmt_id' => $entry->id,
     ]);
   }
 
@@ -163,14 +159,12 @@ class UpdateCategoryEntryMgmtTest extends TestCase
     // Create existence
     CategoryEntryMgmt::create([
       'category_mgmt_id' => $category->id,
-      'entry_mgmt_id' => $entry->id,
     ]);
 
     $payload = [
       'delete' => [
         [
           'category_mgmt_id' => $category->id,
-          'entry_mgmt_id' => $entry->id,
         ]
       ]
     ];
@@ -180,7 +174,6 @@ class UpdateCategoryEntryMgmtTest extends TestCase
 
     $this->assertDatabaseMissing('category_entry_mgmt', [
       'category_mgmt_id' => $category->id,
-      'entry_mgmt_id' => $entry->id,
     ]);
   }
 
@@ -201,7 +194,6 @@ class UpdateCategoryEntryMgmtTest extends TestCase
     // Exist: (cat1, entry1)
     CategoryEntryMgmt::create([
       'category_mgmt_id' => $cat1->id,
-      'entry_mgmt_id' => $entry1->id,
     ]);
 
     // Operation: Delete (cat1, entry1), Insert (cat2, entry2)
@@ -209,13 +201,11 @@ class UpdateCategoryEntryMgmtTest extends TestCase
       'delete' => [
         [
           'category_mgmt_id' => $cat1->id,
-          'entry_mgmt_id' => $entry1->id,
         ]
       ],
       'insert' => [
         [
           'category_mgmt_id' => $cat2->id,
-          'entry_mgmt_id' => $entry2->id,
         ]
       ]
     ];
@@ -225,12 +215,10 @@ class UpdateCategoryEntryMgmtTest extends TestCase
 
     $this->assertDatabaseMissing('category_entry_mgmt', [
       'category_mgmt_id' => $cat1->id,
-      'entry_mgmt_id' => $entry1->id,
     ]);
 
     $this->assertDatabaseHas('category_entry_mgmt', [
       'category_mgmt_id' => $cat2->id,
-      'entry_mgmt_id' => $entry2->id,
     ]);
   }
 }

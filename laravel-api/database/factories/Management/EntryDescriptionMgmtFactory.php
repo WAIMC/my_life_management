@@ -20,7 +20,6 @@ class EntryDescriptionMgmtFactory extends Factory
       'status' => 1,
       'is_display' => true,
       'rank_order' => $this->faker->numberBetween(1, 100),
-      'entry_mgmt_id' => EntryMgmt::factory(),
       'is_delete' => false,
     ];
   }

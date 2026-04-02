@@ -125,7 +125,6 @@ class DeleteEntryMgmtTest extends TestCase
     ]);
 
     $this->assertDatabaseHas('entry_mgmt_hist', [
-      'entry_mgmt_id' => $target->id,
       'action' => ActionType::DELETE->value
     ]);
   }

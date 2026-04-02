@@ -36,7 +36,6 @@ class ListEntryDescriptionMgmtRequest extends FormRequest
             'status' => ['nullable', new Enum(StatusEnum::class),],
             'is_display' => ['nullable', new Enum(IsActive::class),],
             'rank_order' => ['nullable',],
-            'entry_mgmt_id' => ['nullable', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER,],
             'is_delete' => ['nullable', new Enum(IsDelete::class),],
             'from_date' => [
                 'nullable',
@@ -64,7 +63,6 @@ class ListEntryDescriptionMgmtRequest extends FormRequest
             'status' => __('messages.status'),
             'is_display' => __('messages.is_display'),
             'rank_order' => __('messages.rank_order'),
-            'entry_mgmt_id' => __('messages.entry_mgmt_id'),
             'is_delete' => __('messages.is_delete'),
             'from_date' => __('messages.from_date'),
             'to_date' => __('messages.to_date'),

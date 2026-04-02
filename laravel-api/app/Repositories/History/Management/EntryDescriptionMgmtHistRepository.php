@@ -28,9 +28,9 @@ class EntryDescriptionMgmtHistRepository extends BaseRepository implements Entry
   public function list(array $payload): LengthAwarePaginator
   {
     $query = $this->model->query()
-      ->select(['id', 'entry_description_mgmt_id', 'title', 'summary', 'article', 'status', 'is_display', 'rank_order', 'entry_mgmt_id', 'action', 'author_id'])
+      ->select(['id', 'entry_description_mgmt_id', 'title', 'summary', 'article', 'status', 'is_display', 'rank_order', 'action', 'author_id'])
       ->with(['entryDescriptionMgmt:id,title', 'author:id,user_name']);
-    $this->applyFilters($query, $payload, ['entry_description_mgmt_id', 'status', 'is_display', 'rank_order', 'entry_mgmt_id', 'action', 'author_id'], ['title', 'summary', 'article']);
+    $this->applyFilters($query, $payload, ['entry_description_mgmt_id', 'status', 'is_display', 'rank_order', 'action', 'author_id'], ['title', 'summary', 'article']);
     $this->applyDateRange($query, $payload);
     $this->applySorting($query, $payload);
     return $query->paginate($payload['per_page'] ?? 15, ['*'], 'page', $payload['page'] ?? 1);

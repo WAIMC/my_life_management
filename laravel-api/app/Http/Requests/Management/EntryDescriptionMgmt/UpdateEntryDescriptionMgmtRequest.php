@@ -36,7 +36,6 @@ class UpdateEntryDescriptionMgmtRequest extends FormRequest
       'status' => ['required', new Enum(StatusEnum::class),],
       'is_display' => ['required', 'boolean',],
       'rank_order' => ['required', 'integer',],
-      'entry_mgmt_id' => ['required', 'integer', 'min:' . CommonVal::MIN_INTEGER, 'max:' . CommonVal::MAX_INTEGER, Rule::exists(EntryMgmt::class, 'id'),],
       'is_delete' => ['nullable', new Enum(IsDelete::class),],
     ];
   }
@@ -50,7 +49,6 @@ class UpdateEntryDescriptionMgmtRequest extends FormRequest
       'status' => __('messages.status'),
       'is_display' => __('messages.is_display'),
       'rank_order' => __('messages.rank_order'),
-      'entry_mgmt_id' => __('messages.entry_mgmt_id'),
       'is_delete' => __('messages.is_delete'),
     ];
   }

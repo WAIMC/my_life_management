@@ -195,7 +195,6 @@ class EntryDescriptionMgmtSeeder extends Seeder
 
         foreach ($entryGroup['descriptions'] as $descData) {
           EntryDescriptionMgmt::create([
-            'entry_mgmt_id' => $entry->id,
             'title' => $descData['title'],
             'summary' => $descData['summary'],
             'article' => json_encode($descData['article']),

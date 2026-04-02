@@ -242,6 +242,8 @@ services:
       HOSTNAME: 0.0.0.0
       WATCHPACK_POLLING: true
       CHOKIDAR_USEPOLLING: true
+      # Memory optimization for dev mode
+      NODE_OPTIONS: "--max-old-space-size=1536"
     ports:
       - "${NEXTJS_PORT_OUTSIDE_ENV}:${NEXTJS_PORT_INSIDE_ENV}"
     expose:
@@ -250,20 +252,22 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1",
+          "wget --no-verbose --tries=1 --spider --timeout=15 http://localhost:${NEXTJS_PORT_INSIDE_ENV}/ || exit 1",
         ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      interval: 45s
+      timeout: 20s
+      retries: 5
+      start_period: 90s
     networks:
       - app-network
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
+          cpus: "4"
         reservations:
-          memory: 256M
+          memory: 512M
+          cpus: "1"
 
   # Next.js Documentation Frontend
   ml-nextjs-docs:

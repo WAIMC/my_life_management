@@ -18,7 +18,6 @@ return new class extends Migration {
             $table->unsignedTinyInteger('status')->default(0)->comment('Entry status');
             $table->boolean('is_display')->default(false)->comment('Display entry');
             $table->unsignedSmallInteger('rank_order')->default(0)->comment('Rank order');
-            $table->unsignedInteger('entry_mgmt_id')->comment('Entry ID');
             $table->boolean('is_delete')->default(false)->comment('is deleted');
             $table->timestamps();
         });

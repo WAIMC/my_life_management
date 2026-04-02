@@ -50,15 +50,7 @@ class EntryMgmt extends Model
     'updated_at' => 'datetime',
   ];
 
-  /**
-   * Get the descriptions for the entry.
-   *
-   * @return HasMany
-   */
-  public function descriptions(): HasMany
-  {
-    return $this->hasMany(EntryDescriptionMgmt::class, 'entry_mgmt_id');
-  }
+
 
   /**
    * Get the history records for the entry.
