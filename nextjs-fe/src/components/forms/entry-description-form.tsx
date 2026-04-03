@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import type { JSONContent } from '@tiptap/react';
 import { useCrud } from '@/shared/hooks/useCrud';
-import { useApiData } from '@/shared/hooks/useApiData';
 import { useActionLock } from '@/shared/hooks/useActionLock';
 import { UI_CONSTANTS } from '@/shared/config';
 import { handleBindErrors } from '@/shared/utils/error-handler';
@@ -22,9 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { EntryDescriptionMgmt, EntryMgmt } from '@/shared/types/api';
+import type { EntryDescriptionMgmt } from '@/shared/types/api';
 import { ENDPOINTS } from '@/shared/api';
-import { SORT_ORDER, SORT_FIELDS, PAGINATION, FORM_DEFAULTS } from '@/shared/config/constant';
+import { FORM_DEFAULTS } from '@/shared/config/constant';
 import { StatusEnum, StatusEnumLabels, IsActive } from '@/shared/enums';
 import { getEntryDescriptionSchema, type EntryDescriptionFormData } from '@/shared/validation/validation';
 import type { EntryDescriptionFormProps } from './types';
@@ -32,7 +31,6 @@ import type { EntryDescriptionFormProps } from './types';
 const getFormValues = (data: EntryDescriptionFormProps['initialData']): EntryDescriptionFormData => {
     if (data) {
       return {
-        entry_mgmt_id: Number(data.entry_mgmt_id),
         title: data.title,
         summary: data.summary || '',
         article: data.article || '',
@@ -42,7 +40,6 @@ const getFormValues = (data: EntryDescriptionFormProps['initialData']): EntryDes
       };
     }
     return {
-      entry_mgmt_id: 0, // Using 0 as default for number input, though validation requires min 1
       title: '',
       summary: '',
       article: '',
@@ -52,7 +49,7 @@ const getFormValues = (data: EntryDescriptionFormProps['initialData']): EntryDes
     };
   };
 
-export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: EntryDescriptionFormProps) {
+export function EntryDescriptionForm({ initialData, onSuccess, onCancel, hideActions = false }: EntryDescriptionFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tValidation = useTranslations('validation');
@@ -60,14 +57,6 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
   const { create, update, loading } = useCrud<EntryDescriptionMgmt>(ENDPOINTS.MANAGEMENT.ENTRY_DESCRIPTION);
   
   const [articleContent, setArticleContent] = useState<JSONContent | null>(null);
-
-  // Fetch entries for the dropdown
-  // We'll fetch all active entries (no pagination effectively, or big page size)
-  // For simplicity assuming reasonable number of entries
-  const { data: entries, loading: entriesLoading } = useApiData<EntryMgmt>(
-    ENDPOINTS.MANAGEMENT.ENTRY,
-    { page: PAGINATION.DEFAULT_PAGE, per_page: PAGINATION.MAX_PER_PAGE, sort_by: SORT_FIELDS.NAME, sort_order: SORT_ORDER.ASC }
-  );
 
   const defaultValues = getFormValues(initialData);
 
@@ -112,7 +101,6 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
       try {
         // Convert form data to API payload format
         const payload = {
-          entry_mgmt_id: Number(data.entry_mgmt_id),
           title: data.title,
           summary: data.summary,
           status: Number(data.status),
@@ -136,35 +124,10 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
   };
 
   // Use useWatch hook instead of watch() to avoid React Compiler issues
-  const entryMgmtIdValue = useWatch({ control, name: 'entry_mgmt_id' });
   const statusValue = useWatch({ control, name: 'status' });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="entry_mgmt_id">
-          {tCommon('entry')} <span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={entryMgmtIdValue ? String(entryMgmtIdValue) : ''}
-          onValueChange={(value) => setValue('entry_mgmt_id', Number(value))}
-          disabled={entriesLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={entriesLoading ? tCommon('loading') : tForms('selectEntry')} />
-          </SelectTrigger>
-          <SelectContent>
-            {entries.map((entry) => (
-              <SelectItem key={entry.id} value={entry.id.toString()}>
-                {entry.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.entry_mgmt_id && (
-          <p className="text-sm text-red-500">{errors.entry_mgmt_id.message}</p>
-        )}
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} id="entryDescriptionForm" className="space-y-4">
 
       <div className="space-y-2">
         <Label htmlFor="title">
@@ -244,14 +207,16 @@ export function EntryDescriptionForm({ initialData, onSuccess, onCancel }: Entry
         <Label htmlFor="is_display">{tCommon('isDisplay')}</Label>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-          {tCommon('cancel')}
-        </Button>
-        <Button type="submit" disabled={loading || isActionProcessing}>
-          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
-        </Button>
-      </div>
+      {!hideActions && (
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+            {tCommon('cancel')}
+          </Button>
+          <Button type="submit" disabled={loading || isActionProcessing}>
+            {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

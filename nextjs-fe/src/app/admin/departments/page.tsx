@@ -35,6 +35,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { DepartmentForm } from '@/components/forms/department-form';
 import { useTranslations } from 'next-intl';
@@ -276,28 +277,50 @@ export default function DepartmentListPage() {
       </div>
 
       {/* Create/Edit Department Modal */}
+      {/* Create/Edit Department Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingDepartment 
-                ? tCrud('editEntity', { entity: tEntities('department') }) 
-                : tCrud('createEntity', { entity: tEntities('department') })
-              }
-            </DialogTitle>
-            <DialogDescription>
-              {editingDepartment 
-                ? tCrud('editDescription', { entity: tEntities('department').toLowerCase() }) 
-                : tCrud('createDescription', { entity: tEntities('department').toLowerCase() })
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <DepartmentForm
-            key={editingDepartment?.id || 'create'}
-            initialData={editingDepartment}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>
+                {editingDepartment 
+                  ? tCrud('editEntity', { entity: tEntities('department') }) 
+                  : tCrud('createEntity', { entity: tEntities('department') })
+                }
+              </DialogTitle>
+              <DialogDescription>
+                {editingDepartment 
+                  ? tCrud('editDescription', { entity: tEntities('department').toLowerCase() }) 
+                  : tCrud('createDescription', { entity: tEntities('department').toLowerCase() })
+                }
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <DepartmentForm
+                key={editingDepartment?.id || 'create'}
+                initialData={editingDepartment}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+              />
+            </div>
+          </div>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button type="button" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('done')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -31,7 +31,7 @@ import type { CategoryFormProps } from './types';
 import { LayoutStructureEditor } from './layout-structure-editor';
 import { IsActive } from '@/shared/enums/enums';
 
-export function CategoryForm({ initialData, onSuccess, onCancel, renderActions = true, submitTriggerRef }: CategoryFormProps) {
+export function CategoryForm({ initialData, onSuccess, onCancel, renderActions = true, submitTriggerRef, hideActions = false }: CategoryFormProps) {
   
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
@@ -267,14 +267,16 @@ export function CategoryForm({ initialData, onSuccess, onCancel, renderActions =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
         {FormFields}
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-            {tCommon('cancel')}
-          </Button>
-          <Button type="submit" disabled={loading || isActionProcessing}>
-            {loading || isActionProcessing ? tCommon('creating') : tCommon('create')}
-          </Button>
-        </div>
+        {!hideActions && (
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+              {tCommon('cancel')}
+            </Button>
+            <Button type="submit" disabled={loading || isActionProcessing}>
+              {loading || isActionProcessing ? tCommon('creating') : tCommon('create')}
+            </Button>
+          </div>
+        )}
       </form>
     );
   }
@@ -284,16 +286,16 @@ export function CategoryForm({ initialData, onSuccess, onCancel, renderActions =
   return (
     <div className="flex flex-col">
       <Tabs key={`category-tabs-${initialData?.id || 'new'}`} value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="details" type="button">{tCommon('details')}</TabsTrigger>
           <TabsTrigger value="entries" type="button">{tCommon('entries')}</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="details" className="mt-4 space-y-4 max-h-[50vh] overflow-y-auto">
+        <TabsContent value="details" className="space-y-4 m-0">
           {FormFields}
         </TabsContent>
 
-        <TabsContent value="entries" className="mt-4 max-h-[50vh] overflow-y-auto">
+        <TabsContent value="entries" className="m-0">
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground mb-4">
               Manage the layout structure for entries in this category. Drag and drop to reorder or change hierarchy.
@@ -310,8 +312,8 @@ export function CategoryForm({ initialData, onSuccess, onCancel, renderActions =
         </TabsContent>
       </Tabs>
       
-      {/* Action buttons - only render if renderActions is true */}
-      {renderActions && (
+      {/* Action buttons - only render if renderActions is true and hideActions is false */}
+      {renderActions && !hideActions && (
         <div className="flex justify-end gap-2 pt-4 border-t mt-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
             {tCommon('cancel')}

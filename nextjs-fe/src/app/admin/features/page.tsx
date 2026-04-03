@@ -35,6 +35,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { FeatureForm } from '@/components/forms/feature-form';
 import { useTranslations } from 'next-intl';
@@ -257,19 +258,41 @@ export default function FeatureListPage() {
       </div>
 
       {/* Create/Edit Feature Modal */}
+      {/* Create/Edit Feature Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingFeature ? tCrud('editEntity', { entity: tEntities('feature') }) : tCrud('createEntity', { entity: tEntities('feature') })}</DialogTitle>
-            <DialogDescription>
-              {editingFeature ? tCrud('editDescription', { entity: tEntities('feature').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('feature').toLowerCase() })}
-            </DialogDescription>
-          </DialogHeader>
-          <FeatureForm
-            initialData={editingFeature}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>{editingFeature ? tCrud('editEntity', { entity: tEntities('feature') }) : tCrud('createEntity', { entity: tEntities('feature') })}</DialogTitle>
+              <DialogDescription>
+                {editingFeature ? tCrud('editDescription', { entity: tEntities('feature').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('feature').toLowerCase() })}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <FeatureForm
+                initialData={editingFeature}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+              />
+            </div>
+          </div>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button type="button" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('done')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

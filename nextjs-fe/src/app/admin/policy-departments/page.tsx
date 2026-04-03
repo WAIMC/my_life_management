@@ -33,6 +33,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { PolicyDepartmentForm } from '@/components/forms/policy-department-form';
 import { useTranslations } from 'next-intl';
@@ -226,19 +227,41 @@ export default function PolicyDepartmentListPage() {
       </div>
 
       {/* Create/Edit Policy Department Modal */}
+      {/* Create/Edit Policy Department Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingPolicy ? tCrud('editEntity', { entity: tEntities('policyDepartment') }) : tCrud('createEntity', { entity: tEntities('policyDepartment') })}</DialogTitle>
-            <DialogDescription>
-              {editingPolicy ? tCrud('editDescription', { entity: tEntities('policyDepartment').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('policyDepartment').toLowerCase() })}
-            </DialogDescription>
-          </DialogHeader>
-          <PolicyDepartmentForm
-            initialData={editingPolicy}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>{editingPolicyDepartment ? tCrud('editEntity', { entity: tEntities('policyDepartment') }) : tCrud('createEntity', { entity: tEntities('policyDepartment') })}</DialogTitle>
+              <DialogDescription>
+                {editingPolicyDepartment ? tCrud('editDescription', { entity: tEntities('policyDepartment').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('policyDepartment').toLowerCase() })}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <PolicyDepartmentForm
+                initialData={editingPolicyDepartment}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+              />
+            </div>
+          </div>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button type="button" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('done')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -31,7 +31,7 @@ import { slugify } from '@/shared/utils/string-utils';
 import type { EntryFormProps } from './types';
 import { LayoutStructureEditor } from './layout-structure-editor';
 
-export function EntryForm({ initialData, onSuccess, onCancel }: EntryFormProps) {
+export function EntryForm({ initialData, onSuccess, onCancel, hideActions = false }: EntryFormProps) {
   const tCommon = useTranslations('common');
   const tForms = useTranslations('forms.placeholders');
   const tValidation = useTranslations('validation');
@@ -134,7 +134,7 @@ export function EntryForm({ initialData, onSuccess, onCancel }: EntryFormProps) 
   const statusValue = useWatch({ control, name: 'status' });
 
   const FormContent = (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <>
       <div className="space-y-2">
         <Label htmlFor="name">
           {tCommon('name')} <span className="text-red-500">*</span>
@@ -203,69 +203,80 @@ export function EntryForm({ initialData, onSuccess, onCancel }: EntryFormProps) 
         <Label htmlFor="is_display">{tCommon('isDisplay')}</Label>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-          {tCommon('cancel')}
-        </Button>
-        <Button type="submit" disabled={loading || isActionProcessing}>
-          {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
-        </Button>
-      </div>
-    </form>
+      {!hideActions && (
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+            {tCommon('cancel')}
+          </Button>
+          <Button type="submit" disabled={loading || isActionProcessing}>
+            {loading || isActionProcessing ? (isEdit ? tCommon('updating') : tCommon('creating')) : (isEdit ? tCommon('update') : tCommon('create'))}
+          </Button>
+        </div>
+      )}
+    </>
   );
 
   if (!isEdit) {
-    return FormContent;
+    return (
+      <form onSubmit={handleSubmit(onSubmit)} id="entryForm" className="space-y-4">
+        {FormContent}
+      </form>
+    );
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
-        <TabsTrigger value="descriptions">{tCommon('descriptions')}</TabsTrigger>
-        <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
-      </TabsList>
-      <TabsContent value="details" className="mt-4">
-        {FormContent}
-      </TabsContent>
-      <TabsContent value="descriptions" className="mt-4">
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground mb-4">
-            Manage the layout structure for descriptions in this entry. Drag and drop to reorder or change hierarchy.
+    <form onSubmit={handleSubmit(onSubmit)} id="entryForm" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="details">{tCommon('details')}</TabsTrigger>
+          <TabsTrigger value="descriptions">{tCommon('descriptions')}</TabsTrigger>
+          <TabsTrigger value="history">{tCommon('history')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="details" className="mt-4">
+          <div className="space-y-4">
+            {FormContent}
           </div>
-          <LayoutStructureEditor
-            type="entry_desc"
-            value={layoutStructure}
-            onChange={setLayoutStructure}
-            availableItems={mappedDescriptions}
-            loading={descriptionsLoading}
-            onSearch={setDescSearchQuery}
-          />
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
-              {tCommon('cancel')}
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleSubmit(onSubmit)} 
-              disabled={loading || isActionProcessing}
-            >
-              {loading || isActionProcessing ? tCommon('updating') : tCommon('update')}
-            </Button>
-          </div>
-        </div>
-      </TabsContent>
-      <TabsContent value="history" className="mt-4">
-        <div className="h-[400px] overflow-y-auto pr-2">
-          {initialData && (
-            <HistoryViewer
-              entityType="entry"
-              entityId={initialData.id}
-              endpoint={`${ENDPOINTS.MANAGEMENT.ENTRY}-hist`}
+        </TabsContent>
+        <TabsContent value="descriptions" className="mt-4">
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground mb-4">
+              Manage the layout structure for descriptions in this entry. Drag and drop to reorder or change hierarchy.
+            </div>
+            <LayoutStructureEditor
+              type="entry_desc"
+              value={layoutStructure}
+              onChange={setLayoutStructure}
+              availableItems={mappedDescriptions}
+              loading={descriptionsLoading}
+              onSearch={setDescSearchQuery}
             />
-          )}
+          </div>
+        </TabsContent>
+        <TabsContent value="history" className="mt-4">
+          <div className="h-[400px] overflow-y-auto pr-2">
+            {initialData && (
+              <HistoryViewer
+                entityType="entry"
+                entityId={initialData.id}
+                endpoint={`${ENDPOINTS.MANAGEMENT.ENTRY}-hist`}
+              />
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+      {!hideActions && (
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading || isActionProcessing}>
+            {tCommon('cancel')}
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={loading || isActionProcessing}
+          >
+            {loading || isActionProcessing ? tCommon('updating') : tCommon('update')}
+          </Button>
         </div>
-      </TabsContent>
-    </Tabs>
+      )}
+    </form>
   );
 }

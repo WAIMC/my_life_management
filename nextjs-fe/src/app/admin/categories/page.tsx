@@ -284,7 +284,8 @@ export default function CategoryListPage() {
       {/* Create/Edit Category Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
-          <div className="shrink-0 px-6 pt-6 pb-4">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
             <DialogHeader>
               <DialogTitle>{editingCategory ? tCrud('editEntity', { entity: tEntities('category') }) : tCrud('createEntity', { entity: tEntities('category') })}</DialogTitle>
               <DialogDescription>
@@ -292,22 +293,28 @@ export default function CategoryListPage() {
               </DialogDescription>
             </DialogHeader>
           </div>
-          <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
-            <CategoryForm
-              initialData={editingCategory}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setFormDialogOpen(false)}
-              renderActions={!editingCategory}  // Only render actions for CREATE mode
-              submitTriggerRef={editingCategory ? submitTriggerRef : undefined}  // Pass ref for EDIT mode
-            />
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <CategoryForm
+                initialData={editingCategory}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+                renderActions={false}  // Never render actions inside form when in dialog
+                hideActions={true}  // Hide any action buttons
+                submitTriggerRef={editingCategory ? submitTriggerRef : undefined}  // Pass ref for EDIT mode
+              />
+            </div>
           </div>
-          {/* Render action buttons in DialogFooter for EDIT mode */}
-          {editingCategory && (
-            <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
-                  {tCommon('cancel')}
-                </Button>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              {editingCategory ? (
                 <button
                   type="button"
                   onPointerDown={(e) => {
@@ -320,9 +327,24 @@ export default function CategoryListPage() {
                 >
                   {tCommon('update')}
                 </button>
-              </DialogFooter>
-            </div>
-          )}
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    // Trigger form submission for create mode
+                    // The form is a native form element, so we need to trigger its submit
+                    const form = document.querySelector('form');
+                    if (form) {
+                      form.requestSubmit();
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                >
+                  {tCommon('create')}
+                </Button>
+              )}
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

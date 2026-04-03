@@ -33,6 +33,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { TokenForm } from '@/components/forms/token-form';
 import { useTranslations } from 'next-intl';
@@ -231,19 +232,41 @@ export default function TokenListPage() {
       </div>
 
       {/* Create/Edit Token Modal */}
+      {/* Create/Edit Token Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingToken ? tCrud('editEntity', { entity: tEntities('token') }) : tCrud('createEntity', { entity: tEntities('token') })}</DialogTitle>
-            <DialogDescription>
-              {editingToken ? tCrud('editDescription', { entity: tEntities('token').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('token').toLowerCase() })}
-            </DialogDescription>
-          </DialogHeader>
-          <TokenForm
-            initialData={editingToken}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>{editingToken ? tCrud('editEntity', { entity: tEntities('token') }) : tCrud('createEntity', { entity: tEntities('token') })}</DialogTitle>
+              <DialogDescription>
+                {editingToken ? tCrud('editDescription', { entity: tEntities('token').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('token').toLowerCase() })}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <TokenForm
+                initialData={editingToken}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+              />
+            </div>
+          </div>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button type="button" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('done')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

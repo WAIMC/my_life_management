@@ -35,6 +35,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { EntryForm } from '@/components/forms/entry-form';
 import { useTranslations } from 'next-intl';
@@ -242,18 +243,40 @@ export default function EntryListPage() {
 
       {/* Create/Edit Entry Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingEntry ? tCrud('editEntity', { entity: tEntities('entry') }) : tCrud('createEntity', { entity: tEntities('entry') })}</DialogTitle>
-            <DialogDescription>
-              {editingEntry ? tCrud('editDescription', { entity: tEntities('entry').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('entry').toLowerCase() })}
-            </DialogDescription>
-          </DialogHeader>
-          <EntryForm
-            initialData={editingEntry}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>{editingEntry ? tCrud('editEntity', { entity: tEntities('entry') }) : tCrud('createEntity', { entity: tEntities('entry') })}</DialogTitle>
+              <DialogDescription>
+                {editingEntry ? tCrud('editDescription', { entity: tEntities('entry').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('entry').toLowerCase() })}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <EntryForm
+                initialData={editingEntry}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+                hideActions={true}
+              />
+            </div>
+          </div>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button type="submit" form="entryForm">
+                {editingEntry ? tCommon('update') : tCommon('create')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

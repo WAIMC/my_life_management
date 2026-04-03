@@ -180,7 +180,6 @@ export type SocialFormData = z.infer<ReturnType<typeof getSocialSchema>>;
 
 // Entry Description schema
 export const getEntryDescriptionSchema = (t: Translator) => z.object({
-  entry_mgmt_id: z.number().min(1, t('entry.required')),
   title: z.string().min(1, t('title.required')),
   summary: z.string().optional(),
   article: z.string().optional(),

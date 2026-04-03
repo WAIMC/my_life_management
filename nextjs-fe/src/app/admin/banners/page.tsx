@@ -36,6 +36,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { BannerForm } from '@/components/forms/banner-form';
 import { useTranslations } from 'next-intl';
@@ -295,26 +296,47 @@ export default function BannerListPage() {
 
       {/* Create/Edit Banner Modal */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBanner 
-                ? tCrud('editEntity', { entity: tEntities('banner') }) 
-                : tCrud('createEntity', { entity: tEntities('banner') })
-              }
-            </DialogTitle>
-            <DialogDescription>
-              {editingBanner 
-                ? tCrud('editDescription', { entity: tEntities('banner').toLowerCase() }) 
-                : tCrud('createDescription', { entity: tEntities('banner').toLowerCase() })
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <BannerForm
-            initialData={editingBanner}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setFormDialogOpen(false)}
-          />
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>
+                {editingBanner 
+                  ? tCrud('editEntity', { entity: tEntities('banner') }) 
+                  : tCrud('createEntity', { entity: tEntities('banner') })
+                }
+              </DialogTitle>
+              <DialogDescription>
+                {editingBanner 
+                  ? tCrud('editDescription', { entity: tEntities('banner').toLowerCase() }) 
+                  : tCrud('createDescription', { entity: tEntities('banner').toLowerCase() })
+                }
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          {/* Body - Scrollable */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <BannerForm
+                initialData={editingBanner}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setFormDialogOpen(false)}
+              />
+            </div>
+          </div>
+          
+          {/* Footer - Fixed */}
+          <div className="shrink-0 px-6 py-4 border-t bg-muted/20">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button type="button" onClick={() => setFormDialogOpen(false)}>
+                {tCommon('done')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

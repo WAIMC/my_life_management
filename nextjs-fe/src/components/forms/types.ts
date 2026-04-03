@@ -40,6 +40,7 @@ export interface CategoryFormProps {
   onCancel: () => void;
   renderActions?: boolean;  // Whether to render action buttons inside form (default: true)
   submitTriggerRef?: React.Ref<(() => void) | null>;  // Ref to expose submit function
+  hideActions?: boolean;  // Whether to hide action buttons (for dialog mode)
 }
 
 export interface DepartmentFormProps {
@@ -76,12 +77,14 @@ export interface EntryDescriptionFormProps {
   initialData?: EntryDescriptionMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
+  hideActions?: boolean;  // Whether to hide action buttons (for dialog mode)
 }
 
 export interface EntryFormProps {
   initialData?: EntryMgmt | null;
   onSuccess: () => void;
   onCancel: () => void;
+  hideActions?: boolean;  // Whether to hide action buttons (for dialog mode)
 }
 
 export interface SliderFormProps {
