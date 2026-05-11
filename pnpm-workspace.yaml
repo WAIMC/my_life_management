@@ -1,0 +1,4 @@
+packages:
+  - "nextjs-fe"
+  - "nextjs-docs"
+  - "laravel-api"

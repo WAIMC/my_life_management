@@ -1,125 +1,200 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel API - My Life Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 📑 Giới thiệu
 
-## About Laravel
+Backend API được xây dựng bằng Laravel 8+, cung cấp các API RESTful cho hệ thống My Life Management, với tính năng quản lý phân quyền nâng cao và hệ thống tự động tạo API.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🛠️ Yêu cầu môi trường
 
--   [Simple, fast routing engine](https://laravel.com/docs/routing).
--   [Powerful dependency injection container](https://laravel.com/docs/container).
--   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
--   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
--   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
--   [Robust background job processing](https://laravel.com/docs/queues).
--   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Nginx**: Phiên bản x
+- **PHP**: Phiên bản 8.2+
+- **PostgreSQL**: Phiên bản 15+
+- **Redis**: Phiên bản 5.0+
+- **Composer**: Phiên bản 2.0+
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Hướng dẫn cài đặt
 
-## Learning Laravel
+### 1. Thiết lập môi trường
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+#### Trong Docker (Khuyến nghị)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+# Toàn bộ cấu hình Docker (như Dockerfile, docker-entrypoint.sh, docker-compose.yml)
+# được quản lý tập trung và duy nhất tại thư mục `docker/` ở gốc dự án (single source of truth).
+# Bạn cần chạy Docker từ thư mục đó thay vì trong project này.
+cd ../docker
+docker compose up -d ml-php
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### Trên máy local
 
-## Laravel Sponsors
+```bash
+# Clone dự án (nếu chưa có)
+git clone https://github.com/WAIMC/my_life_management.git
+cd my_life_management/laravel-api
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Cài đặt dependencies
+composer install
 
-### Premium Partners
+# Tạo file .env
+cp .env.example .env
+php artisan key:generate
+```
 
--   **[Vehikl](https://vehikl.com/)**
--   **[Tighten Co.](https://tighten.co)**
--   **[WebReinvent](https://webreinvent.com/)**
--   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
--   **[64 Robots](https://64robots.com)**
--   **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
--   **[Cyber-Duck](https://cyber-duck.co.uk)**
--   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
--   **[Jump24](https://jump24.co.uk)**
--   **[Redberry](https://redberry.international/laravel/)**
--   **[Active Logic](https://activelogic.com)**
--   **[byte5](https://byte5.de)**
--   **[OP.GG](https://op.gg)**
+### 2. Cấu hình cơ sở dữ liệu
 
-## Contributing
+Mở file `.env` và cập nhật thông tin kết nối:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+# Kết nối trong Docker
+DB_CONNECTION=pgsql
+DB_HOST=ml-postgres
+DB_PORT=5432
+DB_DATABASE=ml_pg_db
+DB_USERNAME=ml_pg_user
+DB_PASSWORD=ml_pg_password
 
-## Code of Conduct
+# Kết nối từ local vào Docker
+# DB_CONNECTION=pgsql
+# DB_HOST=localhost
+# DB_PORT=5502
+# DB_DATABASE=ml_pg_db
+# DB_USERNAME=ml_pg_user
+# DB_PASSWORD=ml_pg_password
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Cấu hình Redis
 
-## Security Vulnerabilities
+```bash
+# Kết nối Redis trong Docker
+REDIS_CLIENT=predis
+REDIS_HOST=ml-redis
+REDIS_PORT=6379
+REDIS_PASSWORD=ml_redis_password
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Kết nối Redis từ local vào Docker
+# REDIS_CLIENT=predis
+# REDIS_HOST=localhost
+# REDIS_PORT=6601
+# REDIS_PASSWORD=ml_redis_password
+```
 
-## License
+### 4. Cấu hình JWT Authentication
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Tạo khóa JWT
+php -r 'echo base64_encode(random_bytes(32));' # Copy kết quả vào ACCESS_TOKEN_SECRET
+php -r 'echo base64_encode(random_bytes(32));' # Copy kết quả vào REFRESH_TOKEN_SECRET
+```
 
-## Step by step install project
+### 5. Chạy Migrations
 
--   **Step 1: Check requirement**
-    -   Apache version 2.4.62
-    -   php version 8.2.26
-    -   postgresql 16.6
-    -   redis version 5.0.14.1
--   **Step 2: Clone project**
--   **Step 3: Open cmd or terminal run command below to install package**
-    ```
-    composer i
-    ```
--   **Step 4: Duplicate file `.env.example` and rename to `.env`**
--   **Step 5: Open cmd or terminal run command below to generate key**
-    ```
-    php artisan key:generate
-    ```
--   **Step 6: Run start web server apache, php, postgresql, redis**
--   **Step 7: Create new schema in postgresql**
--   **Step 8: Open file `.env` , get information connect from `Step 7` to edit**
-    ```
-    DB_CONNECTION=pgsql
-    DB_HOST=
-    DB_PORT=
-    DB_DATABASE=
-    DB_USERNAME=
-    DB_PASSWORD=
-    ```
--   **Step 9: Open cmd or terminal run command below to migrate database**
-    -   **Step 9.1: Migration all tables**
-        ```
-        php artisan migrate:all
-        ```
-    -   **Step 9.2: Migration rollback all**
-        ```
-        php artisan migrate:rollback-all
-        ```
--   **Step 10: Execute all sql query in file `data_init.sql`**
--   **Step 11: Open file `.env` , get information connect redis to edit**
-    ```
-    REDIS_CLIENT=predis
-    REDIS_HOST=
-    REDIS_PASSWORD=
-    REDIS_PORT=
-    ```
--   **Step 12: Open cmd or terminal run command below to generate access and refresh secret key**
-    -   **Step 12.1: Copy result, create assign value for new variable `ACCESS_TOKEN_SECRET=`**
-    ```
-    php -r 'echo base64_encode(random_bytes(32));'
-    ```
-    -   **Step 12.2: Copy result, create assign value for new variable `REFRESH_TOKEN_SECRET=`**
-    ```
-    php -r 'echo base64_encode(random_bytes(32));'
-    ```
--   **Step 13: Open cmd or terminal run command below to start web**
-    ```
-    php artisan serve
-    ```
+```bash
+# Di chuyển tất cả bảng
+php artisan migrate
+
+# Rollback tất cả nếu cần
+php artisan migrate:rollback
+```
+
+### 6. Khởi tạo dữ liệu ban đầu
+
+```bash
+php artisan db:seed
+```
+
+## 📋 Quản lý quyền
+
+Hệ thống quản lý quyền hai lớp:
+
+### 1. Quản lý dựa trên vai trò (Role-Based)
+
+- Mỗi tài khoản được gán một hoặc nhiều vai trò
+- Mỗi vai trò chịu trách nhiệm cho một số API cụ thể
+- Các API được nhóm thành các tính năng (feature) để dễ quản lý
+
+### 2. Quản lý dựa trên phòng ban (Department-Based)
+
+- Mỗi tài khoản thuộc về một hoặc nhiều phòng ban
+- Phòng ban được giao quản lý một số bảng và bản ghi cụ thể
+- Quyền truy cập và thao tác được xác định dựa trên phòng ban của tài khoản
+
+## 📂 Cấu trúc thư mục
+
+```
+laravel-api/
+├── app/                 # Logic chính của ứng dụng
+│   ├── Console/         # Commands và tasks
+│   ├── Constants/       # Các hằng số
+│   ├── Enums/           # Enumerations
+│   ├── Http/            # Controllers, Middlewares, Requests
+│   ├── Interfaces/      # Interfaces
+│   ├── Models/          # Eloquent models
+│   ├── Providers/       # Service providers
+│   ├── Repositories/    # Repository pattern
+│   ├── Rules/           # Validation rules
+│   ├── Services/        # Business logic
+│   ├── Traits/          # Traits
+│   └── Utilities/       # Helper utilities
+├── auto_script/         # Auto-generator scripts
+│   ├── run_generator.sh
+│   ├── fix_permissions.sh
+│   └── ...
+├── bootstrap/           # Application bootstrap
+├── config/              # Configuration files
+├── database/            # Migrations, factories, seeders
+│   ├── factories/
+│   ├── migrations/
+│   ├── schema/          # Schema definitions
+│   └── seeders/
+├── public/              # Publicly accessible files
+├── resources/           # Views, assets, language files
+├── routes/              # Route definitions
+│   ├── api_generated.php # Auto-generated routes
+│   ├── api.php          # API routes
+│   └── web.php          # Web routes
+├── storage/             # Logs, cache, uploads
+└── tests/               # Unit and feature tests
+```
+
+## 🖥️ API Endpoints
+
+Danh sách API endpoints được tự động quản lý và có thể được xem bằng:
+
+```bash
+php artisan route:list
+```
+
+## 🔧 Xử lý sự cố
+
+### Vấn đề quyền truy cập trong Docker/WSL
+
+```bash
+# Chạy từ thư mục gốc dự án
+./start.sh
+
+# Hoặc thủ công
+chmod -R 755 laravel-api/
+chmod -R 777 laravel-api/storage laravel-api/bootstrap/cache
+chmod -R 755 laravel-api/app/Providers/
+```
+
+### Lỗi kết nối cơ sở dữ liệu
+
+Kiểm tra:
+1. Docker containers đang chạy (`docker ps`)
+2. Thông tin kết nối trong .env
+3. Network giữa các containers
+
+### Lỗi tạo API mới
+
+Sau khi thêm API mới:
+```bash
+php artisan app:sync-api-permission
+```
+
+## 📝 Tham khảo
+
+- [Laravel Documentation](https://laravel.com/docs)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [Redis Documentation](https://redis.io/documentation)

@@ -114,7 +114,7 @@
                                     <h2 class="text-xl font-semibold text-black dark:text-white">Laracasts</h2>
 
                                     <p class="mt-4 text-sm/relaxed">
-                                        Laracasts offers thousands of video tutorials on Laravel, PHP, and JavaScript development. Check them out, see for yourself, and massively level up your development skills in the process.
+                                        Laracasts offers thousands of video tutorials on Laravel, PHP, and JavaScript development. Check them out, see for yourself, and massively level up your development entries in the process.
                                     </p>
                                 </div>
 

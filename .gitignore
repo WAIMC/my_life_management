@@ -1,0 +1,32 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# pnpm
+.pnpm-store/
+**/node_modules/
+*.pnpm-debug.log
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db

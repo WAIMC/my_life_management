@@ -1,0 +1,5 @@
+.env
+.env.local
+.env.*.local
+# Ignore potential auth/data folders if any
+data/

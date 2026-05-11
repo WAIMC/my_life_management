@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Http\Controllers\History\Master;
+
+use App\Http\Requests\History\Master\ApiMstHist\ListApiMstHistRequest;
+use App\Http\Requests\History\Master\ApiMstHist\StoreApiMstHistRequest;
+use App\Http\Requests\History\Master\ApiMstHist\UpdateApiMstHistRequest;
+use App\Http\Requests\History\Master\ApiMstHist\DeleteApiMstHistRequest;
+use App\Services\History\Master\ApiMstHistService;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ApiMstHistController extends Controller
+{
+    public function __construct(
+        protected ApiMstHistService $apiMstHist
+    )
+    {
+    }
+    
+    /**
+     * ApiMstHist list
+     *
+     * @param ListApiMstHistRequest $request
+     * @return JsonResource
+     */
+    public function list(ListApiMstHistRequest $request): JsonResource
+    {
+        return $this->apiMstHist->list($request->all());
+    }
+
+    /**
+     * Store api mst hist
+     *
+     * @param StoreApiMstHistRequest $request
+     * @return int
+     */
+    public function store(StoreApiMstHistRequest $request): int
+    {
+        return $this->apiMstHist->store($request->all());
+    }
+
+    /**
+     * Update api mst hist
+     *
+     * @param UpdateApiMstHistRequest $request
+     * @param string $id
+     * @return int
+     */
+    public function update(UpdateApiMstHistRequest $request, string $id): int
+    {
+        $payload = $request->all();
+        $payload['id'] = $id;
+
+        return $this->apiMstHist->update($payload);
+    }
+
+    /**
+     * Delete api mst hist
+     *
+     * @param DeleteApiMstHistRequest $request
+     * @return void
+     */
+    public function delete(DeleteApiMstHistRequest $request): void
+    {
+        $this->apiMstHist->delete($request->all());
+    }
+}

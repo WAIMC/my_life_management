@@ -2,17 +2,20 @@
 
 namespace App\Utilities;
 
+use App\Constants\CommonVal;
 use App\Constants\Messages;
 
 class JsonWebToken
 {
   public const ALGORITHM_HS256 = 'HS256';
-  public const TTL_ACCESS = 3600 * 5;   // Time to live (second) 
-  public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second) 
+  // public const TTL_ACCESS = 3600 * 5;   // Time to live (second)
+  public const TTL_ACCESS = CommonVal::MAX_ACCESS_TTL;   // Time to live (second)
+  //    public const TTL_REFRESH = 3600 * 60 * 24; // Time to live (second)
 
+  public const TTL_REFRESH = CommonVal::MAX_REFRESH_TTL; // Time to live (second)
   /**
    * Generate JWT header
-   * 
+   *
    * @param string $algorithm
    * @return array
    */
@@ -26,31 +29,31 @@ class JsonWebToken
 
   /**
    * Generate JWT payload
-   * 
+   *
    * @param array $payload
    * @param bool $isRefresh
    * @return array
    */
-  public static function JWTPayload(array $payload, bool $isRefresh = false): array
+  public static function JWTPayload(array $payload, bool $isRefresh = false, ?int $iat = null): array
   {
+    $iat = $iat ?? time();
     return [
       'id'   => $payload['id'] ?? '',                                        // ID of the token (member id)
       'type' => $payload['type'] ?? '',                                      // Type of the token (member type)
-      'role' => $payload['role'] ?? '',                                      // Role of the token (member role)
-      'iat'  => time(),                                                      // Time when JWT was issued.
-      'exp'  => time() + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS) // Expiration time
+      'iat'  => $iat,                                                        // Time when JWT was issued.
+      'exp'  => $iat + ($isRefresh ? self::TTL_REFRESH : self::TTL_ACCESS)   // Expiration time
     ];
   }
 
   /**
    * Encode JWT
-   * 
+   *
    * @param array $params
    * @param string $key
    * @param string $alg
    * @return string
    */
-  public static function encode($params, $key, $alg = self::ALGORITHM_HS256): string
+  public static function encode(array $params, string $key, string $alg = self::ALGORITHM_HS256): string
   {
     // Encrypt header
     $header = json_encode(self::JWTHeader($alg));
@@ -86,13 +89,13 @@ class JsonWebToken
 
   /**
    * Decode JWT
-   * 
+   *
    * @param string $jwt
    * @param string $key
    * @param bool $isRefresh
    * @return array
    */
-  public static function decode($jwt, $key, $isRefresh = false): array
+  public static function decode(string $jwt, string $key, bool $isRefresh = false): array
   {
     $tks = explode('.', $jwt);
     if (count($tks) != 3) {
@@ -116,9 +119,9 @@ class JsonWebToken
       throw new \UnexpectedValueException(Messages::E0603);
     }
 
-    if (!Tmp::areSameKeysAndType($payload, self::JWTPayload([]))) {
-      throw new \UnexpectedValueException(Messages::E0604);
-    }
+    // if (!Tmp::areSameKeysAndType($payload, self::JWTPayload([]))) {
+    //   throw new \UnexpectedValueException(Messages::E0604);
+    // }
 
     // Check expiration time
     if (

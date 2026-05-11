@@ -2,24 +2,21 @@
 
 namespace Database\Seeders;
 
-use App\Models\master\Category;
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Management\CategoryMgmt;
 use Illuminate\Database\Seeder;
+
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
-    {
-        Category::factory(10)->create();
-        // User::factory(10)->create();
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-    }
+  /**
+   * Seed the application's database.
+   */
+  public function run(): void
+  {
+    // Create root account with all permissions
+    $this->call([
+      RootAccountSeeder::class,
+    ]);
+  }
 }

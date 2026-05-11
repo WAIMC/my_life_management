@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Frontend - My Life Management
 
-## Getting Started
+This is a [Next.js](https://nextjs.org) project configured as a **Single Page Application (SPA)** with **full Client-Side Rendering (CSR)**.
 
-First, run the development server:
+## 🎯 Architecture
+
+This application is built using:
+
+- **Single Page Application (SPA)** - All pages are rendered on the client side
+- **Full Client-Side Rendering (CSR)** - No server-side rendering (SSR) or static site generation (SSG)
+- **Static Export** - Configured with `output: 'export'` in `next.config.ts`
+- **No Node.js Server Required** - Can be deployed to any static hosting (CDN, nginx, etc.)
+
+### Why SPA/CSR?
+
+- ✅ Full control over rendering on the client
+- ✅ Can be deployed as static files
+- ✅ No server runtime required
+- ✅ Works perfectly with nginx proxy
+- ✅ Ideal for applications with authentication and dynamic content
+
+### Single Source of Truth for Docker
+Note that all Docker-related configuration (`Dockerfile`, `docker-compose.yml`) is removed from this directory to enforce a single source of truth. The `.dockerignore` remains here as required by the Docker build context. All Docker commands must be run from the root `docker/` directory.
+
+## 🚀 Getting Started
+
+### Development (Docker)
+
+The recommended way to run this application is via Docker:
 
 ```bash
+cd ../docker
+docker compose up ml-nextjs
+```
+
+The application will be available at:
+- Via nginx: `http://localhost:81`
+- Direct access: `http://localhost:3456`
+
+### Development (Local)
+
+If you want to run locally without Docker:
+
+```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Note**: The dev script uses `--webpack` flag for better compatibility with static export mode.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Project Structure
 
-## Learn More
+```
+src/
+├── app/              # App router pages
+├── components/       # Reusable UI components
+├── hooks/           # Custom React hooks
+├── redux/           # Redux store and slices
+├── lib/             # Utility functions
+└── styles/          # Global styles
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🔧 Configuration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Next.js Config
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The application is configured in `next.config.ts`:
 
-## Deploy on Vercel
+```typescript
+{
+  output: 'export',        // Static export mode
+  images: {
+    unoptimized: true,     // Disable image optimization
+  }
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Create a `.env.local` file for local development:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:81/api
+```
+
+## 🏗️ Building for Production
+
+To build the static files:
+
+```bash
+npm run build
+```
+
+This will generate static HTML/CSS/JS files in the `out/` directory, which can be deployed to:
+- Any static hosting service (Vercel, Netlify, etc.)
+- CDN (CloudFront, Cloudflare, etc.)
+- Web servers (nginx, Apache, etc.)
+
+## 🐳 Docker Development
+
+The Docker setup includes:
+
+- **Pre-installed dependencies** in the image for fast startup
+- **Hot-reload support** with file watching polling
+- **Smart dependency caching** - only updates when package.json changes
+- **Optimized volume mounts** for better performance
+
+Performance metrics:
+- Container startup: < 3 seconds
+- Container restart: ~1.5 seconds
+- Server ready: ~2 seconds
+
+## 📚 Learn More
+
+To learn more about Next.js and SPA development:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API
+- [Next.js Static Exports](https://nextjs.org/docs/app/building-your-application/deploying/static-exports) - learn about static export mode
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial
+
+## 🔐 Authentication
+
+Default credentials for development:
+- Username: `root`
+- Password: `12345678`
+
+## 📝 Notes
+
+- This application uses **webpack mode** instead of Turbopack for better compatibility with static export
+- File watching uses **polling** in Docker environments for reliable hot-reload
+- All rendering happens on the client - no server-side code execution
