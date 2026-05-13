@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
   // All pages are pre-rendered at build time into the 'out/' directory
   // No Node.js server required - can be deployed to any static hosting
   // Note: Disabled in dev for better DX, enable for production builds
-  // output: 'export',
+  output: 'standalone',
   
   // Disable Next.js image optimization (requires server)
   // Images will be served as-is without optimization
