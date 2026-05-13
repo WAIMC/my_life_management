@@ -15,8 +15,9 @@ COPY package.json pnpm-lock.yaml* ./
 # Allow native packages to run their build scripts in Docker context
 # (onlyBuiltDependencies in root package.json is not available here)
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-  pnpm install --frozen-lockfile \
-    --config.onlyBuiltDependencies="@parcel/watcher,@swc/core,esbuild,msw,sharp,unrs-resolver"
+  pnpm config set ignore-scripts true && \
+  pnpm install --frozen-lockfile && \
+  pnpm rebuild @parcel/watcher @swc/core esbuild msw sharp unrs-resolver
 
 # ============ Stage 2: Builder ============
 FROM node:22-alpine AS builder
@@ -96,8 +97,10 @@ COPY package.json package-lock.json* pnpm-lock.yaml* ./
 # Use pnpm if pnpm-lock.yaml exists, otherwise use npm with--legacy-peer-deps
 RUN if [ -f pnpm-lock.yaml ]; then \
       echo "Using pnpm..." && \
+      pnpm config set ignore-scripts true && \
       pnpm install --frozen-lockfile && \
-      pnpm add -D @next/swc-linux-x64-musl; \
+      pnpm add -D @next/swc-linux-x64-musl && \
+      pnpm rebuild @parcel/watcher @swc/core esbuild msw sharp unrs-resolver; \
     elif [ -f package-lock.json ]; then \
       echo "Using npm with legacy peer deps..." && \
       npm ci --legacy-peer-deps && \
