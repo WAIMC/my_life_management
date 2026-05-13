@@ -110,6 +110,38 @@ Tạo ra một "Di sản số cá nhân" - một nền tảng hợp nhất để
 - **Web Server**: Nginx Alpine
 - **Package Manager**: pnpm (monorepo workspace)
 - **Build Tool**: Webpack (via Next.js), Vite (optional)
+- **CI/CD**: GitHub Actions
+- **Deployment Strategy**: Blue-Green Deployment
+- **Infrastructure**: Self-hosted GitHub Runner on Ubuntu VM
+- **Traffic Management**: Nginx Reverse Proxy (Dynamic Upstreams)
+
+---
+
+## 🚀 CI/CD & Deployment
+
+Dự án sử dụng quy trình CI/CD hiện đại để đảm bảo tính ổn định và khả năng mở rộng:
+
+### 1. CI Pipeline (Continuous Integration)
+- **Trigger**: Khi có Pull Request merge vào branch `dev`.
+- **Nhiệm vụ**:
+    - Linting & Code Style check.
+    - Type-checking (TypeScript).
+    - Security Audit (Dependencies).
+    - Unit & Integration Testing.
+
+### 2. CD Pipeline (Continuous Deployment)
+- **Trigger**: Khi code được push/merge thành công vào branch `dev`.
+- **Quy trình**:
+    - Build Docker images trên GitHub hosted runner.
+    - Push images lên GitHub Container Registry (GHCR).
+    - Kích hoạt deployment trên **Self-hosted Runner** (Ubuntu VM).
+
+### 3. Chiến lược Blue-Green Deployment
+Hệ thống sử dụng chiến lược Blue-Green để đạt được zero-downtime:
+- **Môi trường song song**: Duy trì hai môi trường `blue` và `green` độc lập.
+- **Traffic Switching**: Sử dụng Nginx để chuyển đổi lưu lượng giữa hai môi trường.
+- **Health Check**: Tự động kiểm tra trạng thái dịch vụ trước khi switch traffic. Nếu không đạt yêu cầu, hệ thống sẽ giữ nguyên version cũ (Auto Rollback).
+- **Cleanup**: Tự động dọn dẹp tài nguyên của version cũ sau khi deploy thành công để tối ưu hóa tài nguyên máy chủ.
 
 ---
 
