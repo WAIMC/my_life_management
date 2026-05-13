@@ -233,9 +233,9 @@ export default function PolicyDepartmentListPage() {
           {/* Header - Fixed */}
           <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
             <DialogHeader>
-              <DialogTitle>{editingPolicyDepartment ? tCrud('editEntity', { entity: tEntities('policyDepartment') }) : tCrud('createEntity', { entity: tEntities('policyDepartment') })}</DialogTitle>
+              <DialogTitle>{editingPolicy ? tCrud('editEntity', { entity: tEntities('policyDepartment') }) : tCrud('createEntity', { entity: tEntities('policyDepartment') })}</DialogTitle>
               <DialogDescription>
-                {editingPolicyDepartment ? tCrud('editDescription', { entity: tEntities('policyDepartment').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('policyDepartment').toLowerCase() })}
+                {editingPolicy ? tCrud('editDescription', { entity: tEntities('policyDepartment').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('policyDepartment').toLowerCase() })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -244,7 +244,7 @@ export default function PolicyDepartmentListPage() {
           <div className="flex-1 overflow-y-auto min-h-0">
             <div className="px-6 py-4">
               <PolicyDepartmentForm
-                initialData={editingPolicyDepartment}
+                initialData={editingPolicy}
                 onSuccess={handleFormSuccess}
                 onCancel={() => setFormDialogOpen(false)}
               />

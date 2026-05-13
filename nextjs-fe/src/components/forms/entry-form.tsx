@@ -68,7 +68,7 @@ export function EntryForm({ initialData, onSuccess, onCancel, hideActions = fals
     reset,
     setError,
   } = useForm<EntryFormData>({
-    resolver: zodResolver(getEntrySchema(tValidation)),
+    resolver: zodResolver(getEntrySchema(tValidation)) as any,
     defaultValues: {
       rank_order: FORM_DEFAULTS.RANK_ORDER,
       status: EntryStatus.ACTIVE,

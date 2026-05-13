@@ -248,9 +248,9 @@ export default function SettingLinkListPage() {
           {/* Header - Fixed */}
           <div className="shrink-0 px-6 pt-6 pb-4 border-b bg-background">
             <DialogHeader>
-              <DialogTitle>{editingSettingLink ? tCrud('editEntity', { entity: tEntities('settingLink') }) : tCrud('createEntity', { entity: tEntities('settingLink') })}</DialogTitle>
+              <DialogTitle>{editingLink ? tCrud('editEntity', { entity: tEntities('settingLink') }) : tCrud('createEntity', { entity: tEntities('settingLink') })}</DialogTitle>
               <DialogDescription>
-                {editingSettingLink ? tCrud('editDescription', { entity: tEntities('settingLink').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('settingLink').toLowerCase() })}
+                {editingLink ? tCrud('editDescription', { entity: tEntities('settingLink').toLowerCase() }) : tCrud('createDescription', { entity: tEntities('settingLink').toLowerCase() })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -259,7 +259,7 @@ export default function SettingLinkListPage() {
           <div className="flex-1 overflow-y-auto min-h-0">
             <div className="px-6 py-4">
               <SettingLinkForm
-                initialData={editingSettingLink}
+                initialData={editingLink}
                 onSuccess={handleFormSuccess}
                 onCancel={() => setFormDialogOpen(false)}
               />

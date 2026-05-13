@@ -116,7 +116,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
       // NOTE: Real implementation would need FormData or separate upload call if file selected
       
       if (isEdit && initialData) {
-        await update(initialData.id, payload);
+        await update(initialData.id, payload as any);
       } else {
         await create({
           ...payload,

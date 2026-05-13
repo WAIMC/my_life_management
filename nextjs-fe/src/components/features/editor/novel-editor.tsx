@@ -37,6 +37,7 @@ export function NovelEditor({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
+      // @ts-ignore - TipTap version mismatch in monorepo causes Extension type conflicts
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
