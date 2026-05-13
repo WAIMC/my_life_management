@@ -1,32 +1,65 @@
-
-# Playwright
+# Dependencies
 node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+vendor/
+laravel-api/vendor/
+nextjs-fe/node_modules/
+nextjs-docs/node_modules/
+nuxtjs-FE/node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
 
-# pnpm
-.pnpm-store/
-**/node_modules/
-*.pnpm-debug.log
+# Laravel specific
+laravel-api/.env
+laravel-api/storage/*.key
+laravel-api/storage/framework/cache/data/*
+laravel-api/storage/framework/sessions/*
+laravel-api/storage/framework/testing/*
+laravel-api/storage/framework/views/*
+laravel-api/storage/logs/*
+laravel-api/bootstrap/cache/*
+laravel-api/public/storage
+laravel-api/public/hot
+laravel-api/public/build
+laravel-api/.phpunit.result.cache
 
-# IDE
-.vscode/
+# Next.js specific
+nextjs-fe/.next/
+nextjs-fe/out/
+nextjs-fe/.env*.local
+nextjs-fe/next-env.d.ts
+
+# Documentation / Docs
+nextjs-docs/.next/
+nextjs-docs/out/
+
+# NuxtJS FE (if used)
+nuxtjs-FE/.nuxt/
+nuxtjs-FE/dist/
+nuxtjs-FE/.output/
+
+# IDEs / Editors
 .idea/
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Build outputs
-dist/
-build/
-.next/
-out/
-
-# OS
+.vscode/
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
+
+# Docker / Deployment
+docker/.env
+ci-cd/*.log
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc
+.cache/
+dist/
+build/
+coverage/
+.nyc_output/
