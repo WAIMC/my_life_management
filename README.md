@@ -13,7 +13,10 @@
 
 ## 📖 Giới thiệu
 
-**Second Memory** là một hệ thống quản lý tri thức cá nhân (PKMS) tự lưu trữ (self-hosted), được thiết kế để số hóa, tổ chức và khai thác toàn bộ kiến thức, kinh nghiệm, sở thích và suy nghĩ cá nhân một cách có hệ thống.
+**Second Memory** là một hệ thống quản lý tri thức cá nhân (PKMS - Personal Knowledge Management System) được xây dựng nhằm mục đích lưu trữ, tổ chức và khai thác toàn bộ kiến thức, kinh nghiệm, sở thích và suy nghĩ cá nhân một cách có hệ thống.
+
+> [!NOTE]
+> Test update to verify GitHub Actions Runner functionality.
 
 ### 🎯 Tầm nhìn
 
