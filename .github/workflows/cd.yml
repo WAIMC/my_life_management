@@ -22,19 +22,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase repository name
+        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
           context: ./laravel-api
           push: true
-          tags: ghcr.io/${{ github.repository }}/api:latest
+          tags: ghcr.io/${{ env.REPO_LOWER }}/api:latest
 
       - name: Build and push FE image
         uses: docker/build-push-action@v5
         with:
           context: ./nextjs-fe
           push: true
-          tags: ghcr.io/${{ github.repository }}/fe:latest
+          tags: ghcr.io/${{ env.REPO_LOWER }}/fe:latest
 
   deploy:
     needs: build
