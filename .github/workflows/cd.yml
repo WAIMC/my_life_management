@@ -107,8 +107,12 @@ jobs:
         env:
           REPO_LOWER: ${{ needs.build-and-push.outputs.repo_lower }}
         run: |
-          docker pull ${{ env.REGISTRY }}/$REPO_LOWER/api:latest
-          docker pull ${{ env.REGISTRY }}/$REPO_LOWER/fe:latest
+          for i in {1..10}; do
+            docker pull ${{ env.REGISTRY }}/$REPO_LOWER/api:latest && break || (echo "Retry API pull $i/10..." && sleep 20)
+          done
+          for i in {1..10}; do
+            docker pull ${{ env.REGISTRY }}/$REPO_LOWER/fe:latest && break || (echo "Retry FE pull $i/10..." && sleep 20)
+          done
 
       - name: Run Blue-Green deploy
         env:
