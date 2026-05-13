@@ -1,0 +1,25 @@
+upstream backend_blue {
+    server localhost:8080;
+}
+
+upstream backend_green {
+    server localhost:8081;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://backend_ENV_TARGET;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /health {
+        access_log off;
+        return 200 'proxy-is-up';
+    }
+}
