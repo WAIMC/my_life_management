@@ -12,9 +12,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies with cache
+# Allow native packages to run their build scripts in Docker context
+# (onlyBuiltDependencies in root package.json is not available here)
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-  pnpm install --frozen-lockfile
+  pnpm install --frozen-lockfile \
+    --config.onlyBuiltDependencies="@parcel/watcher,@swc/core,esbuild,msw,sharp,unrs-resolver"
 
 # ============ Stage 2: Builder ============
 FROM node:22-alpine AS builder
